@@ -17,6 +17,7 @@ interface ProfileSectionProps {
 const ProfileSection: React.FC<ProfileSectionProps> = ({ user }) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [profilePictureUrl, setProfilePictureUrl] = useState(user?.profile_picture || '');
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -76,23 +77,36 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({ user }) => {
       // Upload profile picture to Supabase Storage
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-      const filePath = `profile-pictures/${fileName}`;
+      const filePath = `avatars/${fileName}`;
       
-      // Example: Replace with actual Supabase storage upload
-      // This is just a mock implementation
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Upload to Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
       
       // Update user profile with new profile picture URL
       const { error } = await supabase
         .from('users')
         .update({
-          profile_picture: filePath,
+          profile_picture: publicUrl,
         })
         .eq('id', user.id);
       
       if (error) {
         throw error;
       }
+      
+      // Update local state to show new image immediately
+      setProfilePictureUrl(publicUrl);
       
       toast.success('Profile picture updated');
     } catch (error) {
@@ -114,7 +128,7 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({ user }) => {
           {/* Profile picture */}
           <div className="flex items-center gap-4 mb-6">
             <Avatar className="h-20 w-20">
-              <AvatarImage src={user.profile_picture || ''} alt={user.name} />
+              <AvatarImage src={profilePictureUrl || user.profile_picture || ''} alt={user.name} />
               <AvatarFallback>{user.name?.charAt(0) || 'U'}</AvatarFallback>
             </Avatar>
             <div>

@@ -9,6 +9,31 @@ import { usePublicExpertsData } from '@/hooks/usePublicExpertsData';
 
 const Experts = () => {
   const { experts, loading, error } = usePublicExpertsData();
+  const [sortedExperts, setSortedExperts] = React.useState(experts);
+
+  React.useEffect(() => {
+    setSortedExperts(experts);
+  }, [experts]);
+
+  const handleSortChange = (sortBy: string) => {
+    const sorted = [...experts].sort((a, b) => {
+      switch (sortBy) {
+        case 'rating':
+          return (b.averageRating || 0) - (a.averageRating || 0);
+        case 'experience':
+          return (b.experience || 0) - (a.experience || 0);
+        case 'price-low':
+          return (a.price || 0) - (b.price || 0);
+        case 'price-high':
+          return (b.price || 0) - (a.price || 0);
+        case 'reviews':
+          return (b.reviewsCount || 0) - (a.reviewsCount || 0);
+        default:
+          return 0;
+      }
+    });
+    setSortedExperts(sorted);
+  };
 
   return (
     <>
@@ -45,7 +70,13 @@ const Experts = () => {
           
           {experts.length > 0 && (
             <div className="space-y-6">
-              <ExpertsGrid experts={experts} loading={loading} />
+              <SearchSort 
+                expertCount={experts.length} 
+                onToggleFilters={() => {}} 
+                showFilters={false} 
+                onSortChange={handleSortChange}
+              />
+              <ExpertsGrid experts={sortedExperts} loading={loading} />
             </div>
           )}
         </Container>

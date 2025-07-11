@@ -4,7 +4,7 @@ import { UserProfile } from '@/types/database/unified';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Wallet, CreditCard, RefreshCcw, PlusCircle, Clock, CheckCircle, XCircle } from 'lucide-react';
-import { useRazorpayPayment } from '@/hooks/call/useRazorpayPayment';
+import { useRazorpayPayment } from '@/hooks/useRazorpayPayment';
 import { toast } from 'sonner';
 
 interface WalletSectionProps {
@@ -17,9 +17,11 @@ const WalletSection: React.FC<WalletSectionProps> = ({ user }) => {
   const handleAddMoney = async () => {
     try {
       await processPayment(
-        500, // ₹500 default amount
-        'INR',
-        'Wallet Recharge',
+        {
+          amount: 50000, // ₹500 in paise
+          currency: 'INR',
+          description: 'Wallet Recharge',
+        },
         (paymentId, orderId) => {
           toast.success('Wallet recharged successfully!');
           // Here you would update the user's wallet balance in the database
