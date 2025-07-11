@@ -3,6 +3,11 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { isUserAuthenticated } from '@/utils/authHelpers';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import { Container } from '@/components/ui/container';
+import ProfilePictureCard from '@/components/user/dashboard/profile/ProfilePictureCard';
+import WalletCard from '@/components/user/dashboard/wallet/WalletCard';
 
 const UserDashboard = () => {
   const simpleAuth = useSimpleAuth();
@@ -42,29 +47,42 @@ const UserDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">
-          User Dashboard
-        </h1>
-        
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">Welcome back!</h2>
-          <p>Email: {simpleAuth.user?.email}</p>
-          <p>User ID: {simpleAuth.user?.id}</p>
-          <p>User Type: {simpleAuth.userType}</p>
+    <>
+      <Navbar />
+      <div className="min-h-screen bg-gray-50 py-20">
+        <Container>
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">
+              Dashboard
+            </h1>
+            <p className="text-xl text-gray-600">
+              Welcome back, {simpleAuth.userProfile?.name || simpleAuth.user?.email}!
+            </p>
+          </div>
           
-          {simpleAuth.userProfile && (
-            <div className="mt-4">
-              <h3 className="font-semibold">Profile Information:</h3>
-              <p>Name: {simpleAuth.userProfile.name}</p>
-              <p>Phone: {simpleAuth.userProfile.phone}</p>
-              <p>Country: {simpleAuth.userProfile.country}</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <ProfilePictureCard user={simpleAuth.userProfile} />
+            <WalletCard user={simpleAuth.userProfile} />
+            
+            {/* Additional dashboard cards can be added here */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-semibold mb-4">Quick Stats</h3>
+              <div className="space-y-2">
+                <p className="text-sm">Email: {simpleAuth.user?.email}</p>
+                <p className="text-sm">User Type: {simpleAuth.userType}</p>
+                {simpleAuth.userProfile && (
+                  <>
+                    <p className="text-sm">Phone: {simpleAuth.userProfile.phone || 'Not set'}</p>
+                    <p className="text-sm">Country: {simpleAuth.userProfile.country || 'Not set'}</p>
+                  </>
+                )}
+              </div>
             </div>
-          )}
-        </div>
+          </div>
+        </Container>
       </div>
-    </div>
+      <Footer />
+    </>
   );
 };
 

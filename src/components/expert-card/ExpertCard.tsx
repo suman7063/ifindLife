@@ -143,11 +143,6 @@ const ExpertCard: React.FC<ExpertCardProps> = ({
           <div className="flex-1">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold text-lg">{expertName}</h3>
-              {isVerified && (
-                <Badge variant="outline" className="border-green-500 text-green-600">
-                  Verified
-                </Badge>
-              )}
             </div>
             
             <p className="text-sm text-muted-foreground">{specialization}</p>

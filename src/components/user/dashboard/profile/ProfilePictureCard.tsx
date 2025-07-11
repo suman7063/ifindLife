@@ -17,6 +17,11 @@ const ProfilePictureCard: React.FC<ProfilePictureCardProps> = ({ user }) => {
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [profilePicture, setProfilePicture] = useState<string | null>(user?.profile_picture || null);
 
+  // Update local state when user prop changes
+  React.useEffect(() => {
+    setProfilePicture(user?.profile_picture || null);
+  }, [user?.profile_picture]);
+
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -25,18 +30,19 @@ const ProfilePictureCard: React.FC<ProfilePictureCardProps> = ({ user }) => {
     const reader = new FileReader();
     reader.onload = (event) => {
       if (event.target?.result) {
-        setProfilePicture(event.target.result as string);
+        const newImageUrl = event.target.result as string;
+        setProfilePicture(newImageUrl);
+        
+        // Start upload simulation
+        setIsUploadingPhoto(true);
+        
+        setTimeout(() => {
+          toast.success("Profile photo updated");
+          setIsUploadingPhoto(false);
+        }, 1500);
       }
     };
     reader.readAsDataURL(file);
-    
-    // Simulate photo upload (will be implemented in future)
-    setIsUploadingPhoto(true);
-    
-    setTimeout(() => {
-      toast.success("Profile photo updated");
-      setIsUploadingPhoto(false);
-    }, 1500);
   };
 
   return (

@@ -205,12 +205,6 @@ const ExpertDetailModal: React.FC<ExpertDetailModalProps> = ({
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
                   <h2 className="text-2xl font-bold">{expertName}</h2>
-                  {isVerified && (
-                    <Badge variant="outline" className="border-green-500 text-green-600">
-                      <Award className="h-3 w-3 mr-1" />
-                      Verified
-                    </Badge>
-                  )}
                 </div>
 
                 <p className="text-lg text-muted-foreground mb-3">{specialization}</p>

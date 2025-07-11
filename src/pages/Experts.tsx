@@ -45,11 +45,6 @@ const Experts = () => {
           
           {experts.length > 0 && (
             <div className="space-y-6">
-              <SearchSort 
-                expertCount={experts.length}
-                onToggleFilters={() => {}}
-                showFilters={false}
-              />
               <ExpertsGrid experts={experts} loading={loading} />
             </div>
           )}
