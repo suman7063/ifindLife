@@ -22,8 +22,8 @@ const AgoraCallInfo: React.FC<AgoraCallInfoProps> = ({
     return null;
   }
   
-  // Calculate current cost based on duration and expert price (price per minute)
-  const currentCost = ((duration / 60) * expertPrice).toFixed(2);
+  // Fixed session cost
+  const sessionCost = expertPrice.toFixed(2);
   
   return (
     <Card className="border border-muted bg-muted/30 mb-2">
@@ -43,10 +43,10 @@ const AgoraCallInfo: React.FC<AgoraCallInfoProps> = ({
         </div>
         
         <div className="flex items-center justify-between mt-1">
-          <p className="text-xs text-muted-foreground">Rate: ${expertPrice.toFixed(2)}/min</p>
+          <p className="text-xs text-muted-foreground">Session Rate: ${expertPrice.toFixed(2)}</p>
           <div className="flex items-center gap-2">
             <DollarSign className="h-4 w-4 text-emerald-500" />
-            <p className="text-sm font-medium text-emerald-500">${currentCost}</p>
+            <p className="text-sm font-medium text-emerald-500">${sessionCost}</p>
           </div>
         </div>
       </CardContent>

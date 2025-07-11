@@ -38,7 +38,7 @@ const AgoraCallModalHeader: React.FC<AgoraCallModalHeaderProps> = ({
       <div>
         <h2 className="text-lg font-medium">{expertName}</h2>
         {callStatus !== 'choosing' && (
-          <p className="text-sm text-muted-foreground">{currency}{expertPrice}/min after free period</p>
+          <p className="text-sm text-muted-foreground">{currency}{expertPrice} per session</p>
         )}
       </div>
       {getStatusDisplayText()}
