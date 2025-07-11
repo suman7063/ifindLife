@@ -45,9 +45,15 @@ const ProtectedBookingDialog: React.FC<ProtectedBookingDialogProps> = ({
     setShowExpertSelection(true);
   };
 
-  // Handle expert selection
+  // Handle expert selection - navigate to booking tab for the selected expert
   const handleExpertSelected = (expertId: number) => {
     console.log('Expert selected during booking:', expertId);
+    
+    // Navigate to the expert's page with booking tab active
+    const expertUrl = `/experts/${expertId}?book=true`;
+    window.location.href = expertUrl;
+    
+    // Close the dialog since we're navigating away
     setShowExpertSelection(false);
     handleClose();
   };

@@ -38,9 +38,10 @@ const ExpertsGrid: React.FC<ExpertsGridProps> = ({
 
   const handleBookNow = (expert: ExpertCardData) => {
     console.log(`Booking session with ${expert.name}`);
-    // Open integrated booking system
-    setSelectedExpert(expert);
-    setIsModalOpen(true);
+    
+    // Navigate to expert's booking page with booking tab active
+    const expertUrl = `/experts/${expert.auth_id || expert.id}?book=true`;
+    window.location.href = expertUrl;
   };
 
   const handleShowConnectOptions = (expertId: string, show: boolean) => {
@@ -58,8 +59,11 @@ const ExpertsGrid: React.FC<ExpertsGridProps> = ({
   };
 
   const handleModalBookNow = () => {
-    // Keep modal open for booking interface
-    console.log(`Starting booking flow for ${selectedExpert?.name}`);
+    if (selectedExpert) {
+      // Navigate to expert's booking page with booking tab active
+      const expertUrl = `/experts/${selectedExpert.auth_id || selectedExpert.id}?book=true`;
+      window.location.href = expertUrl;
+    }
   };
 
   if (loading) {

@@ -25,6 +25,10 @@ const ExpertDetail = () => {
     if (searchParams.get('chat') === 'true') {
       setIsChatModalOpen(true);
     }
+    if (searchParams.get('book') === 'true') {
+      // Activate the booking tab automatically
+      handleBookClick();
+    }
   }, [searchParams]);
 
   // Check for pending actions after user returns from login

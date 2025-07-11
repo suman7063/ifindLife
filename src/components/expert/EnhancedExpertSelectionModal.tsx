@@ -59,7 +59,10 @@ const EnhancedExpertSelectionModal: React.FC<EnhancedExpertSelectionModalProps> 
 
     console.log('Expert card clicked:', expert.name);
     setSelectedExpert(expert);
-    onExpertSelected(expert.id);
+    
+    // Navigate to expert's booking page instead of just calling onExpertSelected
+    const expertUrl = `/experts/${expert.id}?book=true`;
+    window.location.href = expertUrl;
   };
 
   // Handle call start with enhanced protection

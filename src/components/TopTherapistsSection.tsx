@@ -73,8 +73,10 @@ const TopTherapistsSection: React.FC<TopTherapistsSectionProps> = ({ experts = [
 
   const handleBookNow = (expert: ExpertCardData) => {
     console.log(`Booking session with ${expert.name}`);
-    toast.info(`Opening booking interface for ${expert.name}...`);
-    // Here you would open the booking modal similar to the program booking
+    
+    // Navigate to expert's booking page with booking tab active
+    const expertUrl = `/experts/${expert.auth_id || expert.id}?book=true`;
+    window.location.href = expertUrl;
   };
 
   const handleShowConnectOptions = (expertId: string, show: boolean) => {
