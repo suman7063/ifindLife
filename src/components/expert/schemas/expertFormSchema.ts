@@ -1,7 +1,7 @@
 
 import { z } from "zod";
 
-// Simplified form schema focused on essential expert information
+// Define form schema with validation
 export const expertFormSchema = z.object({
   // Personal Info
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -17,8 +17,12 @@ export const expertFormSchema = z.object({
   // Professional Info
   title: z.string().min(1, "Professional title is required"),
   experience: z.number().min(0, "Please specify years of experience"),
+  
   bio: z.string().min(50, "Bio should be at least 50 characters"),
-  certificate: z.instanceof(File, { message: "Please upload your certificate" }),
+  expertCategory: z.enum(["listening-volunteer", "listening-expert", "mindfulness-coach", "mindfulness-expert", "spiritual-mentor"], {
+    required_error: "Please select an expert category",
+  }),
+  certificate: z.instanceof(File, { message: "Please upload your Soulversity certificate" }),
   
   // CAPTCHA
   captchaAnswer: z.number(),

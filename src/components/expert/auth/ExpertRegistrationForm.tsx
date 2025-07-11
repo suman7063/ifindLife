@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -45,7 +45,9 @@ const ExpertRegistrationForm: React.FC = () => {
       country: '',
       title: '',
       experience: 0,
+      
       bio: '',
+      expertCategory: 'listening-volunteer',
       captchaAnswer: 0,
       password: '',
       confirmPassword: '',
@@ -62,7 +64,7 @@ const ExpertRegistrationForm: React.FC = () => {
     }
 
     if (!selectedFile) {
-      setSubmitError('Please upload your professional certificate.');
+      setSubmitError('Please upload your Soulversity certificate.');
       return;
     }
 
@@ -104,28 +106,29 @@ const ExpertRegistrationForm: React.FC = () => {
         certificateUrl = uploadData.path;
       }
 
-          // Create expert account - simplified without category selection
-          const { error: expertError } = await supabase
-            .from('expert_accounts')
-            .insert({
-              auth_id: authData.user.id,
-              name: data.name,
-              email: data.email,
-              phone: data.phone,
-              address: data.address,
-              city: data.city,
-              state: data.state,
-              country: data.country,
-              specialization: data.title,
-              experience: data.experience.toString(),
-              bio: data.bio,
-              certificate_urls: certificateUrl ? [certificateUrl] : [],
-              status: 'pending',
-              onboarding_completed: false,
-              pricing_set: false,
-              availability_set: false,
-              profile_completed: false,
-            });
+      // Create expert account with category
+      const { error: expertError } = await supabase
+        .from('expert_accounts')
+        .insert({
+          auth_id: authData.user.id,
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          address: data.address,
+          city: data.city,
+          state: data.state,
+          country: data.country,
+          specialization: data.title,
+          experience: data.experience.toString(),
+          bio: data.bio,
+          certificate_urls: certificateUrl ? [certificateUrl] : [],
+          category: data.expertCategory, // Add category field
+          status: 'pending',
+          onboarding_completed: false,
+          pricing_set: false,
+          availability_set: false,
+          profile_completed: false,
+        });
 
       if (expertError) {
         throw new Error(expertError.message);
@@ -320,10 +323,43 @@ const ExpertRegistrationForm: React.FC = () => {
             Professional Information
           </div>
 
+          {/* Expert Category */}
+          <div>
+            <Label className="text-base font-medium">Expert Category *</Label>
+            <RadioGroup
+              value={form.watch('expertCategory')}
+              onValueChange={(value) => form.setValue('expertCategory', value as any)}
+              className="mt-2"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="listening-volunteer" id="listening-volunteer" />
+                <Label htmlFor="listening-volunteer">Listening Volunteer</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="listening-expert" id="listening-expert" />
+                <Label htmlFor="listening-expert">Listening Expert</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="mindfulness-coach" id="mindfulness-coach" />
+                <Label htmlFor="mindfulness-coach">Mindfulness Coach</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="mindfulness-expert" id="mindfulness-expert" />
+                <Label htmlFor="mindfulness-expert">Mindfulness Expert</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="spiritual-mentor" id="spiritual-mentor" />
+                <Label htmlFor="spiritual-mentor">Spiritual Mentor</Label>
+              </div>
+            </RadioGroup>
+            {form.formState.errors.expertCategory && (
+              <p className="text-sm text-red-500 mt-1">{form.formState.errors.expertCategory.message}</p>
+            )}
+          </div>
 
           {/* Certificate Upload */}
           <div>
-            <Label className="text-base font-medium">Upload Professional Certificate *</Label>
+            <Label className="text-base font-medium">Upload Proof (Soulversity Certificate) *</Label>
             <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
               <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
               <div className="space-y-2">
