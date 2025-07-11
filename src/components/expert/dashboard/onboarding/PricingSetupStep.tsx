@@ -69,12 +69,12 @@ export const PricingSetupStep: React.FC<PricingSetupStepProps> = ({
 
       if (!error && data) {
         setPricing({
-          session_30_usd: data.session_30_usd || 0,
-          session_30_inr: data.session_30_inr || 0,
-          session_30_eur: data.session_30_eur || 0,
-          session_60_usd: data.session_60_usd || 0,
-          session_60_inr: data.session_60_inr || 0,
-          session_60_eur: data.session_60_eur || 0
+          session_30_usd: data.session_30_usd || data.price_per_min_usd * 30 || 0,
+          session_30_inr: data.session_30_inr || data.price_per_min_inr * 30 || 0,
+          session_30_eur: data.session_30_eur || data.price_per_min_eur * 30 || 0,
+          session_60_usd: data.session_60_usd || data.price_per_min_usd * 60 || 0,
+          session_60_inr: data.session_60_inr || data.price_per_min_inr * 60 || 0,
+          session_60_eur: data.session_60_eur || data.price_per_min_eur * 60 || 0
         });
       }
     } catch (error) {

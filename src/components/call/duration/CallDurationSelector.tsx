@@ -23,6 +23,7 @@ export const CallDurationSelector: React.FC<CallDurationSelectorProps> = ({
   className = ''
 }) => {
   const getPrice = (option: CallPricing) => {
+    if (userCurrency === 'EUR') return option.price_eur || option.price_usd;
     return userCurrency === 'INR' ? option.price_inr : option.price_usd;
   };
 

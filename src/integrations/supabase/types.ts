@@ -648,6 +648,12 @@ export type Database = {
           price_per_min_eur: number | null
           price_per_min_inr: number | null
           price_per_min_usd: number | null
+          session_30_eur: number | null
+          session_30_inr: number | null
+          session_30_usd: number | null
+          session_60_eur: number | null
+          session_60_inr: number | null
+          session_60_usd: number | null
           updated_at: string | null
         }
         Insert: {
@@ -661,6 +667,12 @@ export type Database = {
           price_per_min_eur?: number | null
           price_per_min_inr?: number | null
           price_per_min_usd?: number | null
+          session_30_eur?: number | null
+          session_30_inr?: number | null
+          session_30_usd?: number | null
+          session_60_eur?: number | null
+          session_60_inr?: number | null
+          session_60_usd?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -674,6 +686,12 @@ export type Database = {
           price_per_min_eur?: number | null
           price_per_min_inr?: number | null
           price_per_min_usd?: number | null
+          session_30_eur?: number | null
+          session_30_inr?: number | null
+          session_30_usd?: number | null
+          session_60_eur?: number | null
+          session_60_inr?: number | null
+          session_60_usd?: number | null
           updated_at?: string | null
         }
         Relationships: [
