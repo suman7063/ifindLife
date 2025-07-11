@@ -62,8 +62,8 @@ const UserRoutes: React.FC = () => {
         <Route path="/service/:serviceId" element={<ServiceDetailPage />} />
         
         {/* Expert Routes */}
-        <Route path="/experts" element={<EnhancedExpertSearch />} />
-        <Route path="/experts-old" element={<Experts />} />
+        <Route path="/experts" element={<Experts />} />
+        <Route path="/experts-enhanced" element={<EnhancedExpertSearch />} />
         <Route path="/experts/:id" element={<ExpertDetail />} />
         <Route path="/expert-login" element={<ExpertLogin />} />
         <Route path="/expert-signup" element={<ExpertSignup />} />
