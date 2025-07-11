@@ -19,8 +19,8 @@ const CallCostDisplay: React.FC<CallCostDisplayProps> = ({
   formatTime,
   expertPrice
 }) => {
-  const initialDuration = 15 * 60; // 15 minutes in seconds
-  const timeUsedPercentage = ((initialDuration - remainingTime) / initialDuration) * 100;
+  const selectedDuration = 60 * 60; // 60 minutes in seconds (fixed session)
+  const timeUsedPercentage = ((selectedDuration - remainingTime) / selectedDuration) * 100;
   const showExtensionWarning = remainingTime <= 60; // Show warning when less than 1 minute remains
   
   return (
@@ -33,7 +33,7 @@ const CallCostDisplay: React.FC<CallCostDisplayProps> = ({
           </div>
           
           <div className="space-y-1">
-            <p className="text-xs text-muted-foreground">Current Cost</p>
+            <p className="text-xs text-muted-foreground">Session Cost</p>
             <p className="font-medium">₹{cost.toFixed(2)}</p>
           </div>
           
@@ -43,8 +43,8 @@ const CallCostDisplay: React.FC<CallCostDisplayProps> = ({
           </div>
           
           <div className="space-y-1">
-            <p className="text-xs text-muted-foreground">Price</p>
-            <p className="font-medium">₹{expertPrice}/min</p>
+            <p className="text-xs text-muted-foreground">Session Price</p>
+            <p className="font-medium">₹{expertPrice.toFixed(2)}</p>
           </div>
         </div>
         
@@ -63,7 +63,7 @@ const CallCostDisplay: React.FC<CallCostDisplayProps> = ({
           <div className="mt-3 p-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-md flex gap-2 items-center">
             <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-500 flex-shrink-0" />
             <p className="text-xs text-amber-800 dark:text-amber-400">
-              Initial time slot ending soon. The call will be automatically extended at the standard rate.
+              Session time ending soon. You can extend the session if needed.
             </p>
           </div>
         )}

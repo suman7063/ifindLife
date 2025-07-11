@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
 
-export const useEnhancedCallTimer = (pricePerMinute: number) => {
+export const useEnhancedCallTimer = (sessionPrice: number) => {
   const [duration, setDuration] = useState(0);
   const [selectedDurationMinutes, setSelectedDurationMinutes] = useState(60);
   const [extensionMinutes, setExtensionMinutes] = useState(0);
@@ -32,11 +32,8 @@ export const useEnhancedCallTimer = (pricePerMinute: number) => {
   const warningThreshold = totalDurationSeconds - 180; // 3 minutes warning
   const isInWarningPeriod = duration > warningThreshold && !isOvertime;
 
-  // Calculate cost including extensions
-  const baseCost = (Math.min(duration, selectedDurationMinutes * 60) / 60) * pricePerMinute;
-  const extensionCost = extensionMinutes > 0 ? (extensionMinutes / 60) * pricePerMinute : 0;
-  const overtimeCost = isOvertime ? ((duration - totalDurationSeconds) / 60) * pricePerMinute : 0;
-  const totalCost = baseCost + extensionCost + overtimeCost;
+  // Calculate cost as fixed session price
+  const totalCost = sessionPrice;
 
   const formatTime = useCallback((seconds: number): string => {
     const hours = Math.floor(seconds / 3600);

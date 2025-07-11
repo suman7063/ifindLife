@@ -16,12 +16,12 @@ export const PricingSetupStep: React.FC<PricingSetupStepProps> = ({
   onComplete
 }) => {
   const [pricing, setPricing] = useState({
-    price_per_min_usd: 0,
-    price_per_min_inr: 0,
-    price_per_min_eur: 0,
-    consultation_fee_usd: 0,
-    consultation_fee_inr: 0,
-    consultation_fee_eur: 0
+    session_30_usd: 0,
+    session_30_inr: 0,
+    session_30_eur: 0,
+    session_60_usd: 0,
+    session_60_inr: 0,
+    session_60_eur: 0
   });
   const [loading, setLoading] = useState(false);
   const [basePricing, setBasePricing] = useState<any>(null);
@@ -44,14 +44,14 @@ export const PricingSetupStep: React.FC<PricingSetupStepProps> = ({
       if (error) throw error;
       setBasePricing(data);
 
-      // Set default pricing based on category
+      // Set default pricing based on category (fixed session pricing)
       setPricing({
-        price_per_min_usd: data.base_price_usd,
-        price_per_min_inr: data.base_price_inr,
-        price_per_min_eur: data.base_price_eur,
-        consultation_fee_usd: data.base_price_usd * 15, // 15 min consultation
-        consultation_fee_inr: data.base_price_inr * 15,
-        consultation_fee_eur: data.base_price_eur * 15
+        session_30_usd: data.base_price_usd * 30,
+        session_30_inr: data.base_price_inr * 30,
+        session_30_eur: data.base_price_eur * 30,
+        session_60_usd: data.base_price_usd * 60,
+        session_60_inr: data.base_price_inr * 60,
+        session_60_eur: data.base_price_eur * 60
       });
     } catch (error) {
       console.error('Error fetching base pricing:', error);
@@ -69,12 +69,12 @@ export const PricingSetupStep: React.FC<PricingSetupStepProps> = ({
 
       if (!error && data) {
         setPricing({
-          price_per_min_usd: data.price_per_min_usd,
-          price_per_min_inr: data.price_per_min_inr,
-          price_per_min_eur: data.price_per_min_eur,
-          consultation_fee_usd: data.consultation_fee_usd,
-          consultation_fee_inr: data.consultation_fee_inr,
-          consultation_fee_eur: data.consultation_fee_eur
+          session_30_usd: data.session_30_usd || 0,
+          session_30_inr: data.session_30_inr || 0,
+          session_30_eur: data.session_30_eur || 0,
+          session_60_usd: data.session_60_usd || 0,
+          session_60_inr: data.session_60_inr || 0,
+          session_60_eur: data.session_60_eur || 0
         });
       }
     } catch (error) {
@@ -126,16 +126,28 @@ export const PricingSetupStep: React.FC<PricingSetupStepProps> = ({
           <CardContent>
             <div className="grid grid-cols-3 gap-4 text-sm">
               <div>
-                <Label className="text-blue-700">USD</Label>
-                <p className="font-medium">${basePricing.base_price_usd}/min</p>
+                <Label className="text-blue-700">USD (30 min)</Label>
+                <p className="font-medium">${(basePricing.base_price_usd * 30).toFixed(2)}</p>
               </div>
               <div>
-                <Label className="text-blue-700">INR</Label>
-                <p className="font-medium">₹{basePricing.base_price_inr}/min</p>
+                <Label className="text-blue-700">INR (30 min)</Label>
+                <p className="font-medium">₹{(basePricing.base_price_inr * 30).toFixed(2)}</p>
               </div>
               <div>
-                <Label className="text-blue-700">EUR</Label>
-                <p className="font-medium">€{basePricing.base_price_eur}/min</p>
+                <Label className="text-blue-700">EUR (30 min)</Label>
+                <p className="font-medium">€{(basePricing.base_price_eur * 30).toFixed(2)}</p>
+              </div>
+              <div>
+                <Label className="text-blue-700">USD (60 min)</Label>
+                <p className="font-medium">${(basePricing.base_price_usd * 60).toFixed(2)}</p>
+              </div>
+              <div>
+                <Label className="text-blue-700">INR (60 min)</Label>
+                <p className="font-medium">₹{(basePricing.base_price_inr * 60).toFixed(2)}</p>
+              </div>
+              <div>
+                <Label className="text-blue-700">EUR (60 min)</Label>
+                <p className="font-medium">€{(basePricing.base_price_eur * 60).toFixed(2)}</p>
               </div>
             </div>
           </CardContent>
@@ -143,44 +155,44 @@ export const PricingSetupStep: React.FC<PricingSetupStepProps> = ({
       )}
 
       <div className="space-y-4">
-        <h4 className="font-medium">Per-Minute Rates</h4>
+        <h4 className="font-medium">30-Minute Session Rates</h4>
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <Label htmlFor="price_usd">USD Rate (per minute)</Label>
+            <Label htmlFor="session_30_usd">USD (30 min session)</Label>
             <Input
-              id="price_usd"
+              id="session_30_usd"
               type="number"
               step="0.01"
-              value={pricing.price_per_min_usd}
+              value={pricing.session_30_usd}
               onChange={(e) => setPricing(prev => ({
                 ...prev,
-                price_per_min_usd: parseFloat(e.target.value) || 0
+                session_30_usd: parseFloat(e.target.value) || 0
               }))}
             />
           </div>
           <div>
-            <Label htmlFor="price_inr">INR Rate (per minute)</Label>
+            <Label htmlFor="session_30_inr">INR (30 min session)</Label>
             <Input
-              id="price_inr"
+              id="session_30_inr"
               type="number"
               step="0.01"
-              value={pricing.price_per_min_inr}
+              value={pricing.session_30_inr}
               onChange={(e) => setPricing(prev => ({
                 ...prev,
-                price_per_min_inr: parseFloat(e.target.value) || 0
+                session_30_inr: parseFloat(e.target.value) || 0
               }))}
             />
           </div>
           <div>
-            <Label htmlFor="price_eur">EUR Rate (per minute)</Label>
+            <Label htmlFor="session_30_eur">EUR (30 min session)</Label>
             <Input
-              id="price_eur"
+              id="session_30_eur"
               type="number"
               step="0.01"
-              value={pricing.price_per_min_eur}
+              value={pricing.session_30_eur}
               onChange={(e) => setPricing(prev => ({
                 ...prev,
-                price_per_min_eur: parseFloat(e.target.value) || 0
+                session_30_eur: parseFloat(e.target.value) || 0
               }))}
             />
           </div>
@@ -188,44 +200,44 @@ export const PricingSetupStep: React.FC<PricingSetupStepProps> = ({
       </div>
 
       <div className="space-y-4">
-        <h4 className="font-medium">Consultation Fees (15 minutes)</h4>
+        <h4 className="font-medium">60-Minute Session Rates</h4>
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <Label htmlFor="consultation_usd">USD Consultation</Label>
+            <Label htmlFor="session_60_usd">USD (60 min session)</Label>
             <Input
-              id="consultation_usd"
+              id="session_60_usd"
               type="number"
               step="0.01"
-              value={pricing.consultation_fee_usd}
+              value={pricing.session_60_usd}
               onChange={(e) => setPricing(prev => ({
                 ...prev,
-                consultation_fee_usd: parseFloat(e.target.value) || 0
+                session_60_usd: parseFloat(e.target.value) || 0
               }))}
             />
           </div>
           <div>
-            <Label htmlFor="consultation_inr">INR Consultation</Label>
+            <Label htmlFor="session_60_inr">INR (60 min session)</Label>
             <Input
-              id="consultation_inr"
+              id="session_60_inr"
               type="number"
               step="0.01"
-              value={pricing.consultation_fee_inr}
+              value={pricing.session_60_inr}
               onChange={(e) => setPricing(prev => ({
                 ...prev,
-                consultation_fee_inr: parseFloat(e.target.value) || 0
+                session_60_inr: parseFloat(e.target.value) || 0
               }))}
             />
           </div>
           <div>
-            <Label htmlFor="consultation_eur">EUR Consultation</Label>
+            <Label htmlFor="session_60_eur">EUR (60 min session)</Label>
             <Input
-              id="consultation_eur"
+              id="session_60_eur"
               type="number"
               step="0.01"
-              value={pricing.consultation_fee_eur}
+              value={pricing.session_60_eur}
               onChange={(e) => setPricing(prev => ({
                 ...prev,
-                consultation_fee_eur: parseFloat(e.target.value) || 0
+                session_60_eur: parseFloat(e.target.value) || 0
               }))}
             />
           </div>
