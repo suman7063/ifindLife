@@ -36,7 +36,7 @@ const ExpertRegister: React.FC = () => {
       country: '',
       title: '',
       experience: 0,
-      specialties: [],
+      
       bio: '',
       expertCategory: 'listening-volunteer',
       captchaAnswer: 0,
@@ -100,28 +100,6 @@ const ExpertRegister: React.FC = () => {
     }
   };
 
-  const specialtyOptions = [
-    'Mindful Listening',
-    'Anxiety & Stress',
-    'Depression',
-    'Relationships',
-    'Career Guidance',
-    'Life Coaching',
-    'Trauma Recovery',
-    'Addiction Recovery',
-    'Family Therapy',
-    'Mindfulness & Meditation',
-    'Spiritual Counseling',
-  ];
-
-  const handleSpecialtyChange = (specialty: string, checked: boolean) => {
-    const current = form.getValues('specialties');
-    if (checked) {
-      form.setValue('specialties', [...current, specialty]);
-    } else {
-      form.setValue('specialties', current.filter(s => s !== specialty));
-    }
-  };
 
   return (
     <>
@@ -267,19 +245,23 @@ const ExpertRegister: React.FC = () => {
                     >
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="listening-volunteer" id="listening-volunteer" />
-                        <Label htmlFor="listening-volunteer">Listening Volunteer (Entry level)</Label>
+                        <Label htmlFor="listening-volunteer">Listening Volunteer</Label>
                       </div>
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="listening-expert" id="listening-expert" />
-                        <Label htmlFor="listening-expert">Listening Expert (Intermediate)</Label>
+                        <Label htmlFor="listening-expert">Listening Expert</Label>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="listening-coach" id="listening-coach" />
-                        <Label htmlFor="listening-coach">Listening Coach (Advanced)</Label>
+                        <RadioGroupItem value="mindfulness-coach" id="mindfulness-coach" />
+                        <Label htmlFor="mindfulness-coach">Mindfulness Coach</Label>
                       </div>
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="mindfulness-expert" id="mindfulness-expert" />
-                        <Label htmlFor="mindfulness-expert">Mindfulness Expert (Specialized)</Label>
+                        <Label htmlFor="mindfulness-expert">Mindfulness Expert</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="spiritual-mentor" id="spiritual-mentor" />
+                        <Label htmlFor="spiritual-mentor">Spiritual Mentor</Label>
                       </div>
                     </RadioGroup>
                     {form.formState.errors.expertCategory && (
@@ -315,24 +297,6 @@ const ExpertRegister: React.FC = () => {
                     </div>
                   </div>
 
-                  <div>
-                    <Label className="text-base font-medium">Specialties * (Select at least one)</Label>
-                    <div className="grid grid-cols-2 gap-2 mt-2">
-                      {specialtyOptions.map((specialty) => (
-                        <div key={specialty} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={specialty}
-                            checked={form.watch('specialties').includes(specialty)}
-                            onCheckedChange={(checked) => handleSpecialtyChange(specialty, checked as boolean)}
-                          />
-                          <Label htmlFor={specialty} className="text-sm">{specialty}</Label>
-                        </div>
-                      ))}
-                    </div>
-                    {form.formState.errors.specialties && (
-                      <p className="text-sm text-red-500 mt-1">{form.formState.errors.specialties.message}</p>
-                    )}
-                  </div>
 
                   <div>
                     <Label htmlFor="bio">Professional Bio *</Label>

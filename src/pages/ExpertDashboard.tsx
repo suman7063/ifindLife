@@ -7,7 +7,7 @@ import ProfilePage from '@/components/expert-dashboard/pages/ProfilePage';
 import SchedulePage from '@/components/expert-dashboard/pages/SchedulePage';
 import ClientsPage from '@/components/expert-dashboard/pages/ClientsPage';
 import MessagingPage from '@/components/expert-dashboard/pages/MessagingPage';
-import ServicesPage from '@/components/expert-dashboard/pages/ServicesPage';
+
 import EarningsPage from '@/components/expert-dashboard/pages/EarningsPage';
 import ReportPage from '@/components/expert-dashboard/pages/ReportPage';
 import AnalyticsPage from '@/components/expert-dashboard/pages/analytics/AnalyticsPage';
@@ -70,7 +70,7 @@ const ExpertDashboard = () => {
         <Route path="schedule" element={<SchedulePage />} />
         <Route path="clients" element={<ClientsPage />} />
         <Route path="messages" element={<MessagingPage />} />
-        <Route path="services" element={<ServicesPage />} />
+        
         <Route path="earnings" element={<EarningsPage />} />
         <Route path="analytics" element={<AnalyticsPage />} />
         <Route path="reports" element={<ReportPage />} />

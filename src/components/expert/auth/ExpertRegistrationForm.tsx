@@ -45,7 +45,7 @@ const ExpertRegistrationForm: React.FC = () => {
       country: '',
       title: '',
       experience: 0,
-      specialties: [],
+      
       bio: '',
       expertCategory: 'listening-volunteer',
       captchaAnswer: 0,
@@ -143,28 +143,6 @@ const ExpertRegistrationForm: React.FC = () => {
     }
   };
 
-  const specialtyOptions = [
-    'Mindful Listening',
-    'Anxiety & Stress',
-    'Depression',
-    'Relationships',
-    'Career Guidance',
-    'Life Coaching',
-    'Trauma Recovery',
-    'Addiction Recovery',
-    'Family Therapy',
-    'Mindfulness & Meditation',
-    'Spiritual Counseling',
-  ];
-
-  const handleSpecialtyChange = (specialty: string, checked: boolean) => {
-    const current = form.getValues('specialties');
-    if (checked) {
-      form.setValue('specialties', [...current, specialty]);
-    } else {
-      form.setValue('specialties', current.filter(s => s !== specialty));
-    }
-  };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -353,40 +331,26 @@ const ExpertRegistrationForm: React.FC = () => {
               onValueChange={(value) => form.setValue('expertCategory', value as any)}
               className="mt-2"
             >
-               <div className="space-y-3">
-                 <div className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-gray-50">
-                   <RadioGroupItem value="listening-volunteer" id="listening-volunteer" className="mt-1" />
-                   <div className="flex-1">
-                     <Label htmlFor="listening-volunteer" className="font-medium">Listening Volunteer</Label>
-                     <p className="text-sm text-gray-600">Entry level - Free compassionate support</p>
-                     <p className="text-xs text-green-600">Rate: Free</p>
-                   </div>
-                 </div>
-                 <div className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-gray-50">
-                   <RadioGroupItem value="listening-expert" id="listening-expert" className="mt-1" />
-                   <div className="flex-1">
-                     <Label htmlFor="listening-expert" className="font-medium">Listening Expert</Label>
-                     <p className="text-sm text-gray-600">Professional listeners with extensive training</p>
-                     <p className="text-xs text-blue-600">Rate: $2.00/min • ₹150/min • €1.80/min</p>
-                   </div>
-                 </div>
-                 <div className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-gray-50">
-                   <RadioGroupItem value="listening-coach" id="listening-coach" className="mt-1" />
-                   <div className="flex-1">
-                     <Label htmlFor="listening-coach" className="font-medium">Listening Coach</Label>
-                     <p className="text-sm text-gray-600">Certified coaches specializing in active listening</p>
-                     <p className="text-xs text-blue-600">Rate: $3.00/min • ₹250/min • €2.70/min</p>
-                   </div>
-                 </div>
-                 <div className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-gray-50">
-                   <RadioGroupItem value="mindfulness-expert" id="mindfulness-expert" className="mt-1" />
-                   <div className="flex-1">
-                     <Label htmlFor="mindfulness-expert" className="font-medium">Mindfulness Expert</Label>
-                     <p className="text-sm text-gray-600">Certified mindfulness practitioners and meditation teachers</p>
-                     <p className="text-xs text-blue-600">Rate: $4.00/min • ₹300/min • €3.60/min</p>
-                   </div>
-                 </div>
-               </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="listening-volunteer" id="listening-volunteer" />
+                <Label htmlFor="listening-volunteer">Listening Volunteer</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="listening-expert" id="listening-expert" />
+                <Label htmlFor="listening-expert">Listening Expert</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="mindfulness-coach" id="mindfulness-coach" />
+                <Label htmlFor="mindfulness-coach">Mindfulness Coach</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="mindfulness-expert" id="mindfulness-expert" />
+                <Label htmlFor="mindfulness-expert">Mindfulness Expert</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="spiritual-mentor" id="spiritual-mentor" />
+                <Label htmlFor="spiritual-mentor">Spiritual Mentor</Label>
+              </div>
             </RadioGroup>
             {form.formState.errors.expertCategory && (
               <p className="text-sm text-red-500 mt-1">{form.formState.errors.expertCategory.message}</p>
@@ -450,24 +414,6 @@ const ExpertRegistrationForm: React.FC = () => {
             </div>
           </div>
 
-          <div>
-            <Label className="text-base font-medium">Specialties * (Select at least one)</Label>
-            <div className="grid grid-cols-2 gap-2 mt-2">
-              {specialtyOptions.map((specialty) => (
-                <div key={specialty} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={specialty}
-                    checked={form.watch('specialties').includes(specialty)}
-                    onCheckedChange={(checked) => handleSpecialtyChange(specialty, checked as boolean)}
-                  />
-                  <Label htmlFor={specialty} className="text-sm">{specialty}</Label>
-                </div>
-              ))}
-            </div>
-            {form.formState.errors.specialties && (
-              <p className="text-sm text-red-500 mt-1">{form.formState.errors.specialties.message}</p>
-            )}
-          </div>
 
           <div>
             <Label htmlFor="bio">Professional Bio *</Label>

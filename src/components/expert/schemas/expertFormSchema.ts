@@ -17,9 +17,9 @@ export const expertFormSchema = z.object({
   // Professional Info
   title: z.string().min(1, "Professional title is required"),
   experience: z.number().min(0, "Please specify years of experience"),
-  specialties: z.array(z.string()).min(1, "Select at least one specialty"),
+  
   bio: z.string().min(50, "Bio should be at least 50 characters"),
-  expertCategory: z.enum(["listening-volunteer", "listening-expert", "listening-coach", "mindfulness-expert"], {
+  expertCategory: z.enum(["listening-volunteer", "listening-expert", "mindfulness-coach", "mindfulness-expert", "spiritual-mentor"], {
     required_error: "Please select an expert category",
   }),
   certificate: z.instanceof(File, { message: "Please upload your Soulversity certificate" }),

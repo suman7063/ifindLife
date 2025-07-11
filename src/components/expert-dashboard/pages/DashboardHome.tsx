@@ -44,9 +44,6 @@ const DashboardHome = () => {
     navigate('/expert-dashboard/earnings');
   };
 
-  const handleViewServices = () => {
-    navigate('/expert-dashboard/services');
-  };
 
   const handleStartConsultation = () => {
     // TODO: Implement consultation start functionality
@@ -206,18 +203,6 @@ const DashboardHome = () => {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Services</CardTitle>
-            <CardDescription>Manage your service offerings</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button onClick={handleViewServices} className="w-full">
-              <TrendingUp className="w-4 h-4 mr-2" />
-              Manage Services
-            </Button>
-          </CardContent>
-        </Card>
 
         <Card>
           <CardHeader>

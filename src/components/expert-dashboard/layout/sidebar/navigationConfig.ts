@@ -59,12 +59,6 @@ export const navigationItems: NavigationItem[] = [
     badge: '3'
   },
   {
-    name: 'Services',
-    href: '/expert-dashboard/services',
-    icon: Briefcase,
-    description: 'Manage your service offerings'
-  },
-  {
     name: 'Earnings',
     href: '/expert-dashboard/earnings',
     icon: DollarSign,
