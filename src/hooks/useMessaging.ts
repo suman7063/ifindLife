@@ -1,347 +1,378 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '@/contexts/auth/AuthContext';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Message, Conversation } from './messaging/types';
-import { adaptConversation } from '@/utils/userProfileAdapter';
 
-const useMessaging = () => {
-  const { user, isAuthenticated } = useAuth();
-  const [messages, setMessages] = useState<Message[]>([]);
+export interface Message {
+  id: string;
+  sender_id: string;
+  receiver_id: string;
+  content: string;
+  read: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ExpertPresence {
+  id: string;
+  expert_id: string;
+  status: 'online' | 'away' | 'offline';
+  last_activity: string;
+  auto_away_enabled: boolean;
+  away_timeout_minutes: number;
+}
+
+export interface Conversation {
+  expert_id: string;
+  expert_name: string;
+  expert_image?: string;
+  last_message?: Message;
+  unread_count: number;
+  presence?: ExpertPresence;
+}
+
+export const useMessaging = (userId?: string) => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [sending, setSending] = useState<boolean>(false);
+  const [messages, setMessages] = useState<{ [expertId: string]: Message[] }>({});
+  const [loading, setLoading] = useState(true);
+  const [sendingMessage, setSendingMessage] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Get conversations for a user
-  const getConversations = useCallback(async (userId: string): Promise<Conversation[]> => {
-    if (!isAuthenticated || !user) return [];
-    
-    setLoading(true);
+  // Fetch conversations list with last message and unread count
+  const fetchConversations = useCallback(async () => {
+    if (!userId) return;
+
     try {
-      // Get unique conversation partners (people user has messaged with)
-      const { data: sentMessages, error: sentError } = await supabase
+      setLoading(true);
+      setError(null);
+
+      // Get all conversations for this user
+      const { data: messagesData, error: messagesError } = await supabase
         .from('messages')
-        .select('receiver_id, created_at')
-        .eq('sender_id', userId)
+        .select(`
+          id,
+          sender_id,
+          receiver_id,
+          content,
+          read,
+          created_at,
+          updated_at
+        `)
+        .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
         .order('created_at', { ascending: false });
+
+      if (messagesError) throw messagesError;
+
+      // Group messages by expert (the other participant)
+      const conversationsMap = new Map<string, {
+        expert_id: string;
+        messages: Message[];
+        unread_count: number;
+      }>();
+
+      messagesData?.forEach((message) => {
+        const expertId = message.sender_id === userId ? message.receiver_id : message.sender_id;
         
-      const { data: receivedMessages, error: receivedError } = await supabase
-        .from('messages')
-        .select('sender_id, created_at')
-        .eq('receiver_id', userId)
-        .order('created_at', { ascending: false });
-        
-      if (sentError || receivedError) {
-        console.error('Error fetching conversations:', sentError || receivedError);
-        toast.error('Failed to load conversations');
-        return [];
-      }
-      
-      // Combine and find unique conversation partners
-      const conversationPartners = new Map<string, { lastMessageDate: string }>();
-      
-      sentMessages?.forEach(msg => {
-        if (!conversationPartners.has(msg.receiver_id)) {
-          conversationPartners.set(msg.receiver_id, { 
-            lastMessageDate: msg.created_at 
+        if (!conversationsMap.has(expertId)) {
+          conversationsMap.set(expertId, {
+            expert_id: expertId,
+            messages: [],
+            unread_count: 0
           });
-        } else {
-          const existing = conversationPartners.get(msg.receiver_id);
-          if (existing && new Date(msg.created_at) > new Date(existing.lastMessageDate)) {
-            existing.lastMessageDate = msg.created_at;
-          }
+        }
+
+        const conv = conversationsMap.get(expertId)!;
+        conv.messages.push(message);
+
+        // Count unread messages (messages sent to this user that are unread)
+        if (message.receiver_id === userId && !message.read) {
+          conv.unread_count++;
         }
       });
-      
-      receivedMessages?.forEach(msg => {
-        if (!conversationPartners.has(msg.sender_id)) {
-          conversationPartners.set(msg.sender_id, { 
-            lastMessageDate: msg.created_at 
-          });
-        } else {
-          const existing = conversationPartners.get(msg.sender_id);
-          if (existing && new Date(msg.created_at) > new Date(existing.lastMessageDate)) {
-            existing.lastMessageDate = msg.created_at;
+
+      // Get expert information for each conversation
+      const expertIds = Array.from(conversationsMap.keys());
+      if (expertIds.length > 0) {
+        const { data: expertsData, error: expertsError } = await supabase
+          .from('expert_accounts')
+          .select('id, name, profile_picture')
+          .in('id', expertIds);
+
+        if (expertsError) throw expertsError;
+
+        // Get expert presence information
+        const { data: presenceData } = await supabase
+          .from('expert_presence')
+          .select('*')
+          .in('expert_id', expertIds);
+
+        // Build conversations with expert info
+        const conversationsList: Conversation[] = [];
+
+        conversationsMap.forEach((conv, expertId) => {
+          const expertInfo = expertsData?.find(expert => expert.id === expertId);
+          const presence = presenceData?.find(p => p.expert_id === expertId);
+
+          if (expertInfo) {
+            conversationsList.push({
+              expert_id: expertId,
+              expert_name: expertInfo.name,
+              expert_image: expertInfo.profile_picture,
+              last_message: conv.messages[0], // Most recent message
+              unread_count: conv.unread_count,
+              presence: presence ? {
+                ...presence,
+                status: presence.status as 'online' | 'away' | 'offline'
+              } : undefined
+            });
           }
-        }
-      });
-      
-      // Get user details for each conversation partner
-      const conversationList: Conversation[] = [];
-      
-      for (const [partnerId, data] of conversationPartners.entries()) {
-        // Fetch user profile
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('name, profile_picture')
-          .eq('id', partnerId)
-          .single();
-          
-        if (!userError && userData) {
-          const conversation: Conversation = {
-            id: partnerId,
-            participant_id: partnerId, // Fixed: Use participant_id instead of participantId
-            participant_name: userData.name || 'Unknown User',
-            last_message: '',
-            last_message_time: data.lastMessageDate,
-            unread_count: 0,
-            // Compatibility aliases
-            name: userData.name || 'Unknown User',
-            profilePicture: userData.profile_picture || '',
-            lastMessage: '',
-            lastMessageDate: data.lastMessageDate,
-            unreadCount: 0
-          };
-          
-          conversationList.push(adaptConversation(conversation));
-        }
+        });
+
+        // Sort by last message time
+        conversationsList.sort((a, b) => {
+          const aTime = a.last_message?.created_at || '';
+          const bTime = b.last_message?.created_at || '';
+          return new Date(bTime).getTime() - new Date(aTime).getTime();
+        });
+
+        setConversations(conversationsList);
       }
-      
-      // Sort by most recent message
-      conversationList.sort((a, b) => 
-        new Date(b.lastMessageDate || b.last_message_time).getTime() - 
-        new Date(a.lastMessageDate || a.last_message_time).getTime()
-      );
-      
-      return conversationList;
-    } catch (error) {
-      console.error('Error in getConversations:', error);
-      toast.error('An error occurred while loading conversations');
-      return [];
+
+    } catch (err) {
+      console.error('Error fetching conversations:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load conversations');
+      toast.error('Failed to load conversations');
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated, user]);
+  }, [userId]);
 
-  // Get messages for a specific conversation
-  const getMessages = useCallback(async (userId: string, recipientId?: string): Promise<Message[]> => {
-    if (!recipientId) recipientId = selectedConversation || '';
-    if (!isAuthenticated || !user) return [];
-    
-    setLoading(true);
+  // Fetch messages for a specific expert
+  const fetchMessages = useCallback(async (expertId: string) => {
+    if (!userId) return;
+
     try {
-      // Get messages where current user is either sender or receiver
       const { data, error } = await supabase
         .from('messages')
         .select('*')
-        .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
-        .or(`sender_id.eq.${recipientId},receiver_id.eq.${recipientId}`)
+        .or(`and(sender_id.eq.${userId},receiver_id.eq.${expertId}),and(sender_id.eq.${expertId},receiver_id.eq.${userId})`)
         .order('created_at', { ascending: true });
-        
-      if (error) {
-        console.error('Error fetching messages:', error);
-        toast.error('Failed to load messages');
-        return [];
-      }
-      
-      // Filter to only include messages between these two users
-      const filteredMessages = data.filter(msg =>
-        (msg.sender_id === userId && msg.receiver_id === recipientId) ||
-        (msg.sender_id === recipientId && msg.receiver_id === userId)
-      );
-      
-      // Transform to our Message type
-      const formattedMessages: Message[] = filteredMessages.map(msg => ({
-        id: msg.id,
-        sender_id: msg.sender_id,
-        receiver_id: msg.receiver_id,
-        content: msg.content,
-        created_at: msg.created_at,
-        updated_at: msg.updated_at || msg.created_at,
-        read: msg.read,
-        timestamp: new Date(msg.created_at),
-        isMine: msg.sender_id === userId
+
+      if (error) throw error;
+
+      setMessages(prev => ({
+        ...prev,
+        [expertId]: data || []
       }));
-      
-      setMessages(formattedMessages);
-      setSelectedConversation(recipientId);
-      
-      // Mark received messages as read
-      const unreadMessageIds = filteredMessages
-        .filter(msg => msg.receiver_id === userId && !msg.read)
-        .map(msg => msg.id);
-        
-      if (unreadMessageIds.length > 0) {
-        await supabase
-          .from('messages')
-          .update({ read: true })
-          .in('id', unreadMessageIds);
-      }
-      
-      return formattedMessages;
-    } catch (error) {
-      console.error('Error in getMessages:', error);
-      toast.error('An error occurred while loading messages');
-      return [];
-    } finally {
-      setLoading(false);
-    }
-  }, [isAuthenticated, user, selectedConversation]);
 
-  // Fetch conversations (alias for getConversations for backward compatibility)
-  const fetchConversations = useCallback(async () => {
-    if (user?.id) {
-      await getConversations(user.id);
-    }
-  }, [user, getConversations]);
+      // Mark messages as read
+      await markMessagesAsRead(expertId);
 
-  // Fetch messages (alias for getMessages for backward compatibility)
-  const fetchMessages = useCallback(async (recipientId: string) => {
-    if (user?.id) {
-      await getMessages(user.id, recipientId);
+    } catch (err) {
+      console.error('Error fetching messages:', err);
+      toast.error('Failed to load messages');
     }
-  }, [user, getMessages]);
+  }, [userId]);
 
-  // Send a message
-  const sendMessage = useCallback(async (recipientId: string, content: string): Promise<boolean> => {
-    if (!isAuthenticated || !user) {
-      toast.error('You must be logged in to send messages');
-      return false;
-    }
-    
-    if (!content.trim()) {
-      toast.error('Message cannot be empty');
-      return false;
-    }
-    
-    setSending(true);
+  // Send a new message
+  const sendMessage = useCallback(async (expertId: string, content: string) => {
+    if (!userId || !content.trim()) return false;
+
     try {
-      const newMessage = {
-        sender_id: user.id,
-        receiver_id: recipientId,
-        content: content.trim(),
-        read: false,
-        created_at: new Date().toISOString()
-      };
-      
+      setSendingMessage(true);
+
       const { data, error } = await supabase
         .from('messages')
-        .insert(newMessage)
+        .insert({
+          sender_id: userId,
+          receiver_id: expertId,
+          content: content.trim(),
+          read: false
+        })
         .select()
         .single();
-        
-      if (error) {
-        console.error('Error sending message:', error);
-        toast.error('Failed to send message');
-        return false;
-      }
-      
-      // Add the new message to the state
-      const formattedMessage: Message = {
-        id: data.id,
-        sender_id: data.sender_id,
-        receiver_id: data.receiver_id,
-        content: data.content,
-        created_at: data.created_at,
-        updated_at: data.updated_at || data.created_at,
-        read: data.read,
-        timestamp: new Date(data.created_at),
-        isMine: true
-      };
-      
-      setMessages(prev => [...prev, formattedMessage]);
-      
-      // Update the conversation list
+
+      if (error) throw error;
+
+      // Add message to local state
+      setMessages(prev => ({
+        ...prev,
+        [expertId]: [...(prev[expertId] || []), data]
+      }));
+
+      // Update conversations list
       await fetchConversations();
-      
+
       return true;
-    } catch (error) {
-      console.error('Error in sendMessage:', error);
-      toast.error('An error occurred while sending the message');
+    } catch (err) {
+      console.error('Error sending message:', err);
+      toast.error('Failed to send message');
       return false;
     } finally {
-      setSending(false);
+      setSendingMessage(false);
     }
-  }, [isAuthenticated, user, fetchConversations]);
+  }, [userId, fetchConversations]);
 
-  // Subscribe to new messages
+  // Mark messages as read
+  const markMessagesAsRead = useCallback(async (expertId: string) => {
+    if (!userId) return;
+
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .update({ read: true })
+        .eq('sender_id', expertId)
+        .eq('receiver_id', userId)
+        .eq('read', false);
+
+      if (error) throw error;
+
+      // Update local state
+      setMessages(prev => ({
+        ...prev,
+        [expertId]: prev[expertId]?.map(msg => 
+          msg.sender_id === expertId && msg.receiver_id === userId 
+            ? { ...msg, read: true }
+            : msg
+        ) || []
+      }));
+
+      // Update conversations unread count
+      setConversations(prev =>
+        prev.map(conv =>
+          conv.expert_id === expertId
+            ? { ...conv, unread_count: 0 }
+            : conv
+        )
+      );
+
+    } catch (err) {
+      console.error('Error marking messages as read:', err);
+    }
+  }, [userId]);
+
+  // Start a new conversation with an expert
+  const startConversation = useCallback(async (expertId: string, initialMessage?: string) => {
+    if (!userId) return;
+
+    try {
+      // Get expert info
+      const { data: expertData, error: expertError } = await supabase
+        .from('expert_accounts')
+        .select('name, profile_picture')
+        .eq('id', expertId)
+        .single();
+
+      if (expertError) throw expertError;
+
+      // Add to conversations if not already there
+      const existingConv = conversations.find(c => c.expert_id === expertId);
+      if (!existingConv) {
+        const newConversation: Conversation = {
+          expert_id: expertId,
+          expert_name: expertData.name,
+          expert_image: expertData.profile_picture,
+          unread_count: 0
+        };
+
+        setConversations(prev => [newConversation, ...prev]);
+      }
+
+      // Send initial message if provided
+      if (initialMessage) {
+        await sendMessage(expertId, initialMessage);
+      }
+
+      // Fetch messages for this conversation
+      await fetchMessages(expertId);
+
+    } catch (err) {
+      console.error('Error starting conversation:', err);
+      toast.error('Failed to start conversation');
+    }
+  }, [userId, conversations, sendMessage, fetchMessages]);
+
+  // Set up real-time subscriptions
   useEffect(() => {
-    if (!isAuthenticated || !user) return;
-    
-    const subscription = supabase
-      .channel('messages-channel')
-      .on('postgres_changes', { 
-        event: 'INSERT', 
-        schema: 'public', 
-        table: 'messages',
-        filter: `receiver_id=eq.${user.id}`
-      }, async (payload) => {
-        // A new message has arrived for the user
-        const newMessage = payload.new;
-        
-        // Add to messages if from current conversation
-        if (selectedConversation === newMessage.sender_id) {
-          const formattedMessage: Message = {
-            id: newMessage.id,
-            sender_id: newMessage.sender_id,
-            receiver_id: newMessage.receiver_id,
-            content: newMessage.content,
-            created_at: newMessage.created_at,
-            updated_at: newMessage.updated_at,
-            read: newMessage.read,
-            timestamp: new Date(newMessage.created_at),
-            isMine: false
-          };
+    if (!userId) return;
+
+    const messageSubscription = supabase
+      .channel('messages')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `receiver_id=eq.${userId}`
+        },
+        (payload) => {
+          const newMessage = payload.new as Message;
           
-          setMessages(prev => [...prev, formattedMessage]);
-          
-          // Mark as read since user is currently viewing this conversation
-          await supabase
-            .from('messages')
-            .update({ read: true })
-            .eq('id', newMessage.id);
+          // Add to messages state
+          setMessages(prev => ({
+            ...prev,
+            [newMessage.sender_id]: [...(prev[newMessage.sender_id] || []), newMessage]
+          }));
+
+          // Update conversations
+          fetchConversations();
+
+          // Show notification
+          toast.info('New message received');
         }
-        
-        // Refresh conversations to update order/unread status
-        fetchConversations();
-        
-        // Notify user if not in current conversation
-        if (selectedConversation !== newMessage.sender_id) {
-          // Get sender name
-          const { data: senderData } = await supabase
-            .from('users')
-            .select('name')
-            .eq('id', newMessage.sender_id)
-            .single();
-            
-          const senderName = senderData?.name || 'Someone';
-          
-          toast(`New message from ${senderName}`, {
-            description: newMessage.content.substring(0, 50) + (newMessage.content.length > 50 ? '...' : ''),
-            action: {
-              label: 'View',
-              onClick: () => fetchMessages(newMessage.sender_id),
-            },
-          });
-        }
-      })
+      )
       .subscribe();
-      
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [isAuthenticated, user, selectedConversation, fetchConversations, fetchMessages]);
 
-  // Load conversations initially
+    const presenceSubscription = supabase
+      .channel('expert_presence')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'expert_presence'
+        },
+        (payload) => {
+          const updatedPresence = {
+            ...payload.new,
+            status: payload.new.status as 'online' | 'away' | 'offline'
+          } as ExpertPresence;
+          
+          // Update presence in conversations
+          setConversations(prev =>
+            prev.map(conv =>
+              conv.expert_id === updatedPresence.expert_id
+                ? { ...conv, presence: updatedPresence }
+                : conv
+            )
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      messageSubscription.unsubscribe();
+      presenceSubscription.unsubscribe();
+    };
+  }, [userId, fetchConversations]);
+
+  // Initial load
   useEffect(() => {
-    if (isAuthenticated && user) {
+    if (userId) {
       fetchConversations();
     }
-  }, [isAuthenticated, user, fetchConversations]);
+  }, [userId, fetchConversations]);
 
   return {
-    messages,
     conversations,
-    selectedConversation,
+    messages,
     loading,
-    sending,
-    fetchMessages,
+    sendingMessage,
+    error,
     sendMessage,
-    fetchConversations,
-    getConversations,
-    getMessages
+    fetchMessages,
+    markMessagesAsRead,
+    startConversation,
+    refetch: fetchConversations
   };
 };
-
-export default useMessaging;

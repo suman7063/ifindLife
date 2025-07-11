@@ -135,6 +135,7 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
               variant="outline"
               size="sm"
               className="flex-1"
+              onClick={() => navigate(`/messaging?expert=${appointment.expert_id}`)}
             >
               <MessageSquare className="h-4 w-4 mr-2" />
               Message Expert

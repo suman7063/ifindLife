@@ -44,6 +44,7 @@ import { EnhancedExpertSearch } from '@/components/expert/EnhancedExpertSearch';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 import { FavoritesManager } from '@/components/favorites/FavoritesManager';
 import CallPage from './pages/CallPage';
+import MessagingPage from './pages/MessagingPage';
 
 const queryClient = new QueryClient();
 
@@ -78,6 +79,7 @@ const UserRoutes: React.FC = () => {
         <Route path="/dashboard" element={<UserDashboard />} />
         <Route path="/appointments" element={<AppointmentsPage />} />
         <Route path="/call/:appointmentId" element={<CallPage />} />
+        <Route path="/messaging" element={<MessagingPage />} />
         <Route path="/notifications" element={<NotificationCenter />} />
         <Route path="/favorites" element={<FavoritesManager />} />
         
