@@ -3,7 +3,7 @@ import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import UserRegistrationForm from '@/components/auth/UserRegistrationForm';
+import SinglePageUserRegistrationForm from '@/components/auth/SinglePageUserRegistrationForm';
 import { toast } from 'sonner';
 
 const UserRegister: React.FC = () => {
@@ -33,7 +33,7 @@ const UserRegister: React.FC = () => {
             </p>
           </div>
           
-          <UserRegistrationForm 
+          <SinglePageUserRegistrationForm 
             onSuccess={handleRegistrationSuccess}
             onError={handleRegistrationError}
           />
