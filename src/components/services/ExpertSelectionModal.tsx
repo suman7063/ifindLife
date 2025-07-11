@@ -171,10 +171,8 @@ const ExpertSelectionModal: React.FC<ExpertSelectionModalProps> = ({
     }
 
     console.log(`Opening booking interface for ${expert.name} - ${serviceTitle}`);
-    
-    // Navigate to the expert's booking page with the booking tab active
-    const expertUrl = `/experts/${expert.id}?book=true`;
-    window.location.href = expertUrl;
+    setSelectedExpert(expert);
+    setIsBookingModalOpen(true);
   };
 
   const handleShowConnectOptions = (expertId: string, show: boolean) => {
@@ -193,8 +191,8 @@ const ExpertSelectionModal: React.FC<ExpertSelectionModalProps> = ({
 
   const handleModalBookNow = () => {
     if (selectedExpert) {
-      handleBookNow(selectedExpert);
       setIsExpertModalOpen(false);
+      setIsBookingModalOpen(true);
     }
   };
 

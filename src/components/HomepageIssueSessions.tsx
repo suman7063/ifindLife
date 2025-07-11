@@ -1,19 +1,13 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { ArrowRight, Brain, Heart, Clock, Cloud, ShieldAlert, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useProgramDetailModal } from '@/hooks/useProgramDetailModal';
-import ProgramDetailModal from '@/components/programs/detail/ProgramDetailModal';
-import { programDetailData } from '@/data/programData';
+import ExpertSelectionModal from '@/components/services/ExpertSelectionModal';
 
 const HomepageIssueSessions: React.FC = () => {
-  const {
-    modalState,
-    openModal,
-    closeModal,
-    switchTab
-  } = useProgramDetailModal();
+  const [isExpertModalOpen, setIsExpertModalOpen] = useState(false);
+  const [selectedIssue, setSelectedIssue] = useState<{title: string, id: string}>({title: '', id: ''});
 
   // Issue sessions matching the screenshot with proper icons instead of emojis
   const sessions = [{
@@ -83,10 +77,10 @@ const HomepageIssueSessions: React.FC = () => {
   }];
 
   const handleSessionClick = (sessionId: string) => {
-    // Get program data for the session
-    const sessionData = programDetailData[sessionId as keyof typeof programDetailData];
-    if (sessionData) {
-      openModal(sessionId, sessionData);
+    const session = sessions.find(s => s.id === sessionId);
+    if (session) {
+      setSelectedIssue({title: session.title, id: sessionId});
+      setIsExpertModalOpen(true);
     }
   };
 
@@ -122,15 +116,12 @@ const HomepageIssueSessions: React.FC = () => {
           </Link>
         </div>
         
-        {/* Program Detail Modal */}
-        <ProgramDetailModal 
-          isOpen={modalState.isOpen} 
-          onClose={closeModal} 
-          programData={modalState.programData} 
-          activeTab={modalState.activeTab} 
-          onTabChange={switchTab} 
-          loading={modalState.loading} 
-          error={modalState.error} 
+        {/* Expert Selection Modal */}
+        <ExpertSelectionModal
+          isOpen={isExpertModalOpen}
+          onClose={() => setIsExpertModalOpen(false)}
+          serviceTitle={`${selectedIssue.title} Support`}
+          serviceId={selectedIssue.id}
         />
       </div>
     </section>
