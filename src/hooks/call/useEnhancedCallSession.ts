@@ -15,7 +15,7 @@ export interface EnhancedCallSession {
   end_time?: Date;
   duration?: number;
   cost?: number;
-  currency: 'USD' | 'INR';
+  currency: 'USD' | 'INR' | 'EUR';
   selected_duration: number;
   pricing_tier: string;
   payment_method?: 'wallet' | 'gateway';
@@ -34,7 +34,7 @@ export const useEnhancedCallSession = () => {
     expertId: number,
     callType: 'audio' | 'video',
     selectedDuration: number,
-    currency: 'USD' | 'INR',
+    currency: 'USD' | 'INR' | 'EUR',
     cost: number,
     paymentMethod: 'wallet' | 'gateway'
   ): Promise<EnhancedCallSession | null> => {
@@ -147,7 +147,7 @@ export const useEnhancedCallSession = () => {
 
   const processWalletPayment = useCallback(async (
     cost: number,
-    currency: 'USD' | 'INR'
+    currency: 'USD' | 'INR' | 'EUR'
   ): Promise<boolean> => {
     if (!userProfile) return false;
 

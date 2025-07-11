@@ -1,0 +1,318 @@
+import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
+
+interface AvailabilitySetupStepProps {
+  expertAccount: any;
+  onComplete: () => void;
+}
+
+interface TimeSlot {
+  start_time: string;
+  end_time: string;
+}
+
+interface DayAvailability {
+  day: string;
+  enabled: boolean;
+  timeSlots: TimeSlot[];
+}
+
+const DAYS = [
+  'Monday', 'Tuesday', 'Wednesday', 'Thursday', 
+  'Friday', 'Saturday', 'Sunday'
+];
+
+const TIME_OPTIONS = Array.from({ length: 24 }, (_, i) => {
+  const hour = i.toString().padStart(2, '0');
+  return [`${hour}:00`, `${hour}:30`];
+}).flat();
+
+export const AvailabilitySetupStep: React.FC<AvailabilitySetupStepProps> = ({
+  expertAccount,
+  onComplete
+}) => {
+  const [availability, setAvailability] = useState<DayAvailability[]>(
+    DAYS.map(day => ({
+      day,
+      enabled: false,
+      timeSlots: [{ start_time: '09:00', end_time: '17:00' }]
+    }))
+  );
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetchExistingAvailability();
+  }, [expertAccount]);
+
+  const fetchExistingAvailability = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('expert_availabilities')
+        .select('*')
+        .eq('expert_id', expertAccount.auth_id);
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        // Convert existing data to our format
+        // This is a simplified version - you might need more complex logic
+        // based on your actual availability data structure
+        console.log('Existing availability:', data);
+      }
+    } catch (error) {
+      console.error('Error fetching existing availability:', error);
+    }
+  };
+
+  const handleDayToggle = (dayIndex: number, enabled: boolean) => {
+    setAvailability(prev => prev.map((day, index) => 
+      index === dayIndex ? { ...day, enabled } : day
+    ));
+  };
+
+  const handleTimeSlotChange = (
+    dayIndex: number, 
+    slotIndex: number, 
+    field: 'start_time' | 'end_time', 
+    value: string
+  ) => {
+    setAvailability(prev => prev.map((day, dIndex) => 
+      dIndex === dayIndex 
+        ? {
+            ...day,
+            timeSlots: day.timeSlots.map((slot, sIndex) => 
+              sIndex === slotIndex 
+                ? { ...slot, [field]: value }
+                : slot
+            )
+          }
+        : day
+    ));
+  };
+
+  const addTimeSlot = (dayIndex: number) => {
+    setAvailability(prev => prev.map((day, index) => 
+      index === dayIndex 
+        ? {
+            ...day,
+            timeSlots: [...day.timeSlots, { start_time: '09:00', end_time: '17:00' }]
+          }
+        : day
+    ));
+  };
+
+  const removeTimeSlot = (dayIndex: number, slotIndex: number) => {
+    setAvailability(prev => prev.map((day, index) => 
+      index === dayIndex 
+        ? {
+            ...day,
+            timeSlots: day.timeSlots.filter((_, sIndex) => sIndex !== slotIndex)
+          }
+        : day
+    ));
+  };
+
+  const handleSaveAvailability = async () => {
+    setLoading(true);
+    
+    try {
+      // Delete existing availability
+      await supabase
+        .from('expert_availabilities')
+        .delete()
+        .eq('expert_id', expertAccount.auth_id);
+
+      // Insert new availability records
+      const availabilityRecords = availability
+        .filter(day => day.enabled)
+        .map(day => ({
+          expert_id: expertAccount.auth_id,
+          start_date: new Date().toISOString().split('T')[0], // Today
+          end_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // One year from now
+          availability_type: 'recurring'
+        }));
+
+      if (availabilityRecords.length > 0) {
+        const { error } = await supabase
+          .from('expert_availabilities')
+          .insert(availabilityRecords);
+
+        if (error) throw error;
+      }
+
+      toast.success('Availability saved successfully!');
+      onComplete();
+    } catch (error) {
+      console.error('Error saving availability:', error);
+      toast.error('Failed to save availability');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const setQuickAvailability = (type: 'business' | 'evening' | 'weekend') => {
+    const templates = {
+      business: DAYS.slice(0, 5).map(day => ({ // Mon-Fri
+        day,
+        enabled: true,
+        timeSlots: [{ start_time: '09:00', end_time: '17:00' }]
+      })),
+      evening: DAYS.map(day => ({
+        day,
+        enabled: true,
+        timeSlots: [{ start_time: '18:00', end_time: '22:00' }]
+      })),
+      weekend: DAYS.slice(5).map(day => ({ // Sat-Sun
+        day,
+        enabled: true,
+        timeSlots: [{ start_time: '10:00', end_time: '16:00' }]
+      }))
+    };
+
+    if (type === 'business' || type === 'evening') {
+      setAvailability(templates[type].concat(
+        DAYS.slice(templates[type].length).map(day => ({
+          day,
+          enabled: false,
+          timeSlots: [{ start_time: '09:00', end_time: '17:00' }]
+        }))
+      ));
+    } else {
+      setAvailability(prev => prev.map((day, index) => 
+        index >= 5 ? templates.weekend[index - 5] : { ...day, enabled: false }
+      ));
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Set Your Availability</h3>
+        <p className="text-muted-foreground mb-4">
+          Configure when you're available for consultations. Users will only be able to book during these times.
+        </p>
+      </div>
+
+      <div className="flex gap-2 mb-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setQuickAvailability('business')}
+        >
+          Business Hours (9-5, Mon-Fri)
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setQuickAvailability('evening')}
+        >
+          Evening Hours (6-10 PM)
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setQuickAvailability('weekend')}
+        >
+          Weekends Only
+        </Button>
+      </div>
+
+      <div className="space-y-4">
+        {availability.map((day, dayIndex) => (
+          <Card key={day.day} className={day.enabled ? 'border-green-200' : ''}>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Checkbox
+                    checked={day.enabled}
+                    onCheckedChange={(checked) => handleDayToggle(dayIndex, checked as boolean)}
+                  />
+                  <Label className="font-medium">{day.day}</Label>
+                </div>
+                {day.enabled && day.timeSlots.length < 3 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => addTimeSlot(dayIndex)}
+                  >
+                    Add Time Slot
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            {day.enabled && (
+              <CardContent className="pt-0">
+                <div className="space-y-3">
+                  {day.timeSlots.map((slot, slotIndex) => (
+                    <div key={slotIndex} className="flex items-center gap-3">
+                      <div className="grid grid-cols-2 gap-2 flex-1">
+                        <div>
+                          <Label className="text-xs">Start Time</Label>
+                          <Select
+                            value={slot.start_time}
+                            onValueChange={(value) => handleTimeSlotChange(dayIndex, slotIndex, 'start_time', value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {TIME_OPTIONS.map(time => (
+                                <SelectItem key={time} value={time}>{time}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-xs">End Time</Label>
+                          <Select
+                            value={slot.end_time}
+                            onValueChange={(value) => handleTimeSlotChange(dayIndex, slotIndex, 'end_time', value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {TIME_OPTIONS.map(time => (
+                                <SelectItem key={time} value={time}>{time}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      {day.timeSlots.length > 1 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeTimeSlot(dayIndex, slotIndex)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          Remove
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            )}
+          </Card>
+        ))}
+      </div>
+
+      <div className="flex justify-end pt-4">
+        <Button 
+          onClick={handleSaveAvailability}
+          disabled={loading || !availability.some(day => day.enabled)}
+          className="px-8"
+        >
+          {loading ? 'Saving...' : 'Save Availability'}
+        </Button>
+      </div>
+    </div>
+  );
+};

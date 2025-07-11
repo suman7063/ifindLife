@@ -17,7 +17,10 @@ export async function fetchServices(): Promise<ServiceType[]> {
       throw error;
     }
     
-    return data as ServiceType[];
+    return (data || []).map(service => ({
+      ...service,
+      duration: service.duration?.toString() || '60'
+    })) as ServiceType[];
   } catch (error) {
     console.error('Failed to fetch services:', error);
     throw error;
@@ -43,7 +46,10 @@ export async function fetchServicesByIds(serviceIds: number[]): Promise<ServiceT
       throw error;
     }
     
-    return data as ServiceType[];
+    return (data || []).map(service => ({
+      ...service,
+      duration: service.duration?.toString() || '60'
+    })) as ServiceType[];
   } catch (error) {
     console.error('Failed to fetch services by ids:', error);
     throw error;
@@ -66,7 +72,10 @@ export async function fetchServiceById(serviceId: number): Promise<ServiceType |
       throw error;
     }
     
-    return data as ServiceType;
+    return data ? {
+      ...data,
+      duration: data.duration?.toString() || '60'
+    } as ServiceType : null;
   } catch (error) {
     console.error('Failed to fetch service by id:', error);
     throw error;

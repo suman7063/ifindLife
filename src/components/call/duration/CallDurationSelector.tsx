@@ -10,7 +10,7 @@ interface CallDurationSelectorProps {
   selectedDuration: number | null;
   onSelectDuration: (duration: number, price: number) => void;
   formatPrice: (price: number) => string;
-  userCurrency: 'USD' | 'INR';
+  userCurrency: 'USD' | 'INR' | 'EUR';
   className?: string;
 }
 

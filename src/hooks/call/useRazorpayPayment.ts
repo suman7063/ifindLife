@@ -30,7 +30,7 @@ export const useRazorpayPayment = () => {
 
   const processPayment = async (
     amount: number,
-    currency: 'INR' | 'USD',
+    currency: 'INR' | 'USD' | 'EUR',
     description: string,
     onSuccess: (paymentId: string, orderId: string) => void,
     onFailure: (error: any) => void

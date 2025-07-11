@@ -8,6 +8,7 @@ export interface CallPricing {
   duration_minutes: number;
   price_usd: number;
   price_inr: number;
+  price_eur?: number; // Add EUR support
   tier: string;
   active: boolean;
 }
@@ -19,7 +20,7 @@ export interface UserGeolocation {
 
 export const useCallPricing = () => {
   const [pricingOptions, setPricingOptions] = useState<CallPricing[]>([]);
-  const [userCurrency, setUserCurrency] = useState<'USD' | 'INR'>('USD');
+  const [userCurrency, setUserCurrency] = useState<'USD' | 'INR' | 'EUR'>('USD');
   const [isLoading, setIsLoading] = useState(true);
 
   // Fetch pricing options
@@ -54,7 +55,7 @@ export const useCallPricing = () => {
         .maybeSingle();
 
       if (existingGeo?.currency) {
-        setUserCurrency(existingGeo.currency as 'USD' | 'INR');
+        setUserCurrency(existingGeo.currency as 'USD' | 'INR' | 'EUR');
         return;
       }
 
@@ -63,7 +64,13 @@ export const useCallPricing = () => {
       const response = await fetch('https://ipapi.co/json/');
       const geoData = await response.json();
       
-      const currency = geoData.country_code === 'IN' ? 'INR' : 'USD';
+      // Enhanced currency detection for EUR support
+      let currency: 'USD' | 'INR' | 'EUR' = 'USD';
+      if (geoData.country_code === 'IN') {
+        currency = 'INR';
+      } else if (['DE', 'FR', 'IT', 'ES', 'NL', 'BE', 'AT', 'PT', 'IE', 'FI', 'EE', 'LV', 'LT', 'LU', 'MT', 'SK', 'SI', 'CY'].includes(geoData.country_code)) {
+        currency = 'EUR';
+      }
       setUserCurrency(currency);
 
       // Store geolocation data
@@ -97,11 +104,13 @@ export const useCallPricing = () => {
     const pricing = pricingOptions.find(p => p.duration_minutes === durationMinutes);
     if (!pricing) return 0;
     
-    return userCurrency === 'INR' ? pricing.price_inr : pricing.price_usd;
+    if (userCurrency === 'INR') return pricing.price_inr;
+    if (userCurrency === 'EUR') return pricing.price_eur || pricing.price_usd;
+    return pricing.price_usd;
   };
 
   const formatPrice = (price: number): string => {
-    const symbol = userCurrency === 'INR' ? '₹' : '$';
+    const symbol = userCurrency === 'INR' ? '₹' : userCurrency === 'EUR' ? '€' : '$';
     return `${symbol}${price.toFixed(2)}`;
   };
 

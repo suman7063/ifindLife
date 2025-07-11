@@ -281,6 +281,7 @@ export type Database = {
           created_at: string | null
           duration_minutes: number
           id: string
+          price_eur: number | null
           price_inr: number
           price_usd: number
           tier: string | null
@@ -290,6 +291,7 @@ export type Database = {
           created_at?: string | null
           duration_minutes: number
           id?: string
+          price_eur?: number | null
           price_inr: number
           price_usd: number
           tier?: string | null
@@ -299,6 +301,7 @@ export type Database = {
           created_at?: string | null
           duration_minutes?: number
           id?: string
+          price_eur?: number | null
           price_inr?: number
           price_usd?: number
           tier?: string | null
@@ -311,10 +314,12 @@ export type Database = {
           call_type: string
           channel_name: string
           cost: number | null
+          cost_eur: number | null
           created_at: string | null
           currency: string | null
           duration: number | null
           end_time: string | null
+          expert_category: string | null
           expert_id: number
           id: string
           payment_method: string | null
@@ -333,10 +338,12 @@ export type Database = {
           call_type: string
           channel_name: string
           cost?: number | null
+          cost_eur?: number | null
           created_at?: string | null
           currency?: string | null
           duration?: number | null
           end_time?: string | null
+          expert_category?: string | null
           expert_id: number
           id: string
           payment_method?: string | null
@@ -355,10 +362,12 @@ export type Database = {
           call_type?: string
           channel_name?: string
           cost?: number | null
+          cost_eur?: number | null
           created_at?: string | null
           currency?: string | null
           duration?: number | null
           end_time?: string | null
+          expert_category?: string | null
           expert_id?: number
           id?: string
           payment_method?: string | null
@@ -408,8 +417,10 @@ export type Database = {
         Row: {
           address: string | null
           auth_id: string | null
+          availability_set: boolean | null
           average_rating: number | null
           bio: string | null
+          category: string | null
           certificate_urls: string[] | null
           city: string | null
           country: string | null
@@ -418,7 +429,10 @@ export type Database = {
           experience: string | null
           id: string
           name: string
+          onboarding_completed: boolean | null
           phone: string | null
+          pricing_set: boolean | null
+          profile_completed: boolean | null
           profile_picture: string | null
           reviews_count: number | null
           selected_services: number[] | null
@@ -431,8 +445,10 @@ export type Database = {
         Insert: {
           address?: string | null
           auth_id?: string | null
+          availability_set?: boolean | null
           average_rating?: number | null
           bio?: string | null
+          category?: string | null
           certificate_urls?: string[] | null
           city?: string | null
           country?: string | null
@@ -441,7 +457,10 @@ export type Database = {
           experience?: string | null
           id?: string
           name: string
+          onboarding_completed?: boolean | null
           phone?: string | null
+          pricing_set?: boolean | null
+          profile_completed?: boolean | null
           profile_picture?: string | null
           reviews_count?: number | null
           selected_services?: number[] | null
@@ -454,8 +473,10 @@ export type Database = {
         Update: {
           address?: string | null
           auth_id?: string | null
+          availability_set?: boolean | null
           average_rating?: number | null
           bio?: string | null
+          category?: string | null
           certificate_urls?: string[] | null
           city?: string | null
           country?: string | null
@@ -464,7 +485,10 @@ export type Database = {
           experience?: string | null
           id?: string
           name?: string
+          onboarding_completed?: boolean | null
           phone?: string | null
+          pricing_set?: boolean | null
+          profile_completed?: boolean | null
           profile_picture?: string | null
           reviews_count?: number | null
           selected_services?: number[] | null
@@ -541,6 +565,36 @@ export type Database = {
           },
         ]
       }
+      expert_categories: {
+        Row: {
+          base_price_eur: number | null
+          base_price_inr: number | null
+          base_price_usd: number | null
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          base_price_eur?: number | null
+          base_price_inr?: number | null
+          base_price_usd?: number | null
+          created_at?: string | null
+          description?: string | null
+          id: string
+          name: string
+        }
+        Update: {
+          base_price_eur?: number | null
+          base_price_inr?: number | null
+          base_price_usd?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       expert_presence: {
         Row: {
           auto_away_enabled: boolean | null
@@ -579,6 +633,56 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "expert_accounts"
             referencedColumns: ["auth_id"]
+          },
+        ]
+      }
+      expert_pricing_tiers: {
+        Row: {
+          category: string
+          consultation_fee_eur: number | null
+          consultation_fee_inr: number | null
+          consultation_fee_usd: number | null
+          created_at: string | null
+          expert_id: string
+          id: string
+          price_per_min_eur: number | null
+          price_per_min_inr: number | null
+          price_per_min_usd: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          consultation_fee_eur?: number | null
+          consultation_fee_inr?: number | null
+          consultation_fee_usd?: number | null
+          created_at?: string | null
+          expert_id: string
+          id?: string
+          price_per_min_eur?: number | null
+          price_per_min_inr?: number | null
+          price_per_min_usd?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          consultation_fee_eur?: number | null
+          consultation_fee_inr?: number | null
+          consultation_fee_usd?: number | null
+          created_at?: string | null
+          expert_id?: string
+          id?: string
+          price_per_min_eur?: number | null
+          price_per_min_inr?: number | null
+          price_per_min_usd?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expert_pricing_tiers_expert_id_fkey"
+            columns: ["expert_id"]
+            isOneToOne: false
+            referencedRelation: "expert_accounts"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -1249,23 +1353,35 @@ export type Database = {
       }
       services: {
         Row: {
+          category: string | null
           description: string | null
+          duration: number | null
+          featured: boolean | null
           id: number
           name: string
+          rate_eur: number | null
           rate_inr: number
           rate_usd: number
         }
         Insert: {
+          category?: string | null
           description?: string | null
+          duration?: number | null
+          featured?: boolean | null
           id: number
           name: string
+          rate_eur?: number | null
           rate_inr: number
           rate_usd: number
         }
         Update: {
+          category?: string | null
           description?: string | null
+          duration?: number | null
+          featured?: boolean | null
           id?: number
           name?: string
+          rate_eur?: number | null
           rate_inr?: number
           rate_usd?: number
         }
@@ -1757,6 +1873,10 @@ export type Database = {
       check_if_table_exists: {
         Args: { table_name: string }
         Returns: boolean
+      }
+      get_admin_metrics: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       get_user_reviews_with_experts: {
         Args: { user_id_param: string }

@@ -106,7 +106,7 @@ const ExpertRegistrationForm: React.FC = () => {
         certificateUrl = uploadData.path;
       }
 
-      // Create expert account
+      // Create expert account with category
       const { error: expertError } = await supabase
         .from('expert_accounts')
         .insert({
@@ -122,7 +122,12 @@ const ExpertRegistrationForm: React.FC = () => {
           experience: data.experience.toString(),
           bio: data.bio,
           certificate_urls: certificateUrl ? [certificateUrl] : [],
+          category: data.expertCategory, // Add category field
           status: 'pending',
+          onboarding_completed: false,
+          pricing_set: false,
+          availability_set: false,
+          profile_completed: false,
         });
 
       if (expertError) {
@@ -348,22 +353,40 @@ const ExpertRegistrationForm: React.FC = () => {
               onValueChange={(value) => form.setValue('expertCategory', value as any)}
               className="mt-2"
             >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="listening-volunteer" id="listening-volunteer" />
-                <Label htmlFor="listening-volunteer">Listening Volunteer (Entry level)</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="listening-expert" id="listening-expert" />
-                <Label htmlFor="listening-expert">Listening Expert (Intermediate)</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="listening-coach" id="listening-coach" />
-                <Label htmlFor="listening-coach">Listening Coach (Advanced)</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="mindfulness-expert" id="mindfulness-expert" />
-                <Label htmlFor="mindfulness-expert">Mindfulness Expert (Specialized)</Label>
-              </div>
+               <div className="space-y-3">
+                 <div className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-gray-50">
+                   <RadioGroupItem value="listening-volunteer" id="listening-volunteer" className="mt-1" />
+                   <div className="flex-1">
+                     <Label htmlFor="listening-volunteer" className="font-medium">Listening Volunteer</Label>
+                     <p className="text-sm text-gray-600">Entry level - Free compassionate support</p>
+                     <p className="text-xs text-green-600">Rate: Free</p>
+                   </div>
+                 </div>
+                 <div className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-gray-50">
+                   <RadioGroupItem value="listening-expert" id="listening-expert" className="mt-1" />
+                   <div className="flex-1">
+                     <Label htmlFor="listening-expert" className="font-medium">Listening Expert</Label>
+                     <p className="text-sm text-gray-600">Professional listeners with extensive training</p>
+                     <p className="text-xs text-blue-600">Rate: $2.00/min • ₹150/min • €1.80/min</p>
+                   </div>
+                 </div>
+                 <div className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-gray-50">
+                   <RadioGroupItem value="listening-coach" id="listening-coach" className="mt-1" />
+                   <div className="flex-1">
+                     <Label htmlFor="listening-coach" className="font-medium">Listening Coach</Label>
+                     <p className="text-sm text-gray-600">Certified coaches specializing in active listening</p>
+                     <p className="text-xs text-blue-600">Rate: $3.00/min • ₹250/min • €2.70/min</p>
+                   </div>
+                 </div>
+                 <div className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-gray-50">
+                   <RadioGroupItem value="mindfulness-expert" id="mindfulness-expert" className="mt-1" />
+                   <div className="flex-1">
+                     <Label htmlFor="mindfulness-expert" className="font-medium">Mindfulness Expert</Label>
+                     <p className="text-sm text-gray-600">Certified mindfulness practitioners and meditation teachers</p>
+                     <p className="text-xs text-blue-600">Rate: $4.00/min • ₹300/min • €3.60/min</p>
+                   </div>
+                 </div>
+               </div>
             </RadioGroup>
             {form.formState.errors.expertCategory && (
               <p className="text-sm text-red-500 mt-1">{form.formState.errors.expertCategory.message}</p>
