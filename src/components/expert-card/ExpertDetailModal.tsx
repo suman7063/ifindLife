@@ -7,7 +7,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Star, X, Award, MapPin, Clock, Video, Phone, Calendar } from 'lucide-react';
 import { ExpertCardData } from './types';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useAuth } from '@/contexts/auth/AuthContext';
+import { useAuth } from '@/contexts/auth';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import IntegratedBookingSystem from '../booking/IntegratedBookingSystem';

@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Star, Video, Phone, Clock, Calendar } from 'lucide-react';
 import { ExpertCardData } from './types';
-import { useAuth } from '@/contexts/auth/AuthContext';
+import { useAuth } from '@/contexts/auth';
 import { useAuthRedirectSystem } from '@/hooks/useAuthRedirectSystem';
 import { useEnhancedExpertPresence } from '@/hooks/useEnhancedExpertPresence';
 import ExpertStatusIndicator from './ExpertStatusIndicator';

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Video, Phone, Loader2 } from 'lucide-react';
 import { useCallPricing } from '@/hooks/call/useCallPricing';
 import { useEnhancedCallSession } from '@/hooks/call/useEnhancedCallSession';
-import { useAuth } from '@/contexts/auth/AuthContext';
+import { useAuth } from '@/contexts/auth';
 import CallDurationSelector from '../duration/CallDurationSelector';
 import PaymentMethodSelector from '../duration/PaymentMethodSelector';
 import { toast } from 'sonner';
