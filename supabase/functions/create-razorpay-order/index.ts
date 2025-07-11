@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { amount, currency, expertId, duration } = await req.json()
+    const { amount, currency, expertId, serviceId, description, callSessionId } = await req.json()
 
     const razorpayKeyId = Deno.env.get('RAZORPAY_KEY_ID')
     const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET')
@@ -23,12 +23,14 @@ serve(async (req) => {
 
     // Create Razorpay order
     const orderData = {
-      amount: Math.round(amount * 100), // Convert to paise/cents
+      amount: amount, // Amount already in paise from frontend
       currency: currency,
-      receipt: `session_${Date.now()}`,
+      receipt: `booking_${Date.now()}`,
       notes: {
         expertId: expertId,
-        duration: duration
+        serviceId: serviceId,
+        description: description,
+        callSessionId: callSessionId
       }
     }
 
@@ -64,25 +66,30 @@ serve(async (req) => {
       throw new Error('Unauthorized')
     }
 
-    await supabaseClient.from('call_sessions').insert({
-      id: order.id,
-      user_id: user.id,
-      expert_id: expertId,
-      call_type: 'video',
-      channel_name: `session_${Date.now()}`,
-      status: 'pending_payment',
-      selected_duration: duration,
-      cost: currency === 'INR' ? amount : null,
-      cost_eur: currency === 'EUR' ? amount : null,
-      currency: currency
-    })
+    // Store payment order for verification - handle both appointments and call sessions
+    if (callSessionId) {
+      // This is for call sessions
+      await supabaseClient.from('call_sessions').insert({
+        id: order.id,
+        user_id: user.id,
+        expert_id: expertId,
+        call_type: 'video',
+        channel_name: `session_${Date.now()}`,
+        status: 'pending_payment',
+        selected_duration: 60, // Default 60 minutes
+        cost: currency === 'INR' ? amount / 100 : null, // Convert back from paise
+        cost_eur: currency === 'EUR' ? amount / 100 : null,
+        currency: currency
+      })
+    }
+    // For appointments, we don't need to store anything here - will be handled after payment success
 
     return new Response(
       JSON.stringify({ 
-        orderId: order.id,
+        id: order.id,
         amount: order.amount,
         currency: order.currency,
-        keyId: razorpayKeyId
+        razorpayKeyId: razorpayKeyId
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

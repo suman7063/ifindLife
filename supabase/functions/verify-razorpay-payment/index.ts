@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = await req.json()
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, callSessionId } = await req.json()
 
     const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET')
     if (!razorpayKeySecret) {
@@ -30,7 +30,6 @@ serve(async (req) => {
       throw new Error('Invalid payment signature')
     }
 
-    // Update call session status
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -44,49 +43,66 @@ serve(async (req) => {
       throw new Error('Unauthorized')
     }
 
-    // Update session status to completed
-    const { data: session, error: updateError } = await supabaseClient
-      .from('call_sessions')
-      .update({
-        status: 'completed',
-        payment_method: 'razorpay',
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', razorpay_order_id)
-      .eq('user_id', user.id)
-      .select()
-      .single()
+    // Handle different payment types - call sessions vs appointments
+    if (callSessionId) {
+      // Update call session status to completed
+      const { data: session, error: updateError } = await supabaseClient
+        .from('call_sessions')
+        .update({
+          status: 'completed',
+          payment_method: 'razorpay',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', razorpay_order_id)
+        .eq('user_id', user.id)
+        .select()
+        .single()
 
-    if (updateError || !session) {
-      throw new Error('Failed to update session status')
+      if (updateError || !session) {
+        throw new Error('Failed to update session status')
+      }
+
+      // Generate Agora token and channel for the call
+      const channelName = `session_${Date.now()}_${user.id}`
+      const uid = Math.floor(Math.random() * 1000000)
+
+      // Update session with call details
+      await supabaseClient
+        .from('call_sessions')
+        .update({
+          channel_name: channelName,
+          start_time: new Date().toISOString()
+        })
+        .eq('id', razorpay_order_id)
+
+      return new Response(
+        JSON.stringify({ 
+          success: true,
+          sessionId: razorpay_order_id,
+          channelName: channelName,
+          uid: uid,
+          token: 'agora_token_placeholder' // You'll need to implement Agora token generation
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        },
+      )
+    } else {
+      // For appointment bookings - just return success
+      // The appointment creation will be handled in the frontend after payment verification
+      return new Response(
+        JSON.stringify({ 
+          success: true,
+          paymentId: razorpay_payment_id,
+          orderId: razorpay_order_id
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        },
+      )
     }
-
-    // Generate Agora token and channel for the call
-    const channelName = `session_${Date.now()}_${user.id}`
-    const uid = Math.floor(Math.random() * 1000000)
-
-    // Update session with call details
-    await supabaseClient
-      .from('call_sessions')
-      .update({
-        channel_name: channelName,
-        start_time: new Date().toISOString()
-      })
-      .eq('id', razorpay_order_id)
-
-    return new Response(
-      JSON.stringify({ 
-        success: true,
-        sessionId: razorpay_order_id,
-        channelName: channelName,
-        uid: uid,
-        token: 'agora_token_placeholder' // You'll need to implement Agora token generation
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      },
-    )
   } catch (error) {
     console.error('Error verifying payment:', error)
     return new Response(
