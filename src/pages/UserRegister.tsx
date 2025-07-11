@@ -1,24 +1,42 @@
 
 import React from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { Card, CardContent } from '@/components/ui/card';
-import { Link } from 'react-router-dom';
+import UserRegistrationForm from '@/components/auth/UserRegistrationForm';
+import { toast } from 'sonner';
 
 const UserRegister: React.FC = () => {
+  const navigate = useNavigate();
+
+  const handleRegistrationSuccess = () => {
+    toast.success('Registration successful! Please check your email to verify your account.');
+    navigate('/login');
+  };
+
+  const handleRegistrationError = (error: string) => {
+    toast.error(error);
+  };
+
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-background to-secondary/20">
       <Navbar />
-      <main className="flex-1 py-16 container">
-        <div className="max-w-md mx-auto">
-          <Card className="border-ifind-lavender/20 shadow-xl">
-            <CardContent className="pt-6">
-              <h1 className="text-2xl font-bold text-center mb-6">Create an Account</h1>
-              <p className="text-center mb-4">
-                Already have an account? <Link to="/login" className="text-ifind-teal hover:underline">Login</Link>
-              </p>
-            </CardContent>
-          </Card>
+      <main className="flex-1 py-8 container">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold mb-2">Join iFindLife</h1>
+            <p className="text-muted-foreground">
+              Connect with expert therapists and wellness professionals
+            </p>
+            <p className="mt-2">
+              Already have an account? <Link to="/login" className="text-primary hover:underline font-medium">Login here</Link>
+            </p>
+          </div>
+          
+          <UserRegistrationForm 
+            onSuccess={handleRegistrationSuccess}
+            onError={handleRegistrationError}
+          />
         </div>
       </main>
       <Footer />

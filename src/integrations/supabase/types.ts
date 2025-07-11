@@ -197,6 +197,84 @@ export type Database = {
           },
         ]
       }
+      booking_requests: {
+        Row: {
+          created_at: string | null
+          duration_minutes: number
+          estimated_price_inr: number
+          estimated_price_usd: number
+          expert_id: string | null
+          expert_response: string | null
+          expires_at: string | null
+          id: string
+          payment_status: string | null
+          requested_date: string
+          requested_time: string
+          service_id: number | null
+          special_requirements: string | null
+          status: string | null
+          updated_at: string | null
+          urgency_level: string | null
+          user_currency: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          duration_minutes?: number
+          estimated_price_inr: number
+          estimated_price_usd: number
+          expert_id?: string | null
+          expert_response?: string | null
+          expires_at?: string | null
+          id?: string
+          payment_status?: string | null
+          requested_date: string
+          requested_time: string
+          service_id?: number | null
+          special_requirements?: string | null
+          status?: string | null
+          updated_at?: string | null
+          urgency_level?: string | null
+          user_currency?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          duration_minutes?: number
+          estimated_price_inr?: number
+          estimated_price_usd?: number
+          expert_id?: string | null
+          expert_response?: string | null
+          expires_at?: string | null
+          id?: string
+          payment_status?: string | null
+          requested_date?: string
+          requested_time?: string
+          service_id?: number | null
+          special_requirements?: string | null
+          status?: string | null
+          updated_at?: string | null
+          urgency_level?: string | null
+          user_currency?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_requests_expert_id_fkey"
+            columns: ["expert_id"]
+            isOneToOne: false
+            referencedRelation: "expert_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_requests_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       call_pricing: {
         Row: {
           active: boolean | null
@@ -541,6 +619,69 @@ export type Database = {
             columns: ["expert_id"]
             isOneToOne: false
             referencedRelation: "experts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expert_service_specializations: {
+        Row: {
+          certifications: string[] | null
+          created_at: string | null
+          description: string | null
+          expert_id: string | null
+          hourly_rate_inr: number | null
+          hourly_rate_usd: number | null
+          id: string
+          is_available: boolean | null
+          is_primary_service: boolean | null
+          proficiency_level: string | null
+          service_id: number | null
+          updated_at: string | null
+          years_experience: number | null
+        }
+        Insert: {
+          certifications?: string[] | null
+          created_at?: string | null
+          description?: string | null
+          expert_id?: string | null
+          hourly_rate_inr?: number | null
+          hourly_rate_usd?: number | null
+          id?: string
+          is_available?: boolean | null
+          is_primary_service?: boolean | null
+          proficiency_level?: string | null
+          service_id?: number | null
+          updated_at?: string | null
+          years_experience?: number | null
+        }
+        Update: {
+          certifications?: string[] | null
+          created_at?: string | null
+          description?: string | null
+          expert_id?: string | null
+          hourly_rate_inr?: number | null
+          hourly_rate_usd?: number | null
+          id?: string
+          is_available?: boolean | null
+          is_primary_service?: boolean | null
+          proficiency_level?: string | null
+          service_id?: number | null
+          updated_at?: string | null
+          years_experience?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expert_service_specializations_expert_id_fkey"
+            columns: ["expert_id"]
+            isOneToOne: false
+            referencedRelation: "expert_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expert_service_specializations_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
             referencedColumns: ["id"]
           },
         ]
@@ -1040,6 +1181,72 @@ export type Database = {
         }
         Relationships: []
       }
+      service_pricing: {
+        Row: {
+          base_price_inr: number
+          base_price_usd: number
+          created_at: string | null
+          demand_multiplier: number | null
+          discount_percentage: number | null
+          experience_multiplier: number | null
+          expert_id: string | null
+          id: string
+          is_active: boolean | null
+          maximum_session_duration: number | null
+          minimum_session_duration: number | null
+          peak_hour_multiplier: number | null
+          service_id: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          base_price_inr?: number
+          base_price_usd?: number
+          created_at?: string | null
+          demand_multiplier?: number | null
+          discount_percentage?: number | null
+          experience_multiplier?: number | null
+          expert_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          maximum_session_duration?: number | null
+          minimum_session_duration?: number | null
+          peak_hour_multiplier?: number | null
+          service_id?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          base_price_inr?: number
+          base_price_usd?: number
+          created_at?: string | null
+          demand_multiplier?: number | null
+          discount_percentage?: number | null
+          experience_multiplier?: number | null
+          expert_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          maximum_session_duration?: number | null
+          minimum_session_duration?: number | null
+          peak_hour_multiplier?: number | null
+          service_id?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_pricing_expert_id_fkey"
+            columns: ["expert_id"]
+            isOneToOne: false
+            referencedRelation: "expert_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_pricing_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       services: {
         Row: {
           description: string | null
@@ -1310,6 +1517,51 @@ export type Database = {
         }
         Relationships: []
       }
+      user_notification_preferences: {
+        Row: {
+          appointment_reminders: boolean | null
+          booking_confirmations: boolean | null
+          created_at: string | null
+          email_notifications: boolean | null
+          expert_messages: boolean | null
+          id: string
+          promotional_emails: boolean | null
+          push_notifications: boolean | null
+          sms_notifications: boolean | null
+          updated_at: string | null
+          user_id: string | null
+          weekly_digest: boolean | null
+        }
+        Insert: {
+          appointment_reminders?: boolean | null
+          booking_confirmations?: boolean | null
+          created_at?: string | null
+          email_notifications?: boolean | null
+          expert_messages?: boolean | null
+          id?: string
+          promotional_emails?: boolean | null
+          push_notifications?: boolean | null
+          sms_notifications?: boolean | null
+          updated_at?: string | null
+          user_id?: string | null
+          weekly_digest?: boolean | null
+        }
+        Update: {
+          appointment_reminders?: boolean | null
+          booking_confirmations?: boolean | null
+          created_at?: string | null
+          email_notifications?: boolean | null
+          expert_messages?: boolean | null
+          id?: string
+          promotional_emails?: boolean | null
+          push_notifications?: boolean | null
+          sms_notifications?: boolean | null
+          updated_at?: string | null
+          user_id?: string | null
+          weekly_digest?: boolean | null
+        }
+        Relationships: []
+      }
       user_reports: {
         Row: {
           date: string
@@ -1430,14 +1682,23 @@ export type Database = {
           country: string | null
           created_at: string | null
           currency: string | null
+          date_of_birth: string | null
           email: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          gender: string | null
           id: string
+          marketing_consent: boolean | null
           name: string | null
+          occupation: string | null
           phone: string | null
+          preferences: Json | null
+          privacy_accepted: boolean | null
           profile_picture: string | null
           referral_code: string | null
           referral_link: string | null
           referred_by: string | null
+          terms_accepted: boolean | null
           wallet_balance: number | null
         }
         Insert: {
@@ -1445,14 +1706,23 @@ export type Database = {
           country?: string | null
           created_at?: string | null
           currency?: string | null
+          date_of_birth?: string | null
           email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          gender?: string | null
           id: string
+          marketing_consent?: boolean | null
           name?: string | null
+          occupation?: string | null
           phone?: string | null
+          preferences?: Json | null
+          privacy_accepted?: boolean | null
           profile_picture?: string | null
           referral_code?: string | null
           referral_link?: string | null
           referred_by?: string | null
+          terms_accepted?: boolean | null
           wallet_balance?: number | null
         }
         Update: {
@@ -1460,14 +1730,23 @@ export type Database = {
           country?: string | null
           created_at?: string | null
           currency?: string | null
+          date_of_birth?: string | null
           email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          gender?: string | null
           id?: string
+          marketing_consent?: boolean | null
           name?: string | null
+          occupation?: string | null
           phone?: string | null
+          preferences?: Json | null
+          privacy_accepted?: boolean | null
           profile_picture?: string | null
           referral_code?: string | null
           referral_link?: string | null
           referred_by?: string | null
+          terms_accepted?: boolean | null
           wallet_balance?: number | null
         }
         Relationships: []

@@ -1,29 +1,41 @@
 // Unified types for the application
 export interface UserProfile {
   id: string;
-  name: string;
-  email: string;
-  phone: string;
-  country: string;
-  city: string;
-  currency: string;
-  profile_picture: string;
-  referral_code: string;
-  referral_link: string;
-  referred_by: string;
-  wallet_balance: number;
-  created_at: string;
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+  country: string | null;
+  city: string | null;
+  currency: string | null;
+  profile_picture: string | null;
+  referral_code: string | null;
+  referral_link: string | null;
+  referred_by: string | null;
+  wallet_balance: number | null;
+  created_at: string | null;
   updated_at?: string;
-  // Additional properties for user dashboard - all required now
-  favorite_experts: string[];
-  favorite_programs: number[];
-  enrolled_courses: any[];
-  reviews: any[];
-  recent_activities: any[];
-  upcoming_appointments: any[];
-  transactions: any[];
-  reports: any[];
-  referrals: any[];
+  
+  // New fields from updated schema (optional for backward compatibility)
+  date_of_birth?: string | null;
+  gender?: string | null;
+  occupation?: string | null;
+  emergency_contact_name?: string | null;
+  emergency_contact_phone?: string | null;
+  preferences?: any;
+  terms_accepted?: boolean | null;
+  privacy_accepted?: boolean | null;
+  marketing_consent?: boolean | null;
+  
+  // Additional properties for user dashboard - all optional to handle partial data
+  favorite_experts?: string[];
+  favorite_programs?: number[];
+  enrolled_courses?: any[];
+  reviews?: any[];
+  recent_activities?: any[];
+  upcoming_appointments?: any[];
+  transactions?: any[];
+  reports?: any[];
+  referrals?: any[];
 }
 
 export interface UserProfileUpdate {
