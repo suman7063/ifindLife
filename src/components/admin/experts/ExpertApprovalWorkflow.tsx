@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { 
   CheckCircle, 
   XCircle, 
@@ -13,7 +14,9 @@ import {
   FileText,
   Eye,
   Calendar,
-  MapPin
+  MapPin,
+  Trash2,
+  AlertTriangle
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -36,6 +39,15 @@ interface ExpertApplication {
   created_at: string;
 }
 
+interface ExpertCategory {
+  id: string;
+  name: string;
+  description: string;
+  base_price_usd: number;
+  base_price_inr: number;
+  base_price_eur: number;
+}
+
 export const ExpertApprovalWorkflow: React.FC = () => {
   const [applications, setApplications] = useState<ExpertApplication[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,9 +55,18 @@ export const ExpertApprovalWorkflow: React.FC = () => {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'approved' | 'disapproved'>('pending');
   const [rejectionReason, setRejectionReason] = useState('');
+  const [categories, setCategories] = useState<ExpertCategory[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{
+    open: boolean;
+    expertId: string;
+    expertName: string;
+  }>({ open: false, expertId: '', expertName: '' });
+  const [deleteInput, setDeleteInput] = useState('');
 
   useEffect(() => {
     fetchApplications();
+    fetchCategories();
   }, [filterStatus]);
 
   const fetchApplications = async () => {
@@ -72,6 +93,21 @@ export const ExpertApprovalWorkflow: React.FC = () => {
     }
   };
 
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('expert_categories')
+        .select('*')
+        .order('name');
+      
+      if (error) throw error;
+      setCategories(data || []);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      toast.error('Failed to load categories');
+    }
+  };
+
   const handleApproval = async (applicationId: string, action: 'approved' | 'disapproved') => {
     setActionLoading(applicationId);
     
@@ -80,6 +116,11 @@ export const ExpertApprovalWorkflow: React.FC = () => {
         status: action,
         updated_at: new Date().toISOString()
       };
+
+      // If modifying category during approval, update it
+      if (action === 'approved' && selectedCategory) {
+        updateData.category = selectedCategory;
+      }
 
       // If rejecting, add the reason to the bio temporarily (you might want a separate rejection_reason field)
       if (action === 'disapproved' && rejectionReason) {
@@ -96,21 +137,27 @@ export const ExpertApprovalWorkflow: React.FC = () => {
       // Update local state
       setApplications(prev => prev.map(app => 
         app.id === applicationId 
-          ? { ...app, status: action }
+          ? { 
+              ...app, 
+              status: action, 
+              category: selectedCategory || app.category 
+            }
           : app
       ));
 
-      // If approved, create initial pricing tier
+      // If approved, create initial pricing tier and assign services
       if (action === 'approved') {
-        const application = applications.find(app => app.id === applicationId);
-        if (application?.category) {
-          await createInitialPricingTier(applicationId, application.category);
+        const finalCategory = selectedCategory || applications.find(app => app.id === applicationId)?.category;
+        if (finalCategory) {
+          await createInitialPricingTier(applicationId, finalCategory);
+          await assignCategoryServices(applicationId, finalCategory);
         }
       }
 
       toast.success(`Expert ${action === 'approved' ? 'approved' : 'rejected'} successfully`);
       setSelectedApp(null);
       setRejectionReason('');
+      setSelectedCategory('');
       
       // Refresh the list if we're filtering
       if (filterStatus === 'pending') {
@@ -121,6 +168,40 @@ export const ExpertApprovalWorkflow: React.FC = () => {
       toast.error('Failed to update application status');
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  const assignCategoryServices = async (expertId: string, category: string) => {
+    try {
+      // Define category-specific services based on the plan
+      const categoryServices: Record<string, number[]> = {
+        'listening-volunteer': [1, 2], // Basic listening services
+        'listening-expert': [1, 2, 3, 4], // Advanced listening + counseling
+        'listening-coach': [1, 2, 3, 4, 5], // All listening + coaching
+        'mindfulness-expert': [6, 7, 8] // Mindfulness specific services
+      };
+
+      const serviceIds = categoryServices[category] || [];
+      
+      if (serviceIds.length > 0) {
+        // Create service specializations for this expert
+        const specializations = serviceIds.map(serviceId => ({
+          expert_id: expertId,
+          service_id: serviceId,
+          is_available: true,
+          is_primary_service: serviceId === serviceIds[0], // First service is primary
+          proficiency_level: category.includes('expert') ? 'expert' : 
+                           category.includes('coach') ? 'advanced' : 'intermediate'
+        }));
+
+        const { error } = await supabase
+          .from('expert_service_specializations')
+          .insert(specializations);
+
+        if (error) throw error;
+      }
+    } catch (error) {
+      console.error('Error assigning category services:', error);
     }
   };
 
@@ -153,6 +234,38 @@ export const ExpertApprovalWorkflow: React.FC = () => {
     } catch (error) {
       console.error('Error creating initial pricing tier:', error);
     }
+  };
+
+  const handleDeleteExpert = async (expertId: string) => {
+    try {
+      // Delete from expert_accounts table
+      const { error } = await supabase
+        .from('expert_accounts')
+        .delete()
+        .eq('id', expertId);
+
+      if (error) throw error;
+
+      // Update local state
+      setApplications(prev => prev.filter(app => app.id !== expertId));
+      
+      toast.success('Expert deleted successfully');
+      setDeleteConfirmation({ open: false, expertId: '', expertName: '' });
+      setDeleteInput('');
+      setSelectedApp(null);
+    } catch (error) {
+      console.error('Error deleting expert:', error);
+      toast.error('Failed to delete expert');
+    }
+  };
+
+  const initiateDelete = (expert: ExpertApplication) => {
+    setDeleteConfirmation({
+      open: true,
+      expertId: expert.id,
+      expertName: expert.name
+    });
+    setDeleteInput('');
   };
 
   const getCategoryBadgeColor = (category: string) => {
@@ -320,9 +433,30 @@ export const ExpertApprovalWorkflow: React.FC = () => {
 
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Category</label>
-                  <Badge className={getCategoryBadgeColor(selectedApp.category)}>
-                    {formatCategoryName(selectedApp.category)}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge className={getCategoryBadgeColor(selectedApp.category)}>
+                      {formatCategoryName(selectedApp.category)}
+                    </Badge>
+                    {selectedApp.status === 'pending' && (
+                      <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                        <SelectTrigger className="w-48">
+                          <SelectValue placeholder="Change category..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((cat) => (
+                            <SelectItem key={cat.id} value={cat.id}>
+                              {cat.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
+                  {selectedCategory && (
+                    <div className="mt-2 p-2 bg-blue-50 rounded text-sm">
+                      <strong>New category:</strong> {categories.find(c => c.id === selectedCategory)?.name}
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -389,6 +523,19 @@ export const ExpertApprovalWorkflow: React.FC = () => {
                     </div>
                   </div>
                 )}
+
+                {selectedApp.status !== 'pending' && (
+                  <div className="pt-4 border-t">
+                    <Button
+                      variant="destructive"
+                      onClick={() => initiateDelete(selectedApp)}
+                      className="w-full"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete Expert
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ) : (
@@ -401,6 +548,67 @@ export const ExpertApprovalWorkflow: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog 
+        open={deleteConfirmation.open} 
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteConfirmation({ open: false, expertId: '', expertName: '' });
+            setDeleteInput('');
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="h-5 w-5" />
+              Delete Expert
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              This action cannot be undone. This will permanently delete the expert account and all associated data.
+            </p>
+            <div className="bg-red-50 p-3 rounded border border-red-200">
+              <p className="text-sm text-red-800">
+                <strong>Expert to delete:</strong> {deleteConfirmation.expertName}
+              </p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">
+                Type "{deleteConfirmation.expertName}" to confirm deletion
+              </label>
+              <input
+                type="text"
+                value={deleteInput}
+                onChange={(e) => setDeleteInput(e.target.value)}
+                className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                placeholder="Enter expert name to confirm"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteConfirmation({ open: false, expertId: '', expertName: '' });
+                setDeleteInput('');
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => handleDeleteExpert(deleteConfirmation.expertId)}
+              disabled={deleteInput !== deleteConfirmation.expertName}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete Expert
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
