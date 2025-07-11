@@ -5,6 +5,7 @@ import { SimpleAuthProvider } from '@/contexts/SimpleAuthContext';
 import { AdminAuthProvider } from '@/contexts/AdminAuthClean';
 import { FavoritesProvider } from '@/contexts/favorites/FavoritesProvider';
 import { SecureAdminAuthProvider } from '@/contexts/SecureAdminAuth';
+import { AuthProvider } from '@/hooks/useAuth';
 import SecureAdminLogin from '@/components/admin/SecureAdminLogin';
 import Home from './pages/Index';
 import UserLogin from './pages/UserLogin';
@@ -37,6 +38,10 @@ import UnifiedAssessment from './pages/UnifiedAssessment';
 import AuthTestPage from './pages/AuthTestPage';
 import { Toaster } from '@/components/ui/toaster';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { UserDashboard } from '@/components/user/UserDashboard';
+import { EnhancedExpertSearch } from '@/components/expert/EnhancedExpertSearch';
+import { NotificationCenter } from '@/components/notifications/NotificationCenter';
+import { FavoritesManager } from '@/components/favorites/FavoritesManager';
 
 const queryClient = new QueryClient();
 
@@ -45,8 +50,9 @@ const queryClient = new QueryClient();
 // Component wrapper for user/expert routes with SimpleAuthProvider
 const UserRoutes: React.FC = () => {
   return (
-    <SimpleAuthProvider>
-      <FavoritesProvider>
+    <AuthProvider>
+      <SimpleAuthProvider>
+        <FavoritesProvider>
         <Routes>
         <Route path="/" element={<Home />} />
         
@@ -56,7 +62,8 @@ const UserRoutes: React.FC = () => {
         <Route path="/service/:serviceId" element={<ServiceDetailPage />} />
         
         {/* Expert Routes */}
-        <Route path="/experts" element={<Experts />} />
+        <Route path="/experts" element={<EnhancedExpertSearch />} />
+        <Route path="/experts-old" element={<Experts />} />
         <Route path="/experts/:id" element={<ExpertDetail />} />
         <Route path="/expert-login" element={<ExpertLogin />} />
         <Route path="/expert-signup" element={<ExpertSignup />} />
@@ -66,6 +73,9 @@ const UserRoutes: React.FC = () => {
         <Route path="/user-login" element={<UserLogin />} />
         <Route path="/user-signup" element={<UserSignup />} />
         <Route path="/user-dashboard/*" element={<UserDashboardWrapper />} />
+        <Route path="/dashboard" element={<UserDashboard />} />
+        <Route path="/notifications" element={<NotificationCenter />} />
+        <Route path="/favorites" element={<FavoritesManager />} />
         
         {/* Program Routes */}
         <Route path="/programs" element={<Programs />} />
@@ -106,6 +116,7 @@ const UserRoutes: React.FC = () => {
         </Routes>
       </FavoritesProvider>
     </SimpleAuthProvider>
+    </AuthProvider>
   );
 };
 

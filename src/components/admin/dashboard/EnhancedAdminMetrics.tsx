@@ -44,10 +44,10 @@ export const EnhancedAdminMetrics: React.FC = () => {
       
       if (error) throw error;
       
-      setMetrics(data as AdminMetrics);
+      setMetrics(data as unknown as AdminMetrics);
       
       // Calculate revenue growth (mock calculation for demo)
-      if ((data as AdminMetrics)?.total_revenue_usd) {
+      if ((data as unknown as AdminMetrics)?.total_revenue_usd) {
         setRevenueGrowth(12.5); // This would typically be calculated from historical data
       }
     } catch (error) {
