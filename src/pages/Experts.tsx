@@ -4,6 +4,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Container } from '@/components/ui/container';
 import ExpertsGrid from '@/components/experts/ExpertsGrid';
+import SearchSort from '@/components/experts/SearchSort';
 import { usePublicExpertsData } from '@/hooks/usePublicExpertsData';
 
 const Experts = () => {
@@ -44,11 +45,11 @@ const Experts = () => {
           
           {experts.length > 0 && (
             <div className="space-y-6">
-              <div className="text-center">
-                <p className="text-sm text-gray-600 mb-6">
-                  {experts.length} {experts.length === 1 ? 'expert' : 'experts'} available
-                </p>
-              </div>
+              <SearchSort 
+                expertCount={experts.length}
+                onToggleFilters={() => {}}
+                showFilters={false}
+              />
               <ExpertsGrid experts={experts} loading={loading} />
             </div>
           )}

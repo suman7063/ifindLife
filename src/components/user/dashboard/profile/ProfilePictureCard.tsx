@@ -15,10 +15,20 @@ interface ProfilePictureCardProps {
 
 const ProfilePictureCard: React.FC<ProfilePictureCardProps> = ({ user }) => {
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [profilePicture, setProfilePicture] = useState<string | null>(user?.profile_picture || null);
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    
+    // Create a preview URL for immediate display
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        setProfilePicture(event.target.result as string);
+      }
+    };
+    reader.readAsDataURL(file);
     
     // Simulate photo upload (will be implemented in future)
     setIsUploadingPhoto(true);
@@ -36,9 +46,9 @@ const ProfilePictureCard: React.FC<ProfilePictureCardProps> = ({ user }) => {
         <p className="text-muted-foreground text-sm mb-4">Update your profile photo</p>
         
         <div className="w-32 h-32 rounded-full overflow-hidden mb-4 bg-purple-400 flex items-center justify-center">
-          {user?.profile_picture ? (
+          {profilePicture ? (
             <Avatar className="w-full h-full">
-              <AvatarImage src={user.profile_picture} alt={user.name || 'Profile'} />
+              <AvatarImage src={profilePicture} alt={user?.name || 'Profile'} />
               <AvatarFallback className="text-4xl font-bold text-white">
                 {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
               </AvatarFallback>

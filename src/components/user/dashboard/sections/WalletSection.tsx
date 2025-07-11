@@ -4,12 +4,37 @@ import { UserProfile } from '@/types/database/unified';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Wallet, CreditCard, RefreshCcw, PlusCircle, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { useRazorpayPayment } from '@/hooks/call/useRazorpayPayment';
+import { toast } from 'sonner';
 
 interface WalletSectionProps {
   user: UserProfile;
 }
 
 const WalletSection: React.FC<WalletSectionProps> = ({ user }) => {
+  const { processPayment, isLoading } = useRazorpayPayment();
+
+  const handleAddMoney = async () => {
+    try {
+      await processPayment(
+        500, // ₹500 default amount
+        'INR',
+        'Wallet Recharge',
+        (paymentId, orderId) => {
+          toast.success('Wallet recharged successfully!');
+          // Here you would update the user's wallet balance in the database
+        },
+        (error) => {
+          toast.error('Payment failed. Please try again.');
+          console.error('Payment error:', error);
+        }
+      );
+    } catch (error) {
+      toast.error('Failed to initiate payment');
+      console.error('Error:', error);
+    }
+  };
+
   // Mock transactions for demonstration
   const transactions = [
     { 
@@ -78,9 +103,9 @@ const WalletSection: React.FC<WalletSectionProps> = ({ user }) => {
           <CardContent>
             <div className="text-3xl font-bold">{user?.currency || '₹'}{user?.wallet_balance?.toFixed(2) || '0.00'}</div>
             <div className="flex space-x-4 mt-4">
-              <Button size="sm">
+              <Button size="sm" onClick={handleAddMoney} disabled={isLoading}>
                 <PlusCircle className="mr-2 h-4 w-4" />
-                Add Money
+                {isLoading ? 'Processing...' : 'Add Money'}
               </Button>
               <Button size="sm" variant="outline">
                 <RefreshCcw className="mr-2 h-4 w-4" />

@@ -122,22 +122,6 @@ const HelpSection: React.FC<HelpSectionProps> = ({ user }) => {
               </CardFooter>
             </Card>
             
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="flex items-center">
-                  <Phone className="h-5 w-5 mr-2" />
-                  Phone Support
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm">Call us at +91 999-999-9999 (Mon-Fri, 9 AM - 6 PM IST)</p>
-              </CardContent>
-              <CardFooter>
-                <Button variant="outline" className="w-full">
-                  Call Now
-                </Button>
-              </CardFooter>
-            </Card>
           </div>
           
           <form onSubmit={handleSubmit} className="space-y-4 pt-4">

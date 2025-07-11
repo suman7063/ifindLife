@@ -59,10 +59,6 @@ const SupportSection: React.FC = () => {
                 <span className="font-medium">support@ifindlife.com</span>
               </div>
               <div className="flex flex-col">
-                <span className="text-sm text-muted-foreground">Phone Support</span>
-                <span className="font-medium">+1 (888) 123-4567</span>
-              </div>
-              <div className="flex flex-col">
                 <span className="text-sm text-muted-foreground">Support Hours</span>
                 <span className="font-medium">Monday to Friday, 9am - 5pm</span>
               </div>
