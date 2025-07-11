@@ -52,7 +52,6 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
       specialization: expert.specialization || 'General',
       rating: expert.averageRating || 0,
       reviewCount: expert.reviewsCount || 0,
-      isVerified: expert.verified || false,
       status: expert.status || 'offline',
       experience: expert.experience || 0,
       price: expert.price || 0,

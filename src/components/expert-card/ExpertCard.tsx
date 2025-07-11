@@ -38,7 +38,6 @@ const ExpertCard: React.FC<ExpertCardProps> = ({
   const specialization = expert.specialization || 'General';
   const rating = expert.averageRating || 0;
   const reviewCount = expert.reviewsCount || 0;
-  const isVerified = expert.verified || false;
   const status = expert.status || 'offline';
   const experience = expert.experience || 0;
   const price = expert.price || 0;
