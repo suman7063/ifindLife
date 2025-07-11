@@ -176,8 +176,6 @@ export const useAuthFunctions = (): AuthFunctions => {
       date_of_birth: profile?.date_of_birth || null,
       gender: profile?.gender || null,
       occupation: profile?.occupation || null,
-      emergency_contact_name: profile?.emergency_contact_name || null,
-      emergency_contact_phone: profile?.emergency_contact_phone || null,
       preferences: profile?.preferences || {},
       terms_accepted: profile?.terms_accepted || false,
       privacy_accepted: profile?.privacy_accepted || false,

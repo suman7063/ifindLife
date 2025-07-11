@@ -131,8 +131,6 @@ export const useFetchUserProfile = (userId: string | undefined, session: Session
             date_of_birth: rawProfileData.date_of_birth || null,
             gender: rawProfileData.gender || null,
             occupation: rawProfileData.occupation || null,
-            emergency_contact_name: rawProfileData.emergency_contact_name || null,
-            emergency_contact_phone: rawProfileData.emergency_contact_phone || null,
             preferences: rawProfileData.preferences || {},
             terms_accepted: rawProfileData.terms_accepted || false,
             privacy_accepted: rawProfileData.privacy_accepted || false,

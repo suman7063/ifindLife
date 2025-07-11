@@ -1684,8 +1684,6 @@ export type Database = {
           currency: string | null
           date_of_birth: string | null
           email: string | null
-          emergency_contact_name: string | null
-          emergency_contact_phone: string | null
           gender: string | null
           id: string
           marketing_consent: boolean | null
@@ -1708,8 +1706,6 @@ export type Database = {
           currency?: string | null
           date_of_birth?: string | null
           email?: string | null
-          emergency_contact_name?: string | null
-          emergency_contact_phone?: string | null
           gender?: string | null
           id: string
           marketing_consent?: boolean | null
@@ -1732,8 +1728,6 @@ export type Database = {
           currency?: string | null
           date_of_birth?: string | null
           email?: string | null
-          emergency_contact_name?: string | null
-          emergency_contact_phone?: string | null
           gender?: string | null
           id?: string
           marketing_consent?: boolean | null

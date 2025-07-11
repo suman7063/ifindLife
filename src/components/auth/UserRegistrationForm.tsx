@@ -122,8 +122,6 @@ const UserRegistrationForm: React.FC<UserRegistrationFormProps> = ({
             date_of_birth: data.dateOfBirth,
             gender: data.gender,
             occupation: data.occupation,
-            emergency_contact_name: data.emergencyContactName,
-            emergency_contact_phone: data.emergencyContactPhone,
             terms_accepted: data.termsAccepted,
             privacy_accepted: data.privacyAccepted,
             marketing_consent: data.marketingConsent,

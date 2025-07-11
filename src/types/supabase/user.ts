@@ -18,8 +18,6 @@ export interface UserProfile {
   date_of_birth: string | null;
   gender: string | null;
   occupation: string | null;
-  emergency_contact_name: string | null;
-  emergency_contact_phone: string | null;
   preferences: any;
   terms_accepted: boolean | null;
   privacy_accepted: boolean | null;

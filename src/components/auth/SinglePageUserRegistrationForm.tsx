@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2, User, Mail, Phone, Calendar, MapPin, Users, Shield, Globe } from 'lucide-react';
+import { Loader2, User, Mail, Phone, Calendar, MapPin, Shield, Globe } from 'lucide-react';
 
 // Comprehensive registration schema
 const registrationSchema = z.object({
@@ -29,10 +29,6 @@ const registrationSchema = z.object({
   // Location
   country: z.string().min(1, 'Country is required'),
   city: z.string().min(1, 'City is required'),
-  
-  // Emergency Contact
-  emergencyContactName: z.string().optional(),
-  emergencyContactPhone: z.string().optional(),
   
   // Preferences
   currency: z.string().default('USD'),
@@ -119,8 +115,6 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
             date_of_birth: data.dateOfBirth,
             gender: data.gender,
             occupation: data.occupation,
-            emergency_contact_name: data.emergencyContactName,
-            emergency_contact_phone: data.emergencyContactPhone,
             terms_accepted: data.termsAccepted,
             privacy_accepted: data.privacyAccepted,
             marketing_consent: data.marketingConsent,
@@ -359,42 +353,14 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
               </div>
             </div>
 
-            {/* Emergency Contact & Preferences Section */}
+            {/* Preferences Section */}
             <div className="space-y-4">
               <div className="flex items-center gap-2 mb-4">
-                <Users className="h-5 w-5 text-primary" />
-                <h3 className="text-lg font-semibold">Emergency Contact & Preferences</h3>
+                <Globe className="h-5 w-5 text-primary" />
+                <h3 className="text-lg font-semibold">Preferences</h3>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="emergencyContactName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Emergency Contact Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Contact person name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="emergencyContactPhone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Emergency Contact Phone</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Contact person phone" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
                 <FormField
                   control={form.control}
                   name="currency"
