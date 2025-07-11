@@ -1,86 +1,100 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-
-const RAZORPAY_KEY_SECRET = Deno.env.get("RAZORPAY_KEY_SECRET") || "";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createHmac } from "https://deno.land/std@0.168.0/node/crypto.ts"
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
 
 serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const {
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature,
-      callSessionId
-    } = await req.json();
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = await req.json()
 
-    if (!RAZORPAY_KEY_SECRET) {
-      throw new Error("Razorpay secret key not configured");
+    const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET')
+    if (!razorpayKeySecret) {
+      throw new Error('Razorpay secret not configured')
     }
 
-    // Verify signature
-    const crypto = await import("node:crypto");
-    const expectedSignature = crypto
-      .createHmac("sha256", RAZORPAY_KEY_SECRET)
-      .update(razorpay_order_id + "|" + razorpay_payment_id)
-      .digest("hex");
+    // Verify payment signature
+    const body = razorpay_order_id + "|" + razorpay_payment_id
+    const expectedSignature = createHmac('sha256', razorpayKeySecret)
+      .update(body)
+      .digest('hex')
 
     if (expectedSignature !== razorpay_signature) {
-      throw new Error("Invalid payment signature");
+      throw new Error('Invalid payment signature')
     }
 
-    // Update call session status if provided
-    if (callSessionId) {
-      const supabase = createClient(
-        Deno.env.get("SUPABASE_URL") ?? "",
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-      );
+    // Update call session status
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
 
-      const { error: updateError } = await supabase
-        .from("call_sessions")
-        .update({
-          status: "active",
-          payment_method: "razorpay",
-          start_time: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .eq("id", callSessionId);
+    const authHeader = req.headers.get('Authorization')!
+    const token = authHeader.replace('Bearer ', '')
+    const { data: { user } } = await supabaseClient.auth.getUser(token)
 
-      if (updateError) {
-        console.error("Error updating call session:", updateError);
-      }
+    if (!user) {
+      throw new Error('Unauthorized')
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        payment_id: razorpay_payment_id,
-        order_id: razorpay_order_id
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      }
-    );
-  } catch (error) {
-    console.error("Payment verification error:", error);
+    // Update session status to completed
+    const { data: session, error: updateError } = await supabaseClient
+      .from('call_sessions')
+      .update({
+        status: 'completed',
+        payment_method: 'razorpay',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', razorpay_order_id)
+      .eq('user_id', user.id)
+      .select()
+      .single()
+
+    if (updateError || !session) {
+      throw new Error('Failed to update session status')
+    }
+
+    // Generate Agora token and channel for the call
+    const channelName = `session_${Date.now()}_${user.id}`
+    const uid = Math.floor(Math.random() * 1000000)
+
+    // Update session with call details
+    await supabaseClient
+      .from('call_sessions')
+      .update({
+        channel_name: channelName,
+        start_time: new Date().toISOString()
+      })
+      .eq('id', razorpay_order_id)
+
     return new Response(
       JSON.stringify({ 
-        success: false, 
-        error: error.message || "Payment verification failed" 
+        success: true,
+        sessionId: razorpay_order_id,
+        channelName: channelName,
+        uid: uid,
+        token: 'agora_token_placeholder' // You'll need to implement Agora token generation
       }),
       {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      },
+    )
+  } catch (error) {
+    console.error('Error verifying payment:', error)
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
-      }
-    );
+      },
+    )
   }
-});
+})

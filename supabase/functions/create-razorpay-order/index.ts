@@ -12,27 +12,33 @@ serve(async (req) => {
   }
 
   try {
-    const { amount, currency = 'INR', receipt, notes } = await req.json()
-    
+    const { amount, currency, expertId, duration } = await req.json()
+
     const razorpayKeyId = Deno.env.get('RAZORPAY_KEY_ID')
     const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET')
-    
+
     if (!razorpayKeyId || !razorpayKeySecret) {
       throw new Error('Razorpay credentials not configured')
     }
 
+    // Create Razorpay order
     const orderData = {
-      amount: amount,
+      amount: Math.round(amount * 100), // Convert to paise/cents
       currency: currency,
-      receipt: receipt || `order_${Date.now()}`,
-      notes: notes || {}
+      receipt: `session_${Date.now()}`,
+      notes: {
+        expertId: expertId,
+        duration: duration
+      }
     }
 
+    const auth = btoa(`${razorpayKeyId}:${razorpayKeySecret}`)
+    
     const response = await fetch('https://api.razorpay.com/v1/orders', {
       method: 'POST',
       headers: {
+        'Authorization': `Basic ${auth}`,
         'Content-Type': 'application/json',
-        'Authorization': `Basic ${btoa(`${razorpayKeyId}:${razorpayKeySecret}`)}`
       },
       body: JSON.stringify(orderData)
     })
@@ -43,11 +49,40 @@ serve(async (req) => {
     }
 
     const order = await response.json()
-    
+
+    // Store order in database for verification
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
+
+    const authHeader = req.headers.get('Authorization')!
+    const token = authHeader.replace('Bearer ', '')
+    const { data: { user } } = await supabaseClient.auth.getUser(token)
+
+    if (!user) {
+      throw new Error('Unauthorized')
+    }
+
+    await supabaseClient.from('call_sessions').insert({
+      id: order.id,
+      user_id: user.id,
+      expert_id: expertId,
+      call_type: 'video',
+      channel_name: `session_${Date.now()}`,
+      status: 'pending_payment',
+      selected_duration: duration,
+      cost: currency === 'INR' ? amount : null,
+      cost_eur: currency === 'EUR' ? amount : null,
+      currency: currency
+    })
+
     return new Response(
-      JSON.stringify({
-        ...order,
-        razorpayKeyId: razorpayKeyId
+      JSON.stringify({ 
+        orderId: order.id,
+        amount: order.amount,
+        currency: order.currency,
+        keyId: razorpayKeyId
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
