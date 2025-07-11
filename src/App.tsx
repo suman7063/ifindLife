@@ -43,6 +43,7 @@ import { UserDashboard } from '@/components/user/UserDashboard';
 import { EnhancedExpertSearch } from '@/components/expert/EnhancedExpertSearch';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 import { FavoritesManager } from '@/components/favorites/FavoritesManager';
+import CallPage from './pages/CallPage';
 
 const queryClient = new QueryClient();
 
@@ -76,6 +77,7 @@ const UserRoutes: React.FC = () => {
         <Route path="/user-dashboard/*" element={<UserDashboardWrapper />} />
         <Route path="/dashboard" element={<UserDashboard />} />
         <Route path="/appointments" element={<AppointmentsPage />} />
+        <Route path="/call/:appointmentId" element={<CallPage />} />
         <Route path="/notifications" element={<NotificationCenter />} />
         <Route path="/favorites" element={<FavoritesManager />} />
         

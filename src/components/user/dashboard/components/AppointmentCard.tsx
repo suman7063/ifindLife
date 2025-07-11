@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calendar, Clock, User, Phone, MessageSquare, AlertTriangle } from 'lucide-react';
 import { format, parseISO, isToday, isTomorrow } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 import { UserAppointment } from '@/hooks/useUserAppointments';
 
 interface AppointmentCardProps {
@@ -20,6 +21,7 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
   onReschedule,
   onStartCall
 }) => {
+  const navigate = useNavigate();
   const appointmentDate = parseISO(appointment.appointment_date);
   const currentTime = new Date();
   const appointmentDateTime = new Date(`${appointment.appointment_date}T${appointment.start_time}`);
@@ -97,7 +99,7 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
               Your session is starting soon!
             </div>
             <Button 
-              onClick={() => onStartCall?.(appointment)}
+              onClick={() => navigate(`/call/${appointment.id}`)}
               className="w-full"
               size="sm"
             >

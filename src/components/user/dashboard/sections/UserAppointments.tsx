@@ -24,11 +24,6 @@ const UserAppointments: React.FC<UserAppointmentsProps> = ({ user }) => {
     rescheduleAppointment
   } = useUserAppointments(user?.id);
 
-  const handleStartCall = async (appointment: any) => {
-    // This would integrate with the call system
-    console.log('Starting call for appointment:', appointment.id);
-  };
-
   if (loading) {
     return (
       <div className="space-y-6">
@@ -108,7 +103,6 @@ const UserAppointments: React.FC<UserAppointmentsProps> = ({ user }) => {
                   type="upcoming"
                   onCancel={cancelAppointment}
                   onReschedule={rescheduleAppointment}
-                  onStartCall={handleStartCall}
                 />
               ))}
             </div>
