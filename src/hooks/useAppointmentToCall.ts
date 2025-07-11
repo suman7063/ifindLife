@@ -15,12 +15,12 @@ interface AppointmentCallData {
 export const useAppointmentToCall = () => {
   const [loading, setLoading] = useState(false);
   const { user } = useSimpleAuth();
-  const { 
-    setIsOpen: setCallModalOpen,
+  const {
     setCurrentSessionId,
     setCallStatus,
     initializeCall,
-    callOperations
+    callOperations,
+    setShowChat
   } = useCallModal();
 
   const generateChannelName = useCallback((appointmentId: string) => {
@@ -42,14 +42,7 @@ export const useAppointmentToCall = () => {
       // Fetch appointment details
       const { data: appointment, error: appointmentError } = await supabase
         .from('appointments')
-        .select(`
-          *,
-          expert:expert_accounts!appointments_expert_id_fkey(
-            id,
-            name,
-            auth_id
-          )
-        `)
+        .select('*')
         .eq('id', appointmentId)
         .single();
 
@@ -57,8 +50,19 @@ export const useAppointmentToCall = () => {
         throw new Error('Appointment not found');
       }
 
+      // Fetch expert details separately
+      const { data: expertData, error: expertError } = await supabase
+        .from('expert_accounts')
+        .select('id, name, auth_id')
+        .eq('id', appointment.expert_id)
+        .single();
+
+      if (expertError || !expertData) {
+        throw new Error('Expert not found');
+      }
+
       // Verify user has permission to join this call
-      if (appointment.user_id !== user.id && appointment.expert?.auth_id !== user.id) {
+      if (appointment.user_id !== user.id && expertData.auth_id !== user.id) {
         throw new Error('You are not authorized to join this call');
       }
 
@@ -134,7 +138,7 @@ export const useAppointmentToCall = () => {
       // Initialize the call infrastructure
       await initializeCall({
         expertId: appointment.expert_id,
-        expertName: appointment.expert?.name || appointment.expert_name,
+        expertName: expertData.name || appointment.expert_name,
         chatMode: false
       });
 
@@ -142,7 +146,7 @@ export const useAppointmentToCall = () => {
       const success = await callOperations.startCall(callType);
       
       if (success) {
-        setCallModalOpen(true);
+        setShowChat(true);
         setCallStatus('connected');
         toast.success(`${callType} call connected successfully`);
         return sessionId;
@@ -158,7 +162,7 @@ export const useAppointmentToCall = () => {
     } finally {
       setLoading(false);
     }
-  }, [user, generateChannelName, setCurrentSessionId, setCallStatus, initializeCall, callOperations, setCallModalOpen]);
+  }, [user, generateChannelName, setCurrentSessionId, setCallStatus, initializeCall, callOperations, setShowChat]);
 
   const getAppointmentStatus = useCallback(async (appointmentId: string) => {
     try {

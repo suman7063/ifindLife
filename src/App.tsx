@@ -14,7 +14,8 @@ import ExpertLogin from './pages/ExpertLogin';
 import ExpertSignup from './pages/ExpertRegister';
 import ExpertDashboard from './pages/ExpertDashboard';
 import UserDashboardWrapper from './pages/UserDashboardWrapper';
-import AdminLoginClean from '@/pages/AdminLoginClean';
+
+import AppointmentsPage from './pages/AppointmentsPage';
 import AdminDashboard from '@/components/admin/dashboard/AdminDashboard';
 import ServiceDetailPage from './pages/service/ServiceDetailPage';
 import ProgramDetailPage from './pages/ProgramDetail';
@@ -74,6 +75,7 @@ const UserRoutes: React.FC = () => {
         <Route path="/user-signup" element={<UserSignup />} />
         <Route path="/user-dashboard/*" element={<UserDashboardWrapper />} />
         <Route path="/dashboard" element={<UserDashboard />} />
+        <Route path="/appointments" element={<AppointmentsPage />} />
         <Route path="/notifications" element={<NotificationCenter />} />
         <Route path="/favorites" element={<FavoritesManager />} />
         

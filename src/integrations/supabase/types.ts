@@ -311,6 +311,7 @@ export type Database = {
       call_sessions: {
         Row: {
           analytics_data: Json | null
+          appointment_id: string | null
           call_type: string
           channel_name: string
           cost: number | null
@@ -335,6 +336,7 @@ export type Database = {
         }
         Insert: {
           analytics_data?: Json | null
+          appointment_id?: string | null
           call_type: string
           channel_name: string
           cost?: number | null
@@ -359,6 +361,7 @@ export type Database = {
         }
         Update: {
           analytics_data?: Json | null
+          appointment_id?: string | null
           call_type?: string
           channel_name?: string
           cost?: number | null
@@ -381,7 +384,15 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "call_sessions_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       contact_submissions: {
         Row: {

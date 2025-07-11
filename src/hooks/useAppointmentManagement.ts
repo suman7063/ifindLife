@@ -5,7 +5,7 @@ import type { Appointment, TimeSlot } from '@/types/appointments';
 import { UserProfile } from '@/types/supabase';
 import { handleDatabaseError, retryOperation } from '@/utils/errorHandling';
 
-export const useAppointmentManagement = (currentUser: UserProfile | null, expertId?: string) => {
+export const useAppointmentManagement = (currentUser: any, expertId?: string) => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
