@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -36,9 +36,7 @@ const ExpertRegister: React.FC = () => {
       country: '',
       title: '',
       experience: 0,
-      
       bio: '',
-      expertCategory: 'listening-volunteer',
       captchaAnswer: 0,
       password: '',
       confirmPassword: '',
@@ -235,39 +233,6 @@ const ExpertRegister: React.FC = () => {
                     Professional Information
                   </div>
 
-                  {/* Expert Category */}
-                  <div>
-                    <Label className="text-base font-medium">Expert Category *</Label>
-                    <RadioGroup
-                      value={form.watch('expertCategory')}
-                      onValueChange={(value) => form.setValue('expertCategory', value as any)}
-                      className="mt-2"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="listening-volunteer" id="listening-volunteer" />
-                        <Label htmlFor="listening-volunteer">Listening Volunteer</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="listening-expert" id="listening-expert" />
-                        <Label htmlFor="listening-expert">Listening Expert</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="mindfulness-coach" id="mindfulness-coach" />
-                        <Label htmlFor="mindfulness-coach">Mindfulness Coach</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="mindfulness-expert" id="mindfulness-expert" />
-                        <Label htmlFor="mindfulness-expert">Mindfulness Expert</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="spiritual-mentor" id="spiritual-mentor" />
-                        <Label htmlFor="spiritual-mentor">Spiritual Mentor</Label>
-                      </div>
-                    </RadioGroup>
-                    {form.formState.errors.expertCategory && (
-                      <p className="text-sm text-red-500 mt-1">{form.formState.errors.expertCategory.message}</p>
-                    )}
-                  </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
