@@ -43,10 +43,10 @@ const AgoraCallInfo: React.FC<AgoraCallInfoProps> = ({
         </div>
         
         <div className="flex items-center justify-between mt-1">
-          <p className="text-xs text-muted-foreground">Session Rate: ${expertPrice.toFixed(2)}</p>
+          <p className="text-xs text-muted-foreground">Session Rate: {expertPrice.toFixed(2)}</p>
           <div className="flex items-center gap-2">
             <DollarSign className="h-4 w-4 text-emerald-500" />
-            <p className="text-sm font-medium text-emerald-500">${sessionCost}</p>
+            <p className="text-sm font-medium text-emerald-500">{sessionCost}</p>
           </div>
         </div>
       </CardContent>

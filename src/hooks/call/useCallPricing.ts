@@ -6,9 +6,8 @@ import { toast } from 'sonner';
 export interface CallPricing {
   id: string;
   duration_minutes: number;
-  price_usd: number;
   price_inr: number;
-  price_eur?: number; // Add EUR support
+  price_eur: number;
   tier: string;
   active: boolean;
 }
@@ -20,7 +19,7 @@ export interface UserGeolocation {
 
 export const useCallPricing = () => {
   const [pricingOptions, setPricingOptions] = useState<CallPricing[]>([]);
-  const [userCurrency, setUserCurrency] = useState<'USD' | 'INR' | 'EUR'>('USD');
+  const [userCurrency, setUserCurrency] = useState<'INR' | 'EUR'>('EUR');
   const [isLoading, setIsLoading] = useState(true);
 
   // Fetch pricing options
@@ -55,7 +54,7 @@ export const useCallPricing = () => {
         .maybeSingle();
 
       if (existingGeo?.currency) {
-        setUserCurrency(existingGeo.currency as 'USD' | 'INR' | 'EUR');
+        setUserCurrency(existingGeo.currency as 'INR' | 'EUR');
         return;
       }
 
@@ -64,12 +63,10 @@ export const useCallPricing = () => {
       const response = await fetch('https://ipapi.co/json/');
       const geoData = await response.json();
       
-      // Enhanced currency detection for EUR support
-      let currency: 'USD' | 'INR' | 'EUR' = 'USD';
+      // Currency detection: INR for India, EUR for rest of world
+      let currency: 'INR' | 'EUR' = 'EUR';
       if (geoData.country_code === 'IN') {
         currency = 'INR';
-      } else if (['DE', 'FR', 'IT', 'ES', 'NL', 'BE', 'AT', 'PT', 'IE', 'FI', 'EE', 'LV', 'LT', 'LU', 'MT', 'SK', 'SI', 'CY'].includes(geoData.country_code)) {
-        currency = 'EUR';
       }
       setUserCurrency(currency);
 
@@ -85,8 +82,8 @@ export const useCallPricing = () => {
       }
     } catch (error) {
       console.error('Error detecting currency:', error);
-      // Default to USD if detection fails
-      setUserCurrency('USD');
+      // Default to EUR if detection fails
+      setUserCurrency('EUR');
     }
   };
 
@@ -104,13 +101,11 @@ export const useCallPricing = () => {
     const pricing = pricingOptions.find(p => p.duration_minutes === durationMinutes);
     if (!pricing) return 0;
     
-    if (userCurrency === 'INR') return pricing.price_inr;
-    if (userCurrency === 'EUR') return pricing.price_eur || pricing.price_usd;
-    return pricing.price_usd;
+    return userCurrency === 'INR' ? pricing.price_inr : pricing.price_eur;
   };
 
   const formatPrice = (price: number): string => {
-    const symbol = userCurrency === 'INR' ? '₹' : userCurrency === 'EUR' ? '€' : '$';
+    const symbol = userCurrency === 'INR' ? '₹' : '€';
     return `${symbol}${price.toFixed(2)}`;
   };
 
