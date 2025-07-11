@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { UserProfile } from '@/types/supabase';
+import { UserProfile } from '@/types/database/unified';
 import { 
   MobileMenuHeader, 
   MobileMenuSections, 

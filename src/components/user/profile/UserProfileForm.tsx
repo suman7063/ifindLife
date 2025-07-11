@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { UserProfile } from '@/types/supabase/user';
+import { UserProfile } from '@/types/database/unified';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import countryList from '@/data/countries.json';

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { UserProfile } from '@/types/supabase/user';
+import { UserProfile } from '@/types/database/unified';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';

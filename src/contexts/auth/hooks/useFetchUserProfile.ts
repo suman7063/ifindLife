@@ -2,7 +2,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Session } from '@supabase/supabase-js';
-import { UserProfile, Review, Report, Course } from '@/types/supabase/user';
+import { UserProfile } from '@/types/database/unified';
+import { Review, Report, Course } from '@/types/supabase/user';
 import { UserTransaction } from '@/types/supabase/tables';
 import { Referral } from '@/types/supabase/referral';
 
@@ -124,9 +125,18 @@ export const useFetchUserProfile = (userId: string | undefined, session: Session
             profile_picture: rawProfileData.profile_picture || '',
             wallet_balance: rawProfileData.wallet_balance || 0,
             created_at: rawProfileData.created_at || '',
+            referred_by: rawProfileData.referred_by || null,
             referral_code: rawProfileData.referral_code || '',
-            referred_by: rawProfileData.referred_by || '',
             referral_link: rawProfileData.referral_link || '',
+            date_of_birth: rawProfileData.date_of_birth || null,
+            gender: rawProfileData.gender || null,
+            occupation: rawProfileData.occupation || null,
+            emergency_contact_name: rawProfileData.emergency_contact_name || null,
+            emergency_contact_phone: rawProfileData.emergency_contact_phone || null,
+            preferences: rawProfileData.preferences || {},
+            terms_accepted: rawProfileData.terms_accepted || false,
+            privacy_accepted: rawProfileData.privacy_accepted || false,
+            marketing_consent: rawProfileData.marketing_consent || false,
             
             // Convert any numeric favorite_programs to strings for consistency
             favorite_experts: (rawProfileData.favorite_experts || []) as string[],
@@ -136,8 +146,8 @@ export const useFetchUserProfile = (userId: string | undefined, session: Session
             reviews: (rawProfileData.reviews || []) as Review[],
             reports: (rawProfileData.reports || []) as Report[],
             referrals: (rawProfileData.referrals || []) as any[],
-            recent_activities: (rawProfileData.recent_activities || []) as any[], // Added missing property
-            upcoming_appointments: (rawProfileData.upcoming_appointments || []) as any[] // Added missing property
+            recent_activities: (rawProfileData.recent_activities || []) as any[],
+            upcoming_appointments: (rawProfileData.upcoming_appointments || []) as any[]
           };
           
           console.log('Enhanced profile created:', {

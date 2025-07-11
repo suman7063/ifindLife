@@ -3,7 +3,7 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { fetchUserProfile } from '@/utils/profileFetcher';
 import { UserRole } from '@/contexts/auth/types';
-import { UserProfile } from '@/types/supabase/user';
+import { UserProfile } from '@/types/database/unified';
 import { toast } from '@/hooks/use-toast';
 
 // Define proper type for auth functions without excessive nesting
@@ -166,22 +166,31 @@ export const useAuthFunctions = (): AuthFunctions => {
       phone: profile?.phone || '',
       city: profile?.city || '',
       country: profile?.country || '',
+      currency: profile?.currency || 'USD',
       profile_picture: profile?.profile_picture || '',
       wallet_balance: profile?.wallet_balance || 0,
-      currency: profile?.currency || 'USD',
       created_at: profile?.created_at || new Date().toISOString(),
+      referred_by: profile?.referred_by || null,
       referral_code: profile?.referral_code || '',
       referral_link: profile?.referral_link || '',
-      referred_by: profile?.referred_by || null,
+      date_of_birth: profile?.date_of_birth || null,
+      gender: profile?.gender || null,
+      occupation: profile?.occupation || null,
+      emergency_contact_name: profile?.emergency_contact_name || null,
+      emergency_contact_phone: profile?.emergency_contact_phone || null,
+      preferences: profile?.preferences || {},
+      terms_accepted: profile?.terms_accepted || false,
+      privacy_accepted: profile?.privacy_accepted || false,
+      marketing_consent: profile?.marketing_consent || false,
       favorite_experts: profile?.favorite_experts || [],
-      favorite_programs: profile?.favorite_programs || [], // Keep as number[]
+      favorite_programs: profile?.favorite_programs || [],
       enrolled_courses: profile?.enrolled_courses || [],
-      reviews: [],
-      reports: [],
-      transactions: [],
-      referrals: [],
-      recent_activities: [], // Added missing property
-      upcoming_appointments: [] // Added missing property
+      reviews: profile?.reviews || [],
+      reports: profile?.reports || [],
+      transactions: profile?.transactions || [],
+      referrals: profile?.referrals || [],
+      recent_activities: profile?.recent_activities || [],
+      upcoming_appointments: profile?.upcoming_appointments || []
     };
     
     // Determine user role based on profile data

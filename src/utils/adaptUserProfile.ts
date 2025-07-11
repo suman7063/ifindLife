@@ -1,5 +1,5 @@
 
-import { UserProfile } from '@/types/supabase/user';
+import { UserProfile } from '@/types/database/unified';
 
 /**
  * Adapts different user profile formats to ensure consistent access to profile properties
@@ -15,20 +15,29 @@ export function adaptUserProfile(user: any): UserProfile {
     city: '',
     profile_picture: '',
     wallet_balance: 0,
+    currency: 'USD',
     created_at: '',
     referred_by: null,
     referral_code: '',
     referral_link: '',
+    date_of_birth: null,
+    gender: null,
+    occupation: null,
+    emergency_contact_name: null,
+    emergency_contact_phone: null,
+    preferences: {},
+    terms_accepted: false,
+    privacy_accepted: false,
+    marketing_consent: false,
     favorite_experts: [],
     favorite_programs: [],
     enrolled_courses: [],
-    currency: '$',
     reviews: [],
     reports: [],
     transactions: [],
     referrals: [],
-    recent_activities: [], // Added missing property
-    upcoming_appointments: [] // Added missing property
+    recent_activities: [],
+    upcoming_appointments: []
   };
   
   return {
@@ -38,21 +47,30 @@ export function adaptUserProfile(user: any): UserProfile {
     phone: user.phone || '',
     country: user.country || '',
     city: user.city || '',
+    currency: user.currency || 'USD',
     profile_picture: user.profile_picture || user.avatar || '',
     wallet_balance: user.wallet_balance || 0,
     created_at: user.created_at || '',
     referred_by: user.referred_by || null,
     referral_code: user.referral_code || '',
     referral_link: user.referral_link || '',
+    date_of_birth: user.date_of_birth || null,
+    gender: user.gender || null,
+    occupation: user.occupation || null,
+    emergency_contact_name: user.emergency_contact_name || null,
+    emergency_contact_phone: user.emergency_contact_phone || null,
+    preferences: user.preferences || {},
+    terms_accepted: user.terms_accepted || false,
+    privacy_accepted: user.privacy_accepted || false,
+    marketing_consent: user.marketing_consent || false,
     favorite_experts: user.favorite_experts || [],
     favorite_programs: user.favorite_programs || [],
     enrolled_courses: user.enrolled_courses || [],
-    currency: user.currency || '$',
     reviews: user.reviews || [],
     reports: user.reports || [],
     transactions: user.transactions || [],
     referrals: user.referrals || [],
-    recent_activities: user.recent_activities || [], // Added missing property
-    upcoming_appointments: user.upcoming_appointments || [] // Added missing property
+    recent_activities: user.recent_activities || [],
+    upcoming_appointments: user.upcoming_appointments || []
   };
 }

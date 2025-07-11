@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { UserProfile } from '@/types/supabase/user';
+import { UserProfile } from '@/types/database/unified';
 import { toast } from 'sonner';
 
 interface Appointment {

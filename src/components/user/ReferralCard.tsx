@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Copy, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { UserProfile } from "@/types/supabase/user";
+import { UserProfile } from "@/types/database/unified";
 import { ReferralSettings } from "@/types/supabase/referral";
 
 interface ReferralCardProps {
