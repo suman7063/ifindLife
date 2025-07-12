@@ -16,12 +16,14 @@ const ProgramsMenu = () => {
         <ul className="grid w-full gap-1 p-2">
           <li>
             <NavigationMenuLink asChild>
-              <Link 
-                to="/programs-for-wellness-seekers" 
+              <a 
+                href="https://learn.ifindlife.com" 
+                target="_blank"
+                rel="noopener noreferrer"
                 className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
               >
                 Wellness Seeker
-              </Link>
+              </a>
             </NavigationMenuLink>
           </li>
           <li>

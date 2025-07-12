@@ -71,7 +71,6 @@ const WhatWeDoSection = () => {
                   variant="outline" 
                   className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
                 >
-                  Learn More
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
@@ -79,14 +78,6 @@ const WhatWeDoSection = () => {
           ))}
         </div>
 
-        <div className="text-center mt-12">
-          <Link to="/programs-for-wellness-seekers">
-            <Button className="bg-ifind-teal hover:bg-ifind-teal/90 text-white px-8 py-3">
-              View All Programs
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </Link>
-        </div>
       </Container>
     </section>
   );
