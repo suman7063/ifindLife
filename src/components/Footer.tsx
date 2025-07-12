@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Facebook, Twitter, Instagram, Youtube, Heart, Award, BrainCircuit } from 'lucide-react';
+import { Heart, Award, BrainCircuit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import NewsletterSubscription from './newsletter/NewsletterSubscription';
 
@@ -21,20 +21,6 @@ const Footer = () => {
             <p className="text-ifind-offwhite/80 mb-6 text-justify">
               Your journey from recovery to resilience starts here. Find balance and support with our professional mental wellness therapists.
             </p>
-            <div className="flex space-x-4">
-              <a href="#" className="h-8 w-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-ifind-aqua/30 transition-colors">
-                <Facebook size={16} />
-              </a>
-              <a href="#" className="h-8 w-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-ifind-aqua/30 transition-colors">
-                <Twitter size={16} />
-              </a>
-              <a href="#" className="h-8 w-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-ifind-aqua/30 transition-colors">
-                <Instagram size={16} />
-              </a>
-              <a href="#" className="h-8 w-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-ifind-aqua/30 transition-colors">
-                <Youtube size={16} />
-              </a>
-            </div>
           </div>
           
           <div>
