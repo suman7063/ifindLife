@@ -12,7 +12,7 @@ import UserLogin from './pages/UserLogin';
 import UserSignup from './pages/UserRegister';
 import ExpertLogin from './pages/ExpertLogin';
 import ExpertSignup from './pages/ExpertRegister';
-import ExpertDashboard from './pages/ExpertDashboard';
+import NewExpertDashboard from './pages/NewExpertDashboard';
 import UserDashboardWrapper from './pages/UserDashboardWrapper';
 
 import AppointmentsPage from './pages/AppointmentsPage';
@@ -70,7 +70,7 @@ const UserRoutes: React.FC = () => {
         <Route path="/experts/:id" element={<ExpertDetail />} />
         <Route path="/expert-login" element={<ExpertLogin />} />
         <Route path="/expert-signup" element={<ExpertSignup />} />
-        <Route path="/expert-dashboard/*" element={<ExpertDashboard />} />
+        <Route path="/expert-dashboard/*" element={<NewExpertDashboard />} />
         
         {/* User Routes */}
         <Route path="/user-login" element={<UserLogin />} />

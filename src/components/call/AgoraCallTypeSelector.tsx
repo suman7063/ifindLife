@@ -14,6 +14,7 @@ interface Expert {
   name: string;
   imageUrl: string;
   price: number;
+  category?: string;
 }
 
 interface AgoraCallTypeSelectorProps {
@@ -38,7 +39,7 @@ const AgoraCallTypeSelector: React.FC<AgoraCallTypeSelectorProps> = ({
   const [selectedCallType, setSelectedCallType] = useState<'voice' | 'video'>(callType);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'wallet' | 'gateway' | null>(null);
   
-  const { pricingOptions, userCurrency, isLoading, formatPrice } = useCallPricing();
+  const { pricingOptions, userCurrency, isLoading, formatPrice } = useCallPricing(expert.category);
   const { userProfile } = useSimpleAuth();
   const { processPayment, isLoading: isPaymentLoading } = useRazorpayPayment();
 

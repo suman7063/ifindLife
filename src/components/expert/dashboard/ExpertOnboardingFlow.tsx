@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { CheckCircle, Circle, Clock, AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { useAuth } from '@/contexts/auth/AuthContext';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { PricingSetupStep } from './onboarding/PricingSetupStep';
 import { AvailabilitySetupStep } from './onboarding/AvailabilitySetupStep';
 import { ProfileCompletionStep } from './onboarding/ProfileCompletionStep';
@@ -19,7 +19,7 @@ interface OnboardingStep {
 }
 
 export const ExpertOnboardingFlow: React.FC = () => {
-  const { user } = useAuth();
+  const { expert } = useSimpleAuth();
   const [expertAccount, setExpertAccount] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeStep, setActiveStep] = useState<string>('services');
@@ -54,16 +54,16 @@ export const ExpertOnboardingFlow: React.FC = () => {
 
   useEffect(() => {
     fetchExpertAccount();
-  }, [user]);
+  }, [expert]);
 
   const fetchExpertAccount = async () => {
-    if (!user) return;
+    if (!expert) return;
 
     try {
       const { data, error } = await supabase
         .from('expert_accounts')
         .select('*')
-        .eq('auth_id', user.id)
+        .eq('auth_id', expert.id)
         .single();
 
       if (error) throw error;
@@ -129,7 +129,7 @@ export const ExpertOnboardingFlow: React.FC = () => {
           [updateField]: true,
           onboarding_completed: steps.filter(s => !s.optional).every(s => s.completed || s.id === stepId)
         })
-        .eq('auth_id', user?.id);
+        .eq('auth_id', expert?.id);
 
       if (error) throw error;
 

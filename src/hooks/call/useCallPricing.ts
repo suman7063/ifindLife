@@ -17,12 +17,12 @@ export interface UserGeolocation {
   currency: string;
 }
 
-export const useCallPricing = () => {
+export const useCallPricing = (expertCategory?: string) => {
   const [pricingOptions, setPricingOptions] = useState<CallPricing[]>([]);
   const [userCurrency, setUserCurrency] = useState<'INR' | 'EUR'>('EUR');
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch pricing options
+  // Fetch pricing options with expert category filtering
   const fetchPricing = async () => {
     try {
       const { data, error } = await supabase
@@ -33,8 +33,24 @@ export const useCallPricing = () => {
 
       if (error) throw error;
       
-      console.log('Fetched pricing data:', data);
-      setPricingOptions(data || []);
+      // Filter durations based on expert category
+      let filteredData = data || [];
+      
+      if (expertCategory === 'listening-volunteer') {
+        // Listening volunteers can only offer 5 and 10 minute sessions
+        filteredData = filteredData.filter(pricing => 
+          pricing.duration_minutes === 5 || pricing.duration_minutes === 10
+        );
+      } else if (expertCategory === 'listening-expert') {
+        // Listening experts can offer 5, 10, and 30 minute sessions
+        filteredData = filteredData.filter(pricing => 
+          pricing.duration_minutes === 5 || pricing.duration_minutes === 10 || pricing.duration_minutes === 30
+        );
+      }
+      // For other categories (listening-coach, mindfulness-expert), show all durations
+      
+      console.log('Fetched pricing data for category', expertCategory, ':', filteredData);
+      setPricingOptions(filteredData);
     } catch (error) {
       console.error('Error fetching pricing:', error);
       toast.error('Failed to load pricing options');

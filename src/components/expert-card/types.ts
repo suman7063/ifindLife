@@ -13,6 +13,7 @@ export interface ExpertCardData {
   experience: number;
   price: number;
   waitTime: string;
+  category?: string; // Expert category for duration filtering
   // Additional optional properties for compatibility
   title?: string;
   rating?: number;

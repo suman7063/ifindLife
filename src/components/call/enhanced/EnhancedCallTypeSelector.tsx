@@ -16,6 +16,7 @@ interface EnhancedCallTypeSelectorProps {
     name: string;
     imageUrl: string;
     price: number;
+    category?: string;
   };
   onCallStarted: (sessionId: string, callType: 'audio' | 'video') => void;
 }
@@ -36,7 +37,7 @@ export const EnhancedCallTypeSelector: React.FC<EnhancedCallTypeSelectorProps> =
     userCurrency, 
     isLoading: pricingLoading, 
     formatPrice 
-  } = useCallPricing();
+  } = useCallPricing(expert.category);
   
   const { 
     createCallSession, 
