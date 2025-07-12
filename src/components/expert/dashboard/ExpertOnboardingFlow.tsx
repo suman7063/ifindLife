@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/auth/AuthContext';
 import { PricingSetupStep } from './onboarding/PricingSetupStep';
 import { AvailabilitySetupStep } from './onboarding/AvailabilitySetupStep';
 import { ProfileCompletionStep } from './onboarding/ProfileCompletionStep';
+import ServiceSelectionStep from './onboarding/ServiceSelectionStep';
 
 interface OnboardingStep {
   id: string;
@@ -21,9 +22,15 @@ export const ExpertOnboardingFlow: React.FC = () => {
   const { user } = useAuth();
   const [expertAccount, setExpertAccount] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [activeStep, setActiveStep] = useState<string>('pricing');
+  const [activeStep, setActiveStep] = useState<string>('services');
 
   const [steps, setSteps] = useState<OnboardingStep[]>([
+    {
+      id: 'services',
+      title: 'Select Services',
+      description: 'Choose the services you want to offer to clients',
+      completed: false
+    },
     {
       id: 'pricing',
       title: 'Set Your Pricing',
@@ -39,7 +46,7 @@ export const ExpertOnboardingFlow: React.FC = () => {
     {
       id: 'profile',
       title: 'Complete Profile',
-      description: 'Add additional information to enhance your profile',
+      description: 'Add profile picture and additional information',
       completed: false,
       optional: true
     }
@@ -79,6 +86,8 @@ export const ExpertOnboardingFlow: React.FC = () => {
 
   const getStepCompletion = (stepId: string, account: any): boolean => {
     switch (stepId) {
+      case 'services':
+        return account?.selected_services && account.selected_services.length > 0;
       case 'pricing':
         return account?.pricing_set || false;
       case 'availability':
@@ -95,13 +104,30 @@ export const ExpertOnboardingFlow: React.FC = () => {
       let updateField = `${stepId}_set`;
       if (stepId === 'profile') {
         updateField = 'profile_completed';
+      } else if (stepId === 'services') {
+        // Services completion is handled within the ServiceSelectionStep
+        // Just update the local state here
+        setSteps(prev => prev.map(step => 
+          step.id === stepId 
+            ? { ...step, completed: true }
+            : step
+        ));
+
+        toast.success(`${steps.find(s => s.id === stepId)?.title} completed!`);
+        
+        // Move to next incomplete step
+        const nextStep = steps.find(s => !s.completed && s.id !== stepId);
+        if (nextStep) {
+          setActiveStep(nextStep.id);
+        }
+        return;
       }
 
       const { error } = await supabase
         .from('expert_accounts')
         .update({ 
           [updateField]: true,
-          onboarding_completed: steps.every(s => s.completed || s.optional)
+          onboarding_completed: steps.filter(s => !s.optional).every(s => s.completed || s.id === stepId)
         })
         .eq('auth_id', user?.id);
 
@@ -142,6 +168,13 @@ export const ExpertOnboardingFlow: React.FC = () => {
     if (!expertAccount) return null;
 
     switch (activeStep) {
+      case 'services':
+        return (
+          <ServiceSelectionStep
+            expertAccount={expertAccount}
+            onComplete={() => handleStepComplete('services')}
+          />
+        );
       case 'pricing':
         return (
           <PricingSetupStep

@@ -21,6 +21,7 @@ export interface OptimizedExpertCardProps {
   showConnectOptions?: boolean;
   onShowConnectOptions?: (show: boolean) => void;
   variant?: 'default' | 'compact' | 'detailed';
+  showCategoryBadge?: boolean;
 }
 
 const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({ 
@@ -31,7 +32,8 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
   onBookNow,
   showConnectOptions = false,
   onShowConnectOptions,
-  variant = 'default'
+  variant = 'default',
+  showCategoryBadge = false
 }) => {
   const { isAuthenticated } = useAuth();
   const { requireAuthForExpert, requireAuthForCall, executeIntendedAction } = useAuthRedirectSystem();
@@ -56,6 +58,7 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
       experience: expert.experience || 0,
       price: expert.price || 0,
       waitTime: expert.waitTime || 'Unknown',
+      category: (expert as any).category || '',
       initials: expert.name
         ?.split(' ')
         .map(name => name.charAt(0))
@@ -64,6 +67,24 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
         .substring(0, 2) || 'EX'
     };
   }, [expert]);
+
+  // Category badge logic from ExpertApprovalWorkflow
+  const getCategoryBadgeColor = (category: string) => {
+    const colors = {
+      'listening-volunteer': 'bg-blue-100 text-blue-800',
+      'listening-expert': 'bg-green-100 text-green-800', 
+      'listening-coach': 'bg-purple-100 text-purple-800',
+      'mindfulness-expert': 'bg-yellow-100 text-yellow-800'
+    };
+    return colors[category as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+  };
+
+  const formatCategoryName = (category: string) => {
+    return category
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
 
   // Memoize availability status
   const availabilityStatus = useMemo(() => {
@@ -262,6 +283,14 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-1">
               <h3 className="font-semibold text-lg truncate">{expertData.name}</h3>
+              {showCategoryBadge && expertData.category && (
+                <Badge 
+                  variant="secondary"
+                  className={getCategoryBadgeColor(expertData.category)}
+                >
+                  {formatCategoryName(expertData.category)}
+                </Badge>
+              )}
             </div>
             
             <p className="text-sm text-muted-foreground truncate mb-2">{expertData.specialization}</p>

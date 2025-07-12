@@ -170,8 +170,8 @@ export const EnhancedCallTimer: React.FC<EnhancedCallTimerProps> = ({
               </div>
             </div>
 
-            {/* Extend Call Button */}
-            {onExtendCall && (isInWarningPeriod || isOvertime) && (
+            {/* Extend Call Button - DISABLED as per PRD */}
+            {false && onExtendCall && (isInWarningPeriod || isOvertime) && (
               <Button 
                 variant={isInWarningPeriod ? "default" : "outline"}
                 size="sm" 
@@ -182,6 +182,15 @@ export const EnhancedCallTimer: React.FC<EnhancedCallTimerProps> = ({
                 <Plus className="h-4 w-4 mr-2" />
                 {isExtending ? 'Processing...' : 'Extend Call'}
               </Button>
+            )}
+            
+            {/* Hard Stop Message */}
+            {isOvertime && (
+              <div className="text-center p-2 bg-red-50 rounded border border-red-200">
+                <p className="text-sm text-red-700 font-medium">
+                  Call time exceeded. Session will end automatically.
+                </p>
+              </div>
             )}
           </div>
         </CardContent>

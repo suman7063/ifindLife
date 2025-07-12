@@ -20,6 +20,8 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import ExpertDeleteConfirmationModal from './ExpertDeleteConfirmationModal';
+import DocumentViewModal from './DocumentViewModal';
 
 interface ExpertApplication {
   id: string;
@@ -63,6 +65,11 @@ export const ExpertApprovalWorkflow: React.FC = () => {
     expertName: string;
   }>({ open: false, expertId: '', expertName: '' });
   const [deleteInput, setDeleteInput] = useState('');
+  const [documentModal, setDocumentModal] = useState<{
+    open: boolean;
+    documents: string[];
+    expertName: string;
+  }>({ open: false, documents: [], expertName: '' });
 
   useEffect(() => {
     fetchApplications();
@@ -266,6 +273,14 @@ export const ExpertApprovalWorkflow: React.FC = () => {
       expertName: expert.name
     });
     setDeleteInput('');
+  };
+
+  const openDocumentModal = (documents: string[], expertName: string) => {
+    setDocumentModal({
+      open: true,
+      documents,
+      expertName
+    });
   };
 
   const getCategoryBadgeColor = (category: string) => {
@@ -473,17 +488,17 @@ export const ExpertApprovalWorkflow: React.FC = () => {
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Certificates</label>
                     <div className="space-y-2">
-                      {selectedApp.certificate_urls.map((url, index) => (
+                      <div className="flex gap-2">
                         <Button
-                          key={index}
                           variant="outline"
                           size="sm"
-                          onClick={() => window.open(url, '_blank')}
+                          onClick={() => openDocumentModal(selectedApp.certificate_urls, selectedApp.name)}
+                          className="gap-2"
                         >
-                          <FileText className="h-4 w-4 mr-2" />
-                          View Certificate {index + 1}
+                          <Eye className="h-4 w-4" />
+                          View Documents ({selectedApp.certificate_urls.length})
                         </Button>
-                      ))}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -549,66 +564,22 @@ export const ExpertApprovalWorkflow: React.FC = () => {
         </div>
       </div>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog 
-        open={deleteConfirmation.open} 
-        onOpenChange={(open) => {
-          if (!open) {
-            setDeleteConfirmation({ open: false, expertId: '', expertName: '' });
-            setDeleteInput('');
-          }
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-red-600">
-              <AlertTriangle className="h-5 w-5" />
-              Delete Expert
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              This action cannot be undone. This will permanently delete the expert account and all associated data.
-            </p>
-            <div className="bg-red-50 p-3 rounded border border-red-200">
-              <p className="text-sm text-red-800">
-                <strong>Expert to delete:</strong> {deleteConfirmation.expertName}
-              </p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-muted-foreground">
-                Type "{deleteConfirmation.expertName}" to confirm deletion
-              </label>
-              <input
-                type="text"
-                value={deleteInput}
-                onChange={(e) => setDeleteInput(e.target.value)}
-                className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                placeholder="Enter expert name to confirm"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setDeleteConfirmation({ open: false, expertId: '', expertName: '' });
-                setDeleteInput('');
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => handleDeleteExpert(deleteConfirmation.expertId)}
-              disabled={deleteInput !== deleteConfirmation.expertName}
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete Expert
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Delete Confirmation Modal */}
+      <ExpertDeleteConfirmationModal
+        isOpen={deleteConfirmation.open}
+        onClose={() => setDeleteConfirmation({ open: false, expertId: '', expertName: '' })}
+        onConfirm={() => handleDeleteExpert(deleteConfirmation.expertId)}
+        expertName={deleteConfirmation.expertName}
+        expertId={deleteConfirmation.expertId}
+      />
+
+      {/* Document View Modal */}
+      <DocumentViewModal
+        isOpen={documentModal.open}
+        onClose={() => setDocumentModal({ open: false, documents: [], expertName: '' })}
+        documentUrls={documentModal.documents}
+        expertName={documentModal.expertName}
+      />
     </div>
   );
 };
