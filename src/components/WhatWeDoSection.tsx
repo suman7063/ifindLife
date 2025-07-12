@@ -66,14 +66,6 @@ const WhatWeDoSection = () => {
                 {program.description}
               </p>
               
-              <Link to={program.href} className="block">
-                <Button 
-                  variant="outline" 
-                  className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
             </div>
           ))}
         </div>

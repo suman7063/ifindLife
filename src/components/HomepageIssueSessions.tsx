@@ -108,13 +108,6 @@ const HomepageIssueSessions: React.FC = () => {
           ))}
         </div>
         
-        <div className="text-center mt-8">
-          <Link to="/programs-for-wellness-seekers#issue-based">
-            <Button className="bg-ifind-teal hover:bg-ifind-teal/90 text-white">
-              View All Sessions <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </Link>
-        </div>
         
         {/* Expert Selection Modal */}
         <ExpertSelectionModal
