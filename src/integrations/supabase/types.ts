@@ -1895,6 +1895,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      armor: {
+        Args: { "": string }
+        Returns: string
+      }
       authenticate_admin: {
         Args: { p_username: string; p_password: string }
         Returns: Json
@@ -1902,6 +1906,22 @@ export type Database = {
       check_if_table_exists: {
         Args: { table_name: string }
         Returns: boolean
+      }
+      dearmor: {
+        Args: { "": string }
+        Returns: string
+      }
+      gen_random_bytes: {
+        Args: { "": number }
+        Returns: string
+      }
+      gen_random_uuid: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      gen_salt: {
+        Args: { "": string }
+        Returns: string
       }
       get_admin_metrics: {
         Args: Record<PropertyKey, never>
@@ -1947,6 +1967,14 @@ export type Database = {
       mark_away_message_read: {
         Args: { message_id: string }
         Returns: undefined
+      }
+      pgp_armor_headers: {
+        Args: { "": string }
+        Returns: Record<string, unknown>[]
+      }
+      pgp_key_id: {
+        Args: { "": string }
+        Returns: string
       }
       update_expert_away_status: {
         Args: Record<PropertyKey, never>
