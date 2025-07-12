@@ -284,6 +284,8 @@ export const ExpertApprovalWorkflow: React.FC = () => {
   };
 
   const getCategoryBadgeColor = (category: string) => {
+    if (!category) return 'bg-gray-100 text-gray-800';
+    
     const colors = {
       'listening-volunteer': 'bg-blue-100 text-blue-800',
       'listening-expert': 'bg-green-100 text-green-800',
@@ -294,6 +296,8 @@ export const ExpertApprovalWorkflow: React.FC = () => {
   };
 
   const formatCategoryName = (category: string) => {
+    if (!category) return 'No Category';
+    
     return category
       .split('-')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
