@@ -58,17 +58,19 @@ const NewExpertDashboard: React.FC = () => {
 
   // Enhanced debug logging
   useEffect(() => {
-    console.log('NewExpertDashboard - Auth state:', {
+    console.log('🚀 NewExpertDashboard - Auth state:', {
       isAuthenticated,
       hasExpertProfile: !!expert,
       isLoading,
       userType,
-      needsOnboarding
+      needsOnboarding,
+      expertStatus: expert?.status,
+      authId: expert?.auth_id
     });
     
     // Ensure userType is set to expert when accessing this page
     if (isAuthenticated && expert) {
-      console.log('Setting preferred role to expert');
+      console.log('🚀 Setting preferred role to expert');
       localStorage.setItem('preferredRole', 'expert');
       localStorage.setItem('sessionType', 'expert');
     }
