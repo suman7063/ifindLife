@@ -39,18 +39,16 @@ export const useAgoraCall = (expertId: number, expertPrice: number) => {
       sessionStorage.setItem('videoCallActive', 'true');
       sessionStorage.setItem('activeCallExpertId', expertId.toString());
       
-      // Dynamic import of actual Agora modules (when available)
+      // Import actual Agora service utilities
       try {
-        const { useCallState } = await import('./call/useCallState');
-        const { useCallTimer } = await import('./call/useCallTimer');
-        const { useCallOperations } = await import('./call/useCallOperations');
+        const { createClient, joinCall } = await import('../utils/agoraService');
         
         setIsInitialized(true);
-        console.log('Agora modules loaded successfully');
+        console.log('Agora service modules loaded successfully');
         
-        return { useCallState, useCallTimer, useCallOperations };
+        return { createClient, joinCall };
       } catch (importError) {
-        console.log('Agora modules not available, using fallback implementation');
+        console.error('Failed to load Agora service:', importError);
         setIsInitialized(true);
         return null;
       }

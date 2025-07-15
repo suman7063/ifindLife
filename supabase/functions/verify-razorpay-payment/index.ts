@@ -66,6 +66,27 @@ serve(async (req) => {
       const channelName = `session_${Date.now()}_${user.id}`
       const uid = Math.floor(Math.random() * 1000000)
 
+      // Generate Agora token using our token service
+      const tokenResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/generate-agora-token`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          channelName: channelName,
+          uid: uid,
+          role: 1,
+          expireTime: 3600
+        })
+      })
+
+      let agoraToken = 'fallback_token'
+      if (tokenResponse.ok) {
+        const tokenData = await tokenResponse.json()
+        agoraToken = tokenData.token
+      }
+
       // Update session with call details
       await supabaseClient
         .from('call_sessions')
@@ -81,7 +102,8 @@ serve(async (req) => {
           sessionId: razorpay_order_id,
           channelName: channelName,
           uid: uid,
-          token: 'agora_token_placeholder' // You'll need to implement Agora token generation
+          token: agoraToken,
+          appId: '9b3ad657507642f98a52d47893780e8e'
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
