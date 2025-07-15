@@ -23,21 +23,16 @@ export const isExpertAuthenticated = (auth: SimpleAuthContextType): boolean => {
     userType: auth.userType,
     hasUser: !!auth.user,
     hasExpert: !!auth.expert,
-    expertStatus: auth.expert?.status,
-    authId: auth.expert?.auth_id
+    expertStatus: auth.expert?.status
   });
   
-  const result = Boolean(
+  return Boolean(
     auth.isAuthenticated && 
     auth.user &&
     auth.userType === 'expert' && 
     auth.expert && 
     auth.expert.status === 'approved'
   );
-  
-  console.log('🔍 isExpertAuthenticated result:', result);
-  
-  return result;
 };
 
 export const isDualAuthenticated = (auth: SimpleAuthContextType): boolean => {

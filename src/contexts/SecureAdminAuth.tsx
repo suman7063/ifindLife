@@ -80,27 +80,22 @@ export const SecureAdminAuthProvider: React.FC<SecureAdminAuthProviderProps> = (
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
       setIsLoading(true);
-      console.log('🔐 SecureAdminAuth: Starting login process for:', username);
 
       // Input validation and sanitization
       if (!username || !password) {
-        console.log('❌ SecureAdminAuth: Missing credentials');
         toast.error('Please enter both username and password');
         return false;
       }
 
       const sanitizedUsername = sanitizeInput(username);
       const sanitizedPassword = sanitizeInput(password);
-      console.log('🔐 SecureAdminAuth: Sanitized username:', sanitizedUsername);
 
-      if (sanitizedUsername.length < 3 || sanitizedPassword.length < 6) {
-        console.log('❌ SecureAdminAuth: Credentials too short');
+      if (sanitizedUsername.length < 3 || sanitizedPassword.length < 8) {
         toast.error('Invalid credentials format');
         return false;
       }
 
       // Call secure authentication endpoint
-      console.log('🔐 SecureAdminAuth: Calling admin-auth function...');
       const { data, error } = await supabase.functions.invoke('admin-auth', {
         body: {
           action: 'login',
@@ -109,22 +104,18 @@ export const SecureAdminAuthProvider: React.FC<SecureAdminAuthProviderProps> = (
         },
       });
 
-      console.log('🔐 SecureAdminAuth: Function response:', { data, error });
-
       if (error) {
-        console.error('❌ SecureAdminAuth: Function invocation error:', error);
+        console.error('Admin login error:', error);
         toast.error('Authentication failed. Please try again.');
         return false;
       }
 
       if (!data?.success) {
-        console.log('❌ SecureAdminAuth: Login failed:', data?.error);
         toast.error(data?.error || 'Invalid credentials');
         return false;
       }
 
       // Store session securely
-      console.log('✅ SecureAdminAuth: Login successful, storing session');
       setStoredSession(data.sessionToken, data.expiresAt);
       setAdmin(data.admin);
       setIsAuthenticated(true);
