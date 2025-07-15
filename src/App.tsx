@@ -2,11 +2,12 @@
 import React from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { SimpleAuthProvider } from '@/contexts/SimpleAuthContext';
-import { AdminAuthProvider } from '@/contexts/AdminAuthClean';
 import { FavoritesProvider } from '@/contexts/favorites/FavoritesProvider';
 import { SecureAdminAuthProvider } from '@/contexts/SecureAdminAuth';
 import { AuthProvider } from '@/hooks/useAuth';
 import SecureAdminLogin from '@/components/admin/SecureAdminLogin';
+import AdminTestLogin from '@/components/admin/AdminTestLogin';
+import DebugStatus from '@/components/DebugStatus';
 import Home from './pages/Index';
 import UserLogin from './pages/UserLogin';
 import UserSignup from './pages/UserRegister';
@@ -107,6 +108,7 @@ const UserRoutes: React.FC = () => {
         
         {/* Authentication Test Suite */}
         <Route path="/auth-test" element={<AuthTestPage />} />
+        <Route path="/debug" element={<DebugStatus />} />
         
         {/* Legal Routes */}
         <Route path="/terms-of-service" element={<TermsOfService />} />
@@ -138,6 +140,11 @@ function App() {
           <Route path="/admin-login" element={
             <SecureAdminAuthProvider>
               <SecureAdminLogin />
+            </SecureAdminAuthProvider>
+          } />
+          <Route path="/admin-test-login" element={
+            <SecureAdminAuthProvider>
+              <AdminTestLogin />
             </SecureAdminAuthProvider>
           } />
           <Route path="/admin/*" element={
