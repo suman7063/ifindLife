@@ -82,7 +82,7 @@ serve(async (req) => {
         expert_id: parseInt(expertId), // Convert expertId to number
         call_type: 'video',
         channel_name: `session_${Date.now()}`,
-        status: 'pending_payment',
+        status: 'pending',
         selected_duration: 60, // Default 60 minutes
         cost: currency === 'INR' ? amount / 100 : null, // Convert back from paise
         cost_eur: currency === 'EUR' ? amount / 100 : null,

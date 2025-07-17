@@ -5,11 +5,11 @@ import { useRealAgoraCall } from '@/hooks/useRealAgoraCall';
 import { Badge } from '@/components/ui/badge';
 import { Video, Phone, PhoneOff } from 'lucide-react';
 
-// Test expert data
+// Using a test expert - the hook expects numeric ID
 const testExpert = {
-  id: 1,
-  name: 'Dr. Sarah Johnson',
-  price: 50 // 50 INR per minute
+  id: 1, // Numeric ID as expected by the hook
+  name: 'Test Expert (Online)',
+  price: 25 // 25 INR per minute
 };
 
 const TestCallFlow: React.FC = () => {
