@@ -68,8 +68,15 @@ serve(async (req) => {
 
     // Store payment order for verification - handle both appointments and call sessions
     if (callSessionId) {
+      console.log('Creating call session with data:', {
+        id: order.id,
+        user_id: user.id,
+        expert_id: parseInt(expertId),
+        callSessionId: callSessionId
+      })
+      
       // This is for call sessions
-      await supabaseClient.from('call_sessions').insert({
+      const { data: sessionData, error: sessionError } = await supabaseClient.from('call_sessions').insert({
         id: order.id,
         user_id: user.id,
         expert_id: parseInt(expertId), // Convert expertId to number
@@ -81,6 +88,13 @@ serve(async (req) => {
         cost_eur: currency === 'EUR' ? amount / 100 : null,
         currency: currency
       })
+      
+      if (sessionError) {
+        console.error('Failed to create call session:', sessionError)
+        throw new Error(`Failed to create call session: ${sessionError.message}`)
+      }
+      
+      console.log('Call session created successfully:', sessionData)
     }
     // For appointments, we don't need to store anything here - will be handled after payment success
 
