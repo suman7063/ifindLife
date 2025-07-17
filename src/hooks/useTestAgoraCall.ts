@@ -3,6 +3,7 @@ import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { createClient, joinCall, leaveCall, CallState } from '@/utils/agoraService';
 import type { IAgoraRTCClient } from 'agora-rtc-sdk-ng';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 // Test hook that bypasses payment verification for testing Agora functionality
 export const useTestAgoraCall = (expertId: number, expertPrice: number) => {
@@ -41,7 +42,26 @@ export const useTestAgoraCall = (expertId: number, expertPrice: number) => {
         callType
       });
 
-      // Initialize Agora client and join call directly
+      // Get Agora token from edge function
+      console.log('🔑 Getting Agora token from server...');
+      
+      const { data: tokenData, error: tokenError } = await supabase.functions.invoke('generate-agora-token', {
+        body: {
+          channelName: testChannelName,
+          uid: Math.floor(Math.random() * 1000000),
+          role: 1,
+          expireTime: 3600
+        }
+      });
+
+      if (tokenError) {
+        console.error('❌ Failed to get Agora token:', tokenError);
+        throw new Error('Failed to get Agora token: ' + tokenError.message);
+      }
+
+      console.log('✅ Got Agora token data:', tokenData);
+
+      // Initialize Agora client and join call with token
       const client = createClient();
       clientRef.current = client;
 
@@ -49,7 +69,9 @@ export const useTestAgoraCall = (expertId: number, expertPrice: number) => {
         {
           channelName: testChannelName,
           callType: callType === 'video' ? 'video' : 'audio',
-          appId: testAppId
+          appId: testAppId,
+          token: tokenData.token,
+          uid: tokenData.uid
         },
         client
       );

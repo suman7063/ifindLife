@@ -25,6 +25,8 @@ export interface CallSettings {
   channelName: string;
   callType: CallType;
   appId?: string;
+  token?: string | null;
+  uid?: number;
 }
 
 // Create Agora client
@@ -43,13 +45,18 @@ export const joinCall = async (
   localAudioTrack: IMicrophoneAudioTrack | null;
   localVideoTrack: ICameraVideoTrack | null;
 }> => {
-  const { channelName, callType, appId = '9b3ad657507642f98a52d47893780e8e' } = settings;
+  const { 
+    channelName, 
+    callType, 
+    appId = '9b3ad657507642f98a52d47893780e8e',
+    token = null,
+    uid
+  } = settings;
   
-  // Generate a consistent user ID
-  const userId = `user_${Math.floor(Math.random() * 1000000)}_${Date.now()}`;
+  // Use provided UID or generate one
+  const userId = uid || Math.floor(Math.random() * 1000000);
   
-  // For demo purposes only - in production get this from server
-  const token = null;
+  console.log('🎯 Joining Agora channel with:', { appId, channelName, token, userId });
   
   try {
     // Join the channel with consistent App ID
