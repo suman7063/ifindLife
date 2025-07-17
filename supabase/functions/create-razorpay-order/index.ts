@@ -72,7 +72,7 @@ serve(async (req) => {
       await supabaseClient.from('call_sessions').insert({
         id: order.id,
         user_id: user.id,
-        expert_id: expertId,
+        expert_id: parseInt(expertId), // Convert expertId to number
         call_type: 'video',
         channel_name: `session_${Date.now()}`,
         status: 'pending_payment',

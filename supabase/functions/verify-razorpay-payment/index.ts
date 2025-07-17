@@ -45,6 +45,8 @@ serve(async (req) => {
 
     // Handle different payment types - call sessions vs appointments
     if (callSessionId) {
+      console.log('Looking for call session with ID:', razorpay_order_id, 'for user:', user.id)
+      
       // Update call session status to completed
       const { data: session, error: updateError } = await supabaseClient
         .from('call_sessions')
@@ -58,8 +60,11 @@ serve(async (req) => {
         .select()
         .single()
 
+      console.log('Update result:', { session, updateError })
+
       if (updateError || !session) {
-        throw new Error('Failed to update session status')
+        console.error('Failed to update session. Error:', updateError)
+        throw new Error(`Failed to update session status: ${updateError?.message || 'Session not found'}`)
       }
 
       // Generate Agora token and channel for the call
