@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useRealAgoraCall } from '@/hooks/useRealAgoraCall';
+import { useTestAgoraCall } from '@/hooks/useTestAgoraCall';
 import { Badge } from '@/components/ui/badge';
 import { Video, Phone, PhoneOff } from 'lucide-react';
 
@@ -28,7 +28,7 @@ const TestCallFlow: React.FC = () => {
     handleToggleMute,
     handleToggleVideo,
     formatTime
-  } = useRealAgoraCall(testExpert.id, testExpert.price);
+  } = useTestAgoraCall(testExpert.id, testExpert.price);
 
   const handleStartCall = async () => {
     console.log('🚀 Testing complete call flow...');
@@ -188,11 +188,11 @@ const TestCallFlow: React.FC = () => {
         )}
 
         {/* Instructions */}
-        <div className="mt-6 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md">
-          <p className="text-xs text-blue-700 dark:text-blue-300">
-            <strong>Testing Flow:</strong> This will create a real Razorpay payment order, 
-            open payment modal, verify payment, and start an Agora video call session.
-            {!callState?.isJoined && ' Click "Start Call" to test the complete flow.'}
+        <div className="mt-6 p-3 bg-green-50 dark:bg-green-900/20 rounded-md">
+          <p className="text-xs text-green-700 dark:text-green-300">
+            <strong>Test Mode:</strong> This bypasses payment verification and directly starts an Agora video call session.
+            Perfect for testing the video calling functionality without dealing with payment issues.
+            {!callState?.isJoined && ' Click "Start Call" to test Agora video functionality.'}
           </p>
         </div>
       </CardContent>

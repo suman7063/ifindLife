@@ -52,7 +52,7 @@ serve(async (req) => {
         .from('call_sessions')
         .update({
           status: 'completed',
-          payment_method: 'razorpay',
+          payment_method: 'gateway',
           updated_at: new Date().toISOString()
         })
         .eq('id', razorpay_order_id)
