@@ -310,8 +310,13 @@ export type Database = {
       }
       call_sessions: {
         Row: {
+          agora_channel_name: string | null
+          agora_token: string | null
           analytics_data: Json | null
+          answered_at: string | null
           appointment_id: string | null
+          call_direction: string | null
+          call_metadata: Json | null
           call_type: string
           channel_name: string
           cost: number | null
@@ -320,9 +325,11 @@ export type Database = {
           currency: string | null
           duration: number | null
           end_time: string | null
+          expert_auth_id: string | null
           expert_category: string | null
           expert_id: number
           id: string
+          missed_call: boolean | null
           payment_method: string | null
           pricing_tier: string | null
           rating: number | null
@@ -335,8 +342,13 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          agora_channel_name?: string | null
+          agora_token?: string | null
           analytics_data?: Json | null
+          answered_at?: string | null
           appointment_id?: string | null
+          call_direction?: string | null
+          call_metadata?: Json | null
           call_type: string
           channel_name: string
           cost?: number | null
@@ -345,9 +357,11 @@ export type Database = {
           currency?: string | null
           duration?: number | null
           end_time?: string | null
+          expert_auth_id?: string | null
           expert_category?: string | null
           expert_id: number
           id: string
+          missed_call?: boolean | null
           payment_method?: string | null
           pricing_tier?: string | null
           rating?: number | null
@@ -360,8 +374,13 @@ export type Database = {
           user_id: string
         }
         Update: {
+          agora_channel_name?: string | null
+          agora_token?: string | null
           analytics_data?: Json | null
+          answered_at?: string | null
           appointment_id?: string | null
+          call_direction?: string | null
+          call_metadata?: Json | null
           call_type?: string
           channel_name?: string
           cost?: number | null
@@ -370,9 +389,11 @@ export type Database = {
           currency?: string | null
           duration?: number | null
           end_time?: string | null
+          expert_auth_id?: string | null
           expert_category?: string | null
           expert_id?: number
           id?: string
+          missed_call?: boolean | null
           payment_method?: string | null
           pricing_tier?: string | null
           rating?: number | null
@@ -961,6 +982,75 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      incoming_call_requests: {
+        Row: {
+          agora_token: string | null
+          agora_uid: number | null
+          call_session_id: string | null
+          call_type: string
+          channel_name: string
+          created_at: string
+          estimated_cost_inr: number | null
+          estimated_cost_usd: number | null
+          expert_id: string
+          expires_at: string
+          id: string
+          status: string
+          updated_at: string
+          user_id: string
+          user_metadata: Json | null
+        }
+        Insert: {
+          agora_token?: string | null
+          agora_uid?: number | null
+          call_session_id?: string | null
+          call_type: string
+          channel_name: string
+          created_at?: string
+          estimated_cost_inr?: number | null
+          estimated_cost_usd?: number | null
+          expert_id: string
+          expires_at: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          user_metadata?: Json | null
+        }
+        Update: {
+          agora_token?: string | null
+          agora_uid?: number | null
+          call_session_id?: string | null
+          call_type?: string
+          channel_name?: string
+          created_at?: string
+          estimated_cost_inr?: number | null
+          estimated_cost_usd?: number | null
+          expert_id?: string
+          expires_at?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          user_metadata?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incoming_call_requests_call_session_id_fkey"
+            columns: ["call_session_id"]
+            isOneToOne: false
+            referencedRelation: "call_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incoming_call_requests_expert_id_fkey"
+            columns: ["expert_id"]
+            isOneToOne: false
+            referencedRelation: "expert_accounts"
+            referencedColumns: ["auth_id"]
+          },
+        ]
       }
       messages: {
         Row: {
@@ -1910,6 +2000,10 @@ export type Database = {
       dearmor: {
         Args: { "": string }
         Returns: string
+      }
+      expire_old_call_requests: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       gen_random_bytes: {
         Args: { "": number }

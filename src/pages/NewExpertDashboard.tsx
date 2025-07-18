@@ -11,6 +11,7 @@ import ServicesPage from '@/components/expert-dashboard/pages/ServicesPage';
 import EarningsPage from '@/components/expert-dashboard/pages/EarningsPage';
 import ReportPage from '@/components/expert-dashboard/pages/ReportPage';
 import ExpertOnboardingFlow from '@/components/expert/dashboard/ExpertOnboardingFlow';
+import CallReceptionWidget from '@/components/expert-dashboard/call/CallReceptionWidget';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { useIntegratedExpertPresence } from '@/hooks/useIntegratedExpertPresence';
 import { supabase } from '@/lib/supabase';
@@ -99,6 +100,9 @@ const NewExpertDashboard: React.FC = () => {
 
   return (
     <ExpertDashboardLayout>
+      {/* Call Reception Widget - Always available */}
+      <CallReceptionWidget />
+      
       <Routes>
         {/* Dashboard Home */}
         <Route index element={<DashboardHome />} />

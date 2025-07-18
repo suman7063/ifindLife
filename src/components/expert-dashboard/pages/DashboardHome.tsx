@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import PresenceStatusControl from '../components/PresenceStatusControl';
 import AwayMessagesPanel from '../components/AwayMessagesPanel';
+import CallReceptionWidget from '../call/CallReceptionWidget';
+import CallTestWidget from '../call/CallTestWidget';
 
 const DashboardHome = () => {
   const { expert: expertProfile } = useSimpleAuth();
@@ -69,9 +71,10 @@ const DashboardHome = () => {
   return (
     <div className="space-y-6">
       {/* Presence and Messages Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <PresenceStatusControl />
         <AwayMessagesPanel />
+        <CallTestWidget />
       </div>
 
       {/* Welcome Section */}
