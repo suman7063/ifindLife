@@ -6,10 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Install agora-token package: npm install agora-token
-import { RtcTokenBuilder, RtcRole } from "https://esm.sh/agora-token@2.0.4"
-
-function generateAgoraToken(appId: string, appCertificate: string, channelName: string, uid: number, role: number, expireTime: number): string | null {
+// Agora token generation using Deno's native crypto
+async function generateAgoraToken(appId: string, appCertificate: string, channelName: string, uid: number, role: number, expireTime: number): Promise<string | null> {
   try {
     // If no app certificate is provided, return null (for projects without authentication)
     if (!appCertificate || appCertificate === 'temp_certificate') {
@@ -17,21 +15,44 @@ function generateAgoraToken(appId: string, appCertificate: string, channelName: 
       return null;
     }
 
-    // Generate proper Agora token
+    // Generate proper Agora token using Deno crypto
     const currentTimestamp = Math.floor(Date.now() / 1000);
     const privilegeExpiredTs = currentTimestamp + expireTime;
     
-    // Use RtcRole.PUBLISHER for role 1 (host), RtcRole.SUBSCRIBER for role 2 (audience)
-    const rtcRole = role === 1 ? RtcRole.PUBLISHER : RtcRole.SUBSCRIBER;
+    // Agora RTC Token format
+    const version = '007';
+    const randomInt = Math.floor(Math.random() * 0xFFFFFFFF);
+    const randomHex = randomInt.toString(16).padStart(8, '0');
     
-    const token = RtcTokenBuilder.buildTokenWithUid(
-      appId,
-      appCertificate,
-      channelName,
-      uid,
-      rtcRole,
-      privilegeExpiredTs
+    // Build message to sign
+    const messageRaw = `${appId}${channelName}${uid}${privilegeExpiredTs}${randomHex}`;
+    
+    // Create HMAC-SHA256 signature using Deno's crypto API
+    const key = await crypto.subtle.importKey(
+      'raw',
+      new TextEncoder().encode(appCertificate),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
     );
+    
+    const signature = await crypto.subtle.sign(
+      'HMAC',
+      key,
+      new TextEncoder().encode(messageRaw)
+    );
+    
+    // Convert signature to hex
+    const signatureArray = new Uint8Array(signature);
+    const signatureHex = Array.from(signatureArray)
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+    
+    // Build token
+    const tokenData = `${version}${appId}${privilegeExpiredTs}${randomHex}${signatureHex}`;
+    
+    // Base64 encode
+    const token = btoa(tokenData);
     
     console.log('✅ Generated Agora token for channel:', channelName, 'uid:', uid, 'role:', role);
     return token;
@@ -74,7 +95,7 @@ serve(async (req) => {
     const appCertificate = Deno.env.get('AGORA_APP_CERTIFICATE') || 'temp_certificate'
     
     // Generate Agora token
-    const agoraToken = generateAgoraToken(
+    const agoraToken = await generateAgoraToken(
       appId, 
       appCertificate, 
       channelName, 
