@@ -6,13 +6,41 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// For testing purposes, return null to use Agora without token
-// In production, you should use the official Agora token server or SDK
+// Install agora-token package: npm install agora-token
+import { RtcTokenBuilder, RtcRole } from "https://esm.sh/agora-token@2.0.4"
+
 function generateAgoraToken(appId: string, appCertificate: string, channelName: string, uid: number, role: number, expireTime: number): string | null {
-  // For testing without authentication, return null
-  // This requires Agora project to have authentication disabled
-  console.log('🟡 Generating test token (null) for channel:', channelName, 'uid:', uid);
-  return null;
+  try {
+    // If no app certificate is provided, return null (for projects without authentication)
+    if (!appCertificate || appCertificate === 'temp_certificate') {
+      console.log('🟡 No app certificate provided, returning null token for channel:', channelName, 'uid:', uid);
+      return null;
+    }
+
+    // Generate proper Agora token
+    const currentTimestamp = Math.floor(Date.now() / 1000);
+    const privilegeExpiredTs = currentTimestamp + expireTime;
+    
+    // Use RtcRole.PUBLISHER for role 1 (host), RtcRole.SUBSCRIBER for role 2 (audience)
+    const rtcRole = role === 1 ? RtcRole.PUBLISHER : RtcRole.SUBSCRIBER;
+    
+    const token = RtcTokenBuilder.buildTokenWithUid(
+      appId,
+      appCertificate,
+      channelName,
+      uid,
+      rtcRole,
+      privilegeExpiredTs
+    );
+    
+    console.log('✅ Generated Agora token for channel:', channelName, 'uid:', uid, 'role:', role);
+    return token;
+  } catch (error) {
+    console.error('❌ Error generating Agora token:', error);
+    // Fallback to null token for testing
+    console.log('🟡 Falling back to null token for channel:', channelName, 'uid:', uid);
+    return null;
+  }
 }
 
 serve(async (req) => {
