@@ -34,11 +34,11 @@ export const useTestAgoraCall = (expertId: number, expertPrice: number) => {
       
       // Generate test channel details
       const testChannelName = `test_session_${Date.now()}_${userProfile.id}`;
-      const testAppId = '9b3ad657507642f98a52d47893780e8e'; // Agora App ID
+      const testUid = Math.floor(Math.random() * 1000000);
       
       console.log('🎥 Starting Agora test call with details:', {
         channelName: testChannelName,
-        appId: testAppId,
+        uid: testUid,
         callType
       });
 
@@ -48,8 +48,8 @@ export const useTestAgoraCall = (expertId: number, expertPrice: number) => {
       const { data: tokenData, error: tokenError } = await supabase.functions.invoke('generate-agora-token', {
         body: {
           channelName: testChannelName,
-          uid: Math.floor(Math.random() * 1000000),
-          role: 1,
+          uid: testUid,
+          role: 1, // Publisher role
           expireTime: 3600
         }
       });
@@ -59,22 +59,35 @@ export const useTestAgoraCall = (expertId: number, expertPrice: number) => {
         throw new Error('Failed to get Agora token: ' + tokenError.message);
       }
 
-      console.log('✅ Got Agora token data:', tokenData);
+      console.log('✅ Got Agora token response:', {
+        ...tokenData,
+        token: tokenData.token ? '[HIDDEN]' : null,
+        tokenType: tokenData.tokenType
+      });
 
-      // Initialize Agora client and join call with token
+      // Validate token response
+      if (!tokenData.appId) {
+        throw new Error('Invalid token response: missing appId');
+      }
+
+      // Initialize Agora client and join call
       const client = createClient();
       clientRef.current = client;
 
+      console.log('🔗 Joining Agora channel with proper token...');
+      
       const { localAudioTrack, localVideoTrack } = await joinCall(
         {
           channelName: testChannelName,
           callType: callType === 'video' ? 'video' : 'audio',
-          appId: testAppId,
-          token: tokenData.token,
+          appId: tokenData.appId,
+          token: tokenData.token, // Can be null for testing
           uid: tokenData.uid
         },
         client
       );
+
+      console.log('✅ Successfully joined Agora channel');
 
       // Set call state
       setCallState({
@@ -112,12 +125,29 @@ export const useTestAgoraCall = (expertId: number, expertPrice: number) => {
         });
       }, 1000);
 
-      toast.success('Test call started successfully! (No payment required)');
+      const successMessage = tokenData.tokenType === 'authenticated' 
+        ? 'Test call started with authenticated token!' 
+        : 'Test call started with null token (testing mode)!';
+      
+      toast.success(successMessage);
       return true;
 
     } catch (error) {
       console.error('❌ Error starting test call:', error);
-      setCallError(error instanceof Error ? error.message : 'Failed to start test call');
+      
+      // Provide more specific error messages
+      let errorMessage = 'Failed to start test call';
+      if (error instanceof Error) {
+        if (error.message.includes('CAN_NOT_GET_GATEWAY_SERVER')) {
+          errorMessage = 'Agora gateway error - check token generation and network';
+        } else if (error.message.includes('token')) {
+          errorMessage = 'Token generation failed - check Agora configuration';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      setCallError(errorMessage);
       return false;
     } finally {
       setIsConnecting(false);
