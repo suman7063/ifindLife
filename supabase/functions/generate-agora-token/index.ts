@@ -7,8 +7,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Using a working Agora token builder for Deno
-// This implementation follows the official Agora RTC token format
+// Proper Agora RTC Token generation following official spec
 async function generateAgoraToken(appId: string, appCertificate: string, channelName: string, uid: number, role: number, expireTime: number): Promise<string | null> {
   try {
     // If no app certificate is provided, return null (for projects without authentication)
@@ -17,80 +16,79 @@ async function generateAgoraToken(appId: string, appCertificate: string, channel
       return null;
     }
 
-    console.log('🔑 Generating Agora token with proper format...');
+    console.log('🔑 Generating proper Agora RTC token...');
     
     const currentTimestamp = Math.floor(Date.now() / 1000);
     const privilegeExpiredTs = currentTimestamp + expireTime;
+    const salt = Math.floor(Math.random() * 0xFFFFFFFF);
     
-    // Agora RTC Token version 007 format
-    const version = '007';
-    const serviceTyte = 1; // RTC service
-    const randomInt = Math.floor(Math.random() * 0xFFFFFFFF);
-    
-    // Build privilege map for RTC
-    const privilegeMap = new Map();
-    privilegeMap.set(1, privilegeExpiredTs); // JOIN_CHANNEL privilege
-    if (role === 1) {
-      privilegeMap.set(2, privilegeExpiredTs); // PUBLISH_AUDIO_STREAM privilege
-      privilegeMap.set(3, privilegeExpiredTs); // PUBLISH_VIDEO_STREAM privilege
-      privilegeMap.set(4, privilegeExpiredTs); // PUBLISH_DATA_STREAM privilege
+    // Helper function to pack uint32 in little endian
+    function packUint32LE(value: number): Uint8Array {
+      const buffer = new ArrayBuffer(4);
+      const view = new DataView(buffer);
+      view.setUint32(0, value, true); // true = little endian
+      return new Uint8Array(buffer);
     }
     
-    // Pack privilege map
-    let privilegeBuffer = new ArrayBuffer(2);
-    let privilegeView = new DataView(privilegeBuffer);
-    privilegeView.setUint16(0, privilegeMap.size, true);
-    
-    for (const [key, value] of privilegeMap) {
-      const keyBuffer = new ArrayBuffer(2);
-      const keyView = new DataView(keyBuffer);
-      keyView.setUint16(0, key, true);
-      
-      const valueBuffer = new ArrayBuffer(4);
-      const valueView = new DataView(valueBuffer);
-      valueView.setUint32(0, value, true);
-      
-      const combined = new Uint8Array(privilegeBuffer.byteLength + keyBuffer.byteLength + valueBuffer.byteLength);
-      combined.set(new Uint8Array(privilegeBuffer), 0);
-      combined.set(new Uint8Array(keyBuffer), privilegeBuffer.byteLength);
-      combined.set(new Uint8Array(valueBuffer), privilegeBuffer.byteLength + keyBuffer.byteLength);
-      
-      privilegeBuffer = combined.buffer;
+    // Helper function to pack uint16 in little endian
+    function packUint16LE(value: number): Uint8Array {
+      const buffer = new ArrayBuffer(2);
+      const view = new DataView(buffer);
+      view.setUint16(0, value, true); // true = little endian
+      return new Uint8Array(buffer);
     }
     
-    // Build message to sign
+    // Build privileges map
+    const privileges = new Map<number, number>();
+    privileges.set(1, privilegeExpiredTs); // kJoinChannel
+    if (role === 1) { // Publisher
+      privileges.set(2, privilegeExpiredTs); // kPublishAudioStream
+      privileges.set(3, privilegeExpiredTs); // kPublishVideoStream
+      privileges.set(4, privilegeExpiredTs); // kPublishDataStream
+    }
+    
+    // Pack privileges
+    const privilegesPacked: Uint8Array[] = [];
+    privilegesPacked.push(packUint16LE(privileges.size));
+    
+    for (const [key, value] of privileges) {
+      privilegesPacked.push(packUint16LE(key));
+      privilegesPacked.push(packUint32LE(value));
+    }
+    
+    // Combine all privilege bytes
+    const privilegesBytes = new Uint8Array(privilegesPacked.reduce((acc, arr) => acc + arr.length, 0));
+    let offset = 0;
+    for (const arr of privilegesPacked) {
+      privilegesBytes.set(arr, offset);
+      offset += arr.length;
+    }
+    
+    // Build message to sign (appId + channelName + uid + expiredTs + salt + privileges)
     const appIdBytes = new TextEncoder().encode(appId);
     const channelNameBytes = new TextEncoder().encode(channelName);
-    const uidBytes = new ArrayBuffer(4);
-    const uidView = new DataView(uidBytes);
-    uidView.setUint32(0, uid, true);
+    const uidBytes = packUint32LE(uid);
+    const expiredTsBytes = packUint32LE(privilegeExpiredTs);
+    const saltBytes = packUint32LE(salt);
     
-    const expiredTsBytes = new ArrayBuffer(4);
-    const expiredTsView = new DataView(expiredTsBytes);
-    expiredTsView.setUint32(0, privilegeExpiredTs, true);
+    // Combine message components
+    const messageLength = appIdBytes.length + channelNameBytes.length + 4 + 4 + 4 + privilegesBytes.length;
+    const message = new Uint8Array(messageLength);
+    offset = 0;
     
-    const randomBytes = new ArrayBuffer(4);
-    const randomView = new DataView(randomBytes);
-    randomView.setUint32(0, randomInt, true);
-    
-    // Combine all message parts
-    const messageLength = appIdBytes.length + channelNameBytes.length + 4 + 4 + 4 + privilegeBuffer.byteLength;
-    const messageBuffer = new Uint8Array(messageLength);
-    let offset = 0;
-    
-    messageBuffer.set(appIdBytes, offset);
+    message.set(appIdBytes, offset);
     offset += appIdBytes.length;
-    messageBuffer.set(channelNameBytes, offset);
+    message.set(channelNameBytes, offset);
     offset += channelNameBytes.length;
-    messageBuffer.set(new Uint8Array(uidBytes), offset);
+    message.set(uidBytes, offset);
     offset += 4;
-    messageBuffer.set(new Uint8Array(expiredTsBytes), offset);
+    message.set(expiredTsBytes, offset);
     offset += 4;
-    messageBuffer.set(new Uint8Array(randomBytes), offset);
+    message.set(saltBytes, offset);
     offset += 4;
-    messageBuffer.set(new Uint8Array(privilegeBuffer), offset);
+    message.set(privilegesBytes, offset);
     
-    // Create HMAC-SHA256 signature
+    // Generate HMAC-SHA256 signature
     const key = await crypto.subtle.importKey(
       'raw',
       new TextEncoder().encode(appCertificate),
@@ -99,42 +97,35 @@ async function generateAgoraToken(appId: string, appCertificate: string, channel
       ['sign']
     );
     
-    const signature = await crypto.subtle.sign(
-      'HMAC',
-      key,
-      messageBuffer
-    );
+    const signature = await crypto.subtle.sign('HMAC', key, message);
+    const signatureBytes = new Uint8Array(signature);
     
-    // Build final token
-    const signatureArray = new Uint8Array(signature);
-    const tokenBuffer = new Uint8Array(
-      version.length + 
-      appIdBytes.length + 
-      4 + // expiredTs
-      4 + // random
-      signatureArray.length + 
-      messageBuffer.length
-    );
+    // Build final token: version(3) + signature(32) + appId + expiredTs + salt + message
+    const version = '007';
+    const versionBytes = new TextEncoder().encode(version);
     
+    const tokenLength = versionBytes.length + signatureBytes.length + appIdBytes.length + 4 + 4 + messageLength;
+    const token = new Uint8Array(tokenLength);
     offset = 0;
-    tokenBuffer.set(new TextEncoder().encode(version), offset);
-    offset += version.length;
-    tokenBuffer.set(appIdBytes, offset);
+    
+    token.set(versionBytes, offset);
+    offset += versionBytes.length;
+    token.set(signatureBytes, offset);
+    offset += signatureBytes.length;
+    token.set(appIdBytes, offset);
     offset += appIdBytes.length;
-    tokenBuffer.set(new Uint8Array(expiredTsBytes), offset);
+    token.set(expiredTsBytes, offset);
     offset += 4;
-    tokenBuffer.set(new Uint8Array(randomBytes), offset);
+    token.set(saltBytes, offset);
     offset += 4;
-    tokenBuffer.set(signatureArray, offset);
-    offset += signatureArray.length;
-    tokenBuffer.set(messageBuffer, offset);
+    token.set(message, offset);
     
     // Base64 encode the final token
-    const token = btoa(String.fromCharCode(...tokenBuffer));
+    const tokenBase64 = btoa(String.fromCharCode(...token));
     
     console.log('✅ Generated proper Agora RTC token for channel:', channelName, 'uid:', uid, 'role:', role);
-    console.log('🔍 Token length:', token.length, 'Version:', version);
-    return token;
+    console.log('🔍 Token length:', tokenBase64.length, 'Version:', version);
+    return tokenBase64;
     
   } catch (error) {
     console.error('❌ Error generating Agora token:', error);
