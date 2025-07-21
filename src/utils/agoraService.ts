@@ -48,10 +48,14 @@ export const joinCall = async (
   const { 
     channelName, 
     callType, 
-    appId = '9b3ad657507642f98a52d47893780e8e',
+    appId,
     token = null,
     uid
   } = settings;
+  
+  if (!appId) {
+    throw new Error('App ID is required to join call');
+  }
   
   // Use provided UID or generate one
   const userId = uid || Math.floor(Math.random() * 1000000);
