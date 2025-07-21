@@ -74,63 +74,81 @@ export const useTestAgoraCall = (expertId: number, expertPrice: number) => {
       const client = createClient();
       clientRef.current = client;
 
-      console.log('🔗 Joining Agora channel with proper token...');
-      
-      const { localAudioTrack, localVideoTrack } = await joinCall(
-        {
-          channelName: testChannelName,
-          callType: callType === 'video' ? 'video' : 'audio',
-          appId: tokenData.appId,
-          token: tokenData.token, // Can be null for testing
-          uid: tokenData.uid
-        },
-        client
-      );
-
-      console.log('✅ Successfully joined Agora channel');
-
-      // Set call state
-      setCallState({
-        localAudioTrack,
-        localVideoTrack,
-        remoteUsers: [],
-        client,
-        isJoined: true,
-        isMuted: false,
-        isVideoEnabled: callType === 'video',
-        isAudioEnabled: true
+      console.log('🔗 Joining Agora channel...');
+      console.log('📋 Join params:', {
+        appId: tokenData.appId,
+        channelName: testChannelName,
+        token: tokenData.token ? '[HIDDEN]' : 'null',
+        uid: tokenData.uid,
+        tokenType: tokenData.tokenType
       });
-
-      // Start timers
-      setDuration(0);
-      setRemainingTime(selectedDuration * 60);
-      setCost(selectedDuration * expertPrice);
-
-      // Duration timer
-      durationTimerRef.current = setInterval(() => {
-        setDuration(prev => prev + 1);
-      }, 1000);
-
-      // Remaining time timer (for test, make it 10 minutes max)
-      const testDuration = Math.min(selectedDuration, 10);
-      setRemainingTime(testDuration * 60);
       
-      timerRef.current = setInterval(() => {
-        setRemainingTime(prev => {
-          if (prev <= 1) {
-            endCall();
-            return 0;
-          }
-          return prev - 1;
+      try {
+        const { localAudioTrack, localVideoTrack } = await joinCall(
+          {
+            channelName: testChannelName,
+            callType: callType === 'video' ? 'video' : 'audio',
+            appId: tokenData.appId,
+            token: tokenData.token, // Can be null for testing
+            uid: tokenData.uid
+          },
+          client
+        );
+
+        console.log('✅ Successfully joined Agora channel');
+
+        // Set call state
+        setCallState({
+          localAudioTrack,
+          localVideoTrack,
+          remoteUsers: [],
+          client,
+          isJoined: true,
+          isMuted: false,
+          isVideoEnabled: callType === 'video',
+          isAudioEnabled: true
         });
-      }, 1000);
 
-      const successMessage = tokenData.tokenType === 'authenticated' 
-        ? 'Test call started with authenticated token!' 
-        : 'Test call started with null token (testing mode)!';
-      
-      toast.success(successMessage);
-      return true;
+        // Start timers
+        setDuration(0);
+        setRemainingTime(selectedDuration * 60);
+        setCost(selectedDuration * expertPrice);
+
+        // Duration timer
+        durationTimerRef.current = setInterval(() => {
+          setDuration(prev => prev + 1);
+        }, 1000);
+
+        // Remaining time timer (for test, make it 10 minutes max)
+        const testDuration = Math.min(selectedDuration, 10);
+        setRemainingTime(testDuration * 60);
+        
+        timerRef.current = setInterval(() => {
+          setRemainingTime(prev => {
+            if (prev <= 1) {
+              endCall();
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+
+        const successMessage = tokenData.tokenType === 'authenticated' 
+          ? 'Test call started with authenticated token!' 
+          : 'Test call started with null token (testing mode)!';
+        
+        toast.success(successMessage);
+        return true;
+
+      } catch (agoraError) {
+        console.error('❌ Agora SDK Error Details:', {
+          error: agoraError,
+          message: agoraError instanceof Error ? agoraError.message : 'Unknown error',
+          code: (agoraError as any)?.code,
+          name: (agoraError as any)?.name
+        });
+        throw agoraError;
+      }
 
     } catch (error) {
       console.error('❌ Error starting test call:', error);
