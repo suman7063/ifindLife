@@ -22,7 +22,7 @@ export interface AgoraConfiguration {
 }
 
 const defaultConfig: AgoraConfiguration = {
-  appId: '711352125', // Corrected Agora App ID
+  appId: '9b3ad657507642f98a52d47893780e8e', // Match backend App ID
   enableDualStream: true,
   enableCloudRecording: true,
   enableNetworkQualityReport: true,
@@ -64,13 +64,13 @@ interface AgoraConfigProviderProps {
 
 export const AgoraConfigProvider: React.FC<AgoraConfigProviderProps> = ({
   children,
-  appId = '711352125', // Use correct App ID as default
+  appId = '9b3ad657507642f98a52d47893780e8e', // Match backend App ID
   initialConfig = {}
 }) => {
   const [config, setConfig] = React.useState<AgoraConfiguration>({
     ...defaultConfig,
     ...initialConfig,
-    appId: appId || initialConfig.appId || '711352125'
+    appId: appId || initialConfig.appId || '9b3ad657507642f98a52d47893780e8e'
   });
 
   const updateConfig = React.useCallback((updates: Partial<AgoraConfiguration>) => {
