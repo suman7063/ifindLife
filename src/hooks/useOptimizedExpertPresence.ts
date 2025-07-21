@@ -91,7 +91,10 @@ export function useOptimizedExpertPresence(expertIds: string[] = []) {
       // Check if we already have fresh data
       const cached = globalPresenceCache[expertId];
       if (cached && (now - cached.lastUpdate) < CACHE_DURATION) {
-        console.log('🟡 Optimized: Using cached presence for:', expertId);
+        // Only log in development and reduce frequency
+        if (process.env.NODE_ENV === 'development' && Math.random() < 0.1) {
+          console.log('🟡 Optimized: Using cached presence for:', expertId);
+        }
         trackCacheHit();
         return;
       }
@@ -107,7 +110,9 @@ export function useOptimizedExpertPresence(expertIds: string[] = []) {
 
     // Only subscribe to experts we don't have fresh data for
     if (newSubscriptions.length > 0) {
-      console.log('🔵 Optimized: New subscriptions needed for:', newSubscriptions);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔵 Optimized: New subscriptions needed for:', newSubscriptions);
+      }
       
       // Update performance metrics
       updatePerformanceMetrics({
