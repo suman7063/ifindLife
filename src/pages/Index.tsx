@@ -14,7 +14,7 @@ import AuthDebugPanel from '@/components/debug/AuthDebugPanel';
 import EmergencyAuthFix from '@/components/debug/EmergencyAuthFix';
 import TestimonialsSection from '@/components/TestimonialsSection';
 import PresencePerformanceMonitor from '@/components/expert-card/PresencePerformanceMonitor';
-import TestCallFlow from '@/components/TestCallFlow';
+
 
 // Lazy load remaining non-critical components
 const WhyChooseUsSection = lazy(() => import('@/components/WhyChooseUsSection'));
@@ -54,10 +54,6 @@ const Index = () => {
       {/* Emergency Auth Debug - only in development */}
       <EmergencyAuthFix />
       
-      {/* Test Call Flow - Development Testing */}
-      <div className="fixed bottom-4 right-4 z-50">
-        <TestCallFlow />
-      </div>
       
       <main className="flex-1">
         {/* Section 1: Hero Banner with enhanced slider and service cards */}
