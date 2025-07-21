@@ -9,7 +9,7 @@ import { toast } from 'sonner';
  */
 export function useIntegratedExpertPresence() {
   const { expert, isAuthenticated, userType } = useSimpleAuth();
-  const { checkExpertPresence } = useExpertPresence();
+  const { checkExpertPresence, updateExpertPresence } = useExpertPresence();
 
   useEffect(() => {
     if (userType === 'expert' && expert && isAuthenticated) {

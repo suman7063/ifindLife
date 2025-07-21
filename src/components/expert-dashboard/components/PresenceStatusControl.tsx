@@ -16,6 +16,7 @@ import {
 import { useLazyExpertPresence } from '@/hooks/useLazyExpertPresence';
 import { useAwayMessaging } from '@/hooks/useAwayMessaging';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
+import { useExpertPresence } from '@/contexts/ExpertPresenceContext';
 import ExpertStatusIndicator from '@/components/expert-card/ExpertStatusIndicator';
 import { toast } from 'sonner';
 
@@ -24,7 +25,7 @@ const PresenceStatusControl: React.FC = () => {
   
   // Use lazy presence - expert can see their own status immediately
   const { getExpertStatus } = useLazyExpertPresence();
-  
+  const { updateExpertPresence, trackActivity } = useExpertPresence();
   const { getUnreadCount, getAwayMessages } = useAwayMessaging();
   
   const [currentStatus, setCurrentStatus] = useState<'available' | 'busy' | 'away' | 'offline'>('offline');
@@ -34,15 +35,16 @@ const PresenceStatusControl: React.FC = () => {
 
   useEffect(() => {
     if (expert?.auth_id) {
-      const status = getExpertStatus(expert.auth_id);
-      const activity = getLastActivity(expert.auth_id);
-      setCurrentStatus(status);
-      setLastActivity(activity);
+      const expertStatus = getExpertStatus(expert.auth_id);
+      setCurrentStatus(expertStatus.status === 'online' ? 'available' : 
+                     expertStatus.status === 'away' ? 'away' : 
+                     expertStatus.status === 'offline' ? 'offline' : 'available');
+      setLastActivity(expertStatus.lastActivity || '');
       
       // Load unread messages count
       loadUnreadCount();
     }
-  }, [expert?.auth_id, getExpertStatus, getLastActivity]);
+  }, [expert?.auth_id, getExpertStatus]);
 
   const loadUnreadCount = async () => {
     if (expert?.auth_id) {

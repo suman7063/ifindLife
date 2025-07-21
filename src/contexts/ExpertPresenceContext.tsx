@@ -13,6 +13,8 @@ interface ExpertPresenceContextType {
   getExpertPresence: (expertId: string) => ExpertPresence | null;
   checkExpertPresence: (expertId: string) => Promise<ExpertPresence>;
   bulkCheckPresence: (expertIds: string[]) => Promise<void>;
+  updateExpertPresence: (expertId: string, status: 'available' | 'busy' | 'away' | 'offline') => Promise<void>;
+  trackActivity: (expertId: string) => Promise<void>;
   isLoading: boolean;
 }
 
@@ -213,10 +215,103 @@ export const ExpertPresenceProvider: React.FC<{ children: React.ReactNode }> = (
     }
   }, [getExpertPresence]);
 
+  const updateExpertPresence = useCallback(async (
+    expertId: string, 
+    status: 'available' | 'busy' | 'away' | 'offline'
+  ) => {
+    try {
+      console.log('📝 Updating expert presence:', { expertId, status });
+      
+      // First, check if expert_presence record exists
+      const { data: existingPresence, error: checkError } = await supabase
+        .from('expert_presence')
+        .select('id')
+        .eq('expert_id', expertId)
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        throw checkError;
+      }
+
+      if (existingPresence) {
+        // Update existing record
+        const { error } = await supabase
+          .from('expert_presence')
+          .update({
+            status,
+            last_activity: new Date().toISOString()
+          })
+          .eq('expert_id', expertId);
+
+        if (error) throw error;
+      } else {
+        // Create new record
+        const { error } = await supabase
+          .from('expert_presence')
+          .insert({
+            expert_id: expertId,
+            status,
+            last_activity: new Date().toISOString()
+          });
+
+        if (error) throw error;
+      }
+
+      // Update cache
+      const updatedPresence: ExpertPresence = {
+        expertId,
+        status: status === 'available' ? 'online' : status === 'offline' ? 'offline' : 'away',
+        isAvailable: status === 'available' || status === 'busy' || status === 'away',
+        lastActivity: new Date().toISOString(),
+        lastUpdate: Date.now()
+      };
+      
+      presenceCache.set(expertId, updatedPresence);
+      console.log('✅ Expert presence updated successfully');
+      
+    } catch (error) {
+      console.error('❌ Error updating expert presence:', error);
+      throw error;
+    }
+  }, []);
+
+  const trackActivity = useCallback(async (expertId: string) => {
+    try {
+      console.log('⏰ Tracking activity for expert:', expertId);
+      
+      const { error } = await supabase
+        .from('expert_presence')
+        .update({
+          last_activity: new Date().toISOString()
+        })
+        .eq('expert_id', expertId);
+
+      if (error) throw error;
+
+      // Update cache
+      const cached = presenceCache.get(expertId);
+      if (cached) {
+        const updatedPresence: ExpertPresence = {
+          ...cached,
+          lastActivity: new Date().toISOString(),
+          lastUpdate: Date.now()
+        };
+        presenceCache.set(expertId, updatedPresence);
+      }
+      
+      console.log('✅ Activity tracked successfully');
+    } catch (error) {
+      console.error('❌ Error tracking activity:', error);
+      throw error;
+    }
+  }, []);
+
   const contextValue: ExpertPresenceContextType = {
     getExpertPresence,
     checkExpertPresence,
     bulkCheckPresence,
+    updateExpertPresence,
+    trackActivity,
     isLoading
   };
 

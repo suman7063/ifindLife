@@ -22,8 +22,9 @@ export function usePublicExpertsData() {
     const expertId = String(dbExpert.id);
     const expertAuthId = dbExpert.auth_id;
     const isApproved = dbExpert.status === 'approved';
-    const expertStatus = getExpertStatus(expertAuthId);
-    const availability = getExpertAvailability(expertAuthId);
+    const presence = getExpertPresence(expertAuthId);
+    const expertStatus = presence?.status || 'offline';
+    const availability = presence?.isAvailable ? 'available' : 'unavailable';
     
     return {
       id: expertId,
@@ -37,9 +38,9 @@ export function usePublicExpertsData() {
       price: 30, // Default price - this should come from services or expert pricing in the future
       verified: Boolean(dbExpert.verified),
       status: isApproved && expertStatus === 'online' ? 'online' : 'offline',
-      waitTime: isApproved && availability === 'available' ? 'Available Now' : 
-                isApproved && availability === 'busy' ? 'Busy' :
-                isApproved && availability === 'away' ? 'Away' : 'Not Available',
+      waitTime: isApproved && presence?.isAvailable ? 
+                  expertStatus === 'online' ? 'Available Now' : 
+                  expertStatus === 'away' ? 'Away' : 'Available' : 'Not Available',
       dbStatus: dbExpert.status
     };
   };
@@ -50,7 +51,7 @@ export function usePublicExpertsData() {
       const formattedExperts = rawExperts.map(mapDbExpertToExpertCard);
       setExperts(formattedExperts);
     }
-  }, [rawExperts, getExpertStatus, getExpertAvailability]);
+  }, [rawExperts, getExpertPresence]);
 
   useEffect(() => {
     const fetchApprovedExperts = async () => {
