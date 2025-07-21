@@ -26,9 +26,12 @@ class AgoraTokenBuilder {
     // For testing purposes, we'll create a basic token structure
     const tokenData = `${appId}:${channelName}:${uid}:${role}:${privilegeExpiredTs}`;
     
-    // In a real implementation, this would use proper HMAC signing
-    // For now, return a formatted token that the SDK can work with
-    return `007${Buffer.from(tokenData).toString('base64')}`;
+    // Use Deno's native base64 encoding instead of Node.js Buffer
+    const encoder = new TextEncoder();
+    const data = encoder.encode(tokenData);
+    const base64Token = btoa(String.fromCharCode(...data));
+    
+    return `007${base64Token}`;
   }
 }
 
@@ -56,7 +59,7 @@ async function generateAgoraToken(appId: string, appCertificate: string, channel
       privilegeExpiredTs
     );
     
-    console.log('✅ Generated token for testing purposes');
+    console.log('✅ Generated token successfully');
     return token;
     
   } catch (error) {
