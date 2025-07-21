@@ -3,6 +3,7 @@ import React from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { SimpleAuthProvider } from '@/contexts/SimpleAuthContext';
 import { AdminAuthProvider } from '@/contexts/AdminAuthClean';
+import { ExpertPresenceProvider } from '@/contexts/ExpertPresenceContext';
 import { FavoritesProvider } from '@/contexts/favorites/FavoritesProvider';
 import { SecureAdminAuthProvider } from '@/contexts/SecureAdminAuth';
 import { AuthProvider } from '@/hooks/useAuth';
@@ -55,7 +56,8 @@ const UserRoutes: React.FC = () => {
   return (
     <AuthProvider>
       <SimpleAuthProvider>
-        <FavoritesProvider>
+        <ExpertPresenceProvider>
+          <FavoritesProvider>
         <Routes>
         <Route path="/" element={<Home />} />
         
@@ -121,6 +123,7 @@ const UserRoutes: React.FC = () => {
         <Route path="*" element={<NotFound />} />
         </Routes>
       </FavoritesProvider>
+        </ExpertPresenceProvider>
     </SimpleAuthProvider>
     </AuthProvider>
   );

@@ -1,23 +1,32 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import ExpertCard from '@/components/expert-card';
 import UnifiedExpertConnection from '@/components/expert-connection/UnifiedExpertConnection';
 import { usePublicExpertsData } from '@/hooks/usePublicExpertsData';
-import { useOptimizedExpertPresence } from '@/hooks/useOptimizedExpertPresence';
+import { useExpertPresence } from '@/contexts/ExpertPresenceContext';
 
 const ExpertsOnlineSection: React.FC = () => {
   const navigate = useNavigate();
   const { experts: allExperts, loading } = usePublicExpertsData();
-  const expertAuthIds = allExperts.map(e => e.auth_id || e.id).filter(Boolean) as string[];
-  const { getExpertAvailability } = useOptimizedExpertPresence(expertAuthIds);
+  const { bulkCheckPresence, getExpertPresence } = useExpertPresence();
+  
+  // Check presence once when experts are loaded
+  useEffect(() => {
+    if (allExperts.length > 0) {
+      const expertAuthIds = allExperts.map(e => e.auth_id || e.id).filter(Boolean) as string[];
+      if (expertAuthIds.length > 0) {
+        console.log('🏠 Home page loaded - checking expert presence once');
+        bulkCheckPresence(expertAuthIds);
+      }
+    }
+  }, [allExperts, bulkCheckPresence]);
 
   // Filter experts to show only those that are currently online and available
   const onlineExperts = allExperts.filter(expert => {
-    const expertAuthId = expert.auth_id || expert.id;
-    const availability = getExpertAvailability(expertAuthId);
-    return expert.dbStatus === 'approved' && availability === 'available';
+    const presence = getExpertPresence(expert.auth_id || expert.id);
+    return expert.dbStatus === 'approved' && presence?.isAvailable;
   }).slice(0, 3);
 
   return (

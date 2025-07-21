@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ExpertCardData } from '@/components/expert-card/types';
-import { useOptimizedExpertPresence } from './useOptimizedExpertPresence';
+import { useExpertPresence } from '@/contexts/ExpertPresenceContext';
 
 interface UseExpertDataProps {
   serviceId?: string;
@@ -19,15 +19,14 @@ export function useExpertData({ serviceId, specialization }: UseExpertDataProps 
     .map(e => e.auth_id)
     .filter(id => id !== null && id !== undefined);
 
-  const { getExpertStatus, getExpertAvailability } = useOptimizedExpertPresence(expertAuthIds);
+  const { getExpertPresence } = useExpertPresence();
 
   // Map database expert to ExpertCardData with pricing
   const mapDbExpertToExpertCard = (dbExpert: any, servicePricing?: any): ExpertCardData => {
     const expertId = String(dbExpert.id);
     const expertAuthId = dbExpert.auth_id;
     const isApproved = dbExpert.status === 'approved';
-    const expertStatus = getExpertStatus(expertAuthId);
-    const availability = getExpertAvailability(expertAuthId);
+    const presence = getExpertPresence(expertAuthId);
     
     // Calculate price based on service or default
     let price = 30; // Default price
@@ -46,10 +45,8 @@ export function useExpertData({ serviceId, specialization }: UseExpertDataProps 
       reviewsCount: Number(dbExpert.reviews_count) || 0,
       price,
       verified: Boolean(dbExpert.verified),
-      status: isApproved && expertStatus === 'online' ? 'online' : 'offline',
-      waitTime: isApproved && availability === 'available' ? 'Available Now' : 
-                isApproved && availability === 'busy' ? 'Busy' :
-                isApproved && availability === 'away' ? 'Away' : 'Not Available',
+      status: isApproved && presence?.status === 'online' ? 'online' : 'offline',
+      waitTime: isApproved && presence?.isAvailable ? 'Available Now' : 'Not Available',
       dbStatus: dbExpert.status
     };
   };
@@ -60,7 +57,7 @@ export function useExpertData({ serviceId, specialization }: UseExpertDataProps 
       const formattedExperts = rawExperts.map(expert => mapDbExpertToExpertCard(expert));
       setExperts(formattedExperts);
     }
-  }, [rawExperts, getExpertStatus, getExpertAvailability]);
+  }, [rawExperts, getExpertPresence]);
 
   useEffect(() => {
     const fetchExperts = async () => {

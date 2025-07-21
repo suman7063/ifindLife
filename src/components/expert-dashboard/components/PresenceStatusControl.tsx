@@ -13,7 +13,7 @@ import {
   MessageCircle,
   Bell
 } from 'lucide-react';
-import { useEnhancedExpertPresence } from '@/hooks/useEnhancedExpertPresence';
+import { useLazyExpertPresence } from '@/hooks/useLazyExpertPresence';
 import { useAwayMessaging } from '@/hooks/useAwayMessaging';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import ExpertStatusIndicator from '@/components/expert-card/ExpertStatusIndicator';
@@ -21,12 +21,9 @@ import { toast } from 'sonner';
 
 const PresenceStatusControl: React.FC = () => {
   const { expert } = useSimpleAuth();
-  const { 
-    updateExpertPresence, 
-    trackActivity, 
-    getExpertStatus,
-    getLastActivity 
-  } = useEnhancedExpertPresence(expert?.auth_id ? [expert.auth_id] : []);
+  
+  // Use lazy presence - expert can see their own status immediately
+  const { getExpertStatus } = useLazyExpertPresence();
   
   const { getUnreadCount, getAwayMessages } = useAwayMessaging();
   
