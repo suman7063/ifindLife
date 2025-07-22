@@ -3,10 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Users, Calendar, MessageSquare, DollarSign, TrendingUp, Clock } from 'lucide-react';
+import { Users, Calendar, MessageSquare, DollarSign, TrendingUp, Clock, Phone } from 'lucide-react';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import OnlineStatusWidget from '../components/OnlineStatusWidget';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 
 interface DashboardStats {
   totalClients: number;
@@ -15,6 +15,7 @@ interface DashboardStats {
   monthlyEarnings: number;
   completedSessions: number;
   averageRating: number;
+  pendingCalls: number;
 }
 
 const DashboardHome: React.FC = () => {
@@ -25,7 +26,8 @@ const DashboardHome: React.FC = () => {
     unreadMessages: 0,
     monthlyEarnings: 0,
     completedSessions: 0,
-    averageRating: 0
+    averageRating: 0,
+    pendingCalls: 0
   });
   const [loading, setLoading] = useState(true);
 
@@ -47,7 +49,8 @@ const DashboardHome: React.FC = () => {
         unreadMessages: 5,
         monthlyEarnings: 2500,
         completedSessions: 28,
-        averageRating: 4.8
+        averageRating: 4.8,
+        pendingCalls: 2
       });
     } catch (error) {
       console.error('Error loading dashboard stats:', error);
@@ -192,6 +195,19 @@ const DashboardHome: React.FC = () => {
             <div className="text-2xl font-bold">{stats.averageRating}/5</div>
             <p className="text-xs text-muted-foreground">
               From {stats.totalClients} reviews
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pending Calls</CardTitle>
+            <Phone className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.pendingCalls}</div>
+            <p className="text-xs text-muted-foreground">
+              Awaiting response
             </p>
           </CardContent>
         </Card>

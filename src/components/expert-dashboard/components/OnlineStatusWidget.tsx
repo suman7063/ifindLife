@@ -16,7 +16,7 @@ const OnlineStatusWidget: React.FC = () => {
 
   const presenceData = getExpertPresence(expert.auth_id);
   const currentStatus = presenceData?.status || 'offline';
-  const isOnline = presenceData?.isOnline || false;
+  const isAvailable = presenceData?.isAvailable || false;
 
   const handleStatusChange = async (newStatus: 'available' | 'busy' | 'away' | 'offline') => {
     try {
@@ -30,10 +30,8 @@ const OnlineStatusWidget: React.FC = () => {
 
   const getStatusConfig = (status: string) => {
     switch (status) {
-      case 'available':
+      case 'online':
         return { icon: Circle, color: 'text-green-600', bg: 'bg-green-50', label: 'Available' };
-      case 'busy':
-        return { icon: Clock, color: 'text-red-600', bg: 'bg-red-50', label: 'Busy' };
       case 'away':
         return { icon: UserMinus, color: 'text-yellow-600', bg: 'bg-yellow-50', label: 'Away' };
       default:
@@ -58,7 +56,7 @@ const OnlineStatusWidget: React.FC = () => {
           <div>
             <p className="font-medium">{statusConfig.label}</p>
             <p className="text-sm text-gray-500">
-              {isOnline ? 'You are online and visible to clients' : 'You appear offline to clients'}
+              {isAvailable ? 'You are available for calls' : 'You appear offline to clients'}
             </p>
           </div>
         </div>
@@ -66,23 +64,13 @@ const OnlineStatusWidget: React.FC = () => {
         {/* Status Controls */}
         <div className="grid grid-cols-2 gap-2">
           <Button
-            variant={currentStatus === 'available' ? 'default' : 'outline'}
+            variant={currentStatus === 'online' ? 'default' : 'outline'}
             size="sm"
             onClick={() => handleStatusChange('available')}
             className="gap-2"
           >
             <Circle className="h-4 w-4" />
             Available
-          </Button>
-          
-          <Button
-            variant={currentStatus === 'busy' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => handleStatusChange('busy')}
-            className="gap-2"
-          >
-            <Clock className="h-4 w-4" />
-            Busy
           </Button>
           
           <Button
@@ -100,6 +88,7 @@ const OnlineStatusWidget: React.FC = () => {
             size="sm"
             onClick={() => handleStatusChange('offline')}
             className="gap-2"
+            disabled={false}
           >
             <WifiOff className="h-4 w-4" />
             Offline

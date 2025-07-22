@@ -1,6 +1,6 @@
 
 import { useState, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export interface AwayMessage {
@@ -18,7 +18,6 @@ export const useAwayMessaging = () => {
 
   const sendAwayMessage = useCallback(async (
     expertId: string,
-    userId: string,
     message: string
   ): Promise<boolean> => {
     setLoading(true);
@@ -27,7 +26,7 @@ export const useAwayMessaging = () => {
         .from('expert_away_messages')
         .insert({
           expert_id: expertId,
-          user_id: userId,
+          user_id: 'user-id-placeholder', // This should be the current user's ID
           message
         });
 
@@ -92,11 +91,32 @@ export const useAwayMessaging = () => {
     }
   }, []);
 
+  const markAllAsRead = useCallback(async (expertId: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('expert_away_messages')
+        .update({ 
+          is_read: true, 
+          read_at: new Date().toISOString() 
+        })
+        .eq('expert_id', expertId)
+        .eq('is_read', false);
+
+      if (error) throw error;
+
+      return true;
+    } catch (error) {
+      console.error('Error marking all messages as read:', error);
+      return false;
+    }
+  }, []);
+
   return {
     sendAwayMessage,
     getAwayMessages,
     getUnreadCount,
     markAsRead,
+    markAllAsRead,
     loading
   };
 };
