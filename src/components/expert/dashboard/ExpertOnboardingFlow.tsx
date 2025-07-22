@@ -123,11 +123,15 @@ export const ExpertOnboardingFlow: React.FC = () => {
         return;
       }
 
+      // Check if all required steps will be completed after this update
+      const allRequired = steps.filter(s => !s.optional);
+      const willBeCompleted = allRequired.every(s => s.completed || s.id === stepId);
+
       const { error } = await supabase
         .from('expert_accounts')
         .update({ 
           [updateField]: true,
-          onboarding_completed: steps.filter(s => !s.optional).every(s => s.completed || s.id === stepId)
+          onboarding_completed: willBeCompleted
         })
         .eq('auth_id', expert?.id);
 
@@ -288,7 +292,23 @@ export const ExpertOnboardingFlow: React.FC = () => {
               <p className="text-green-700 mb-4">
                 Your expert profile is now active and ready to receive bookings from users.
               </p>
-              <Button>
+              <Button 
+                onClick={async () => {
+                  // Force mark onboarding as complete
+                  try {
+                    await supabase
+                      .from('expert_accounts')
+                      .update({ onboarding_completed: true })
+                      .eq('auth_id', expert?.id);
+                    
+                    // Redirect to dashboard
+                    window.location.href = '/expert-dashboard';
+                  } catch (error) {
+                    console.error('Error finalizing onboarding:', error);
+                    toast.error('Failed to complete onboarding');
+                  }
+                }}
+              >
                 Go to Dashboard
               </Button>
             </div>

@@ -36,14 +36,6 @@ const ExpertHeader: React.FC = () => {
     <header className="border-b bg-white px-6 py-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link to="/" className="flex items-center">
-            <img 
-              src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" 
-              alt="iFindLife" 
-              className="h-8" 
-            />
-          </Link>
-          <div className="border-l h-8 mx-2"></div>
           <h2 className="text-xl font-semibold">Expert Dashboard</h2>
         </div>
         
@@ -79,7 +71,7 @@ const ExpertHeader: React.FC = () => {
               <DropdownMenuItem asChild>
                 <Link to="/" className="flex items-center cursor-pointer">
                   <ExternalLink className="w-4 h-4 mr-2" />
-                  iFindLife Website
+                  Main Website
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>

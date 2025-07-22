@@ -29,24 +29,39 @@ const NewExpertDashboard: React.FC = () => {
   // Check onboarding completion status
   useEffect(() => {
     const checkOnboardingStatus = async () => {
-      if (!isAuthenticated || !expert) return;
+      if (!isAuthenticated || !expert) {
+        setNeedsOnboarding(false);
+        return;
+      }
 
       try {
         const { data, error } = await supabase
           .from('expert_accounts')
-          .select('onboarding_completed, status')
+          .select('onboarding_completed, status, selected_services, pricing_set, availability_set, profile_completed')
           .eq('auth_id', expert.id)
           .single();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error fetching expert account:', error);
+          setNeedsOnboarding(false);
+          return;
+        }
 
-        // Check if onboarding is needed (regardless of approval status)
-        const needsOnboardingFlow = !data.onboarding_completed;
+        // Check if core onboarding steps are completed
+        const hasServices = data.selected_services && data.selected_services.length > 0;
+        const hasPricing = data.pricing_set;
+        const hasAvailability = data.availability_set;
+        
+        // Onboarding is needed if any core step is incomplete
+        const needsOnboardingFlow = !hasServices || !hasPricing || !hasAvailability || !data.onboarding_completed;
         setNeedsOnboarding(needsOnboardingFlow);
 
         console.log('Onboarding check:', {
           status: data.status,
           onboardingCompleted: data.onboarding_completed,
+          hasServices,
+          hasPricing,
+          hasAvailability,
           needsOnboarding: needsOnboardingFlow
         });
       } catch (error) {
