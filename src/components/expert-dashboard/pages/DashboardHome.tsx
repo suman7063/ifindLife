@@ -1,68 +1,80 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Users, Calendar, MessageSquare, DollarSign, TrendingUp, Clock } from 'lucide-react';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
-import { useNavigate } from 'react-router-dom';
-import { 
-  Users, 
-  Calendar, 
-  DollarSign, 
-  MessageCircle, 
-  Star,
-  TrendingUp,
-  Clock,
-  Edit
-} from 'lucide-react';
-import PresenceStatusControl from '../components/PresenceStatusControl';
-import AwayMessagesPanel from '../components/AwayMessagesPanel';
-import CallReceptionWidget from '../call/CallReceptionWidget';
+import OnlineStatusWidget from '../components/OnlineStatusWidget';
+import { supabase } from '@/lib/supabase';
 
+interface DashboardStats {
+  totalClients: number;
+  pendingAppointments: number;
+  unreadMessages: number;
+  monthlyEarnings: number;
+  completedSessions: number;
+  averageRating: number;
+}
 
-const DashboardHome = () => {
-  const { expert: expertProfile } = useSimpleAuth();
-  const navigate = useNavigate();
+const DashboardHome: React.FC = () => {
+  const { expert } = useSimpleAuth();
+  const [stats, setStats] = useState<DashboardStats>({
+    totalClients: 0,
+    pendingAppointments: 0,
+    unreadMessages: 0,
+    monthlyEarnings: 0,
+    completedSessions: 0,
+    averageRating: 0
+  });
+  const [loading, setLoading] = useState(true);
 
-  const isApproved = expertProfile?.status === 'approved';
+  useEffect(() => {
+    if (expert?.id) {
+      loadDashboardStats();
+    }
+  }, [expert?.id]);
 
-  const handleEditProfile = () => {
-    navigate('/expert-dashboard/profile');
+  const loadDashboardStats = async () => {
+    if (!expert?.id) return;
+
+    try {
+      // Load basic stats - you can expand this with real data queries
+      // For now, showing placeholder data
+      setStats({
+        totalClients: 12,
+        pendingAppointments: 3,
+        unreadMessages: 5,
+        monthlyEarnings: 2500,
+        completedSessions: 28,
+        averageRating: 4.8
+      });
+    } catch (error) {
+      console.error('Error loading dashboard stats:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleViewSchedule = () => {
-    navigate('/expert-dashboard/schedule');
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'approved':
+        return <Badge variant="default" className="bg-green-100 text-green-800">Approved</Badge>;
+      case 'pending':
+        return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Pending Approval</Badge>;
+      case 'disapproved':
+        return <Badge variant="destructive">Disapproved</Badge>;
+      default:
+        return <Badge variant="outline">Unknown</Badge>;
+    }
   };
 
-  const handleViewClients = () => {
-    navigate('/expert-dashboard/clients');
-  };
-
-  const handleViewMessages = () => {
-    navigate('/expert-dashboard/messages');
-  };
-
-  const handleViewEarnings = () => {
-    navigate('/expert-dashboard/earnings');
-  };
-
-
-  const handleStartConsultation = () => {
-    // TODO: Implement consultation start functionality
-    console.log('Starting consultation...');
-  };
-
-  if (!isApproved) {
+  if (!expert) {
     return (
-      <div className="space-y-6">
-        <div className="text-center py-12">
-          <div className="mx-auto w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
-            <Clock className="w-12 h-12 text-yellow-600" />
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Account Under Review</h2>
-          <p className="text-gray-600 max-w-md mx-auto">
-            Your expert account is currently being reviewed by our team. You'll receive an email notification once your account is approved and you can start accepting consultations.
-          </p>
+      <div className="p-6">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold">Expert Dashboard</h1>
+          <p className="text-gray-600 mt-2">Loading expert profile...</p>
         </div>
       </div>
     );
@@ -70,182 +82,148 @@ const DashboardHome = () => {
 
   return (
     <div className="space-y-6">
-      {/* Presence and Messages Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <PresenceStatusControl />
-        <AwayMessagesPanel />
-      </div>
-
-      {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold mb-2">
-              Welcome back, {expertProfile?.name}!
-            </h1>
-            <p className="text-blue-100">
-              You're helping people find their path to wellness.
-            </p>
-            <div className="flex items-center gap-2 mt-2">
-              <Badge variant="secondary" className="bg-green-100 text-green-800">
-                Verified Expert
-              </Badge>
-              <div className="flex items-center gap-1">
-                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                <span className="text-sm">
-                  {expertProfile?.average_rating || 0} ({expertProfile?.reviews_count || 0} reviews)
-                </span>
-              </div>
-            </div>
-          </div>
-          <Button 
-            variant="secondary" 
-            onClick={handleEditProfile}
-            className="flex items-center gap-2"
-          >
-            <Edit className="w-4 h-4" />
-            Edit Profile
-          </Button>
+      <div>
+        <h1 className="text-3xl font-bold">Welcome back, {expert.name}!</h1>
+        <div className="flex items-center gap-4 mt-2">
+          <p className="text-gray-600">Expert Dashboard</p>
+          {getStatusBadge(expert.status)}
         </div>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Quick Actions & Status */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <OnlineStatusWidget />
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+            <CardDescription>Manage your expert activities</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Button className="w-full justify-start" variant="outline">
+              <Calendar className="h-4 w-4 mr-2" />
+              View Schedule
+            </Button>
+            <Button className="w-full justify-start" variant="outline">
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Check Messages
+            </Button>
+            <Button className="w-full justify-start" variant="outline">
+              <Users className="h-4 w-4 mr-2" />
+              View Clients
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Stats Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Clients</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0</div>
+            <div className="text-2xl font-bold">{stats.totalClients}</div>
             <p className="text-xs text-muted-foreground">
-              +0% from last month
+              +2 from last month
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Consultations</CardTitle>
+            <CardTitle className="text-sm font-medium">Pending Appointments</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0</div>
+            <div className="text-2xl font-bold">{stats.pendingAppointments}</div>
             <p className="text-xs text-muted-foreground">
-              +0% from last month
+              This week
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Earnings</CardTitle>
+            <CardTitle className="text-sm font-medium">Unread Messages</CardTitle>
+            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.unreadMessages}</div>
+            <p className="text-xs text-muted-foreground">
+              Requires response
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Monthly Earnings</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$0</div>
+            <div className="text-2xl font-bold">${stats.monthlyEarnings}</div>
             <p className="text-xs text-muted-foreground">
-              +0% from last month
+              +12% from last month
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Rating</CardTitle>
-            <Star className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Completed Sessions</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{expertProfile?.average_rating || 0}</div>
+            <div className="text-2xl font-bold">{stats.completedSessions}</div>
             <p className="text-xs text-muted-foreground">
-              Based on {expertProfile?.reviews_count || 0} reviews
+              This month
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Average Rating</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.averageRating}/5</div>
+            <p className="text-xs text-muted-foreground">
+              From {stats.totalClients} reviews
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Card>
+      {/* Account Status Alert */}
+      {expert.status === 'pending' && (
+        <Card className="border-yellow-200 bg-yellow-50">
           <CardHeader>
-            <CardTitle>Schedule</CardTitle>
-            <CardDescription>Manage your availability and appointments</CardDescription>
+            <CardTitle className="text-yellow-800">Account Under Review</CardTitle>
           </CardHeader>
           <CardContent>
-            <Button onClick={handleViewSchedule} className="w-full">
-              <Calendar className="w-4 h-4 mr-2" />
-              View Schedule
-            </Button>
+            <p className="text-yellow-700">
+              Your expert account is currently under review. You'll be able to receive calls and bookings once approved.
+              Make sure your profile is complete with all required information.
+            </p>
           </CardContent>
         </Card>
+      )}
 
-        <Card>
+      {expert.status === 'disapproved' && (
+        <Card className="border-red-200 bg-red-50">
           <CardHeader>
-            <CardTitle>Clients</CardTitle>
-            <CardDescription>View and manage your client relationships</CardDescription>
+            <CardTitle className="text-red-800">Account Needs Attention</CardTitle>
           </CardHeader>
           <CardContent>
-            <Button onClick={handleViewClients} className="w-full">
-              <Users className="w-4 h-4 mr-2" />
-              View Clients
-            </Button>
+            <p className="text-red-700">
+              Your expert account application was not approved. Please contact support for more information.
+            </p>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Messages</CardTitle>
-            <CardDescription>Communicate with your clients</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button onClick={handleViewMessages} className="w-full">
-              <MessageCircle className="w-4 h-4 mr-2" />
-              View Messages
-            </Button>
-          </CardContent>
-        </Card>
-
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Earnings</CardTitle>
-            <CardDescription>Track your income and payouts</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button onClick={handleViewEarnings} className="w-full">
-              <DollarSign className="w-4 h-4 mr-2" />
-              View Earnings
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Consultation</CardTitle>
-            <CardDescription>Start an immediate consultation</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button onClick={handleStartConsultation} className="w-full bg-green-600 hover:bg-green-700">
-              Start Consultation
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Recent Activity */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-          <CardDescription>Your latest interactions and updates</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8 text-gray-500">
-            <Calendar className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-            <p>No recent activity to display</p>
-            <p className="text-sm">Your consultations and interactions will appear here</p>
-          </div>
-        </CardContent>
-      </Card>
+      )}
     </div>
   );
 };
