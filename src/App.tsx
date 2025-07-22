@@ -135,9 +135,11 @@ const UserRoutes: React.FC = () => {
 
 function App(): JSX.Element {
   console.log('App: Component is rendering with separated auth providers');
+  console.log('React available:', !!React);
+  console.log('React.useEffect available:', !!React.useEffect);
   
   return (
-    <QueryClientProvider client={queryClient}>
+    <div>
       <Toaster />
       <BrowserRouter>
         <Routes>
@@ -157,7 +159,7 @@ function App(): JSX.Element {
           <Route path="/*" element={<UserRoutes />} />
         </Routes>
       </BrowserRouter>
-    </QueryClientProvider>
+    </div>
   );
 }
 
