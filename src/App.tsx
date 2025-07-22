@@ -2,11 +2,9 @@
 import React from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { SimpleAuthProvider } from '@/contexts/SimpleAuthContext';
-import { AdminAuthProvider } from '@/contexts/AdminAuthClean';
 import { ExpertPresenceProvider } from '@/contexts/ExpertPresenceContext';
 import { FavoritesProvider } from '@/contexts/favorites/FavoritesProvider';
 import { SecureAdminAuthProvider } from '@/contexts/SecureAdminAuth';
-import { AuthProvider } from '@/hooks/useAuth';
 import SecureAdminLogin from '@/components/admin/SecureAdminLogin';
 import Home from './pages/Index';
 import UserLogin from './pages/UserLogin';
@@ -54,10 +52,9 @@ const queryClient = new QueryClient();
 // Component wrapper for user/expert routes with SimpleAuthProvider
 const UserRoutes: React.FC = () => {
   return (
-    <AuthProvider>
-      <SimpleAuthProvider>
-        <ExpertPresenceProvider>
-          <FavoritesProvider>
+    <SimpleAuthProvider>
+      <ExpertPresenceProvider>
+        <FavoritesProvider>
         <Routes>
         <Route path="/" element={<Home />} />
         
@@ -125,11 +122,10 @@ const UserRoutes: React.FC = () => {
       </FavoritesProvider>
         </ExpertPresenceProvider>
     </SimpleAuthProvider>
-    </AuthProvider>
   );
 };
 
-function App() {
+function App(): JSX.Element {
   console.log('App: Component is rendering with separated auth providers');
   
   return (
