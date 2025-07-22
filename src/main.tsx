@@ -10,11 +10,14 @@ console.log('main.tsx - ReactDOM:', !!ReactDOM);
 console.log('main.tsx - React version:', React.version);
 
 const rootElement = document.getElementById('root');
-console.log('Root element found:', !!rootElement);
 
 if (!rootElement) {
   throw new Error('Root element not found');
 }
 
 const root = ReactDOM.createRoot(rootElement);
-root.render(React.createElement(App));
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
