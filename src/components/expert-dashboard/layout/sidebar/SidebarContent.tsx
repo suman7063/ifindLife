@@ -1,14 +1,14 @@
 
 import React from 'react';
 import { Separator } from '@/components/ui/separator';
-import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import SidebarLogo from './SidebarLogo';
 import ExpertProfileCard from './ExpertProfileCard';
 import SidebarNavigation from './SidebarNavigation';
 import SidebarLogout from './SidebarLogout';
 
 const SidebarContent: React.FC = () => {
-  const { expert } = useUnifiedAuth();
+  const { expert } = useSimpleAuth();
 
   return (
     <div className="flex flex-col h-full">

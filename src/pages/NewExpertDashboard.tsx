@@ -6,10 +6,11 @@ import DashboardHome from '@/components/expert-dashboard/pages/DashboardHome';
 import ProfilePage from '@/components/expert-dashboard/pages/ProfilePage';
 import SchedulePage from '@/components/expert-dashboard/pages/SchedulePage';
 import ClientsPage from '@/components/expert-dashboard/pages/ClientsPage';
-import MessagingTab from '@/components/expert/dashboard/MessagingTab';
+import MessagingPage from '@/components/expert-dashboard/pages/MessagingPage';
 import ServicesPage from '@/components/expert-dashboard/pages/ServicesPage';
 import EarningsPage from '@/components/expert-dashboard/pages/EarningsPage';
 import ReportPage from '@/components/expert-dashboard/pages/ReportPage';
+import AnalyticsPage from '@/components/expert-dashboard/pages/analytics/AnalyticsPage';
 import ExpertOnboardingFlow from '@/components/expert/dashboard/ExpertOnboardingFlow';
 import CallReceptionWidget from '@/components/expert-dashboard/call/CallReceptionWidget';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
@@ -107,6 +108,9 @@ const NewExpertDashboard: React.FC = () => {
         {/* Dashboard Home */}
         <Route index element={<DashboardHome />} />
         
+        {/* Analytics Dashboard */}
+        <Route path="analytics" element={<AnalyticsPage />} />
+        
         {/* Profile Management */}
         <Route path="profile" element={<ProfilePage />} />
         
@@ -116,8 +120,8 @@ const NewExpertDashboard: React.FC = () => {
         {/* Client Management */}
         <Route path="clients" element={<ClientsPage />} />
         
-        {/* Messaging */}
-        <Route path="messages" element={<MessagingTab />} />
+        {/* Messaging - Using enhanced MessagingPage */}
+        <Route path="messages" element={<MessagingPage />} />
         
         {/* Services Management */}
         <Route path="services" element={<ServicesPage />} />
