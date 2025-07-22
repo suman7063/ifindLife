@@ -1,5 +1,5 @@
 
-import React from 'react';
+import * as React from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { SimpleAuthProvider } from '@/contexts/SimpleAuthContext';
 import { ExpertPresenceProvider } from '@/contexts/ExpertPresenceContext';
@@ -44,6 +44,16 @@ import { NotificationCenter } from '@/components/notifications/NotificationCente
 import { FavoritesManager } from '@/components/favorites/FavoritesManager';
 import CallPage from './pages/CallPage';
 import MessagingPage from './pages/MessagingPage';
+
+// Create QueryClient outside component to avoid hook issues
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 // Clean routing - admin routes are now handled directly in App component
 
@@ -125,16 +135,6 @@ const UserRoutes: React.FC = () => {
 
 function App(): JSX.Element {
   console.log('App: Component is rendering with separated auth providers');
-  
-  // Create QueryClient inside component to avoid React version conflicts
-  const queryClient = React.useMemo(() => new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: 1,
-        refetchOnWindowFocus: false,
-      },
-    },
-  }), []);
   
   return (
     <QueryClientProvider client={queryClient}>
