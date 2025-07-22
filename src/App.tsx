@@ -45,8 +45,6 @@ import { FavoritesManager } from '@/components/favorites/FavoritesManager';
 import CallPage from './pages/CallPage';
 import MessagingPage from './pages/MessagingPage';
 
-const queryClient = new QueryClient();
-
 // Clean routing - admin routes are now handled directly in App component
 
 // Component wrapper for user/expert routes with SimpleAuthProvider
@@ -127,6 +125,16 @@ const UserRoutes: React.FC = () => {
 
 function App(): JSX.Element {
   console.log('App: Component is rendering with separated auth providers');
+  
+  // Create QueryClient inside component to avoid React version conflicts
+  const queryClient = React.useMemo(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: 1,
+        refetchOnWindowFocus: false,
+      },
+    },
+  }), []);
   
   return (
     <QueryClientProvider client={queryClient}>
