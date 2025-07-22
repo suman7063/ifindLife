@@ -40,8 +40,8 @@ const NewExpertDashboard: React.FC = () => {
 
         if (error) throw error;
 
-        // Check if expert is approved and onboarding is needed
-        const needsOnboardingFlow = data.status === 'approved' && !data.onboarding_completed;
+        // Check if onboarding is needed (regardless of approval status)
+        const needsOnboardingFlow = !data.onboarding_completed;
         setNeedsOnboarding(needsOnboardingFlow);
 
         console.log('Onboarding check:', {

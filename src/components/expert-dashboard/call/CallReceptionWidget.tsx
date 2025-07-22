@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useIncomingCallManager } from '@/hooks/useIncomingCallManager';
 import IncomingCallModal from './IncomingCallModal';
-import CallStatusIndicator from './CallStatusIndicator';
 import PendingCallsList from './PendingCallsList';
 import AgoraCallInterface from './AgoraCallInterface';
+import { Button } from '@/components/ui/button';
+import { Phone } from 'lucide-react';
+import { useExpertPresence } from '@/contexts/ExpertPresenceContext';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 
 const CallReceptionWidget: React.FC = () => {
   const {
@@ -16,8 +19,25 @@ const CallReceptionWidget: React.FC = () => {
     stopListening
   } = useIncomingCallManager();
 
+  const { expert } = useSimpleAuth();
+  const { getExpertPresence } = useExpertPresence();
+
   const [showPendingCalls, setShowPendingCalls] = useState(false);
   const [activeCall, setActiveCall] = useState<any>(null);
+
+  // Auto-start listening when expert is available
+  useEffect(() => {
+    if (!expert?.id) return;
+    
+    const presence = getExpertPresence(expert.id);
+    const isAvailable = presence?.isAvailable || false;
+    
+    if (isAvailable && !isListening) {
+      startListening();
+    } else if (!isAvailable && isListening) {
+      stopListening();
+    }
+  }, [expert?.id, getExpertPresence, isListening, startListening, stopListening]);
 
   const handleAcceptCall = async () => {
     if (!currentCall) return;
@@ -79,14 +99,20 @@ const CallReceptionWidget: React.FC = () => {
 
   return (
     <>
-      {/* Call Status Indicator */}
-      <CallStatusIndicator
-        isListening={isListening}
-        pendingCallsCount={pendingCalls.length}
-        hasActiveCall={!!activeCall}
-        onToggleListening={handleToggleListening}
-        onShowPendingCalls={() => setShowPendingCalls(true)}
-      />
+      {/* Only show pending calls and incoming call functionality - removed status indicator as per user request */}
+      {pendingCalls.length > 0 && (
+        <div className="fixed top-4 right-4 z-40">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowPendingCalls(true)}
+            className="relative bg-white shadow-lg"
+          >
+            <Phone className="w-4 h-4 mr-1" />
+            <span>{pendingCalls.length} pending call{pendingCalls.length > 1 ? 's' : ''}</span>
+          </Button>
+        </div>
+      )}
 
       {/* Incoming Call Modal */}
       <IncomingCallModal

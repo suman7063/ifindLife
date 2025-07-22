@@ -22,7 +22,7 @@ export interface NavigationItem {
 
 export const navigationItems: NavigationItem[] = [
   {
-    name: 'Dashboard',
+    name: 'Overview',
     href: '/expert-dashboard',
     icon: Home,
     description: 'Overview and quick stats'
