@@ -16,10 +16,10 @@ const ExpertsMenu = () => {
           <li>
             <NavigationMenuLink asChild>
               <Link 
-                to="/experts" 
+                to="/expert-login" 
                 className="block w-full p-2 text-sm hover:bg-accent rounded-md font-medium text-left"
               >
-                All Experts
+                Sign in/Sign Up
               </Link>
             </NavigationMenuLink>
           </li>
