@@ -72,12 +72,20 @@ const MobileMenuSections = () => {
           />
         </Accordion>
         
-        <Link 
-          to="/experts" 
-          className="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
-        >
-          Experts
-        </Link>
+        <Accordion type="single" collapsible>
+          <MobileAccordionItem
+            title="Experts"
+            value="experts"
+            items={[
+              { title: 'All Experts', href: '/experts' },
+              { title: 'Listening Volunteers', href: '/experts/listening-volunteer' },
+              { title: 'Listening Experts', href: '/experts/listening-expert' },
+              { title: 'Mindfulness Experts', href: '/experts/mindfulness-expert' },
+              { title: 'Life Coaches', href: '/experts/life-coach' },
+              { title: 'Spiritual Mentors', href: '/experts/spiritual-mentor' },
+            ]}
+          />
+        </Accordion>
         
         <Link 
           to="/about" 

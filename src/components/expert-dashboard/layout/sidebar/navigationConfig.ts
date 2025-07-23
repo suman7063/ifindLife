@@ -20,6 +20,15 @@ export interface NavigationItem {
   badge?: string;
 }
 
+// Expert category mappings
+export const expertCategoryLabels = {
+  'listening-volunteer': 'Listening Volunteer',
+  'listening-expert': 'Listening Expert', 
+  'mindfulness-expert': 'Mindfulness Expert',
+  'life-coach': 'Life Coach',
+  'spiritual-mentor': 'Spiritual Mentor'
+} as const;
+
 export const navigationItems: NavigationItem[] = [
   {
     name: 'Overview',

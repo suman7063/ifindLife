@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import NavbarUserAvatar from './NavbarUserAvatar';
 import NavbarExpertMenu from './NavbarExpertMenu';
 import { NavigationMenu, NavigationMenuList } from "@/components/ui/navigation-menu";
-import { ProgramsMenu, ServicesMenu, SupportMenu, LoginDropdown, AssessmentMenu } from './menu';
+import { ProgramsMenu, ServicesMenu, SupportMenu, LoginDropdown, AssessmentMenu, ExpertsMenu } from './menu';
 
 interface NavbarDesktopLinksProps {
   isAuthenticated: boolean;
@@ -85,9 +85,11 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
         </NavigationMenuList>
       </NavigationMenu>
       
-      <Button variant="ghost" asChild className="text-gray-700 hover:text-gray-900 font-medium">
-        <Link to="/experts">Experts</Link>
-      </Button>
+      <NavigationMenu>
+        <NavigationMenuList>
+          <ExpertsMenu />
+        </NavigationMenuList>
+      </NavigationMenu>
       
       <Button variant="ghost" asChild className="text-gray-700 hover:text-gray-900 font-medium">
         <Link to="/about">About Us</Link>

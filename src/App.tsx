@@ -44,6 +44,11 @@ import { NotificationCenter } from '@/components/notifications/NotificationCente
 import { FavoritesManager } from '@/components/favorites/FavoritesManager';
 import CallPage from './pages/CallPage';
 import MessagingPage from './pages/MessagingPage';
+import ListeningVolunteerPage from './components/experts/categories/ListeningVolunteerPage';
+import ListeningExpertPage from './components/experts/categories/ListeningExpertPage';
+import MindfulnessExpertPage from './components/experts/categories/MindfulnessExpertPage';
+import LifeCoachPage from './components/experts/categories/LifeCoachPage';
+import SpiritualMentorPage from './components/experts/categories/SpiritualMentorPage';
 
 // Create QueryClient outside component to avoid hook issues
 const queryClient = new QueryClient({
@@ -78,6 +83,13 @@ const UserRoutes: React.FC = () => {
         <Route path="/expert-login" element={<ExpertLogin />} />
         <Route path="/expert-signup" element={<ExpertSignup />} />
         <Route path="/expert-dashboard/*" element={<NewExpertDashboard />} />
+        
+        {/* Expert Category Routes */}
+        <Route path="/experts/listening-volunteer" element={<ListeningVolunteerPage />} />
+        <Route path="/experts/listening-expert" element={<ListeningExpertPage />} />
+        <Route path="/experts/mindfulness-expert" element={<MindfulnessExpertPage />} />
+        <Route path="/experts/life-coach" element={<LifeCoachPage />} />
+        <Route path="/experts/spiritual-mentor" element={<SpiritualMentorPage />} />
         
         {/* User Routes */}
         <Route path="/user-login" element={<UserLogin />} />

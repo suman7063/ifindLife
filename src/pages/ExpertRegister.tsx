@@ -252,12 +252,12 @@ const ExpertRegister: React.FC = () => {
                         <Label htmlFor="listening-expert">Listening Expert</Label>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="mindfulness-coach" id="mindfulness-coach" />
-                        <Label htmlFor="mindfulness-coach">Mindfulness Coach</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
                         <RadioGroupItem value="mindfulness-expert" id="mindfulness-expert" />
                         <Label htmlFor="mindfulness-expert">Mindfulness Expert</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="life-coach" id="life-coach" />
+                        <Label htmlFor="life-coach">Life Coach</Label>
                       </div>
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="spiritual-mentor" id="spiritual-mentor" />
