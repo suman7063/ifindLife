@@ -44,11 +44,7 @@ import { NotificationCenter } from '@/components/notifications/NotificationCente
 import { FavoritesManager } from '@/components/favorites/FavoritesManager';
 import CallPage from './pages/CallPage';
 import MessagingPage from './pages/MessagingPage';
-import ListeningVolunteerPage from './components/experts/categories/ListeningVolunteerPage';
-import ListeningExpertPage from './components/experts/categories/ListeningExpertPage';
-import MindfulnessExpertPage from './components/experts/categories/MindfulnessExpertPage';
-import LifeCoachPage from './components/experts/categories/LifeCoachPage';
-import SpiritualMentorPage from './components/experts/categories/SpiritualMentorPage';
+import UnifiedExpertsPage from './pages/UnifiedExpertsPage';
 
 // Create QueryClient outside component to avoid hook issues
 const queryClient = new QueryClient({
@@ -84,12 +80,15 @@ const UserRoutes: React.FC = () => {
         <Route path="/expert-signup" element={<ExpertSignup />} />
         <Route path="/expert-dashboard/*" element={<NewExpertDashboard />} />
         
-        {/* Expert Category Routes */}
-        <Route path="/experts/listening-volunteer" element={<ListeningVolunteerPage />} />
-        <Route path="/experts/listening-expert" element={<ListeningExpertPage />} />
-        <Route path="/experts/mindfulness-expert" element={<MindfulnessExpertPage />} />
-        <Route path="/experts/life-coach" element={<LifeCoachPage />} />
-        <Route path="/experts/spiritual-mentor" element={<SpiritualMentorPage />} />
+        {/* Expert Category Routes - Unified */}
+        <Route path="/experts/categories" element={<UnifiedExpertsPage />} />
+        
+        {/* Legacy redirects for SEO */}
+        <Route path="/experts/listening-volunteer" element={<UnifiedExpertsPage />} />
+        <Route path="/experts/listening-expert" element={<UnifiedExpertsPage />} />
+        <Route path="/experts/mindfulness-expert" element={<UnifiedExpertsPage />} />
+        <Route path="/experts/life-coach" element={<UnifiedExpertsPage />} />
+        <Route path="/experts/spiritual-mentor" element={<UnifiedExpertsPage />} />
         
         {/* User Routes */}
         <Route path="/user-login" element={<UserLogin />} />
