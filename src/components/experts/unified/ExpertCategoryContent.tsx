@@ -14,16 +14,34 @@ const ExpertCategoryContent: React.FC<ExpertCategoryContentProps> = ({
   experts,
   loading
 }) => {
+  const getCategoryColor = (categoryId: string) => {
+    const colorMap: Record<string, string> = {
+      'listening-volunteer': 'from-ifind-teal to-ifind-teal',
+      'listening-expert': 'from-ifind-aqua to-ifind-aqua', 
+      'mindfulness-expert': 'from-cyan-500 to-cyan-500',
+      'life-coach': 'from-purple-500 to-purple-500',
+      'spiritual-mentor': 'from-ifind-purple to-ifind-purple'
+    };
+    return colorMap[categoryId] || 'from-ifind-teal to-ifind-teal';
+  };
+
+  const getCategoryTextColor = (categoryId: string) => {
+    const colorMap: Record<string, string> = {
+      'listening-volunteer': 'text-ifind-teal',
+      'listening-expert': 'text-ifind-aqua',
+      'mindfulness-expert': 'text-cyan-500', 
+      'life-coach': 'text-purple-500',
+      'spiritual-mentor': 'text-ifind-purple'
+    };
+    return colorMap[categoryId] || 'text-ifind-teal';
+  };
+
   return (
     <div>
       {/* Header Section */}
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold mb-4">
-          <span className={`bg-gradient-to-r ${
-            ['listening-volunteer', 'listening-expert'].includes(category.id)
-              ? 'from-ifind-teal to-ifind-aqua'
-              : 'from-ifind-purple to-purple-400'
-          } bg-clip-text text-transparent`}>
+          <span className={`bg-gradient-to-r ${getCategoryColor(category.id)} bg-clip-text text-transparent`}>
             {category.title}
           </span>
         </h1>
@@ -34,21 +52,13 @@ const ExpertCategoryContent: React.FC<ExpertCategoryContentProps> = ({
 
       {/* What They Offer Section */}
       <div className="bg-gradient-to-br from-white/80 to-card/60 backdrop-blur-sm rounded-xl p-8 mb-12 border shadow-lg">
-        <h2 className={`text-2xl font-semibold mb-6 text-center ${
-          ['listening-volunteer', 'listening-expert'].includes(category.id)
-            ? 'text-ifind-teal'
-            : 'text-ifind-purple'
-        }`}>
+        <h2 className={`text-2xl font-semibold mb-6 text-center ${getCategoryTextColor(category.id)}`}>
           What {category.title} Offer
         </h2>
         <div className="grid md:grid-cols-3 gap-8">
           {category.offerings.map((offering, index) => (
             <div key={index} className="text-center p-4 rounded-lg bg-white/50 hover:bg-white/70 transition-all duration-200 hover:shadow-md">
-              <h3 className={`font-semibold mb-3 text-lg ${
-                ['listening-volunteer', 'listening-expert'].includes(category.id)
-                  ? 'text-ifind-teal'
-                  : 'text-ifind-purple'
-              }`}>
+              <h3 className={`font-semibold mb-3 text-lg ${getCategoryTextColor(category.id)}`}>
                 {offering.title}
               </h3>
               <p className="text-sm text-muted-foreground leading-relaxed">{offering.description}</p>
