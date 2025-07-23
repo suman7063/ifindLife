@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { useCallSession } from '@/hooks/useCallSession';
 import { useRazorpayPayment } from '@/hooks/useRazorpayPayment';
@@ -14,6 +15,7 @@ export interface ExpertConnectionState {
 }
 
 export function useExpertConnection() {
+  const navigate = useNavigate();
   const { isAuthenticated } = useSimpleAuth();
   const { createCallSession, currentSession } = useCallSession();
   const { processPayment } = useRazorpayPayment();
@@ -41,10 +43,8 @@ export function useExpertConnection() {
   };
 
   const handleExpertCardClick = (expert: ExpertCardData) => {
-    updateState({
-      selectedExpert: expert,
-      isExpertModalOpen: true
-    });
+    // Redirect to dedicated expert page instead of opening modal
+    navigate(`/expert/${expert.auth_id || expert.id}`);
   };
 
   const handleConnectNow = async (expert: ExpertCardData, type: 'video' | 'voice') => {

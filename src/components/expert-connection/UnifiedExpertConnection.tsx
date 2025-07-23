@@ -43,16 +43,7 @@ const UnifiedExpertConnection: React.FC<UnifiedExpertConnectionProps> = ({
         handleShowConnectOptions
       })}
 
-      {/* Expert Detail Modal */}
-      <ExpertDetailModal
-        expert={state.selectedExpert}
-        isOpen={state.isExpertModalOpen}
-        onClose={closeExpertModal}
-        onConnectNow={handleModalConnectNow}
-        onBookNow={handleModalBookNow}
-      />
-
-      {/* Booking flow now redirects to expert page - no modal needed */}
+      {/* Expert Detail Modal removed - now using dedicated pages */}
 
       {/* Call Modal */}
       {state.isCallModalOpen && state.selectedExpert && currentSession && (
