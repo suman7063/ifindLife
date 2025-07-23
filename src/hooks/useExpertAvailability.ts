@@ -136,6 +136,7 @@ export function useExpertAvailability(expertId?: string) {
     getAvailableSlots,
     isAvailableOnDate,
     getAvailabilityCalendar,
-    refetch: () => expertId && fetchExpertAvailability(expertId)
+    refetch: () => expertId && fetchExpertAvailability(expertId),
+    hasAvailability: availabilities && availabilities.length > 0
   };
 }

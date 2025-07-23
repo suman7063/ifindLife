@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/auth';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import AvailabilityBasedBooking from './AvailabilityBasedBooking';
+import ModernBookingInterface from './ModernBookingInterface';
 import EnhancedAgoraCallModal from '../call/modals/EnhancedAgoraCallModal';
 import { useRealExpertPresence } from '@/hooks/useRealExpertPresence';
 import { Calendar, Phone, Video, Clock, Users } from 'lucide-react';
@@ -216,9 +216,10 @@ const IntegratedBookingSystem: React.FC<IntegratedBookingSystemProps> = ({
             </TabsContent>
 
             <TabsContent value="schedule" className="space-y-4">
-              <AvailabilityBasedBooking
+              <ModernBookingInterface
                 expertId={expert.id}
                 expertName={expert.name}
+                expertAvatar={expert.profile_picture}
                 onBookingConfirm={handleScheduledBooking}
               />
               {isBooking && (
