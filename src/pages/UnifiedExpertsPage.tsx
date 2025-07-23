@@ -13,28 +13,32 @@ const UnifiedExpertsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
   
-  // Extract category from URL path or search params
-  const getCategoryFromPath = useMemo(() => () => {
+  // Extract category from URL - prioritize search params for tab switching
+  const getInitialCategory = useMemo(() => {
+    // First check search params (for tab switching)
+    const paramCategory = searchParams.get('category');
+    if (paramCategory) return paramCategory;
+    
+    // Then check path for legacy routes
     const pathParts = location.pathname.split('/');
     const lastPart = pathParts[pathParts.length - 1];
-    
-    // Check if it's one of the legacy category routes
     const legacyCategories = ['listening-volunteer', 'listening-expert', 'mindfulness-expert', 'life-coach', 'spiritual-mentor'];
     if (legacyCategories.includes(lastPart)) {
       return lastPart;
     }
     
-    // Fall back to search params or default
-    return searchParams.get('category') || 'listening-volunteer';
+    return 'listening-volunteer';
   }, [location.pathname, searchParams]);
   
-  const [activeCategory, setActiveCategory] = useState(() => getCategoryFromPath());
+  const [activeCategory, setActiveCategory] = useState(getInitialCategory);
   
-  // Update active category when URL changes
+  // Only update category when the initial category calculation changes (page load/navigation)
   useEffect(() => {
-    const newCategory = getCategoryFromPath();
-    setActiveCategory(newCategory);
-  }, [getCategoryFromPath]);
+    // Only update if there's no search param (meaning we're on initial load or direct navigation)
+    if (!searchParams.get('category')) {
+      setActiveCategory(getInitialCategory);
+    }
+  }, [getInitialCategory, searchParams]);
   
   const { experts, loading, error } = usePublicExpertsData();
 
