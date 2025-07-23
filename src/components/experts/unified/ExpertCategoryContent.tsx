@@ -18,8 +18,14 @@ const ExpertCategoryContent: React.FC<ExpertCategoryContentProps> = ({
     <div>
       {/* Header Section */}
       <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent mb-4">
-          {category.title}
+        <h1 className="text-4xl font-bold mb-4">
+          <span className={`bg-gradient-to-r ${
+            ['listening-volunteer', 'listening-expert'].includes(category.id)
+              ? 'from-ifind-teal to-ifind-aqua'
+              : 'from-ifind-purple to-purple-400'
+          } bg-clip-text text-transparent`}>
+            {category.title}
+          </span>
         </h1>
         <p className="text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
           {category.description}
@@ -27,15 +33,25 @@ const ExpertCategoryContent: React.FC<ExpertCategoryContentProps> = ({
       </div>
 
       {/* What They Offer Section */}
-      <div className="bg-card/50 backdrop-blur-sm rounded-lg p-8 mb-12 border">
-        <h2 className="text-2xl font-semibold mb-6 text-center">
+      <div className="bg-gradient-to-br from-white/80 to-card/60 backdrop-blur-sm rounded-xl p-8 mb-12 border shadow-lg">
+        <h2 className={`text-2xl font-semibold mb-6 text-center ${
+          ['listening-volunteer', 'listening-expert'].includes(category.id)
+            ? 'text-ifind-teal'
+            : 'text-ifind-purple'
+        }`}>
           What {category.title} Offer
         </h2>
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-3 gap-8">
           {category.offerings.map((offering, index) => (
-            <div key={index} className="text-center">
-              <h3 className="font-medium mb-2">{offering.title}</h3>
-              <p className="text-sm text-muted-foreground">{offering.description}</p>
+            <div key={index} className="text-center p-4 rounded-lg bg-white/50 hover:bg-white/70 transition-all duration-200 hover:shadow-md">
+              <h3 className={`font-semibold mb-3 text-lg ${
+                ['listening-volunteer', 'listening-expert'].includes(category.id)
+                  ? 'text-ifind-teal'
+                  : 'text-ifind-purple'
+              }`}>
+                {offering.title}
+              </h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">{offering.description}</p>
             </div>
           ))}
         </div>

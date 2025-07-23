@@ -81,8 +81,8 @@ const UnifiedExpertsPage = () => {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 pt-20">
-        <div className="container mx-auto px-4 py-12">
+      <div className="min-h-screen bg-gradient-to-br from-ifind-offwhite via-background to-ifind-teal/10 pt-20">
+        <div className="container mx-auto px-4 py-8">
           {/* Category Tabs */}
           <ExpertCategoryTabs 
             activeCategory={activeCategory}
