@@ -124,6 +124,7 @@ export type Database = {
           google_calendar_event_id: string | null
           id: string
           notes: string | null
+          reminder_sent: boolean | null
           service_id: number | null
           start_time: string | null
           status: string
@@ -144,6 +145,7 @@ export type Database = {
           google_calendar_event_id?: string | null
           id?: string
           notes?: string | null
+          reminder_sent?: boolean | null
           service_id?: number | null
           start_time?: string | null
           status: string
@@ -164,6 +166,7 @@ export type Database = {
           google_calendar_event_id?: string | null
           id?: string
           notes?: string | null
+          reminder_sent?: boolean | null
           service_id?: number | null
           start_time?: string | null
           status?: string
