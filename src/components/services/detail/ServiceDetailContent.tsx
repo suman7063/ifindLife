@@ -6,6 +6,7 @@ import ServiceFAQ from './ServiceFAQ';
 import ServiceCTA from './ServiceCTA';
 import RelatedServices from './RelatedServices';
 import ServiceTestimonial from './ServiceTestimonial';
+import ServiceExperts from './ServiceExperts';
 
 interface ServiceDetailContentProps {
   serviceId: string;
@@ -36,6 +37,12 @@ const ServiceDetailContent: React.FC<ServiceDetailContentProps> = ({
         
         {/* FAQ Section */}
         <ServiceFAQ color={serviceData.color} />
+        
+        {/* Service Experts Section */}
+        <ServiceExperts 
+          serviceId={serviceId}
+          serviceData={serviceData}
+        />
       </div>
       
       <div className="space-y-8">
