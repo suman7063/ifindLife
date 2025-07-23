@@ -630,6 +630,39 @@ export type Database = {
         }
         Relationships: []
       }
+      expert_category_pricing: {
+        Row: {
+          active: boolean
+          category: string
+          created_at: string
+          duration_minutes: number
+          id: string
+          price_inr: number
+          price_usd: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          category: string
+          created_at?: string
+          duration_minutes: number
+          id?: string
+          price_inr: number
+          price_usd: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          category?: string
+          created_at?: string
+          duration_minutes?: number
+          id?: string
+          price_inr?: number
+          price_usd?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       expert_presence: {
         Row: {
           auto_away_enabled: boolean | null
@@ -1490,7 +1523,7 @@ export type Database = {
           description?: string | null
           duration?: number | null
           featured?: boolean | null
-          id: number
+          id?: number
           name: string
           rate_eur?: number | null
           rate_inr: number

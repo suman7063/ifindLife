@@ -1,9 +1,7 @@
-
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
-export interface CallPricing {
+interface CategoryPricing {
   id: string;
   category: string;
   duration_minutes: number;
@@ -12,22 +10,21 @@ export interface CallPricing {
   active: boolean;
 }
 
-// Keep for backward compatibility
-export interface CategoryPricing extends CallPricing {}
-
-export interface UserGeolocation {
+interface UserGeolocation {
   country_code: string;
   currency: string;
 }
 
-export const useCallPricing = (expertCategory?: string) => {
+export function useCategoryPricing(expertCategory?: string) {
   const [pricingOptions, setPricingOptions] = useState<CategoryPricing[]>([]);
-  const [userCurrency, setUserCurrency] = useState<'INR' | 'USD'>('USD');
+  const [userCurrency, setUserCurrency] = useState<'USD' | 'INR'>('USD');
   const [isLoading, setIsLoading] = useState(true);
 
   // Fetch pricing options based on expert category
   const fetchPricing = async () => {
     try {
+      setIsLoading(true);
+      
       let query = supabase
         .from('expert_category_pricing')
         .select('*')
@@ -41,56 +38,56 @@ export const useCallPricing = (expertCategory?: string) => {
 
       const { data, error } = await query;
 
-      if (error) throw error;
-      
-      console.log('Fetched category pricing data for', expertCategory, ':', data);
+      if (error) {
+        console.error('Error fetching category pricing:', error);
+        return;
+      }
+
       setPricingOptions(data || []);
     } catch (error) {
-      console.error('Error fetching pricing:', error);
-      toast.error('Failed to load pricing options');
+      console.error('Error in fetchPricing:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   // Detect user currency based on geolocation
   const detectUserCurrency = async () => {
     try {
-      // Simple IP-based detection
+      // Try to detect based on timezone or IP geolocation
       const response = await fetch('https://ipapi.co/json/');
-      const geoData = await response.json();
+      const geoInfo = await response.json();
       
-      // Currency detection: INR for India, USD for rest of world
-      let currency: 'INR' | 'USD' = 'USD';
-      if (geoData.country_code === 'IN') {
-        currency = 'INR';
-      }
+      const currency = geoInfo.country_code === 'IN' ? 'INR' : 'USD';
       setUserCurrency(currency);
     } catch (error) {
       console.error('Error detecting currency:', error);
-      // Default to USD if detection fails
-      setUserCurrency('USD');
+      setUserCurrency('USD'); // Default fallback
     }
   };
 
   useEffect(() => {
-    const initializePricing = async () => {
-      setIsLoading(true);
-      await Promise.all([fetchPricing(), detectUserCurrency()]);
-      setIsLoading(false);
-    };
-
-    initializePricing();
+    fetchPricing();
+    detectUserCurrency();
   }, [expertCategory]);
 
+  // Get price for specific duration
   const getPriceForDuration = (durationMinutes: number): number => {
-    const pricing = pricingOptions.find(p => p.duration_minutes === durationMinutes);
-    if (!pricing) return 0;
+    const option = pricingOptions.find(p => p.duration_minutes === durationMinutes);
+    if (!option) return 0;
     
-    return userCurrency === 'INR' ? pricing.price_inr : pricing.price_usd;
+    return userCurrency === 'INR' ? option.price_inr : option.price_usd;
   };
 
+  // Format price with currency symbol
   const formatPrice = (price: number): string => {
     const symbol = userCurrency === 'INR' ? '₹' : '$';
-    return `${symbol}${price.toFixed(2)}`;
+    return `${symbol}${price}`;
+  };
+
+  // Get all available durations for this category
+  const getAvailableDurations = (): number[] => {
+    return pricingOptions.map(p => p.duration_minutes);
   };
 
   return {
@@ -99,6 +96,7 @@ export const useCallPricing = (expertCategory?: string) => {
     isLoading,
     getPriceForDuration,
     formatPrice,
+    getAvailableDurations,
     refreshPricing: fetchPricing
   };
-};
+}

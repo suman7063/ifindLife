@@ -10,7 +10,7 @@ interface CallDurationSelectorProps {
   selectedDuration: number | null;
   onSelectDuration: (duration: number, price: number) => void;
   formatPrice: (price: number) => string;
-  userCurrency: 'INR' | 'EUR';
+  userCurrency: 'INR' | 'USD';
   className?: string;
 }
 
@@ -23,7 +23,7 @@ export const CallDurationSelector: React.FC<CallDurationSelectorProps> = ({
   className = ''
 }) => {
   const getPrice = (option: CallPricing) => {
-    return userCurrency === 'INR' ? option.price_inr : option.price_eur;
+    return userCurrency === 'INR' ? option.price_inr : option.price_usd;
   };
 
   const getPopularBadge = (durationMinutes: number) => {
