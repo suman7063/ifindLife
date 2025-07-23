@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import NavbarUserAvatar from './NavbarUserAvatar';
 import NavbarExpertMenu from './NavbarExpertMenu';
 import { NavigationMenu, NavigationMenuList } from "@/components/ui/navigation-menu";
-import { ProgramsMenu, ServicesMenu, SupportMenu, LoginDropdown, AssessmentMenu, ExpertsMenu } from './menu';
+import { ProgramsMenu, ServicesMenu, SupportMenu, AssessmentMenu, ExpertsMenu } from './menu';
 
 interface NavbarDesktopLinksProps {
   isAuthenticated: boolean;
@@ -52,11 +52,12 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
       authComponent = <NavbarUserAvatar currentUser={{ name: 'User', email: '' }} onLogout={userLogout} isLoggingOut={isLoggingOut} />;
     }
   } else {
-    console.log('NavbarDesktopLinks: Rendering login dropdown - user not authenticated');
-    authComponent = <LoginDropdown 
-      isAuthenticated={false} 
-      hasExpertProfile={false} 
-    />;
+    console.log('NavbarDesktopLinks: Rendering user login/signup link - user not authenticated');
+    authComponent = (
+      <Button asChild variant="outline">
+        <Link to="/user-login">User login/Signup</Link>
+      </Button>
+    );
   }
 
   console.log('NavbarDesktopLinks: Final auth component decision made, rendering navbar');

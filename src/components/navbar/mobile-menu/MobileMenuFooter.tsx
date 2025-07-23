@@ -91,11 +91,8 @@ const MobileMenuFooter: React.FC<MobileMenuFooterProps> = ({
     <div className="mt-auto pt-4">
       <Separator className="mb-4" />
       <div className="space-y-2">
-        <Button variant="outline" className="w-full" asChild>
-          <Link to="/user-login">User Login</Link>
-        </Button>
         <Button variant="default" className="w-full" asChild>
-          <Link to="/expert-login">Expert Login</Link>
+          <Link to="/user-login">User login/Signup</Link>
         </Button>
       </div>
     </div>
