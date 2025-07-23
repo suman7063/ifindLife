@@ -14,9 +14,9 @@ const ExpertCategoryTabs: React.FC<ExpertCategoryTabsProps> = ({
   return (
     <div className="w-full mb-6">
       {/* Aqua/Teal background strip */}
-      <div className="bg-gradient-to-r from-ifind-teal to-ifind-aqua p-1 rounded-lg shadow-lg">
+      <div className="bg-gradient-to-r from-ifind-teal to-ifind-aqua p-1 rounded-lg shadow-lg border-0">
         <Tabs value={activeCategory} onValueChange={onCategoryChange} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 bg-white/90 backdrop-blur-sm">
+          <TabsList className="grid w-full grid-cols-5 bg-white/90 backdrop-blur-sm border-0">
             {expertCategories.map((category, index) => (
               <TabsTrigger 
                 key={category.id} 
