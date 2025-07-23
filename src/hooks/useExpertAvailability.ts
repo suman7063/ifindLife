@@ -59,16 +59,17 @@ export function useExpertAvailability(expertId?: string) {
     }
   };
 
-  // Get available time slots for a specific date
-  const getAvailableSlots = (date: string) => {
+  // Generate 30-minute slots from availability periods
+  const generate30MinuteSlots = (date: string) => {
     const targetDate = new Date(date);
-    const dayOfWeek = targetDate.getDay() === 0 ? 7 : targetDate.getDay(); // Convert Sunday (0) to 7
+    const dayOfWeek = targetDate.getDay() === 0 ? 7 : targetDate.getDay();
     
-    const availableSlots: Array<{
+    const generatedSlots: Array<{
       id: string;
       start_time: string;
       end_time: string;
       expert_id: string;
+      availability_id: string;
     }> = [];
 
     availabilities.forEach(availability => {
@@ -78,29 +79,54 @@ export function useExpertAvailability(expertId?: string) {
       // Check if the target date is within the availability range
       if (targetDate >= startDate && targetDate <= endDate) {
         availability.time_slots.forEach(slot => {
+          let shouldInclude = false;
+          
           // For recurring availability, match day of week
           if (availability.availability_type === 'recurring' && slot.day_of_week === dayOfWeek && !slot.is_booked) {
-            availableSlots.push({
-              id: slot.id,
-              start_time: slot.start_time,
-              end_time: slot.end_time,
-              expert_id: availability.expert_id
-            });
+            shouldInclude = true;
           }
           // For date range availability with specific dates
           else if (availability.availability_type === 'date_range' && slot.specific_date === date && !slot.is_booked) {
-            availableSlots.push({
-              id: slot.id,
-              start_time: slot.start_time,
-              end_time: slot.end_time,
-              expert_id: availability.expert_id
-            });
+            shouldInclude = true;
+          }
+
+          if (shouldInclude) {
+            // Generate 30-minute slots between start_time and end_time
+            const startTime = new Date(`2000-01-01T${slot.start_time}`);
+            const endTime = new Date(`2000-01-01T${slot.end_time}`);
+            
+            let currentSlot = new Date(startTime);
+            let slotIndex = 0;
+            
+            while (currentSlot < endTime) {
+              const slotStart = new Date(currentSlot);
+              const slotEnd = new Date(currentSlot.getTime() + 30 * 60 * 1000); // Add 30 minutes
+              
+              // Don't create slot if it would extend beyond the availability end time
+              if (slotEnd <= endTime) {
+                generatedSlots.push({
+                  id: `${slot.id}-${slotIndex}`,
+                  start_time: slotStart.toTimeString().slice(0, 8),
+                  end_time: slotEnd.toTimeString().slice(0, 8),
+                  expert_id: availability.expert_id,
+                  availability_id: availability.id
+                });
+              }
+              
+              currentSlot = slotEnd;
+              slotIndex++;
+            }
           }
         });
       }
     });
 
-    return availableSlots.sort((a, b) => a.start_time.localeCompare(b.start_time));
+    return generatedSlots.sort((a, b) => a.start_time.localeCompare(b.start_time));
+  };
+
+  // Get available time slots for a specific date (original function for compatibility)
+  const getAvailableSlots = (date: string) => {
+    return generate30MinuteSlots(date);
   };
 
   // Check if expert is available on a specific date
@@ -134,6 +160,7 @@ export function useExpertAvailability(expertId?: string) {
     loading,
     error,
     getAvailableSlots,
+    generate30MinuteSlots,
     isAvailableOnDate,
     getAvailabilityCalendar,
     refetch: () => expertId && fetchExpertAvailability(expertId),

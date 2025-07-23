@@ -8,3 +8,9 @@ verify_jwt = true
 
 [functions.verify-razorpay-payment]
 verify_jwt = true
+
+[functions.send-appointment-notification]
+verify_jwt = false
+
+[functions.schedule-appointment-reminders]
+verify_jwt = false

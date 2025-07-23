@@ -63,7 +63,7 @@ const IntegratedBookingSystem: React.FC<IntegratedBookingSystemProps> = ({
     setIsCallModalOpen(true);
   };
 
-  const handleScheduledBooking = async (slotId: string, date: string, time: string) => {
+  const handleScheduledBooking = async (slotIds: string[], date: string, startTime: string, endTime: string, totalPrice: number) => {
     if (!isAuthenticated || !user) {
       toast.error('Please log in to book an appointment');
       navigate('/user-login');
@@ -73,6 +73,11 @@ const IntegratedBookingSystem: React.FC<IntegratedBookingSystemProps> = ({
     try {
       setIsBooking(true);
 
+      // Calculate duration in minutes
+      const start = new Date(`2000-01-01T${startTime}`);
+      const end = new Date(`2000-01-01T${endTime}`);
+      const durationMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
+
       // Create appointment in database
       const { data: appointment, error } = await supabase
         .from('appointments')
@@ -81,24 +86,43 @@ const IntegratedBookingSystem: React.FC<IntegratedBookingSystemProps> = ({
           expert_id: expert.id,
           expert_name: expert.name,
           appointment_date: date,
-          start_time: time,
-          status: 'scheduled',
-          time_slot_id: slotId,
-          duration: 60, // Default 60 minutes
-          notes: `Scheduled consultation with ${expert.name}`
+          start_time: startTime,
+          end_time: endTime,
+          status: 'confirmed', // Since payment was processed
+          time_slot_id: slotIds[0], // Use first slot ID for reference
+          duration: durationMinutes,
+          notes: `Scheduled consultation with ${expert.name} - ${slotIds.length} slots booked`
         })
         .select()
         .single();
 
       if (error) throw error;
 
-      // Mark the time slot as booked
-      await supabase
-        .from('expert_time_slots')
-        .update({ is_booked: true })
-        .eq('id', slotId);
+      // Mark the time slots as booked
+      if (slotIds.length > 0) {
+        // For generated slots, we need to handle them differently
+        // Since these are generated slot IDs, we'll mark the base time slots as booked
+        const baseSlotIds = slotIds.map(id => id.split('-')[0]).filter((value, index, self) => self.indexOf(value) === index);
+        
+        await supabase
+          .from('expert_time_slots')
+          .update({ is_booked: true })
+          .in('id', baseSlotIds);
+      }
 
-      toast.success('Appointment booked successfully!');
+      // Record transaction
+      await supabase
+        .from('user_transactions')
+        .insert({
+          user_id: user.id,
+          amount: totalPrice,
+          date: new Date().toISOString(),
+          type: 'appointment_payment',
+          currency: 'EUR', // This should be dynamic based on user currency
+          description: `Appointment with ${expert.name} on ${date}`
+        });
+
+      toast.success('Appointment booked and payment processed successfully!');
       
       if (onClose) onClose();
     } catch (error) {
