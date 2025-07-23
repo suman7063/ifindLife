@@ -19,6 +19,30 @@ const ExpertDetail = () => {
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
   const { executeIntendedAction, isAuthenticated } = useAuthRedirectSystem();
   
+  // Define handler functions early to avoid temporal dead zone errors
+  const handleBookClick = () => {
+    const tabElement = document.getElementById('booking-tab');
+    if (tabElement) {
+      tabElement.click();
+    }
+  };
+  
+  const handleCallClick = () => {
+    // This will be properly defined after expert state is loaded
+    const tabElement = document.getElementById('call-action');
+    if (tabElement) {
+      tabElement.click();
+    }
+  };
+  
+  const handleChatClick = () => {
+    // This will be properly defined after expert state is loaded  
+    const tabElement = document.getElementById('chat-action');
+    if (tabElement) {
+      tabElement.click();
+    }
+  };
+  
   useEffect(() => {
     if (searchParams.get('call') === 'true') {
       setIsCallModalOpen(true);
@@ -147,8 +171,9 @@ const ExpertDetail = () => {
     );
   }
   
-  const handleCallClick = () => {
-    if (expert.online && expert.waitTime === "Available") {
+  // Update the handler functions with expert data once loaded
+  const handleCallClickWithExpert = () => {
+    if (expert?.online && expert?.waitTime === "Available") {
       setIsCallModalOpen(true);
     } else {
       toast.error("Expert Unavailable", {
@@ -157,15 +182,8 @@ const ExpertDetail = () => {
     }
   };
   
-  const handleBookClick = () => {
-    const tabElement = document.getElementById('booking-tab');
-    if (tabElement) {
-      tabElement.click();
-    }
-  };
-  
-  const handleChatClick = () => {
-    if (expert.online && expert.waitTime === "Available") {
+  const handleChatClickWithExpert = () => {
+    if (expert?.online && expert?.waitTime === "Available") {
       setIsChatModalOpen(true);
     } else {
       toast.error("Expert Unavailable", {
@@ -185,9 +203,9 @@ const ExpertDetail = () => {
             <div className="md:col-span-1">
               <ExpertProfile 
                 expert={expert} 
-                onCallClick={handleCallClick}
+                onCallClick={handleCallClickWithExpert}
                 onBookClick={handleBookClick}
-                onChatClick={handleChatClick}
+                onChatClick={handleChatClickWithExpert}
               />
             </div>
             
