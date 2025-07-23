@@ -52,7 +52,7 @@ const ExpertCategoryContent: React.FC<ExpertCategoryContentProps> = ({
 
       {/* What They Offer Section */}
       <div className="bg-gradient-to-br from-white/80 to-card/60 backdrop-blur-sm rounded-xl p-8 mb-12 border shadow-lg">
-        <h2 className={`text-2xl font-semibold mb-6 text-center ${getCategoryTextColor(category.id)}`}>
+        <h2 className="text-2xl font-semibold mb-6 text-center text-slate-700">
           What {category.title} Offer
         </h2>
         <div className="grid md:grid-cols-3 gap-8">

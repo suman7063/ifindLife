@@ -26,6 +26,17 @@ export function usePublicExpertsData() {
     const expertStatus = presence?.status || 'offline';
     const availability = presence?.isAvailable ? 'available' : 'unavailable';
     
+    // Map specializations to categories for proper filtering
+    const getCategory = (specialization: string) => {
+      const spec = specialization?.toLowerCase() || '';
+      if (spec.includes('listening') && spec.includes('volunteer')) return 'listening-volunteer';
+      if (spec.includes('listening') && spec.includes('expert')) return 'listening-expert';
+      if (spec.includes('mindfulness') || spec.includes('meditation')) return 'mindfulness-expert';
+      if (spec.includes('life') && spec.includes('coach')) return 'life-coach';
+      if (spec.includes('spiritual') || spec.includes('mentor')) return 'spiritual-mentor';
+      return 'listening-volunteer'; // Default category
+    };
+    
     return {
       id: expertId,
       auth_id: expertAuthId,
@@ -41,6 +52,7 @@ export function usePublicExpertsData() {
       waitTime: isApproved && presence?.isAvailable ? 
                   expertStatus === 'online' ? 'Available Now' : 
                   expertStatus === 'away' ? 'Away' : 'Available' : 'Not Available',
+      category: dbExpert.category || getCategory(dbExpert.specialization), // Ensure category mapping
       dbStatus: dbExpert.status
     };
   };

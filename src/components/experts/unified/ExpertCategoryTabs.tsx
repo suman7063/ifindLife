@@ -24,26 +24,24 @@ const ExpertCategoryTabs: React.FC<ExpertCategoryTabsProps> = ({
 
   return (
     <div className="w-full mb-3">
-      <Tabs value={activeCategory} onValueChange={onCategoryChange} className="w-full">
-        <div className="flex justify-center gap-2 mb-8">
-          {expertCategories.map((category, index) => (
-            <button
-              key={category.id}
-              onClick={() => onCategoryChange(category.id)}
-              className={`
-                px-4 py-2 rounded-full border-2 transition-all duration-200 font-medium
-                text-xs sm:text-sm
-                ${activeCategory === category.id 
-                  ? getTabColor(index).split(' ').filter(c => c.includes('data-[state=active]')).join(' ').replace('data-[state=active]:', '')
-                  : getTabColor(index).split(' ').filter(c => !c.includes('data-[state=active]')).join(' ')
-                }
-              `}
-            >
-              {category.label}
-            </button>
-          ))}
-        </div>
-      </Tabs>
+      <div className="flex justify-center gap-2 mb-8">
+        {expertCategories.map((category, index) => (
+          <button
+            key={category.id}
+            onClick={() => onCategoryChange(category.id)}
+            className={`
+              px-4 py-2 rounded-full border-2 transition-all duration-200 font-medium
+              text-xs sm:text-sm
+              ${activeCategory === category.id 
+                ? getTabColor(index).split(' ').filter(c => c.includes('data-[state=active]')).join(' ').replace('data-[state=active]:', '')
+                : getTabColor(index).split(' ').filter(c => !c.includes('data-[state=active]')).join(' ')
+              }
+            `}
+          >
+            {category.label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 };
