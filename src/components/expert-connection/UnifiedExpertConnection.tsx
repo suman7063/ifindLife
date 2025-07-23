@@ -1,6 +1,5 @@
 import React from 'react';
 import ExpertDetailModal from '@/components/expert-card/ExpertDetailModal';
-import AppointmentBookingModal from '@/components/booking/AppointmentBookingModal';
 import LazyAgoraCallModal from '@/components/call/LazyAgoraCallModal';
 import { useExpertConnection } from '@/hooks/useExpertConnection';
 
@@ -31,7 +30,6 @@ const UnifiedExpertConnection: React.FC<UnifiedExpertConnectionProps> = ({
     handleModalConnectNow,
     handleModalBookNow,
     closeExpertModal,
-    closeBookingModal,
     closeCallModal
   } = useExpertConnection();
 
@@ -54,16 +52,7 @@ const UnifiedExpertConnection: React.FC<UnifiedExpertConnectionProps> = ({
         onBookNow={handleModalBookNow}
       />
 
-      {/* Appointment Booking Modal */}
-      {state.isBookingModalOpen && state.selectedExpert && (
-        <AppointmentBookingModal
-          isOpen={state.isBookingModalOpen}
-          onClose={closeBookingModal}
-          expert={state.selectedExpert}
-          serviceTitle={serviceTitle}
-          serviceId={serviceId}
-        />
-      )}
+      {/* Booking flow now redirects to expert page - no modal needed */}
 
       {/* Call Modal */}
       {state.isCallModalOpen && state.selectedExpert && currentSession && (

@@ -114,8 +114,13 @@ const ExpertDetailModal: React.FC<ExpertDetailModalProps> = ({
       navigate('/user-login');
       return;
     }
-
-    setShowBookingSystem(true);
+    
+    // Navigate to expert's booking page with booking tab active
+    const expertUrl = `/experts/${expert.auth_id || expert.id}?book=true`;
+    window.location.href = expertUrl;
+    
+    // Close the modal since we're navigating away
+    onClose();
   };
 
   const handleConnectOption = (type: 'video' | 'voice') => {

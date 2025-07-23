@@ -113,10 +113,14 @@ export function useExpertConnection() {
       return;
     }
 
-    console.log(`Opening booking interface for ${expert.name}`);
-    updateState({
-      selectedExpert: expert,
-      isBookingModalOpen: true
+    console.log('🔗 Redirecting to expert booking page for:', expert.name);
+    
+    // Navigate to expert's booking page with booking tab active
+    const expertUrl = `/experts/${expert.auth_id || expert.id}?book=true`;
+    window.location.href = expertUrl;
+
+    toast.success(`Redirecting to ${expert.name}'s booking page`, {
+      description: 'Complete your appointment booking'
     });
   };
 
@@ -138,9 +142,13 @@ export function useExpertConnection() {
 
   const handleModalBookNow = () => {
     if (state.selectedExpert) {
+      // Navigate to expert's booking page with booking tab active
+      const expertUrl = `/experts/${state.selectedExpert.auth_id || state.selectedExpert.id}?book=true`;
+      window.location.href = expertUrl;
+      
+      // Close the modal since we're navigating away
       updateState({
         isExpertModalOpen: false,
-        isBookingModalOpen: true
       });
     }
   };
