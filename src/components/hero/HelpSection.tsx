@@ -32,7 +32,7 @@ export const HelpSection: React.FC<HelpSectionProps> = ({ subtitle, description 
               <h2 className="text-xl font-medium text-center sm:text-left">
                 {subtitle}
               </h2>
-              <p className="text-sm text-gray-300 max-w-2xl">
+              <p className="text-sm text-gray-300 max-w-2xl text-center sm:text-left">
                 {description} <span className="inline-flex items-center ml-1 text-xs">
                   <span className="h-2 w-2 bg-green-500 rounded-full mr-1 animate-pulse"></span>
                   (12 Experts currently online)

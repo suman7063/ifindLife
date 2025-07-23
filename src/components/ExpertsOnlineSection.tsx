@@ -23,11 +23,29 @@ const ExpertsOnlineSection: React.FC = () => {
     }
   }, [allExperts, bulkCheckPresence]);
 
-  // Filter experts to show only those that are currently online and available
-  const onlineExperts = allExperts.filter(expert => {
+  // Show online experts first, then last online experts, ensuring 3 experts total
+  const approvedExperts = allExperts.filter(expert => expert.dbStatus === 'approved');
+  
+  // Separate online and offline experts
+  const onlineExperts = approvedExperts.filter(expert => {
     const presence = getExpertPresence(expert.auth_id || expert.id);
-    return expert.dbStatus === 'approved' && presence?.isAvailable;
-  }).slice(0, 3);
+    return presence?.isAvailable;
+  });
+  
+  const offlineExperts = approvedExperts.filter(expert => {
+    const presence = getExpertPresence(expert.auth_id || expert.id);
+    return !presence?.isAvailable;
+  });
+  
+  // Sort offline experts by last seen (most recent first)
+  const sortedOfflineExperts = offlineExperts.sort((a, b) => {
+    const presenceA = getExpertPresence(a.auth_id || a.id);
+    const presenceB = getExpertPresence(b.auth_id || b.id);
+    return new Date(presenceB?.lastActivity || 0).getTime() - new Date(presenceA?.lastActivity || 0).getTime();
+  });
+  
+  // Combine online first, then offline (last seen), and take first 3
+  const displayExperts = [...onlineExperts, ...sortedOfflineExperts].slice(0, 3);
 
   return (
     <UnifiedExpertConnection serviceTitle="Expert Consultation" serviceId="consultation">
@@ -64,9 +82,9 @@ const ExpertsOnlineSection: React.FC = () => {
                   </div>
                 ))}
               </div>
-            ) : onlineExperts.length > 0 ? (
+            ) : displayExperts.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {onlineExperts.map(expert => (
+                {displayExperts.map(expert => (
                   <div key={expert.id} className="flex">
                     <ExpertCard
                       expert={expert}

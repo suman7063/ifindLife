@@ -52,7 +52,7 @@ const WhatWeDoSection = () => {
           {programs.map((program) => (
             <div 
               key={program.id} 
-              className={`border-l-4 ${program.color} rounded-lg p-6 hover:shadow-lg transition-all duration-300`}
+              className={`border-l-4 bg-gray-100 ${program.color.includes('border-blue') ? 'border-blue-500' : program.color.includes('border-purple') ? 'border-purple-500' : 'border-teal-500'} rounded-lg p-6 hover:shadow-lg transition-all duration-300`}
             >
               <div className={`flex items-center justify-center w-16 h-16 ${program.iconBg} rounded-full mb-4`}>
                 {program.icon}
