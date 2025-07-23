@@ -44,7 +44,7 @@ export function useExpertConnection() {
 
   const handleExpertCardClick = (expert: ExpertCardData) => {
     // Redirect to dedicated expert page instead of opening modal
-    navigate(`/expert/${expert.auth_id || expert.id}`);
+    navigate(`/experts/${expert.auth_id || expert.id}`);
   };
 
   const handleConnectNow = async (expert: ExpertCardData, type: 'video' | 'voice') => {

@@ -76,6 +76,7 @@ const UserRoutes: React.FC = () => {
         <Route path="/experts" element={<Experts />} />
         <Route path="/experts-enhanced" element={<EnhancedExpertSearch />} />
         <Route path="/experts/:id" element={<ExpertDetail />} />
+        <Route path="/expert/:id" element={<ExpertDetail />} /> {/* Backward compatibility */}
         <Route path="/expert-login" element={<ExpertLogin />} />
         <Route path="/expert-signup" element={<ExpertSignup />} />
         <Route path="/expert-dashboard/*" element={<NewExpertDashboard />} />

@@ -172,7 +172,7 @@ const ExpertProfile: React.FC<ExpertProfileProps> = ({
             data-id="chat-button"
           >
             <MessageCircle className="h-4 w-4" />
-            <span>Chat (30% off)</span>
+            <span>Message Expert</span>
           </Button>
         </div>
       </CardContent>
