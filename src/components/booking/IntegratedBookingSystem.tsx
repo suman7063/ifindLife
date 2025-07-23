@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase';
 import ModernBookingInterface from './ModernBookingInterface';
 import EnhancedAgoraCallModal from '../call/modals/EnhancedAgoraCallModal';
 import { useRealExpertPresence } from '@/hooks/useRealExpertPresence';
+import { useRazorpayPayment } from '@/hooks/useRazorpayPayment';
 import { Calendar, Phone, Video, Clock, Users } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -35,6 +36,7 @@ const IntegratedBookingSystem: React.FC<IntegratedBookingSystemProps> = ({
   const [isCallModalOpen, setIsCallModalOpen] = useState(false);
   const [callType, setCallType] = useState<'voice' | 'video'>('video');
   const [isBooking, setIsBooking] = useState(false);
+  const { processPayment } = useRazorpayPayment();
 
   const { getExpertAvailability, getLastSeen, isExpertOnline } = useRealExpertPresence([expert.id]);
 
@@ -78,57 +80,104 @@ const IntegratedBookingSystem: React.FC<IntegratedBookingSystemProps> = ({
       const end = new Date(`2000-01-01T${endTime}`);
       const durationMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
 
-      // Create appointment in database
-      const { data: appointment, error } = await supabase
-        .from('appointments')
-        .insert({
-          user_id: user.id,
-          expert_id: expert.id,
-          expert_name: expert.name,
-          appointment_date: date,
-          start_time: startTime,
-          end_time: endTime,
-          status: 'confirmed', // Since payment was processed
-          time_slot_id: slotIds[0], // Use first slot ID for reference
-          duration: durationMinutes,
-          notes: `Scheduled consultation with ${expert.name} - ${slotIds.length} slots booked`
-        })
-        .select()
-        .single();
+      // Process payment first using Razorpay
+      await processPayment(
+        {
+          amount: Math.round(totalPrice * 100), // Convert to paise
+          currency: 'INR',
+          description: `Appointment with ${expert.name} - ${slotIds.length} slots`,
+          expertId: expert.id,
+        },
+        async (paymentId: string, orderId: string) => {
+          // Payment successful, create appointment
+          try {
+            // Generate channel name for Agora call
+            const channelName = `appointment_${Date.now()}_${user.id}`;
+            
+            // Generate Agora token for the appointment
+            const { data: tokenData, error: tokenError } = await supabase.functions.invoke('generate-agora-token', {
+              body: {
+                channelName,
+                uid: Math.floor(Math.random() * 1000000),
+                role: 1,
+                expireTime: 3600 // 1 hour token validity
+              }
+            });
 
-      if (error) throw error;
+            if (tokenError) {
+              console.error('Failed to generate Agora token:', tokenError);
+            }
 
-      // Mark the time slots as booked
-      if (slotIds.length > 0) {
-        // For generated slots, we need to handle them differently
-        // Since these are generated slot IDs, we'll mark the base time slots as booked
-        const baseSlotIds = slotIds.map(id => id.split('-')[0]).filter((value, index, self) => self.indexOf(value) === index);
-        
-        await supabase
-          .from('expert_time_slots')
-          .update({ is_booked: true })
-          .in('id', baseSlotIds);
-      }
+            // Create appointment in database
+            const { data: appointment, error } = await supabase
+              .from('appointments')
+              .insert({
+                user_id: user.id,
+                expert_id: expert.id,
+                expert_name: expert.name,
+                appointment_date: date,
+                start_time: startTime,
+                end_time: endTime,
+                status: 'confirmed', // Since payment was processed
+                time_slot_id: slotIds[0], // Use first slot ID for reference
+                duration: durationMinutes,
+                notes: `Scheduled consultation with ${expert.name} - ${slotIds.length} slots booked`,
+                channel_name: channelName,
+                token: tokenData?.token || null
+              })
+              .select()
+              .single();
 
-      // Record transaction
-      await supabase
-        .from('user_transactions')
-        .insert({
-          user_id: user.id,
-          amount: totalPrice,
-          date: new Date().toISOString(),
-          type: 'appointment_payment',
-          currency: 'EUR', // This should be dynamic based on user currency
-          description: `Appointment with ${expert.name} on ${date}`
-        });
+            if (error) throw error;
 
-      toast.success('Appointment booked and payment processed successfully!');
-      
-      if (onClose) onClose();
+            // Mark the time slots as booked
+            if (slotIds.length > 0) {
+              const baseSlotIds = slotIds.map(id => id.split('-')[0]).filter((value, index, self) => self.indexOf(value) === index);
+              
+              await supabase
+                .from('expert_time_slots')
+                .update({ is_booked: true })
+                .in('id', baseSlotIds);
+            }
+
+            // Record transaction with correct currency
+            await supabase
+              .from('user_transactions')
+              .insert({
+                user_id: user.id,
+                amount: totalPrice,
+                date: new Date().toISOString(),
+                type: 'appointment_payment',
+                currency: 'INR', // Match the payment currency
+                description: `Appointment with ${expert.name} on ${date} - Payment ID: ${paymentId}`
+              });
+
+            // Send confirmation notification
+            await supabase.functions.invoke('send-appointment-notification', {
+              body: {
+                appointmentId: appointment.id,
+                type: 'confirmation'
+              }
+            });
+
+            toast.success('Appointment booked and payment processed successfully!');
+            
+            if (onClose) onClose();
+          } catch (appointmentError: any) {
+            console.error('Error creating appointment after payment:', appointmentError);
+            toast.error('Payment successful but failed to create appointment. Please contact support.');
+          }
+        },
+        (error: any) => {
+          console.error('Payment failed:', error);
+          toast.error('Payment failed. Please try again.');
+          setIsBooking(false);
+        }
+      );
+
     } catch (error) {
       console.error('Error booking appointment:', error);
       toast.error('Failed to book appointment. Please try again.');
-    } finally {
       setIsBooking(false);
     }
   };

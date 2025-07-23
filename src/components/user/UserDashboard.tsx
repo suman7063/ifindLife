@@ -20,6 +20,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
+import { useAppointmentToCall } from '@/hooks/useAppointmentToCall';
 import { toast } from 'sonner';
 
 interface UserDashboardData {
@@ -37,6 +38,7 @@ interface UserDashboardData {
 export const UserDashboard: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { initiateCallFromAppointment, getAppointmentStatus } = useAppointmentToCall();
   const [data, setData] = useState<UserDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -138,6 +140,28 @@ export const UserDashboard: React.FC = () => {
       day: 'numeric',
       year: 'numeric'
     });
+  };
+
+  const handleJoinCall = async (appointmentId: string, callType: 'video' | 'audio' = 'video') => {
+    try {
+      const status = await getAppointmentStatus(appointmentId);
+      
+      if (!status?.canJoin) {
+        if (status?.isExpired) {
+          toast.error('This appointment has expired');
+        } else if (status?.timeUntilJoin > 0) {
+          toast.error(`Call will be available in ${Math.ceil(status.timeUntilJoin)} minutes`);
+        } else {
+          toast.error('Cannot join call at this time');
+        }
+        return;
+      }
+
+      await initiateCallFromAppointment(appointmentId, callType);
+    } catch (error) {
+      console.error('Error joining call:', error);
+      toast.error('Failed to join call');
+    }
   };
 
   const formatTime = (timeStr: string) => {
@@ -298,11 +322,19 @@ export const UserDashboard: React.FC = () => {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleJoinCall(appointment.id, 'video')}
+                      >
                         <VideoIcon className="h-4 w-4 mr-1" />
                         Join
                       </Button>
-                      <Button size="sm" variant="ghost">
+                      <Button 
+                        size="sm" 
+                        variant="ghost"
+                        onClick={() => navigate('/messages')}
+                      >
                         <MessageSquare className="h-4 w-4" />
                       </Button>
                     </div>

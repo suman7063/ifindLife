@@ -114,9 +114,23 @@ export const useExpertPricing = (expertId?: string) => {
     return userCurrency === 'INR' ? pricing.session_30_inr : pricing.session_30_eur;
   };
 
-  // Calculate total price for multiple slots
+  // Calculate total price for multiple slots with correct currency
   const calculateTotalPrice = (numberOfSlots: number): number => {
-    return getSlotPrice() * numberOfSlots;
+    const pricePerSlot = getSlotPrice();
+    return pricePerSlot * numberOfSlots;
+  };
+
+  // Convert price to target currency if needed
+  const convertPrice = (price: number, fromCurrency: 'INR' | 'EUR', toCurrency: 'INR' | 'EUR'): number => {
+    if (fromCurrency === toCurrency) return price;
+    
+    // Simple conversion - in production, use real exchange rates
+    if (fromCurrency === 'EUR' && toCurrency === 'INR') {
+      return price * 85; // Approximate rate
+    } else if (fromCurrency === 'INR' && toCurrency === 'EUR') {
+      return price / 85;
+    }
+    return price;
   };
 
   // Format price with currency symbol
@@ -132,6 +146,7 @@ export const useExpertPricing = (expertId?: string) => {
     error,
     getSlotPrice,
     calculateTotalPrice,
+    convertPrice,
     formatPrice,
     refetch: () => expertId && fetchExpertPricing(expertId)
   };

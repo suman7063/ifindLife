@@ -47,17 +47,22 @@ const ModernBookingInterface: React.FC<ModernBookingInterfaceProps> = ({
     loading: pricingLoading,
     getSlotPrice,
     calculateTotalPrice,
-    formatPrice
+    formatPrice,
+    userCurrency,
+    convertPrice
   } = useExpertPricing(expertId);
 
   const selectedDateString = selectedDate?.toISOString().split('T')[0] || '';
   const availableSlots = selectedDate ? generate30MinuteSlots(selectedDateString) : [];
   const availabilityCalendar = getAvailabilityCalendar();
   
-  // Calculate selected slots info
+  // Calculate selected slots info with proper currency
   const totalSelectedSlots = selectedSlots.length;
-  const totalPrice = calculateTotalPrice(totalSelectedSlots);
   const slotPrice = getSlotPrice();
+  const totalPrice = calculateTotalPrice(totalSelectedSlots);
+  
+  // Convert to INR for Razorpay if needed
+  const totalPriceINR = userCurrency === 'EUR' ? convertPrice(totalPrice, 'EUR', 'INR') : totalPrice;
 
   // Check if expert has any availability set
   const hasAvailability = availabilities && availabilities.length > 0;
@@ -115,7 +120,7 @@ const ModernBookingInterface: React.FC<ModernBookingInterfaceProps> = ({
       return;
     }
 
-    onBookingConfirm(selectedSlots, selectedDateString, firstSlot.start_time, lastSlot.end_time, totalPrice);
+    onBookingConfirm(selectedSlots, selectedDateString, firstSlot.start_time, lastSlot.end_time, totalPriceINR);
   };
 
   const goBack = () => {
