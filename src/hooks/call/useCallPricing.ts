@@ -7,7 +7,7 @@ export interface CallPricing {
   id: string;
   category: string;
   duration_minutes: number;
-  price_eur: number;
+  price_usd: number;
   price_inr: number;
   active: boolean;
 }
@@ -22,7 +22,7 @@ export interface UserGeolocation {
 
 export const useCallPricing = (expertCategory?: string) => {
   const [pricingOptions, setPricingOptions] = useState<CategoryPricing[]>([]);
-  const [userCurrency, setUserCurrency] = useState<'INR' | 'EUR'>('EUR');
+  const [userCurrency, setUserCurrency] = useState<'INR' | 'USD'>('USD');
   const [isLoading, setIsLoading] = useState(true);
 
   // Fetch pricing options based on expert category
@@ -58,16 +58,16 @@ export const useCallPricing = (expertCategory?: string) => {
       const response = await fetch('https://ipapi.co/json/');
       const geoData = await response.json();
       
-      // Currency detection: INR for India, EUR for rest of world
-      let currency: 'INR' | 'EUR' = 'EUR';
+      // Currency detection: INR for India, USD for rest of world
+      let currency: 'INR' | 'USD' = 'USD';
       if (geoData.country_code === 'IN') {
         currency = 'INR';
       }
       setUserCurrency(currency);
     } catch (error) {
       console.error('Error detecting currency:', error);
-      // Default to EUR if detection fails
-      setUserCurrency('EUR');
+      // Default to USD if detection fails
+      setUserCurrency('USD');
     }
   };
 
@@ -85,11 +85,11 @@ export const useCallPricing = (expertCategory?: string) => {
     const pricing = pricingOptions.find(p => p.duration_minutes === durationMinutes);
     if (!pricing) return 0;
     
-    return userCurrency === 'INR' ? pricing.price_inr : pricing.price_eur;
+    return userCurrency === 'INR' ? pricing.price_inr : pricing.price_usd;
   };
 
   const formatPrice = (price: number): string => {
-    const symbol = userCurrency === 'INR' ? '₹' : '€';
+    const symbol = userCurrency === 'INR' ? '₹' : '$';
     return `${symbol}${price.toFixed(2)}`;
   };
 
