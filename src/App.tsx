@@ -45,6 +45,8 @@ import { FavoritesManager } from '@/components/favorites/FavoritesManager';
 import CallPage from './pages/CallPage';
 import MessagingPage from './pages/MessagingPage';
 import UnifiedExpertsPage from './pages/UnifiedExpertsPage';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 // Create QueryClient outside component to avoid hook issues
 const queryClient = new QueryClient({
@@ -135,7 +137,9 @@ const UserRoutes: React.FC = () => {
         
         {/* Auth Routes */}
         <Route path="/logout" element={<LogoutPage />} />
-        
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+
         {/* Catch-all route */}
         <Route path="*" element={<NotFound />} />
         </Routes>
