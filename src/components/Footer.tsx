@@ -102,7 +102,32 @@ const Footer = () => {
           </div>
         </div>
         
-        <div className="border-t border-white/10 pt-8 text-center text-ifind-offwhite/60 text-sm">
+        {/* Disclaimer Section */}
+        <div className="border-t border-white/10 pt-8 pb-6">
+          <div className="max-w-4xl mx-auto">
+            <h5 className="text-ifind-offwhite font-medium text-sm mb-3 text-center">Disclaimer</h5>
+            <div className="text-ifind-offwhite/70 text-xs leading-relaxed space-y-2 text-justify">
+              <p>
+                iFindLife is a global emotional wellness platform designed to offer supportive listening, expert guidance, and transformational programs for day-to-day life challenges, stress, and personal growth. While we provide access to trained experts and mental wellness professionals, iFindLife is not equipped to handle medical emergencies, psychiatric crises, or situations requiring immediate clinical intervention.
+              </p>
+              <p>
+                If you or someone you know is experiencing thoughts of self-harm, suicide, or any mental health emergency, please contact a local helpline or visit the nearest hospital or emergency room. Being with a trusted family member or friend during this time can offer essential support.
+              </p>
+              <p>
+                For immediate mental health support in India, you may call the national Tele MANAS helpline at <span className="text-ifind-offwhite font-medium">1-800 891 4416</span>.
+              </p>
+              <p>
+                For those in the UAE, you can call the National Mental Support Line at <span className="text-ifind-offwhite font-medium">800-HOPE (8004673)</span>, available 24/7. For users outside the UAE, please contact your country's emergency mental health services or helpline.
+              </p>
+              <p className="font-medium text-ifind-offwhite/80">
+                We care deeply about your journey, but your safety and urgent care come first. Please seek immediate professional or medical help if you are in crisis.
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        {/* Copyright Section */}
+        <div className="border-t border-white/10 pt-6 text-center text-ifind-offwhite/60 text-sm">
           <p>© {new Date().getFullYear()} iFindfLife LLP, A Soulversity Venture. All rights reserved.</p>
         </div>
       </div>
