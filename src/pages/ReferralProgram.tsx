@@ -3,7 +3,7 @@ import { useUserAuth } from '@/contexts/auth/hooks/useUserAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Copy, Gift, Users, Star, TrendingUp } from 'lucide-react';
+import { Copy, Gift, Users, Star, TrendingUp, BookOpen, Video, Calendar, Crown } from 'lucide-react';
 import { toast } from 'sonner';
 import { getReferralLink, copyReferralLink, fetchReferralSettings } from '@/utils/referralUtils';
 import { ReferralSettings } from '@/types/supabase';
@@ -100,6 +100,74 @@ const ReferralProgram = () => {
               </p>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Points Benefits Section */}
+        <div className="mb-12">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold mb-4">What Can You Do With Your Points?</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Your reward points unlock exclusive wellness experiences and learning opportunities
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card className="text-center hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <BookOpen className="w-6 h-6 text-accent" />
+                </div>
+                <CardTitle className="text-lg">Courses</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Access premium wellness courses and educational content with your points
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="text-center hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <div className="w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Video className="w-6 h-6 text-secondary" />
+                </div>
+                <CardTitle className="text-lg">One-on-One Sessions</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Book personalized wellness sessions with our expert practitioners
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="text-center hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Calendar className="w-6 h-6 text-primary" />
+                </div>
+                <CardTitle className="text-lg">Webinar Access</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Join live webinars and interactive wellness workshops
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="text-center hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <div className="w-12 h-12 bg-gradient-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Crown className="w-6 h-6 text-foreground" />
+                </div>
+                <CardTitle className="text-lg">Exclusive Events</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Get invites to exclusive wellness events and community gatherings
+                </p>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
         {/* Rewards Information */}
