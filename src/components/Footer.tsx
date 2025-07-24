@@ -87,6 +87,11 @@ const Footer = () => {
                   Contact Us
                 </Link>
               </li>
+              <li>
+                <Link to="/referral-program" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
+                  Referral Program
+                </Link>
+              </li>
             </ul>
           </div>
           

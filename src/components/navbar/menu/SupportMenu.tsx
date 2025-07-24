@@ -52,6 +52,17 @@ const SupportMenu = () => {
               </Link>
             </NavigationMenuLink>
           </li>
+          <li>
+            <NavigationMenuLink asChild>
+              <Link 
+                to="/referral-program" 
+                className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
+                onClick={handleLinkClick}
+              >
+                Referral Program
+              </Link>
+            </NavigationMenuLink>
+          </li>
         </ul>
       </NavigationMenuContent>
     </NavigationMenuItem>

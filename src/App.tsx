@@ -47,6 +47,7 @@ import MessagingPage from './pages/MessagingPage';
 import UnifiedExpertsPage from './pages/UnifiedExpertsPage';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import ReferralProgram from './pages/ReferralProgram';
 
 // Create QueryClient outside component to avoid hook issues
 const queryClient = new QueryClient({
@@ -125,6 +126,7 @@ const UserRoutes: React.FC = () => {
         <Route path="/faq" element={<FAQs />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:slug" element={<BlogPost />} />
+        <Route path="/referral-program" element={<ReferralProgram />} />
         
         {/* Authentication Test Suite */}
         <Route path="/auth-test" element={<AuthTestPage />} />
