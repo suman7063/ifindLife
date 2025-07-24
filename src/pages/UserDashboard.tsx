@@ -67,6 +67,7 @@ const UserDashboard = () => {
             {simpleAuth.userProfile && (
               <ReferralDashboardCard userProfile={{
                 ...simpleAuth.userProfile,
+                reward_points: simpleAuth.userProfile.reward_points || 0,
                 favorite_experts: simpleAuth.userProfile.favorite_experts || [],
                 favorite_programs: simpleAuth.userProfile.favorite_programs || [],
                 enrolled_courses: simpleAuth.userProfile.enrolled_courses || [],

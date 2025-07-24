@@ -8,7 +8,8 @@ export interface UserProfile {
   city: string | null;
   currency: string | null;
   profile_picture: string | null;
-  wallet_balance: number | null;
+  wallet_balance: number | null; // Kept for backward compatibility
+  reward_points?: number;
   created_at: string | null;
   referred_by: string | null;
   referral_code: string | null;

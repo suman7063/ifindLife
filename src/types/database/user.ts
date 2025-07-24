@@ -11,7 +11,8 @@ export interface UserProfile {
   referral_code: string;
   referral_link: string;
   referred_by: string;
-  wallet_balance: number;
+  wallet_balance: number; // Kept for backward compatibility
+  reward_points?: number;
   created_at: string;
   // Additional properties for user dashboard
   favorite_experts?: string[];
@@ -21,6 +22,7 @@ export interface UserProfile {
   recent_activities?: any[];
   upcoming_appointments?: any[];
   transactions?: any[];
+  reward_transactions?: any[];
 }
 
 export interface UserProfileUpdate {

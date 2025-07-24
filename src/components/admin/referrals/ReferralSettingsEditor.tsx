@@ -35,7 +35,7 @@ const ReferralSettingsEditor: React.FC = () => {
       <CardHeader>
         <CardTitle>Referral Program Settings</CardTitle>
         <CardDescription>
-          Configure rewards for your referral program. These settings determine how many credits
+          Configure reward points for your referral program. These settings determine how many points
           users receive when participating in the referral program.
         </CardDescription>
       </CardHeader>

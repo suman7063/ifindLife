@@ -12,6 +12,7 @@ export interface UserProfile {
   referral_link: string | null;
   referred_by: string | null;
   wallet_balance: number | null;
+  reward_points?: number;
   created_at: string | null;
   updated_at?: string;
   

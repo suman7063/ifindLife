@@ -1266,6 +1266,7 @@ export type Database = {
           name: string | null
           phone: string | null
           profile_picture: string | null
+          reward_points: number | null
           updated_at: string | null
           wallet_balance: number | null
         }
@@ -1279,6 +1280,7 @@ export type Database = {
           name?: string | null
           phone?: string | null
           profile_picture?: string | null
+          reward_points?: number | null
           updated_at?: string | null
           wallet_balance?: number | null
         }
@@ -1292,6 +1294,7 @@ export type Database = {
           name?: string | null
           phone?: string | null
           profile_picture?: string | null
+          reward_points?: number | null
           updated_at?: string | null
           wallet_balance?: number | null
         }
@@ -1909,6 +1912,39 @@ export type Database = {
           },
         ]
       }
+      user_reward_transactions: {
+        Row: {
+          created_at: string | null
+          date: string
+          description: string | null
+          id: string
+          points: number
+          type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          description?: string | null
+          id?: string
+          points: number
+          type: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          description?: string | null
+          id?: string
+          points?: number
+          type?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_transactions: {
         Row: {
           amount: number
@@ -1967,6 +2003,7 @@ export type Database = {
           referral_code: string | null
           referral_link: string | null
           referred_by: string | null
+          reward_points: number | null
           terms_accepted: boolean | null
           wallet_balance: number | null
         }
@@ -1989,6 +2026,7 @@ export type Database = {
           referral_code?: string | null
           referral_link?: string | null
           referred_by?: string | null
+          reward_points?: number | null
           terms_accepted?: boolean | null
           wallet_balance?: number | null
         }
@@ -2011,6 +2049,7 @@ export type Database = {
           referral_code?: string | null
           referral_link?: string | null
           referred_by?: string | null
+          reward_points?: number | null
           terms_accepted?: boolean | null
           wallet_balance?: number | null
         }

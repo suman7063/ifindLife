@@ -8,26 +8,39 @@ export interface UserProfile {
   city: string;
   currency: string;
   profile_picture: string;
-  wallet_balance: number;
+  wallet_balance?: number; // Kept for backward compatibility
+  reward_points?: number;
   created_at: string;
   updated_at?: string;
   referred_by: string | null;
   referral_code: string;
   referral_link: string;
   favorite_experts: string[];
-  favorite_programs: number[]; // Changed to only number[] for consistency
+  favorite_programs: number[];
   enrolled_courses: any[];
   reviews: any[];
   reports: any[];
   transactions: any[];
+  reward_transactions?: RewardTransaction[];
   referrals: any[];
-  recent_activities: any[]; // Added missing property
-  upcoming_appointments: any[]; // Added missing property
+  recent_activities: any[];
+  upcoming_appointments: any[];
   
   // Camel case aliases for backward compatibility
   profilePicture?: string;
   walletBalance?: number;
+  rewardPoints?: number;
   favoriteExperts?: string[];
   enrolledCourses?: any[];
   referralCode?: string;
+}
+
+export interface RewardTransaction {
+  id: string;
+  user_id: string;
+  date: string;
+  type: string;
+  points: number;
+  description?: string;
+  created_at: string;
 }
