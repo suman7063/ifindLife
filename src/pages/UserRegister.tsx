@@ -1,13 +1,34 @@
 
-import React from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import SinglePageUserRegistrationForm from '@/components/auth/SinglePageUserRegistrationForm';
 import { toast } from 'sonner';
+import { fetchReferralSettings } from '@/utils/referralUtils';
+import { ReferralSettings } from '@/types/supabase';
 
 const UserRegister: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [referralSettings, setReferralSettings] = useState<ReferralSettings | null>(null);
+
+  useEffect(() => {
+    // Extract referral code from URL parameters
+    const refParam = searchParams.get('ref');
+    if (refParam) {
+      setReferralCode(refParam);
+    }
+
+    // Fetch referral settings
+    const loadReferralSettings = async () => {
+      const settings = await fetchReferralSettings();
+      setReferralSettings(settings);
+    };
+
+    loadReferralSettings();
+  }, [searchParams]);
 
   const handleRegistrationSuccess = () => {
     toast.success('Registration successful! Please check your email to verify your account.');
@@ -36,6 +57,8 @@ const UserRegister: React.FC = () => {
           <SinglePageUserRegistrationForm 
             onSuccess={handleRegistrationSuccess}
             onError={handleRegistrationError}
+            initialReferralCode={referralCode}
+            referralSettings={referralSettings}
           />
         </div>
       </main>

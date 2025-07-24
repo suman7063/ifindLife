@@ -8,6 +8,7 @@ import Footer from '@/components/Footer';
 import { Container } from '@/components/ui/container';
 import ProfilePictureCard from '@/components/user/dashboard/profile/ProfilePictureCard';
 import WalletCard from '@/components/user/dashboard/wallet/WalletCard';
+import ReferralDashboardCard from '@/components/user/ReferralDashboardCard';
 
 const UserDashboard = () => {
   const simpleAuth = useSimpleAuth();
@@ -63,10 +64,24 @@ const UserDashboard = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <ProfilePictureCard user={simpleAuth.userProfile} />
             <WalletCard user={simpleAuth.userProfile} />
+            {simpleAuth.userProfile && (
+              <ReferralDashboardCard userProfile={{
+                ...simpleAuth.userProfile,
+                favorite_experts: simpleAuth.userProfile.favorite_experts || [],
+                favorite_programs: simpleAuth.userProfile.favorite_programs || [],
+                enrolled_courses: simpleAuth.userProfile.enrolled_courses || [],
+                reviews: simpleAuth.userProfile.reviews || [],
+                reports: simpleAuth.userProfile.reports || [],
+                referrals: simpleAuth.userProfile.referrals || [],
+                recent_activities: simpleAuth.userProfile.recent_activities || [],
+                upcoming_appointments: simpleAuth.userProfile.upcoming_appointments || [],
+                transactions: simpleAuth.userProfile.transactions || []
+              }} />
+            )}
             
             {/* Additional dashboard cards can be added here */}
             <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold mb-4">Quick Stats</h3>
+              <h3 className="text-lg font-semibold mb-4">Account Overview</h3>
               <div className="space-y-2">
                 <p className="text-sm">Email: {simpleAuth.user?.email}</p>
                 <p className="text-sm">User Type: {simpleAuth.userType}</p>
@@ -74,6 +89,10 @@ const UserDashboard = () => {
                   <>
                     <p className="text-sm">Phone: {simpleAuth.userProfile.phone || 'Not set'}</p>
                     <p className="text-sm">Country: {simpleAuth.userProfile.country || 'Not set'}</p>
+                    {simpleAuth.userProfile.referral_code && (
+                      <p className="text-sm">Referral Code: {simpleAuth.userProfile.referral_code}</p>
+                    )}
+                    <p className="text-sm">Wallet Balance: ${simpleAuth.userProfile.wallet_balance || 0}</p>
                   </>
                 )}
               </div>

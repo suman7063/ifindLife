@@ -10,7 +10,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2, User, Mail, Phone, Calendar, MapPin, Shield, Globe } from 'lucide-react';
+import { Loader2, User, Mail, Phone, Calendar, MapPin, Shield, Globe, Gift } from 'lucide-react';
+import { processReferralCode } from '@/utils/referralUtils';
+import { ReferralSettings } from '@/types/supabase';
 
 // Comprehensive registration schema
 const registrationSchema = z.object({
@@ -45,6 +47,9 @@ const registrationSchema = z.object({
   // Notifications
   emailNotifications: z.boolean().default(true),
   smsNotifications: z.boolean().default(false),
+  
+  // Referral
+  referralCode: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -55,11 +60,15 @@ type RegistrationFormData = z.infer<typeof registrationSchema>;
 interface SinglePageUserRegistrationFormProps {
   onSuccess?: () => void;
   onError?: (error: string) => void;
+  initialReferralCode?: string | null;
+  referralSettings?: ReferralSettings | null;
 }
 
 const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormProps> = ({ 
   onSuccess, 
-  onError 
+  onError,
+  initialReferralCode,
+  referralSettings
 }) => {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -72,6 +81,7 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
       marketingConsent: false,
       emailNotifications: true,
       smsNotifications: false,
+      referralCode: initialReferralCode || '',
     },
   });
 
@@ -146,6 +156,22 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
             });
         } catch (notifError) {
           console.error('Notification preferences error:', notifError);
+        }
+
+        // Process referral code if provided
+        if (data.referralCode && data.referralCode.trim()) {
+          try {
+            console.log('Processing referral code:', data.referralCode);
+            const referralSuccess = await processReferralCode(data.referralCode.trim(), authData.user.id);
+            if (referralSuccess) {
+              console.log('Referral processed successfully');
+            } else {
+              console.warn('Referral processing failed, but registration continues');
+            }
+          } catch (referralError) {
+            console.error('Referral processing error:', referralError);
+            // Don't fail registration if referral processing fails
+          }
         }
       }
 
@@ -428,6 +454,47 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
                 </div>
               </div>
             </div>
+
+            {/* Referral Section */}
+            {(initialReferralCode || referralSettings) && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <Gift className="h-5 w-5 text-primary" />
+                  <h3 className="text-lg font-semibold">Referral Code</h3>
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="referralCode"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel>Referral Code (Optional)</FormLabel>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <Gift className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <FormControl>
+                          <Input
+                            placeholder="Enter referral code"
+                            className="pl-10"
+                            {...field}
+                            value={field.value || initialReferralCode || ''}
+                          />
+                        </FormControl>
+                      </div>
+                      
+                      {referralSettings && (
+                        <div className="text-xs text-gray-500 mt-1 flex items-center p-2 bg-primary/5 rounded-md">
+                          <Gift className="h-3 w-3 mr-1 text-primary" />
+                          Get ${referralSettings.referred_reward} credit when you sign up with a referral code!
+                        </div>
+                      )}
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            )}
 
             {/* Terms & Conditions Section */}
             <div className="space-y-4">
