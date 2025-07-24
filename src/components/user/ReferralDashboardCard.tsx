@@ -48,93 +48,108 @@ const ReferralDashboardCard: React.FC<ReferralDashboardCardProps> = ({ userProfi
       }
       
       if (link) {
-        copyReferralLink(link);
-        toast.success('Referral link copied to clipboard');
-      } else {
-        throw new Error('Could not generate referral link');
+        const success = copyReferralLink(link);
+        if (success) {
+          toast.success('Referral link copied to clipboard!');
+        } else {
+          toast.error('Failed to copy link');
+        }
       }
     } catch (error) {
       console.error('Error copying referral link:', error);
-      toast.error('Failed to copy referral link');
+      toast.error('Failed to copy link');
     } finally {
-      setIsCopying(false);
+      setTimeout(() => setIsCopying(false), 1000);
     }
   };
 
-  if (!userProfile?.referral_code) {
+  // Don't show referral card if program is disabled
+  if (settings && !settings.active) {
     return (
-      <Card className="border-ifind-aqua/10 h-full">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg flex items-center">
-            <Gift className="mr-2 h-5 w-5 text-ifind-aqua" />
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Gift className="h-5 w-5" />
             Referral Program
           </CardTitle>
-          <CardDescription>
-            Your referral code will be available soon.
-            Please complete your profile to participate in our referral program.
-          </CardDescription>
         </CardHeader>
-        <CardFooter className="pt-1">
-          <Button asChild className="w-full mt-2" variant="outline">
-            <Link to="/profile">
-              <Share className="mr-2 h-4 w-4" />
-              Complete Profile
-            </Link>
+        <CardContent>
+          <p className="text-muted-foreground text-center py-4">
+            Referral program is currently disabled.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // If user doesn't have a referral code, show complete profile message
+  if (!userProfile.referral_code) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Gift className="h-5 w-5" />
+            Complete Your Profile
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground mb-4">
+            Complete your profile to get your unique referral code and start earning rewards.
+          </p>
+          <Button asChild className="w-full">
+            <Link to="/profile">Complete Profile</Link>
           </Button>
-        </CardFooter>
+        </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="border-ifind-aqua/10 h-full">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg flex items-center">
-          <Gift className="mr-2 h-5 w-5 text-ifind-aqua" />
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Gift className="h-5 w-5" />
           Referral Program
         </CardTitle>
-        <CardDescription>Invite friends and earn rewards!</CardDescription>
+        <CardDescription>
+          Share your referral code and earn rewards
+        </CardDescription>
       </CardHeader>
-      
-      <CardContent className="pb-2">
-        <div className="mb-4">
-          <span className="text-sm text-gray-500">Your Referral Code</span>
-          <div className="flex items-center mt-1">
-            <div className="bg-gray-50 px-3 py-1.5 rounded-md font-mono text-sm font-medium flex-grow">
-              {userProfile.referral_code}
+      <CardContent>
+        <div className="space-y-4">
+          <div className="p-4 bg-primary/5 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium">Your Referral Code</p>
+                <p className="text-2xl font-bold text-primary">{userProfile.referral_code}</p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopyLink}
+                disabled={isCopying}
+                className="ml-2"
+              >
+                <Copy className="h-4 w-4 mr-2" />
+                {isCopying ? 'Copied!' : 'Copy Link'}
+              </Button>
             </div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={handleCopyLink}
-              disabled={isCopying}
-              className="ml-2"
-            >
-              <Copy className="h-4 w-4" />
-            </Button>
           </div>
+
+          {settings && settings.active && (
+            <div className="text-sm text-muted-foreground space-y-1">
+              <p>• Earn <span className="font-semibold text-primary">${settings.referrer_reward}</span> for each friend you refer</p>
+              <p>• Your friends get <span className="font-semibold text-primary">${settings.referred_reward}</span> when they sign up</p>
+              {settings.description && (
+                <p className="mt-2 italic">"{settings.description}"</p>
+              )}
+            </div>
+          )}
         </div>
-        
-        {settings && (
-          <div className="rounded-md bg-gradient-to-r from-ifind-teal/5 to-ifind-aqua/5 p-3 grid grid-cols-2 gap-2 text-sm mt-2">
-            <div>
-              <p className="text-gray-500">You get</p>
-              <p className="font-semibold">${settings.referrer_reward}</p>
-            </div>
-            <div>
-              <p className="text-gray-500">Friend gets</p>
-              <p className="font-semibold">${settings.referred_reward}</p>
-            </div>
-          </div>
-        )}
       </CardContent>
-      
-      <CardFooter className="pt-1">
-        <Button asChild className="w-full mt-2" variant="outline">
-          <Link to="/referrals">
-            <Share className="mr-2 h-4 w-4" />
-            Manage Referrals
-          </Link>
+      <CardFooter>
+        <Button asChild className="w-full" variant="outline">
+          <Link to="/referrals">Manage Referrals</Link>
         </Button>
       </CardFooter>
     </Card>

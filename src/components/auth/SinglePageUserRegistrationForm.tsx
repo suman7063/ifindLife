@@ -158,19 +158,27 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
           console.error('Notification preferences error:', notifError);
         }
 
-        // Process referral code if provided
+        // Process referral code if provided and referral program is active
         if (data.referralCode && data.referralCode.trim()) {
           try {
-            console.log('Processing referral code:', data.referralCode);
-            const referralSuccess = await processReferralCode(data.referralCode.trim(), authData.user.id);
-            if (referralSuccess) {
-              console.log('Referral processed successfully');
+            // Check if referral program is active before processing
+            if (!referralSettings?.active) {
+              console.log('Referral program is disabled, skipping referral processing');
             } else {
-              console.warn('Referral processing failed, but registration continues');
+              console.log('Processing referral code:', data.referralCode);
+              const referralSuccess = await processReferralCode(data.referralCode.trim(), authData.user.id);
+              if (referralSuccess) {
+                console.log('Referral processed successfully');
+                toast.success('Referral code applied successfully!');
+              } else {
+                console.warn('Referral processing failed, but registration continues');
+                toast.warning('Invalid referral code, but registration was successful');
+              }
             }
           } catch (referralError) {
             console.error('Referral processing error:', referralError);
             // Don't fail registration if referral processing fails
+            toast.warning('Could not process referral code, but registration was successful');
           }
         }
       }
@@ -455,8 +463,8 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
               </div>
             </div>
 
-            {/* Referral Section */}
-            {(initialReferralCode || referralSettings) && (
+            {/* Referral Section - Only show if referral program is active */}
+            {(initialReferralCode || (referralSettings && referralSettings.active)) && (
               <div className="space-y-4">
                 <div className="flex items-center gap-2 mb-4">
                   <Gift className="h-5 w-5 text-primary" />
@@ -483,10 +491,10 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
                         </FormControl>
                       </div>
                       
-                      {referralSettings && (
+                      {referralSettings && referralSettings.active && (
                         <div className="text-xs text-gray-500 mt-1 flex items-center p-2 bg-primary/5 rounded-md">
                           <Gift className="h-3 w-3 mr-1 text-primary" />
-                          Get ${referralSettings.referred_reward} credit when you sign up with a referral code!
+                          {referralSettings.description || `Get $${referralSettings.referred_reward} credit when you sign up with a referral code!`}
                         </div>
                       )}
                       <FormMessage />

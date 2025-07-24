@@ -10,6 +10,11 @@ const ReferralCodeField: React.FC<ReferralCodeFieldProps> = ({
   initialReferralCode,
   referralSettings 
 }) => {
+  // Don't render if referral program is disabled
+  if (referralSettings && !referralSettings.active) {
+    return null;
+  }
+
   return (
     <FormField
       control={form.control}
@@ -31,10 +36,10 @@ const ReferralCodeField: React.FC<ReferralCodeFieldProps> = ({
             </FormControl>
           </div>
           
-          {referralSettings && (
+          {referralSettings && referralSettings.active && (
             <div className="text-xs text-gray-500 mt-1 flex items-center p-2 bg-ifind-aqua/5 rounded-md">
               <Gift className="h-3 w-3 mr-1 text-ifind-aqua" />
-              Get ${referralSettings.referred_reward} credit when you sign up with a referral code!
+              {referralSettings.description || `Get $${referralSettings.referred_reward} credit when you sign up with a referral code!`}
             </div>
           )}
           <FormMessage />
