@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 import { useUserAuth } from '@/contexts/auth/hooks/useUserAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -42,8 +44,11 @@ const ReferralProgram = () => {
   const referralLink = user?.referral_code ? getReferralLink(user.referral_code) : '';
 
   return (
-    <div className="min-h-screen bg-gradient-subtle">
-      <div className="container mx-auto px-4 py-12">
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
+      
+      <main className="flex-1 bg-gradient-subtle">
+        <div className="container mx-auto px-4 py-12">
         {/* Hero Section */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-6">
@@ -290,7 +295,10 @@ const ReferralProgram = () => {
             </CardContent>
           </Card>
         )}
-      </div>
+        </div>
+      </main>
+      
+      <Footer />
     </div>
   );
 };
