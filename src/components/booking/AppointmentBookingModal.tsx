@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { useRazorpayPayment } from '@/hooks/useRazorpayPayment';
 import { ExpertCardData } from '@/components/expert-card/types';
+import { checkAndCompleteReferral } from '@/utils/referralCompletion';
 
 interface TimeSlot {
   id: string;
@@ -169,6 +170,9 @@ const AppointmentBookingModal: React.FC<AppointmentBookingModalProps> = ({
               .from('expert_time_slots')
               .update({ is_booked: true })
               .eq('id', selectedTimeSlot.id);
+
+            // Check if this appointment booking completes a referral
+            await checkAndCompleteReferral(user.id);
 
             toast.success('Appointment booked successfully!');
             onClose();

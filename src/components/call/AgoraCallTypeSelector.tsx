@@ -7,6 +7,7 @@ import CallDurationSelector from '@/components/call/duration/CallDurationSelecto
 import PaymentMethodSelector from '@/components/call/duration/PaymentMethodSelector';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { useRazorpayPayment } from '@/hooks/call/useRazorpayPayment';
+import { checkAndCompleteReferral } from '@/utils/referralCompletion';
 import { toast } from 'sonner';
 
 interface Expert {
@@ -75,6 +76,12 @@ const AgoraCallTypeSelector: React.FC<AgoraCallTypeSelectorProps> = ({
         `${selectedCallType} call with ${expert.name} - ${selectedDuration} minutes`,
         async (paymentId: string, orderId: string) => {
           console.log('Payment successful:', { paymentId, orderId });
+          
+          // Check if this call payment completes a referral
+          if (userProfile?.id) {
+            await checkAndCompleteReferral(userProfile.id);
+          }
+          
           // Start the call after successful payment
           if (onStartCall) {
             await onStartCall(selectedDuration);

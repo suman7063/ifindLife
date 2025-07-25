@@ -6,6 +6,7 @@ import { useRazorpayIntegration } from '@/hooks/useRazorpayIntegration';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { checkAndCompleteReferral } from '@/utils/referralCompletion';
 
 export function useEnrollmentHandler(program: Program, currentUser: UserProfile) {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -50,7 +51,7 @@ export function useEnrollmentHandler(program: Program, currentUser: UserProfile)
             if (programError) throw programError;
             
             // Check if this enrollment completes a referral
-            await checkAndCompleteReferral();
+            await checkAndCompleteReferral(currentUser.id);
             
             toast.success("Successfully enrolled in program!");
             navigate('/user-dashboard');
@@ -74,27 +75,6 @@ export function useEnrollmentHandler(program: Program, currentUser: UserProfile)
     }
   };
 
-  const checkAndCompleteReferral = async () => {
-    try {
-      // Check if user has a pending referral
-      const { data: referral } = await supabase
-        .from('referrals')
-        .select('*')
-        .eq('referred_id', currentUser.id)
-        .eq('status', 'pending')
-        .single();
-
-      if (referral) {
-        // Complete the referral - this will trigger reward points distribution
-        await supabase.rpc('handle_completed_referral', {
-          p_referral_id: referral.id
-        });
-      }
-    } catch (error) {
-      console.error('Error checking referral:', error);
-      // Don't fail the enrollment for referral issues
-    }
-  };
 
   const handleEnroll = async () => {
     await handleRazorpayPayment();

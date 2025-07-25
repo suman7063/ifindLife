@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { useExpertData } from '@/hooks/useExpertData';
 import { useCallSession } from '@/hooks/useCallSession';
 import { useRazorpayPayment } from '@/hooks/useRazorpayPayment';
+import { checkAndCompleteReferral } from '@/utils/referralCompletion';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import LazyAgoraCallModal from '@/components/call/LazyAgoraCallModal';
 
@@ -29,7 +30,7 @@ const ExpertSelectionModal: React.FC<ExpertSelectionModalProps> = ({
   serviceId,
   experts = []
 }) => {
-  const { isAuthenticated } = useSimpleAuth();
+  const { isAuthenticated, userProfile } = useSimpleAuth();
   const { experts: realExperts, loading, error } = useExpertData({ serviceId });
   const { createCallSession, currentSession } = useCallSession();
   const { processPayment } = useRazorpayPayment();
@@ -144,8 +145,14 @@ const ExpertSelectionModal: React.FC<ExpertSelectionModalProps> = ({
             expertId: expert.id,
             callSessionId: session.id,
           },
-          (paymentId, orderId) => {
+          async (paymentId, orderId) => {
             console.log('Payment successful, starting call interface...');
+            
+            // Check if this call payment completes a referral
+            if (userProfile?.id) {
+              await checkAndCompleteReferral(userProfile.id);
+            }
+            
             setSelectedExpert(expert);
             setIsCallModalOpen(true);
             toast.success(`Payment successful! Starting ${type} call with ${expert.name}...`);
