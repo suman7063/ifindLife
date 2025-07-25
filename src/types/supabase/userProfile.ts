@@ -8,7 +8,6 @@ export interface UserProfile {
   city: string;
   currency: string;
   profile_picture: string;
-  wallet_balance?: number; // Kept for backward compatibility
   reward_points?: number;
   created_at: string;
   updated_at?: string;
@@ -28,7 +27,6 @@ export interface UserProfile {
   
   // Camel case aliases for backward compatibility
   profilePicture?: string;
-  walletBalance?: number;
   rewardPoints?: number;
   favoriteExperts?: string[];
   enrolledCourses?: any[];

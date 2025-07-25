@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { Program } from '@/types/programs';
 import { UserProfile } from '@/types/supabase/user';
+import { useRazorpayIntegration } from '@/hooks/useRazorpayIntegration';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
@@ -9,116 +10,98 @@ import { useNavigate } from 'react-router-dom';
 export function useEnrollmentHandler(program: Program, currentUser: UserProfile) {
   const [isProcessing, setIsProcessing] = useState(false);
   const navigate = useNavigate();
+  const { processPayment } = useRazorpayIntegration();
   
-  const hasEnoughBalance = (currentUser.wallet_balance || 0) >= program.price;
-  
-  const handleWalletPayment = async () => {
-    try {
-      // Create enrollment
-      const { error: enrollmentError } = await supabase
-        .from('program_enrollments')
-        .insert({
-          program_id: program.id,
-          user_id: currentUser.id,
-          enrollment_date: new Date().toISOString(),
-          payment_status: 'completed',
-          payment_method: 'wallet',
-          amount_paid: program.price
-        });
-        
-      if (enrollmentError) throw enrollmentError;
-      
-      // Update wallet balance
-      const { error: walletError } = await supabase
-        .from('profiles')
-        .update({
-          wallet_balance: (currentUser.wallet_balance || 0) - program.price
-        })
-        .eq('id', currentUser.id);
-        
-      if (walletError) throw walletError;
-      
-      // Create transaction record
-      const { error: transactionError } = await supabase
-        .from('user_transactions')
-        .insert({
-          user_id: currentUser.id,
-          date: new Date().toISOString(),
-          type: 'program_purchase',
-          amount: program.price,
-          currency: currentUser.currency || 'INR',
-          description: `Enrolled in program: ${program.title}`
-        });
-        
-      if (transactionError) throw transactionError;
-      
-      // Update program enrollments count
-      const { error: programError } = await supabase
-        .rpc('increment_program_enrollments', {
-          program_id: program.id
-        });
-        
-      if (programError) throw programError;
-      
-      toast.success("Successfully enrolled in program!");
-      navigate('/user-dashboard');
-    } catch (error) {
-      console.error('Error enrolling in program:', error);
-      toast.error("Failed to complete enrollment");
-      return false;
-    }
-    
-    return true;
-  };
-
-  const handleGatewayPayment = () => {
-    // Redirect to payment gateway
-    toast.info("Redirecting to payment gateway...");
-    
-    // Store enrollment details in session storage for after payment
-    sessionStorage.setItem('pendingEnrollment', JSON.stringify({
-      programId: program.id,
-      programTitle: program.title,
-      amount: program.price
-    }));
-    
-    // In a real application, this would redirect to payment gateway
-    window.location.href = `/payment-gateway?program=${program.id}&amount=${program.price}`;
-    return true;
-  };
-
-  const handleEnroll = async (enrollmentMethod: 'wallet' | 'gateway') => {
+  const handleRazorpayPayment = async () => {
     setIsProcessing(true);
     
     try {
-      if (enrollmentMethod === 'wallet') {
-        if (!hasEnoughBalance) {
-          toast.error("Insufficient wallet balance");
+      await processPayment(
+        {
+          amount: program.price * 100, // Convert to paise for Razorpay
+          currency: currentUser.currency === 'USD' ? 'USD' : 'INR',
+          description: `Enrollment in ${program.title}`,
+          itemId: program.id.toString(),
+          itemType: 'program'
+        },
+        async (paymentId: string, orderId: string) => {
+          try {
+            // Create enrollment record
+            const { error: enrollmentError } = await supabase
+              .from('program_enrollments')
+              .insert({
+                program_id: program.id,
+                user_id: currentUser.id,
+                enrollment_date: new Date().toISOString(),
+                payment_status: 'completed',
+                payment_method: 'razorpay',
+                amount_paid: program.price,
+                transaction_id: paymentId
+              });
+              
+            if (enrollmentError) throw enrollmentError;
+            
+            // Update program enrollments count
+            const { error: programError } = await supabase
+              .rpc('increment_program_enrollments', {
+                program_id: program.id
+              });
+              
+            if (programError) throw programError;
+            
+            // Check if this enrollment completes a referral
+            await checkAndCompleteReferral();
+            
+            toast.success("Successfully enrolled in program!");
+            navigate('/user-dashboard');
+          } catch (error) {
+            console.error('Error completing enrollment:', error);
+            toast.error("Payment successful but enrollment failed. Please contact support.");
+          } finally {
+            setIsProcessing(false);
+          }
+        },
+        (error: any) => {
+          console.error('Payment failed:', error);
+          toast.error("Payment failed. Please try again.");
           setIsProcessing(false);
-          return;
         }
-        
-        const success = await handleWalletPayment();
-        if (!success) {
-          setIsProcessing(false);
-          return;
-        }
-      } else {
-        handleGatewayPayment();
-        // Note: This code will not run due to redirect, just here for completeness
-        return;
-      }
+      );
     } catch (error) {
-      console.error('Error enrolling in program:', error);
-      toast.error("Failed to complete enrollment");
-    } finally {
+      console.error('Error initiating payment:', error);
+      toast.error("Failed to initiate payment");
       setIsProcessing(false);
     }
   };
 
+  const checkAndCompleteReferral = async () => {
+    try {
+      // Check if user has a pending referral
+      const { data: referral } = await supabase
+        .from('referrals')
+        .select('*')
+        .eq('referred_id', currentUser.id)
+        .eq('status', 'pending')
+        .single();
+
+      if (referral) {
+        // Complete the referral - this will trigger reward points distribution
+        await supabase.rpc('handle_completed_referral', {
+          p_referral_id: referral.id
+        });
+      }
+    } catch (error) {
+      console.error('Error checking referral:', error);
+      // Don't fail the enrollment for referral issues
+    }
+  };
+
+  const handleEnroll = async () => {
+    await handleRazorpayPayment();
+  };
+
   return {
     isProcessing,
-    hasEnoughBalance,
     handleEnroll
   };
 }

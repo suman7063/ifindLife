@@ -56,6 +56,51 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_reward_items: {
+        Row: {
+          category: string
+          created_at: string
+          current_redemptions: number | null
+          description: string | null
+          external_id: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          max_redemptions: number | null
+          name: string
+          points_required: number
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          current_redemptions?: number | null
+          description?: string | null
+          external_id?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          max_redemptions?: number | null
+          name: string
+          points_required: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          current_redemptions?: number | null
+          description?: string | null
+          external_id?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          max_redemptions?: number | null
+          name?: string
+          points_required?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       admin_sessions: {
         Row: {
           admin_id: string | null
@@ -1268,7 +1313,6 @@ export type Database = {
           profile_picture: string | null
           reward_points: number | null
           updated_at: string | null
-          wallet_balance: number | null
         }
         Insert: {
           city?: string | null
@@ -1282,7 +1326,6 @@ export type Database = {
           profile_picture?: string | null
           reward_points?: number | null
           updated_at?: string | null
-          wallet_balance?: number | null
         }
         Update: {
           city?: string | null
@@ -1296,7 +1339,6 @@ export type Database = {
           profile_picture?: string | null
           reward_points?: number | null
           updated_at?: string | null
-          wallet_balance?: number | null
         }
         Relationships: []
       }
@@ -1912,6 +1954,53 @@ export type Database = {
           },
         ]
       }
+      user_reward_redemptions: {
+        Row: {
+          created_at: string
+          fulfilled_date: string | null
+          id: string
+          notes: string | null
+          points_spent: number
+          redemption_date: string
+          reward_item_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          fulfilled_date?: string | null
+          id?: string
+          notes?: string | null
+          points_spent: number
+          redemption_date?: string
+          reward_item_id: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          fulfilled_date?: string | null
+          id?: string
+          notes?: string | null
+          points_spent?: number
+          redemption_date?: string
+          reward_item_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_reward_redemptions_reward_item_id_fkey"
+            columns: ["reward_item_id"]
+            isOneToOne: false
+            referencedRelation: "admin_reward_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_reward_transactions: {
         Row: {
           created_at: string | null
@@ -1919,6 +2008,7 @@ export type Database = {
           description: string | null
           id: string
           points: number
+          redemption_id: string | null
           type: string
           updated_at: string | null
           user_id: string
@@ -1929,6 +2019,7 @@ export type Database = {
           description?: string | null
           id?: string
           points: number
+          redemption_id?: string | null
           type: string
           updated_at?: string | null
           user_id: string
@@ -1939,11 +2030,20 @@ export type Database = {
           description?: string | null
           id?: string
           points?: number
+          redemption_id?: string | null
           type?: string
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_reward_transactions_redemption_id_fkey"
+            columns: ["redemption_id"]
+            isOneToOne: false
+            referencedRelation: "user_reward_redemptions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_transactions: {
         Row: {
