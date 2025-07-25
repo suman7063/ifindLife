@@ -29,7 +29,7 @@ interface CallModalContextType {
   formatPrice: (price: number) => string;
   currentSession: any;
   endCallSession: any;
-  processWalletPayment: any;
+  
   callState: any;
   setCallState: any;
   initializeCall: any;
@@ -71,7 +71,7 @@ export const CallModalProvider: React.FC<CallModalProviderProps> = ({
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
 
   const { formatPrice } = useCallPricing();
-  const { currentSession, endCallSession, processWalletPayment } = useEnhancedCallSession();
+  const { currentSession, endCallSession } = useEnhancedCallSession();
   const { callState, setCallState, initializeCall, endCall } = useCallState();
   
   const timerData = useEnhancedCallTimer(expert.price);
@@ -128,7 +128,7 @@ export const CallModalProvider: React.FC<CallModalProviderProps> = ({
     formatPrice,
     currentSession,
     endCallSession,
-    processWalletPayment,
+    
     callState,
     setCallState,
     initializeCall,

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Clock, Plus, Minus, DollarSign, Wallet, AlertTriangle } from 'lucide-react';
+import { Clock, Plus, Minus, CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ExtensionConfirmationModalProps {
@@ -24,11 +24,10 @@ export const ExtensionConfirmationModal: React.FC<ExtensionConfirmationModalProp
   const [extensionMinutes, setExtensionMinutes] = useState(15);
   const [isConfirming, setIsConfirming] = useState(false);
 
-  // Use a default wallet balance for now (this should come from props or context in a real implementation)
-  const walletBalance = 1000;
+  // Extension confirmation logic - payment will be handled via gateway
+  const canExtend = true; // Always allow extension, payment will be processed
   
   const extensionCost = (extensionMinutes / 60) * expertPrice;
-  const hasEnoughBalance = walletBalance >= extensionCost;
   const canDecrease = extensionMinutes > 15;
   const canIncrease = extensionMinutes < 60;
 
@@ -47,8 +46,8 @@ export const ExtensionConfirmationModal: React.FC<ExtensionConfirmationModalProp
   };
 
   const handleConfirm = async () => {
-    if (!hasEnoughBalance) {
-      toast.error('Insufficient wallet balance for extension');
+    if (!canExtend) {
+      toast.error('Unable to extend call at this time');
       return;
     }
 
@@ -123,40 +122,10 @@ export const ExtensionConfirmationModal: React.FC<ExtensionConfirmationModalProp
                   <span className="text-muted-foreground">Extension Cost:</span>
                   <span className="font-medium">{formatPrice(extensionCost)}</span>
                 </div>
-                
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-muted-foreground">Wallet Balance:</span>
-                  <span className={`font-medium ${hasEnoughBalance ? 'text-green-600' : 'text-red-600'}`}>
-                    {formatPrice(walletBalance)}
-                  </span>
-                </div>
-                
-                {hasEnoughBalance && (
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-muted-foreground">Remaining After:</span>
-                    <span className="font-medium text-green-600">
-                      {formatPrice(walletBalance - extensionCost)}
-                    </span>
-                  </div>
-                )}
               </div>
             </CardContent>
           </Card>
 
-          {/* Insufficient Balance Warning */}
-          {!hasEnoughBalance && (
-            <Card className="border-red-200 bg-red-50 dark:bg-red-900/20">
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-2 text-red-700 dark:text-red-300">
-                  <AlertTriangle className="h-5 w-5" />
-                  <span className="text-sm font-medium">Insufficient Balance</span>
-                </div>
-                <p className="text-sm text-red-600 dark:text-red-400 mt-1">
-                  You need {formatPrice(extensionCost - walletBalance)} more to extend the call by {extensionMinutes} minutes.
-                </p>
-              </CardContent>
-            </Card>
-          )}
 
           {/* Action Buttons */}
           <div className="flex space-x-3">
@@ -171,7 +140,7 @@ export const ExtensionConfirmationModal: React.FC<ExtensionConfirmationModalProp
             
             <Button
               onClick={handleConfirm}
-              disabled={!hasEnoughBalance || isConfirming || isExtending}
+              disabled={!canExtend || isConfirming || isExtending}
               className="flex-1"
             >
               {isConfirming ? (
@@ -181,7 +150,7 @@ export const ExtensionConfirmationModal: React.FC<ExtensionConfirmationModalProp
                 </>
               ) : (
                 <>
-                  <Wallet className="h-4 w-4 mr-2" />
+                  <CreditCard className="h-4 w-4 mr-2" />
                   Extend for {formatPrice(extensionCost)}
                 </>
               )}

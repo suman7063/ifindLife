@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { toast } from '@/hooks/use-toast';
 import CallVideo from './call/CallVideo';
 import CallTimer from './call/CallTimer';
-import CallBalance from './call/CallBalance';
+
 import CallControls from './call/CallControls';
 
 interface CallModalProps {
@@ -153,7 +153,7 @@ const CallModal: React.FC<CallModalProps> = ({ isOpen, onClose, astrologer }) =>
           />
           
           <CallTimer callStatus={callStatus} duration={duration} />
-          <CallBalance callStatus={callStatus} balance={balance} />
+          
         </div>
         
         <DialogFooter className="flex justify-center space-x-4">

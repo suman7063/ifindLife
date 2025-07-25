@@ -3,7 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { User, LogOut, Wallet } from 'lucide-react';
+import { User, LogOut, Award } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials } from '@/utils/getInitials';
 
@@ -35,7 +35,7 @@ const MobileMenuFooter: React.FC<MobileMenuFooterProps> = ({
     const userName = currentUser?.name || '';
     const userEmail = currentUser?.email || '';
     const profilePicture = currentUser?.profile_picture || currentUser?.profilePicture || '';
-    const walletBalance = currentUser?.wallet_balance || 0;
+    const rewardPoints = currentUser?.reward_points || 0;
     const currency = currentUser?.currency || '₹';
 
     return (
@@ -56,8 +56,8 @@ const MobileMenuFooter: React.FC<MobileMenuFooterProps> = ({
               <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
               {!hasExpertProfile && (
                 <div className="flex items-center mt-1 text-xs text-green-600 font-medium">
-                  <Wallet className="h-3 w-3 mr-1" />
-                  {currency}{walletBalance.toFixed(2)}
+                  <Award className="h-3 w-3 mr-1" />
+                  {rewardPoints} Points
                 </div>
               )}
             </div>

@@ -66,8 +66,8 @@ const UserProfile: React.FC<Props> = (props) => {
             <p className="text-lg">{user.city || 'Not provided'}</p>
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-500">Wallet Balance</label>
-            <p className="text-lg">${user.wallet_balance || user.walletBalance || 0}</p>
+            <label className="text-sm font-medium text-gray-500">Reward Points</label>
+            <p className="text-lg">{user.reward_points || 0}</p>
           </div>
         </div>
       </CardContent>

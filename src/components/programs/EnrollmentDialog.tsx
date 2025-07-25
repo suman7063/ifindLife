@@ -73,7 +73,7 @@ const EnrollmentDialog: React.FC<EnrollmentDialogProps> = ({
           </Button>
           <Button 
             onClick={handleEnroll} 
-            disabled={isEnrolling || (currentUser.wallet_balance || 0) < program.price}
+            disabled={isEnrolling}
           >
             {isEnrolling ? (
               <>
