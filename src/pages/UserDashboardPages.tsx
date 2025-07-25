@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import UserDashboardSidebar from '@/components/user/dashboard/UserDashboardSidebar';
 import DashboardHome from '@/components/user/dashboard/DashboardHome';
 import ProfileSection from '@/components/user/dashboard/sections/ProfileSection';
-import WalletSection from '@/components/user/dashboard/sections/WalletSection';
+// WalletSection removed - now using reward system
 import ConsultationsSection from '@/components/user/dashboard/sections/ConsultationsSection';
 import FavoritesSection from '@/components/user/dashboard/sections/FavoritesSection';
 import MessagesSection from '@/components/user/dashboard/sections/MessagesSection';
@@ -96,12 +96,12 @@ const UserDashboardPages: React.FC<UserDashboardPagesProps> = ({
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Wallet Balance</CardTitle>
+            <CardTitle className="text-sm font-medium">Reward Points</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${currentUser?.wallet_balance?.toFixed(2) || '0.00'}
+              {currentUser?.reward_points || 0}
             </div>
           </CardContent>
         </Card>
@@ -123,8 +123,8 @@ const UserDashboardPages: React.FC<UserDashboardPagesProps> = ({
             <Button variant="outline" onClick={() => onNavigate('appointments')}>
               Book Session
             </Button>
-            <Button variant="outline" onClick={() => onNavigate('wallet')}>
-              Add Funds
+            <Button variant="outline" onClick={() => onNavigate('rewards')}>
+              View Rewards
             </Button>
           </div>
         </CardContent>

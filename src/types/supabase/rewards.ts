@@ -4,7 +4,7 @@ export interface AdminRewardItem {
   id: string;
   name: string;
   description?: string;
-  category: 'course' | 'session' | 'retreat' | 'event';
+  category: string;
   points_required: number;
   is_active: boolean;
   image_url?: string;

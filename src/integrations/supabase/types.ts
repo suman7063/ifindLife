@@ -2176,6 +2176,14 @@ export type Database = {
         Args: { "": string }
         Returns: string
       }
+      deduct_reward_points: {
+        Args: {
+          user_id: string
+          points_to_deduct: number
+          redemption_description: string
+        }
+        Returns: undefined
+      }
       expire_old_call_requests: {
         Args: Record<PropertyKey, never>
         Returns: undefined

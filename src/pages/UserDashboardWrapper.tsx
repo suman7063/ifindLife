@@ -10,7 +10,7 @@ import DashboardHome from '@/components/user/dashboard/DashboardHome';
 import DashboardContent from '@/components/user/dashboard/DashboardContent';
 import WalletPage from '@/components/user/dashboard/wallet/WalletPage';
 import ProfileSection from '@/components/user/dashboard/sections/ProfileSection';
-import WalletSection from '@/components/user/dashboard/sections/WalletSection';
+// WalletSection removed - now using reward system
 import ConsultationsSection from '@/components/user/dashboard/sections/ConsultationsSection';
 import FavoritesSection from '@/components/user/dashboard/sections/FavoritesSection';
 import MessagesSection from '@/components/user/dashboard/sections/MessagesSection';
@@ -32,7 +32,7 @@ const UserDashboardWrapper = () => {
     hasUserProfile: !!simpleAuth.userProfile,
     isLoading: simpleAuth.isLoading,
     userName: simpleAuth.userProfile?.name,
-    walletBalance: simpleAuth.userProfile?.wallet_balance
+    rewardPoints: simpleAuth.userProfile?.reward_points
   });
 
   if (simpleAuth?.isLoading) {
@@ -117,7 +117,9 @@ const UserDashboardWrapper = () => {
     referral_code: '',
     referral_link: '',
     referred_by: '',
+    reward_points: 0,
     wallet_balance: 0,
+    date_of_birth: '',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     favorite_experts: [],

@@ -7,7 +7,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Container } from '@/components/ui/container';
 import ProfilePictureCard from '@/components/user/dashboard/profile/ProfilePictureCard';
-import WalletCard from '@/components/user/dashboard/wallet/WalletCard';
+import RewardPointsCard from '@/components/user/rewards/RewardPointsCard';
 import ReferralDashboardCard from '@/components/user/ReferralDashboardCard';
 
 const UserDashboard = () => {
@@ -63,21 +63,9 @@ const UserDashboard = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <ProfilePictureCard user={simpleAuth.userProfile} />
-            <WalletCard user={simpleAuth.userProfile} />
+            <RewardPointsCard user={simpleAuth.userProfile as any} />
             {simpleAuth.userProfile && (
-              <ReferralDashboardCard userProfile={{
-                ...simpleAuth.userProfile,
-                reward_points: simpleAuth.userProfile.reward_points || 0,
-                favorite_experts: simpleAuth.userProfile.favorite_experts || [],
-                favorite_programs: simpleAuth.userProfile.favorite_programs || [],
-                enrolled_courses: simpleAuth.userProfile.enrolled_courses || [],
-                reviews: simpleAuth.userProfile.reviews || [],
-                reports: simpleAuth.userProfile.reports || [],
-                referrals: simpleAuth.userProfile.referrals || [],
-                recent_activities: simpleAuth.userProfile.recent_activities || [],
-                upcoming_appointments: simpleAuth.userProfile.upcoming_appointments || [],
-                transactions: simpleAuth.userProfile.transactions || []
-              }} />
+              <ReferralDashboardCard userProfile={simpleAuth.userProfile as any} />
             )}
             
             {/* Additional dashboard cards can be added here */}
@@ -93,7 +81,7 @@ const UserDashboard = () => {
                     {simpleAuth.userProfile.referral_code && (
                       <p className="text-sm">Referral Code: {simpleAuth.userProfile.referral_code}</p>
                     )}
-                    <p className="text-sm">Wallet Balance: ${simpleAuth.userProfile.wallet_balance || 0}</p>
+                    <p className="text-sm">Reward Points: {simpleAuth.userProfile.reward_points || 0}</p>
                   </>
                 )}
               </div>
