@@ -41,9 +41,9 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ user }) => {
       </div>
       <div className="text-right text-muted-foreground">
         <p className="font-medium">{today}</p>
-        {user.wallet_balance !== undefined && (
-          <p className="text-green-600 font-semibold">
-            Balance: ₹{user.wallet_balance?.toFixed(2) || '0.00'}
+        {user.reward_points !== undefined && (
+          <p className="text-primary font-semibold">
+            Reward Points: {user.reward_points || 0}
           </p>
         )}
       </div>

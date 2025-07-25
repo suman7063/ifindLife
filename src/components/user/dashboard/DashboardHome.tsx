@@ -2,7 +2,7 @@
 import React from 'react';
 import { UserProfile } from '@/types/database/unified';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, Heart, MessageSquare, Wallet } from 'lucide-react';
+import { Calendar, Heart, MessageSquare, Award } from 'lucide-react';
 
 interface DashboardHomeProps {
   user: UserProfile | null;
@@ -19,12 +19,12 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ user }) => {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Wallet Balance</CardTitle>
-            <Wallet className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Reward Points</CardTitle>
+            <Award className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{user.currency || '₹'}{user.wallet_balance?.toFixed(2) || '0.00'}</div>
-            <p className="text-xs text-muted-foreground">Available balance</p>
+            <div className="text-2xl font-bold">{user.reward_points || 0}</div>
+            <p className="text-xs text-muted-foreground">Points earned through referrals</p>
           </CardContent>
         </Card>
         

@@ -106,7 +106,7 @@ const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({
           <div className="mt-2 text-sm">
             <div className="flex items-center text-green-600 font-medium">
               <Wallet className="h-4 w-4 mr-2" />
-              Balance: {user?.currency || '$'}{user?.wallet_balance?.toFixed(2) || '0.00'}
+              Reward Points: {user?.reward_points || 0}
             </div>
             <div className="text-muted-foreground mt-1">{today}</div>
           </div>

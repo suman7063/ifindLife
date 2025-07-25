@@ -38,7 +38,7 @@ const UserDashboardLayout: React.FC<UserDashboardLayoutProps> = ({
           <div className="flex items-center gap-2 mt-1">
             <Wallet className="h-4 w-4 text-green-600" />
             <p className="font-medium text-green-600">
-              Balance: {adaptedUser?.currency || '₹'}{adaptedUser?.wallet_balance?.toFixed(2) || '0.00'}
+              Reward Points: {adaptedUser?.reward_points || 0}
             </p>
           </div>
           <Button 

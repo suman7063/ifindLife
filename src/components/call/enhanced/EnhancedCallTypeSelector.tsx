@@ -28,7 +28,7 @@ export const EnhancedCallTypeSelector: React.FC<EnhancedCallTypeSelectorProps> =
   const [selectedCallType, setSelectedCallType] = useState<'audio' | 'video' | null>(null);
   const [selectedDuration, setSelectedDuration] = useState<number | null>(null);
   const [selectedPrice, setSelectedPrice] = useState<number>(0);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'wallet' | 'gateway' | null>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'gateway' | null>(null);
   const [isStarting, setIsStarting] = useState(false);
 
   const { userProfile } = useAuth();
@@ -41,7 +41,6 @@ export const EnhancedCallTypeSelector: React.FC<EnhancedCallTypeSelectorProps> =
   
   const { 
     createCallSession, 
-    processWalletPayment,
     isCreatingSession 
   } = useEnhancedCallSession();
 
@@ -59,14 +58,7 @@ export const EnhancedCallTypeSelector: React.FC<EnhancedCallTypeSelectorProps> =
     setIsStarting(true);
 
     try {
-      // Process payment if wallet is selected
-      if (selectedPaymentMethod === 'wallet') {
-        const paymentSuccess = await processWalletPayment(selectedPrice, userCurrency);
-        if (!paymentSuccess) {
-          setIsStarting(false);
-          return;
-        }
-      }
+      // Only gateway payment is available now
 
       // Create call session
       const session = await createCallSession(
@@ -166,7 +158,6 @@ export const EnhancedCallTypeSelector: React.FC<EnhancedCallTypeSelectorProps> =
         <PaymentMethodSelector
           selectedMethod={selectedPaymentMethod}
           onSelectMethod={setSelectedPaymentMethod}
-          walletBalance={userProfile?.wallet_balance || 0}
           callCost={selectedPrice}
           formatPrice={formatPrice}
         />

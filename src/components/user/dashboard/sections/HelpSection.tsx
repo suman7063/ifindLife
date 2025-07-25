@@ -211,7 +211,7 @@ const HelpSection: React.FC<HelpSectionProps> = ({ user }) => {
           <div>
             <h4 className="font-semibold">How do payments work?</h4>
             <p className="text-sm text-muted-foreground mt-1">
-              You can add funds to your wallet using our secure payment system. The consultation fee will be deducted from your wallet balance.
+              Payments are processed securely through our payment gateway. You can pay using cards, UPI, net banking, or digital wallets.
             </p>
           </div>
           

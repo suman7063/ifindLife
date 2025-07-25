@@ -38,13 +38,13 @@ const AgoraCallTypeSelector: React.FC<AgoraCallTypeSelectorProps> = ({
   const [selectedDuration, setSelectedDuration] = useState<number | null>(null);
   const [selectedPrice, setSelectedPrice] = useState<number>(0);
   const [selectedCallType, setSelectedCallType] = useState<'voice' | 'video'>(callType);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'wallet' | 'gateway' | null>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'gateway' | null>(null);
   
   const { pricingOptions, userCurrency, isLoading, formatPrice } = useCallPricing(expert.category);
   const { userProfile } = useSimpleAuth();
   const { processPayment, isLoading: isPaymentLoading } = useRazorpayPayment();
 
-  const walletBalance = userProfile?.wallet_balance || 0;
+  
 
   const handleSelectCallType = (type: 'voice' | 'video') => {
     setSelectedCallType(type);
@@ -61,7 +61,7 @@ const AgoraCallTypeSelector: React.FC<AgoraCallTypeSelectorProps> = ({
     setSelectedPrice(price);
   };
 
-  const handleSelectPaymentMethod = (method: 'wallet' | 'gateway') => {
+  const handleSelectPaymentMethod = (method: 'gateway') => {
     setSelectedPaymentMethod(method);
   };
 
@@ -94,15 +94,10 @@ const AgoraCallTypeSelector: React.FC<AgoraCallTypeSelectorProps> = ({
       );
       return;
     }
-
-    // Wallet payment - start call directly
-    if (onStartCall) {
-      await onStartCall(selectedDuration);
-    }
   };
 
   const canStartCall = selectedDuration && selectedPaymentMethod && 
-    (selectedPaymentMethod === 'gateway' || walletBalance >= selectedPrice);
+    selectedDuration && selectedPrice && selectedPaymentMethod === 'gateway';
 
   if (isLoading) {
     return (
@@ -177,7 +172,7 @@ const AgoraCallTypeSelector: React.FC<AgoraCallTypeSelectorProps> = ({
         <PaymentMethodSelector
           selectedMethod={selectedPaymentMethod}
           onSelectMethod={handleSelectPaymentMethod}
-          walletBalance={walletBalance}
+          
           callCost={selectedPrice}
           formatPrice={formatPrice}
         />

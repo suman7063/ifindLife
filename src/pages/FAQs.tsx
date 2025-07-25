@@ -65,7 +65,7 @@ const FAQs = () => {
       faqs: [
         {
           question: 'What payment methods do you accept?',
-          answer: 'We accept various payment methods including credit/debit cards, net banking, UPI, and wallet payments. All transactions are secured with industry-standard encryption.'
+          answer: 'We accept various payment methods including credit/debit cards, net banking, UPI, and digital wallets. All transactions are secured with industry-standard encryption.'
         },
         {
           question: 'Do you offer refunds?',
