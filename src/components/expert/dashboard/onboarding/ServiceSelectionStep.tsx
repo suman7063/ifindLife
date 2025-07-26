@@ -36,36 +36,72 @@ const ServiceSelectionStep: React.FC<ServiceSelectionStepProps> = ({
 
   const fetchAvailableServices = async () => {
     try {
-      // Define category-specific services
-      const categoryServices: Record<string, number[]> = {
-        'listening-volunteer': [1, 2], // Basic listening services
-        'listening-expert': [1, 2, 3, 4], // Advanced listening + counseling
-        'listening-coach': [1, 2, 3, 4, 5], // All listening + coaching
-        'mindfulness-expert': [6, 7, 8] // Mindfulness specific services
-      };
-
-      const serviceIds = categoryServices[expertAccount.category] || [1, 2, 3];
-
-      const { data, error } = await supabase
-        .from('services')
+      // Check if services are already assigned by admin (Phase 2)
+      const { data: adminAssignedServices, error: adminError } = await supabase
+        .from('expert_services')
         .select('*')
-        .in('id', serviceIds)
-        .order('id');
+        .eq('expert_id', expertAccount.auth_id)
+        .eq('is_active', true);
 
-      if (error) throw error;
+      if (adminError) throw adminError;
 
-      setAvailableServices(data || []);
+      if (adminAssignedServices && adminAssignedServices.length > 0) {
+        // Fetch the actual service details
+        const serviceIds = adminAssignedServices.map(s => s.service_id);
+        const { data: servicesData, error: servicesError } = await supabase
+          .from('services')
+          .select('*')
+          .in('id', serviceIds);
 
-      // Check if expert already has selected services
-      const { data: existingServices, error: existingError } = await supabase
-        .from('expert_service_specializations')
-        .select('service_id')
-        .eq('expert_id', expertAccount.id);
+        if (servicesError) throw servicesError;
 
-      if (existingError) throw existingError;
+        // Admin has already assigned services - combine with rates
+        const combinedServices = adminAssignedServices.map(assignedService => {
+          const serviceDetails = servicesData?.find(s => s.id === assignedService.service_id);
+          return {
+            id: assignedService.service_id,
+            name: serviceDetails?.name || 'Unknown Service',
+            description: serviceDetails?.description || '',
+            category: serviceDetails?.category || '',
+            rate_usd: assignedService.admin_assigned_rate_usd,
+            rate_inr: assignedService.admin_assigned_rate_inr,
+            duration: serviceDetails?.duration || 60
+          };
+        });
+        setAvailableServices(combinedServices);
+        setSelectedServices(combinedServices.map(s => s.id));
+      } else {
+        // Fallback to old system if no admin assignment
+        const categoryServices: Record<string, number[]> = {
+          'listening-volunteer': [1, 2],
+          'listening-expert': [1, 2, 3, 4],
+          'listening-coach': [1, 2, 3, 4, 5],
+          'mindfulness-expert': [6, 7, 8]
+        };
 
-      const existing = existingServices?.map(s => s.service_id) || [];
-      setSelectedServices(existing);
+        const serviceIds = categoryServices[expertAccount.category] || [1, 2, 3];
+
+        const { data, error } = await supabase
+          .from('services')
+          .select('*')
+          .in('id', serviceIds)
+          .order('id');
+
+        if (error) throw error;
+
+        setAvailableServices(data || []);
+
+        // Check existing specializations
+        const { data: existingServices, error: existingError } = await supabase
+          .from('expert_service_specializations')
+          .select('service_id')
+          .eq('expert_id', expertAccount.id);
+
+        if (existingError) throw existingError;
+
+        const existing = existingServices?.map(s => s.service_id) || [];
+        setSelectedServices(existing);
+      }
 
     } catch (error) {
       console.error('Error fetching services:', error);
