@@ -580,6 +580,33 @@ export type Database = {
         }
         Relationships: []
       }
+      expert_approval_notifications: {
+        Row: {
+          created_at: string | null
+          email_sent: boolean | null
+          email_sent_at: string | null
+          expert_id: string
+          id: string
+          notification_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          email_sent?: boolean | null
+          email_sent_at?: string | null
+          expert_id: string
+          id?: string
+          notification_type: string
+        }
+        Update: {
+          created_at?: string | null
+          email_sent?: boolean | null
+          email_sent_at?: string | null
+          expert_id?: string
+          id?: string
+          notification_type?: string
+        }
+        Relationships: []
+      }
       expert_availabilities: {
         Row: {
           availability_type: string
@@ -705,6 +732,45 @@ export type Database = {
           price_inr?: number
           price_usd?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      expert_onboarding_status: {
+        Row: {
+          availability_setup: boolean | null
+          created_at: string | null
+          expert_id: string
+          first_login_after_approval: string | null
+          id: string
+          onboarding_completed: boolean | null
+          pricing_setup: boolean | null
+          profile_completed: boolean | null
+          services_assigned: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          availability_setup?: boolean | null
+          created_at?: string | null
+          expert_id: string
+          first_login_after_approval?: string | null
+          id?: string
+          onboarding_completed?: boolean | null
+          pricing_setup?: boolean | null
+          profile_completed?: boolean | null
+          services_assigned?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          availability_setup?: boolean | null
+          created_at?: string | null
+          expert_id?: string
+          first_login_after_approval?: string | null
+          id?: string
+          onboarding_completed?: boolean | null
+          pricing_setup?: boolean | null
+          profile_completed?: boolean | null
+          services_assigned?: boolean | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -920,6 +986,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      expert_services: {
+        Row: {
+          admin_assigned_rate_inr: number | null
+          admin_assigned_rate_usd: number | null
+          assigned_at: string | null
+          assigned_by: string | null
+          created_at: string | null
+          expert_id: string
+          id: string
+          is_active: boolean | null
+          service_id: number
+          updated_at: string | null
+        }
+        Insert: {
+          admin_assigned_rate_inr?: number | null
+          admin_assigned_rate_usd?: number | null
+          assigned_at?: string | null
+          assigned_by?: string | null
+          created_at?: string | null
+          expert_id: string
+          id?: string
+          is_active?: boolean | null
+          service_id: number
+          updated_at?: string | null
+        }
+        Update: {
+          admin_assigned_rate_inr?: number | null
+          admin_assigned_rate_usd?: number | null
+          assigned_at?: string | null
+          assigned_by?: string | null
+          created_at?: string | null
+          expert_id?: string
+          id?: string
+          is_active?: boolean | null
+          service_id?: number
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       expert_time_slots: {
         Row: {
@@ -2202,6 +2307,10 @@ export type Database = {
       }
       get_admin_metrics: {
         Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      get_expert_onboarding_progress: {
+        Args: { expert_auth_id: string }
         Returns: Json
       }
       get_user_reviews_with_experts: {
