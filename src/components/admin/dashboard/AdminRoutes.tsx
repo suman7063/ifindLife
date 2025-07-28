@@ -6,6 +6,9 @@ import ExpertsEditor from '@/components/admin/experts/ExpertsEditor';
 import ExpertsListView from '@/components/admin/experts/ExpertsListView';
 import { ServicesEditor } from '@/components/admin/services';
 import ExpertApprovals from '@/components/admin/experts/ExpertApprovals';
+import ExpertCategoriesManager from '@/components/admin/experts/ExpertCategoriesManager';
+import ExpertServicesManager from '@/components/admin/experts/ExpertServicesManager';
+import ExpertManagement from '@/components/admin/experts/ExpertManagement';
 import TestimonialsEditor from '@/components/admin/TestimonialsEditor';
 import AdminSettings from './AdminSettings';
 import ProgramsEditor from '@/components/admin/programs/ProgramsEditor';
@@ -39,17 +42,10 @@ const AdminRoutes: React.FC = () => {
       <Route path="/analytics" element={<AdminAnalytics />} />
       <Route path="/reports" element={<AdminReports />} />
       <Route path="/content" element={<ContentSearchManager />} />
-      <Route path="/experts" element={
-        <ExpertsEditor 
-          experts={experts} 
-          setExperts={setExperts} 
-          loading={loading} 
-          error={error} 
-          onRefresh={onRefresh} 
-        />
-      } />
       <Route path="/expertApprovals" element={<ExpertApprovals />} />
-      <Route path="/experts-list" element={<ExpertsListView />} />
+      <Route path="/experts-list" element={<ExpertManagement />} />
+      <Route path="/expert-categories" element={<ExpertCategoriesManager />} />
+      <Route path="/expert-services" element={<ExpertServicesManager />} />
       <Route path="/services" element={
         <ServicesEditor 
           categories={services} 
