@@ -48,29 +48,20 @@ const ReferralProgram = () => {
       <Navbar />
       
       {/* Header Band */}
-      <div className="bg-gradient-to-r from-ifind-aqua/20 via-ifind-purple/20 to-ifind-teal/20 py-12">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-ifind-aqua via-ifind-purple to-ifind-teal bg-clip-text text-transparent">
-            You Care when you Share
-          </h1>
+      <div className="bg-gradient-to-r from-ifind-teal/20 to-ifind-purple/20 text-ifind-charcoal py-16">
+        <div className="container mx-auto px-6 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-6">
+            <Gift className="w-8 h-8 text-primary" />
+          </div>
+          <h1 className="text-3xl md:text-4xl font-bold mb-4">You Care when you Share</h1>
+          <p className="text-gray-700 max-w-3xl mx-auto">
+            Share the gift of wellness and earn rewards when your friends join our community
+          </p>
         </div>
       </div>
       
       <main className="flex-1 bg-gradient-subtle">
         <div className="container mx-auto px-4 py-12">
-        {/* Hero Section */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-6">
-            <Gift className="w-8 h-8 text-primary" />
-          </div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-primary bg-clip-text text-transparent">
-            Referral Program
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Share the gift of wellness and earn rewards when your friends join our community
-          </p>
-        </div>
-
         {/* How It Works Section */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
           <Card className="text-center">
