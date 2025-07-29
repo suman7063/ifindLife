@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Table,
   TableBody,
@@ -19,7 +20,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Plus, Edit, Trash2, Save } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 
@@ -27,39 +28,36 @@ interface ExpertCategory {
   id: string;
   name: string;
   description?: string;
-  base_price_usd: number;
   base_price_inr: number;
   base_price_eur: number;
   created_at?: string;
 }
 
-interface CategoryPricing {
-  duration_minutes: number;
-  price_usd: number;
-  price_inr: number;
-  price_eur: number;
+interface Service {
+  id: number;
+  name: string;
+  description?: string;
+  rate_inr: number;
+  rate_eur?: number;
 }
 
 const ExpertCategoriesManager: React.FC = () => {
   const [categories, setCategories] = useState<ExpertCategory[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [categoryServices, setCategoryServices] = useState<Record<string, number[]>>({});
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isServiceDialogOpen, setIsServiceDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<ExpertCategory | null>(null);
-  const [categoryPricing, setCategoryPricing] = useState<Record<string, CategoryPricing[]>>({});
+  const [selectedCategoryForServices, setSelectedCategoryForServices] = useState<string | null>(null);
+  const [selectedServiceIds, setSelectedServiceIds] = useState<number[]>([]);
 
   // Form state
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    base_price_usd: 0,
     base_price_inr: 0,
     base_price_eur: 0,
-    pricing_30_usd: 0,
-    pricing_30_inr: 0,
-    pricing_30_eur: 0,
-    pricing_60_usd: 0,
-    pricing_60_inr: 0,
-    pricing_60_eur: 0,
   });
 
   useEffect(() => {
@@ -69,6 +67,7 @@ const ExpertCategoriesManager: React.FC = () => {
   const fetchCategories = async () => {
     setLoading(true);
     try {
+      // Fetch categories
       const { data: categoriesData, error: categoriesError } = await supabase
         .from('expert_categories')
         .select('*')
@@ -76,30 +75,19 @@ const ExpertCategoriesManager: React.FC = () => {
 
       if (categoriesError) throw categoriesError;
 
-      const { data: pricingData, error: pricingError } = await supabase
-        .from('expert_category_pricing')
+      // Fetch services
+      const { data: servicesData, error: servicesError } = await supabase
+        .from('services')
         .select('*')
-        .eq('active', true);
+        .order('name');
 
-      if (pricingError) throw pricingError;
+      if (servicesError) throw servicesError;
 
       setCategories(categoriesData || []);
-
-      // Group pricing by category
-      const pricingByCategory: Record<string, CategoryPricing[]> = {};
-      pricingData?.forEach((pricing) => {
-        if (!pricingByCategory[pricing.category]) {
-          pricingByCategory[pricing.category] = [];
-        }
-        pricingByCategory[pricing.category].push({
-          duration_minutes: pricing.duration_minutes,
-          price_usd: pricing.price_usd,
-          price_inr: pricing.price_inr,
-          price_eur: (pricing as any).price_eur || 0,
-        });
-      });
-
-      setCategoryPricing(pricingByCategory);
+      setServices(servicesData || []);
+      
+      // TODO: Implement category services after database types are updated
+      setCategoryServices({});
     } catch (error) {
       console.error('Error fetching categories:', error);
       toast.error('Failed to load categories');
@@ -113,10 +101,9 @@ const ExpertCategoriesManager: React.FC = () => {
     
     try {
       const categoryData = {
-        id: formData.name.toLowerCase().replace(/\s+/g, '-'),
+        id: editingCategory?.id || formData.name.toLowerCase().replace(/\s+/g, '-'),
         name: formData.name,
         description: formData.description,
-        base_price_usd: formData.base_price_usd,
         base_price_inr: formData.base_price_inr,
         base_price_eur: formData.base_price_eur,
       };
@@ -129,6 +116,7 @@ const ExpertCategoriesManager: React.FC = () => {
           .eq('id', editingCategory.id);
 
         if (error) throw error;
+        toast.success('Category updated successfully');
       } else {
         // Create new category
         const { error } = await supabase
@@ -136,44 +124,9 @@ const ExpertCategoriesManager: React.FC = () => {
           .insert([categoryData]);
 
         if (error) throw error;
+        toast.success('Category created successfully');
       }
 
-      // Update pricing for 30 and 60 minute sessions
-      const categoryId = editingCategory?.id || categoryData.id;
-      
-      // First, deactivate existing pricing
-      await supabase
-        .from('expert_category_pricing')
-        .update({ active: false })
-        .eq('category', categoryId);
-
-      // Insert new pricing
-      const pricingInserts = [
-        {
-          category: categoryId,
-          duration_minutes: 30,
-          price_usd: formData.pricing_30_usd,
-          price_inr: formData.pricing_30_inr,
-          price_eur: formData.pricing_30_eur,
-          active: true,
-        },
-        {
-          category: categoryId,
-          duration_minutes: 60,
-          price_usd: formData.pricing_60_usd,
-          price_inr: formData.pricing_60_inr,
-          price_eur: formData.pricing_60_eur,
-          active: true,
-        },
-      ];
-
-      const { error: pricingError } = await supabase
-        .from('expert_category_pricing')
-        .insert(pricingInserts);
-
-      if (pricingError) throw pricingError;
-
-      toast.success(editingCategory ? 'Category updated successfully' : 'Category created successfully');
       setIsDialogOpen(false);
       resetForm();
       fetchCategories();
@@ -185,24 +138,26 @@ const ExpertCategoriesManager: React.FC = () => {
 
   const handleEdit = (category: ExpertCategory) => {
     setEditingCategory(category);
-    const pricing = categoryPricing[category.id] || [];
-    const pricing30 = pricing.find(p => p.duration_minutes === 30);
-    const pricing60 = pricing.find(p => p.duration_minutes === 60);
-
     setFormData({
       name: category.name,
       description: category.description || '',
-      base_price_usd: category.base_price_usd,
       base_price_inr: category.base_price_inr,
       base_price_eur: category.base_price_eur,
-      pricing_30_usd: pricing30?.price_usd || 0,
-      pricing_30_inr: pricing30?.price_inr || 0,
-      pricing_30_eur: pricing30?.price_eur || 0,
-      pricing_60_usd: pricing60?.price_usd || 0,
-      pricing_60_inr: pricing60?.price_inr || 0,
-      pricing_60_eur: pricing60?.price_eur || 0,
     });
     setIsDialogOpen(true);
+  };
+
+  const handleManageServices = (category: ExpertCategory) => {
+    setSelectedCategoryForServices(category.id);
+    const categoryServiceList = categoryServices[category.id] || [];
+    setSelectedServiceIds(categoryServiceList);
+    setIsServiceDialogOpen(true);
+  };
+
+  const handleSaveServices = async () => {
+    // TODO: Implement service assignment after database types are updated
+    toast.success('Service assignment feature coming soon');
+    setIsServiceDialogOpen(false);
   };
 
   const handleDelete = async (categoryId: string) => {
@@ -211,13 +166,6 @@ const ExpertCategoriesManager: React.FC = () => {
     }
 
     try {
-      // First deactivate all pricing for this category
-      await supabase
-        .from('expert_category_pricing')
-        .update({ active: false })
-        .eq('category', categoryId);
-
-      // Then delete the category
       const { error } = await supabase
         .from('expert_categories')
         .delete()
@@ -237,17 +185,18 @@ const ExpertCategoriesManager: React.FC = () => {
     setFormData({
       name: '',
       description: '',
-      base_price_usd: 0,
       base_price_inr: 0,
       base_price_eur: 0,
-      pricing_30_usd: 0,
-      pricing_30_inr: 0,
-      pricing_30_eur: 0,
-      pricing_60_usd: 0,
-      pricing_60_inr: 0,
-      pricing_60_eur: 0,
     });
     setEditingCategory(null);
+  };
+
+  const toggleServiceSelection = (serviceId: number) => {
+    setSelectedServiceIds(prev => 
+      prev.includes(serviceId) 
+        ? prev.filter(id => id !== serviceId)
+        : [...prev, serviceId]
+    );
   };
 
   if (loading) {
@@ -266,7 +215,7 @@ const ExpertCategoriesManager: React.FC = () => {
             <div>
               <CardTitle>Expert Categories Management</CardTitle>
               <p className="text-sm text-muted-foreground mt-1">
-                Manage expert categories and set pricing for different consultation durations
+                Manage expert categories and assign services to each category
               </p>
             </div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -276,109 +225,55 @@ const ExpertCategoriesManager: React.FC = () => {
                   Add Category
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogContent className="max-w-lg">
                 <DialogHeader>
                   <DialogTitle>
                     {editingCategory ? 'Edit Category' : 'Add New Category'}
                   </DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <Label htmlFor="name">Category Name</Label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea
+                      id="description"
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      rows={3}
+                    />
+                  </div>
+
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="name">Category Name</Label>
+                      <Label htmlFor="base_price_inr">Base Price INR (₹)</Label>
                       <Input
-                        id="name"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        id="base_price_inr"
+                        type="number"
+                        step="0.01"
+                        value={formData.base_price_inr}
+                        onChange={(e) => setFormData({ ...formData, base_price_inr: parseFloat(e.target.value) || 0 })}
                         required
                       />
                     </div>
                     <div>
-                      <Label htmlFor="description">Description</Label>
-                      <Textarea
-                        id="description"
-                        value={formData.description}
-                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        rows={3}
+                      <Label htmlFor="base_price_eur">Base Price EUR (€)</Label>
+                      <Input
+                        id="base_price_eur"
+                        type="number"
+                        step="0.01"
+                        value={formData.base_price_eur}
+                        onChange={(e) => setFormData({ ...formData, base_price_eur: parseFloat(e.target.value) || 0 })}
+                        required
                       />
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <h4 className="font-medium">30-Minute Session Pricing</h4>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div>
-                        <Label htmlFor="pricing_30_usd">USD ($)</Label>
-                        <Input
-                          id="pricing_30_usd"
-                          type="number"
-                          step="0.01"
-                          value={formData.pricing_30_usd}
-                          onChange={(e) => setFormData({ ...formData, pricing_30_usd: parseFloat(e.target.value) || 0 })}
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="pricing_30_inr">INR (₹)</Label>
-                        <Input
-                          id="pricing_30_inr"
-                          type="number"
-                          step="0.01"
-                          value={formData.pricing_30_inr}
-                          onChange={(e) => setFormData({ ...formData, pricing_30_inr: parseFloat(e.target.value) || 0 })}
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="pricing_30_eur">EUR (€)</Label>
-                        <Input
-                          id="pricing_30_eur"
-                          type="number"
-                          step="0.01"
-                          value={formData.pricing_30_eur}
-                          onChange={(e) => setFormData({ ...formData, pricing_30_eur: parseFloat(e.target.value) || 0 })}
-                          required
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <h4 className="font-medium">60-Minute Session Pricing</h4>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div>
-                        <Label htmlFor="pricing_60_usd">USD ($)</Label>
-                        <Input
-                          id="pricing_60_usd"
-                          type="number"
-                          step="0.01"
-                          value={formData.pricing_60_usd}
-                          onChange={(e) => setFormData({ ...formData, pricing_60_usd: parseFloat(e.target.value) || 0 })}
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="pricing_60_inr">INR (₹)</Label>
-                        <Input
-                          id="pricing_60_inr"
-                          type="number"
-                          step="0.01"
-                          value={formData.pricing_60_inr}
-                          onChange={(e) => setFormData({ ...formData, pricing_60_inr: parseFloat(e.target.value) || 0 })}
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="pricing_60_eur">EUR (€)</Label>
-                        <Input
-                          id="pricing_60_eur"
-                          type="number"
-                          step="0.01"
-                          value={formData.pricing_60_eur}
-                          onChange={(e) => setFormData({ ...formData, pricing_60_eur: parseFloat(e.target.value) || 0 })}
-                          required
-                        />
-                      </div>
                     </div>
                   </div>
 
@@ -402,41 +297,45 @@ const ExpertCategoriesManager: React.FC = () => {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Description</TableHead>
-                <TableHead>30min Pricing</TableHead>
-                <TableHead>60min Pricing</TableHead>
+                <TableHead>Base Pricing</TableHead>
+                <TableHead>Assigned Services</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {categories.map((category) => {
-                const pricing = categoryPricing[category.id] || [];
-                const pricing30 = pricing.find(p => p.duration_minutes === 30);
-                const pricing60 = pricing.find(p => p.duration_minutes === 60);
+                const assignedServices = categoryServices[category.id] || [];
+                const serviceNames = assignedServices.map(serviceId => 
+                  services.find(s => s.id === serviceId)?.name
+                ).filter(Boolean);
 
                 return (
                   <TableRow key={category.id}>
                     <TableCell className="font-medium">{category.name}</TableCell>
                     <TableCell>{category.description || 'N/A'}</TableCell>
                     <TableCell>
-                      {pricing30 ? (
-                        <div className="text-sm">
-                          <div>${pricing30.price_usd} | ₹{pricing30.price_inr} | €{pricing30.price_eur}</div>
-                        </div>
-                      ) : (
-                        'Not set'
-                      )}
+                      <div className="text-sm">
+                        ₹{category.base_price_inr} | €{category.base_price_eur}
+                      </div>
                     </TableCell>
                     <TableCell>
-                      {pricing60 ? (
-                        <div className="text-sm">
-                          <div>${pricing60.price_usd} | ₹{pricing60.price_inr} | €{pricing60.price_eur}</div>
-                        </div>
-                      ) : (
-                        'Not set'
-                      )}
+                      <div className="text-sm">
+                        {serviceNames.length > 0 ? (
+                          <div>{serviceNames.slice(0, 2).join(', ')}{serviceNames.length > 2 ? `, +${serviceNames.length - 2} more` : ''}</div>
+                        ) : (
+                          <span className="text-muted-foreground">No services assigned</span>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleManageServices(category)}
+                        >
+                          <Settings className="h-4 w-4" />
+                        </Button>
                         <Button
                           size="sm"
                           variant="outline"
@@ -465,6 +364,58 @@ const ExpertCategoriesManager: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Service Assignment Dialog */}
+      <Dialog open={isServiceDialogOpen} onOpenChange={setIsServiceDialogOpen}>
+        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Assign Services to Category</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Select services that experts in this category can offer:
+            </p>
+            <div className="space-y-3">
+              {services.map((service) => (
+                <div key={service.id} className="flex items-start space-x-3">
+                  <Checkbox
+                    id={`service-${service.id}`}
+                    checked={selectedServiceIds.includes(service.id)}
+                    onCheckedChange={() => toggleServiceSelection(service.id)}
+                  />
+                  <div className="flex-1">
+                    <Label 
+                      htmlFor={`service-${service.id}`}
+                      className="text-sm font-medium cursor-pointer"
+                    >
+                      {service.name}
+                    </Label>
+                    {service.description && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {service.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+            {services.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No services available. Create services first in the Expert Services section.
+              </p>
+            )}
+          </div>
+          <div className="flex justify-end space-x-2 pt-4">
+            <Button type="button" variant="outline" onClick={() => setIsServiceDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveServices}>
+              <Save className="h-4 w-4 mr-2" />
+              Save Assignments
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

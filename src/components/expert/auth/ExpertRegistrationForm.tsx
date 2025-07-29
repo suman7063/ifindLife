@@ -21,11 +21,35 @@ const ExpertRegistrationForm: React.FC = () => {
   const [isSuccess, setIsSuccess] = useState(false);
   const [captchaQuestion, setCaptchaQuestion] = useState({ num1: 0, num2: 0, answer: 0 });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [categories, setCategories] = useState<any[]>([]);
 
-  // Generate CAPTCHA on component mount
+  // Generate CAPTCHA and fetch categories on component mount
   useEffect(() => {
     generateCaptcha();
+    fetchCategories();
   }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('expert_categories')
+        .select('id, name')
+        .order('name');
+      
+      if (error) throw error;
+      setCategories(data || []);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      // Fallback to hardcoded categories if fetch fails
+      setCategories([
+        { id: 'listening-volunteer', name: 'Listening Volunteer' },
+        { id: 'listening-expert', name: 'Listening Expert' },
+        { id: 'mindfulness-expert', name: 'Mindfulness Expert' },
+        { id: 'life-coach', name: 'Life Coach' },
+        { id: 'spiritual-mentor', name: 'Spiritual Mentor' },
+      ]);
+    }
+  };
 
   const generateCaptcha = () => {
     const num1 = Math.floor(Math.random() * 20) + 1;
@@ -331,26 +355,12 @@ const ExpertRegistrationForm: React.FC = () => {
               onValueChange={(value) => form.setValue('expertCategory', value as any)}
               className="mt-2"
             >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="listening-volunteer" id="listening-volunteer" />
-                <Label htmlFor="listening-volunteer">Listening Volunteer</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="listening-expert" id="listening-expert" />
-                <Label htmlFor="listening-expert">Listening Expert</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="mindfulness-expert" id="mindfulness-expert" />
-                <Label htmlFor="mindfulness-expert">Mindfulness Expert</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="life-coach" id="life-coach" />
-                <Label htmlFor="life-coach">Life Coach</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="spiritual-mentor" id="spiritual-mentor" />
-                <Label htmlFor="spiritual-mentor">Spiritual Mentor</Label>
-              </div>
+              {categories.map((category) => (
+                <div key={category.id} className="flex items-center space-x-2">
+                  <RadioGroupItem value={category.id} id={category.id} />
+                  <Label htmlFor={category.id}>{category.name}</Label>
+                </div>
+              ))}
             </RadioGroup>
             {form.formState.errors.expertCategory && (
               <p className="text-sm text-red-500 mt-1">{form.formState.errors.expertCategory.message}</p>

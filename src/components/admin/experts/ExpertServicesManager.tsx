@@ -34,10 +34,9 @@ interface Service {
   id: number;
   name: string;
   description?: string;
-  category: string;
-  duration: number;
-  rate_usd: number;
-  rate_inr: number;
+  category?: string;
+  duration?: number;
+  rate_inr?: number;
   rate_eur?: number;
   created_at?: string;
 }
@@ -58,11 +57,6 @@ const ExpertServicesManager: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    category: '',
-    duration: 30,
-    rate_usd: 0,
-    rate_inr: 0,
-    rate_eur: 0,
   });
 
   useEffect(() => {
@@ -80,16 +74,7 @@ const ExpertServicesManager: React.FC = () => {
 
       if (servicesError) throw servicesError;
 
-      // Fetch categories
-      const { data: categoriesData, error: categoriesError } = await supabase
-        .from('expert_categories')
-        .select('id, name')
-        .order('name');
-
-      if (categoriesError) throw categoriesError;
-
       setServices(servicesData || []);
-      setCategories(categoriesData || []);
     } catch (error) {
       console.error('Error fetching data:', error);
       toast.error('Failed to load data');
@@ -105,11 +90,9 @@ const ExpertServicesManager: React.FC = () => {
       const serviceData = {
         name: formData.name,
         description: formData.description,
-        category: formData.category,
-        duration: formData.duration,
-        rate_usd: formData.rate_usd,
-        rate_inr: formData.rate_inr,
-        rate_eur: formData.rate_eur,
+        rate_inr: 0, // Default value - rates managed by categories
+        rate_eur: 0, // Default value - rates managed by categories
+        rate_usd: 0, // Default value - removed but still required by types
       };
 
       if (editingService) {
@@ -145,11 +128,6 @@ const ExpertServicesManager: React.FC = () => {
     setFormData({
       name: service.name,
       description: service.description || '',
-      category: service.category,
-      duration: service.duration,
-      rate_usd: service.rate_usd,
-      rate_inr: service.rate_inr,
-      rate_eur: service.rate_eur || 0,
     });
     setIsDialogOpen(true);
   };
@@ -179,19 +157,10 @@ const ExpertServicesManager: React.FC = () => {
     setFormData({
       name: '',
       description: '',
-      category: '',
-      duration: 30,
-      rate_usd: 0,
-      rate_inr: 0,
-      rate_eur: 0,
     });
     setEditingService(null);
   };
 
-  const getCategoryName = (categoryId: string) => {
-    const category = categories.find(c => c.id === categoryId);
-    return category?.name || categoryId;
-  };
 
   if (loading) {
     return (
@@ -209,7 +178,7 @@ const ExpertServicesManager: React.FC = () => {
             <div>
               <CardTitle>Expert Services Management</CardTitle>
               <p className="text-sm text-muted-foreground mt-1">
-                Manage services that experts can offer. These services will be available during expert onboarding.
+                Manage services that experts can offer. Services only include name and description. Rates are set by category pricing.
               </p>
             </div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -226,35 +195,15 @@ const ExpertServicesManager: React.FC = () => {
                   </DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="name">Service Name</Label>
-                      <Input
-                        id="name"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="e.g. Marriage Counseling"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="category">Category</Label>
-                      <Select 
-                        value={formData.category} 
-                        onValueChange={(value) => setFormData({ ...formData, category: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {categories.map((category) => (
-                            <SelectItem key={category.id} value={category.id}>
-                              {category.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  <div>
+                    <Label htmlFor="name">Service Name</Label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="e.g. Marriage Counseling"
+                      required
+                    />
                   </div>
 
                   <div>
@@ -266,61 +215,6 @@ const ExpertServicesManager: React.FC = () => {
                       placeholder="Describe what this service includes..."
                       rows={3}
                     />
-                  </div>
-
-                  <div className="grid grid-cols-4 gap-4">
-                    <div>
-                      <Label htmlFor="duration">Duration (minutes)</Label>
-                      <Select 
-                        value={formData.duration.toString()} 
-                        onValueChange={(value) => setFormData({ ...formData, duration: parseInt(value) })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="15">15 minutes</SelectItem>
-                          <SelectItem value="30">30 minutes</SelectItem>
-                          <SelectItem value="45">45 minutes</SelectItem>
-                          <SelectItem value="60">60 minutes</SelectItem>
-                          <SelectItem value="90">90 minutes</SelectItem>
-                          <SelectItem value="120">120 minutes</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="rate_usd">Rate USD ($)</Label>
-                      <Input
-                        id="rate_usd"
-                        type="number"
-                        step="0.01"
-                        value={formData.rate_usd}
-                        onChange={(e) => setFormData({ ...formData, rate_usd: parseFloat(e.target.value) || 0 })}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="rate_inr">Rate INR (₹)</Label>
-                      <Input
-                        id="rate_inr"
-                        type="number"
-                        step="0.01"
-                        value={formData.rate_inr}
-                        onChange={(e) => setFormData({ ...formData, rate_inr: parseFloat(e.target.value) || 0 })}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="rate_eur">Rate EUR (€)</Label>
-                      <Input
-                        id="rate_eur"
-                        type="number"
-                        step="0.01"
-                        value={formData.rate_eur}
-                        onChange={(e) => setFormData({ ...formData, rate_eur: parseFloat(e.target.value) || 0 })}
-                        required
-                      />
-                    </div>
                   </div>
 
                   <div className="flex justify-end space-x-2 pt-4">
@@ -342,9 +236,6 @@ const ExpertServicesManager: React.FC = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Duration</TableHead>
-                <TableHead>Rates</TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -353,15 +244,8 @@ const ExpertServicesManager: React.FC = () => {
               {services.map((service) => (
                 <TableRow key={service.id}>
                   <TableCell className="font-medium">{service.name}</TableCell>
-                  <TableCell>{getCategoryName(service.category)}</TableCell>
-                  <TableCell>{service.duration} min</TableCell>
                   <TableCell>
-                    <div className="text-sm">
-                      <div>${service.rate_usd} | ₹{service.rate_inr} | €{service.rate_eur || 0}</div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="max-w-xs truncate" title={service.description}>
+                    <div className="max-w-md" title={service.description}>
                       {service.description || 'N/A'}
                     </div>
                   </TableCell>
