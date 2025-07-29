@@ -83,11 +83,17 @@ const FAQs = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-1 bg-gray-50">
-        <section className="py-16 bg-gradient-to-r from-ifind-aqua to-ifind-teal text-white">
+        {/* Header Band */}
+        <div className="bg-gradient-to-r from-ifind-aqua/20 via-ifind-purple/20 to-ifind-teal/20 py-12">
           <div className="container mx-auto px-4 text-center">
-            <h1 className="text-4xl font-bold mb-4">Frequently Asked Questions</h1>
-            <p className="text-xl max-w-3xl mx-auto">
-              Find answers to common questions about our services, programs, and platform. If you don&apos;t find what you&apos;re looking for, feel free to contact us.
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-6">
+              <Search className="w-8 h-8 text-primary" />
+            </div>
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-ifind-aqua via-ifind-purple to-ifind-teal bg-clip-text text-transparent">
+              Frequently Asked Questions
+            </h1>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Find answers to common questions about our services, programs, and platform. If you don't find what you're looking for, feel free to contact us.
             </p>
             <div className="mt-8 max-w-2xl mx-auto flex">
               <Input 
@@ -99,7 +105,7 @@ const FAQs = () => {
               </Button>
             </div>
           </div>
-        </section>
+        </div>
 
         <section className="py-16">
           <div className="container mx-auto px-4">

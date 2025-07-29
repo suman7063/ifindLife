@@ -26,17 +26,25 @@ const Blog = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
+      
+      {/* Header Band */}
+      <div className="bg-gradient-to-r from-ifind-aqua/20 via-ifind-purple/20 to-ifind-teal/20 py-12">
+        <div className="container mx-auto px-4 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-6">
+            <Search className="w-8 h-8 text-primary" />
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-ifind-aqua via-ifind-purple to-ifind-teal bg-clip-text text-transparent">
+            Mental Health Blog
+          </h1>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            Expert insights, practical tips, and evidence-based guidance for your mental health journey.
+          </p>
+        </div>
+      </div>
+      
       <main className="flex-1 py-16">
         <Container>
           <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-12">
-              <h1 className="text-4xl font-bold text-gray-900 mb-4">
-                Mental Health Blog
-              </h1>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                Expert insights, practical tips, and evidence-based guidance for your mental health journey.
-              </p>
-            </div>
 
             <div className="mb-8 space-y-6">
               <div className="relative max-w-md mx-auto">
