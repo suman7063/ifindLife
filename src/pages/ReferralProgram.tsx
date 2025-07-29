@@ -47,6 +47,15 @@ const ReferralProgram = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
+      {/* Header Band */}
+      <div className="bg-gradient-to-r from-ifind-aqua/20 via-ifind-purple/20 to-ifind-teal/20 py-12">
+        <div className="container mx-auto px-4 text-center">
+          <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-ifind-aqua via-ifind-purple to-ifind-teal bg-clip-text text-transparent">
+            You Care when you Share
+          </h1>
+        </div>
+      </div>
+      
       <main className="flex-1 bg-gradient-subtle">
         <div className="container mx-auto px-4 py-12">
         {/* Hero Section */}
