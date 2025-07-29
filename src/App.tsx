@@ -153,6 +153,7 @@ const UserRoutes: React.FC = () => {
 
 function App(): JSX.Element {
   console.log('App: Component is rendering with separated auth providers');
+  console.log('App: Current pathname:', window.location.pathname);
   
   return (
     <QueryClientProvider client={queryClient}>
