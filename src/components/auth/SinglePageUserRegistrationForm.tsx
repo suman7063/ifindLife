@@ -14,6 +14,7 @@ import { Loader2, User, Mail, Phone, Calendar, MapPin, Shield, Globe, Gift } fro
 import { processReferralCode } from '@/utils/referralUtils';
 import { ReferralSettings } from '@/types/supabase';
 import { useIPBasedPricing } from '@/hooks/call/useIPBasedPricing';
+import { useUserCurrency } from '@/hooks/call/useUserCurrency';
 
 // Comprehensive registration schema
 const registrationSchema = z.object({
@@ -121,7 +122,7 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
             phone: data.phone,
             country: data.country,
             city: data.city,
-            currency: pricing.currency, // Use IP-based detection: INR for India, EUR for rest
+            currency: data.country.toLowerCase() === 'india' || data.country.toLowerCase() === 'in' ? 'INR' : 'EUR', // INR for India, EUR for rest
             date_of_birth: data.dateOfBirth,
             gender: data.gender,
             occupation: data.occupation,
