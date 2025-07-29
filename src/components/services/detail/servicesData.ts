@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Brain, HeartPulse, Leaf, MessageCircle, Sparkles } from 'lucide-react';
+import { Brain, HeartHandshake, HeartPulse, Leaf, MessageCircle, Sparkles } from 'lucide-react';
 
 // Service data with detailed descriptions and updated images - reordered and with updated color themes
 export const servicesData = [
@@ -24,6 +24,27 @@ export const servicesData = [
     ],
     duration: "45-minute sessions",
     process: "You'll be welcomed into a comfortable, private setting where you can speak freely about whatever is on your mind. The listener will maintain attentive, supportive presence without interrupting or offering advice unless specifically requested."
+  },
+  {
+    id: "listening-with-guidance",
+    title: "Listening Session with Guidance",
+    description: "Supportive listening sessions combined with gentle guidance and insights to help navigate life challenges.",
+    image: "/src/assets/listening-with-guidance.jpg",
+    color: "bg-ifind-blue",
+    gradientColor: "from-ifind-blue/20 to-white",
+    textColor: "text-ifind-blue",
+    buttonColor: "bg-ifind-blue hover:bg-ifind-blue/90",
+    icon: React.createElement(HeartHandshake, { className: "h-8 w-8 text-white" }),
+    detailedDescription: "Our Listening Session with Guidance offers the perfect balance between being heard and receiving supportive insights. These sessions begin with open listening where you can express yourself freely, followed by gentle guidance when you seek direction or perspective. Our trained facilitators provide a compassionate space for processing while offering thoughtful reflections and practical insights to help you move forward. This hybrid approach is ideal for those who want both the validation of being heard and the benefit of gentle guidance.",
+    benefits: [
+      "Combination of deep listening and supportive guidance",
+      "Validation of your experiences and feelings",
+      "Gentle insights and perspectives to aid decision-making",
+      "Practical tools and strategies for moving forward",
+      "Flexible sessions that adapt to your needs in the moment"
+    ],
+    duration: "50-minute sessions",
+    process: "Sessions begin with open listening time where you can share freely. Your facilitator will then offer gentle guidance, insights, or practical strategies based on what you've shared and what feels most helpful for your situation."
   },
   {
     id: "therapy-sessions",
