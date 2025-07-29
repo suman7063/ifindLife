@@ -83,11 +83,25 @@ const ExpertCategoriesManager: React.FC = () => {
 
       if (servicesError) throw servicesError;
 
+      // Fetch category service assignments
+      const { data: categoryServicesData, error: categoryServicesError } = await supabase
+        .from('expert_category_services')
+        .select('category_id, service_id');
+
+      if (categoryServicesError) throw categoryServicesError;
+
       setCategories(categoriesData || []);
       setServices(servicesData || []);
       
-      // TODO: Implement category services after database types are updated
-      setCategoryServices({});
+      // Group services by category
+      const categoryServicesMap: Record<string, number[]> = {};
+      categoryServicesData?.forEach(({ category_id, service_id }) => {
+        if (!categoryServicesMap[category_id]) {
+          categoryServicesMap[category_id] = [];
+        }
+        categoryServicesMap[category_id].push(service_id);
+      });
+      setCategoryServices(categoryServicesMap);
     } catch (error) {
       console.error('Error fetching categories:', error);
       toast.error('Failed to load categories');
@@ -155,9 +169,38 @@ const ExpertCategoriesManager: React.FC = () => {
   };
 
   const handleSaveServices = async () => {
-    // TODO: Implement service assignment after database types are updated
-    toast.success('Service assignment feature coming soon');
-    setIsServiceDialogOpen(false);
+    if (!selectedCategoryForServices) return;
+
+    try {
+      // First, delete existing assignments for this category
+      const { error: deleteError } = await supabase
+        .from('expert_category_services')
+        .delete()
+        .eq('category_id', selectedCategoryForServices);
+
+      if (deleteError) throw deleteError;
+
+      // Then, insert new assignments
+      if (selectedServiceIds.length > 0) {
+        const assignments = selectedServiceIds.map(serviceId => ({
+          category_id: selectedCategoryForServices,
+          service_id: serviceId,
+        }));
+
+        const { error: insertError } = await supabase
+          .from('expert_category_services')
+          .insert(assignments);
+
+        if (insertError) throw insertError;
+      }
+
+      toast.success('Service assignments updated successfully');
+      setIsServiceDialogOpen(false);
+      fetchCategories(); // Refresh to show updated assignments
+    } catch (error) {
+      console.error('Error saving service assignments:', error);
+      toast.error('Failed to save service assignments');
+    }
   };
 
   const handleDelete = async (categoryId: string) => {
@@ -299,6 +342,7 @@ const ExpertCategoriesManager: React.FC = () => {
                 <TableHead>Description</TableHead>
                 <TableHead>Base Pricing</TableHead>
                 <TableHead>Assigned Services</TableHead>
+                <TableHead>Services Selection</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -327,15 +371,17 @@ const ExpertCategoriesManager: React.FC = () => {
                         )}
                       </div>
                     </TableCell>
+                    <TableCell className="text-center">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleManageServices(category)}
+                      >
+                        <Settings className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleManageServices(category)}
-                        >
-                          <Settings className="h-4 w-4" />
-                        </Button>
                         <Button
                           size="sm"
                           variant="outline"

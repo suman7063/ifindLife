@@ -735,6 +735,42 @@ export type Database = {
         }
         Relationships: []
       }
+      expert_category_services: {
+        Row: {
+          category_id: string
+          created_at: string
+          id: string
+          service_id: number
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          id?: string
+          service_id: number
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          id?: string
+          service_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expert_category_services_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "expert_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expert_category_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expert_onboarding_status: {
         Row: {
           availability_setup: boolean | null
