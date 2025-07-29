@@ -41,6 +41,9 @@ interface Service {
   rate_eur?: number;
 }
 
+// Define the correct category order
+const CATEGORY_ORDER = ['listening-volunteer', 'listening-expert', 'mindfulness-coach', 'mindfulness-expert', 'spiritual-mentor'];
+
 const ExpertCategoriesManager: React.FC = () => {
   const [categories, setCategories] = useState<ExpertCategory[]>([]);
   const [services, setServices] = useState<Service[]>([]);
@@ -67,11 +70,11 @@ const ExpertCategoriesManager: React.FC = () => {
   const fetchCategories = async () => {
     setLoading(true);
     try {
-      // Fetch categories
+      // Fetch categories in the correct order
       const { data: categoriesData, error: categoriesError } = await supabase
         .from('expert_categories')
         .select('*')
-        .order('name');
+        .in('id', CATEGORY_ORDER);
 
       if (categoriesError) throw categoriesError;
 
@@ -90,7 +93,14 @@ const ExpertCategoriesManager: React.FC = () => {
 
       if (categoryServicesError) throw categoryServicesError;
 
-      setCategories(categoriesData || []);
+      // Sort categories in the correct order
+      const sortedCategories = (categoriesData || []).sort((a, b) => {
+        const aIndex = CATEGORY_ORDER.indexOf(a.id);
+        const bIndex = CATEGORY_ORDER.indexOf(b.id);
+        return aIndex - bIndex;
+      });
+      
+      setCategories(sortedCategories);
       setServices(servicesData || []);
       
       // Group services by category
