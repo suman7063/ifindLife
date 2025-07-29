@@ -41,7 +41,7 @@ const Services = () => {
                   <img 
                     src={service.image} 
                     alt={service.title}
-                    className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-500"
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
                   <div className={`absolute top-4 left-4 p-3 rounded-full ${service.color} shadow-lg`}>
                     {service.icon}
