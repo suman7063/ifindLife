@@ -53,6 +53,17 @@ const LogoutPage: React.FC = () => {
     }
   };
   
+  const getLoginPath = () => {
+    switch (logoutType) {
+      case 'admin':
+        return '/admin-login';
+      case 'expert':
+        return '/expert-login';
+      default:
+        return '/user-login';
+    }
+  };
+  
   return (
     <>
       <Navbar />
@@ -74,7 +85,7 @@ const LogoutPage: React.FC = () => {
           <div className="flex justify-center space-x-4">
             <Button 
               variant="outline"
-              onClick={() => navigate('/login')}
+              onClick={() => navigate(getLoginPath())}
             >
               Sign In Again
             </Button>
