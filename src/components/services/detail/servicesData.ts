@@ -29,7 +29,7 @@ export const servicesData = [
     id: "listening-with-guidance",
     title: "Listening Session with Guidance",
     description: "Supportive listening sessions combined with gentle guidance and insights to help navigate life challenges.",
-    image: "/lovable-uploads/3ba262c7-796f-46aa-92f7-23924bdc6a44.png",
+    image: "/lovable-uploads/b7c0b907-ff72-4597-8beb-61071fedf19f.png",
     color: "bg-ifind-blue",
     gradientColor: "from-ifind-blue/20 to-white",
     textColor: "text-ifind-blue",
