@@ -182,13 +182,35 @@ const ExpertCategoriesManager: React.FC = () => {
     if (!selectedCategoryForServices) return;
 
     try {
+      // Check current user authentication
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        toast.error('Authentication required. Please log in as an admin.');
+        return;
+      }
+
+      // Check if user is admin
+      const { data: adminCheck, error: adminError } = await supabase
+        .from('admin_users')
+        .select('id')
+        .eq('id', user.id)
+        .single();
+
+      if (adminError || !adminCheck) {
+        toast.error('Admin privileges required to manage service assignments.');
+        return;
+      }
+
       // First, delete existing assignments for this category
       const { error: deleteError } = await supabase
         .from('expert_category_services')
         .delete()
         .eq('category_id', selectedCategoryForServices);
 
-      if (deleteError) throw deleteError;
+      if (deleteError) {
+        console.error('Delete error:', deleteError);
+        throw deleteError;
+      }
 
       // Then, insert new assignments
       if (selectedServiceIds.length > 0) {
@@ -201,7 +223,10 @@ const ExpertCategoriesManager: React.FC = () => {
           .from('expert_category_services')
           .insert(assignments);
 
-        if (insertError) throw insertError;
+        if (insertError) {
+          console.error('Insert error:', insertError);
+          throw insertError;
+        }
       }
 
       toast.success('Service assignments updated successfully');
@@ -209,7 +234,7 @@ const ExpertCategoriesManager: React.FC = () => {
       fetchCategories(); // Refresh to show updated assignments
     } catch (error) {
       console.error('Error saving service assignments:', error);
-      toast.error('Failed to save service assignments');
+      toast.error(`Failed to save service assignments: ${error.message}`);
     }
   };
 
