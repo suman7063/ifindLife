@@ -59,8 +59,11 @@ export const useExpertRegistration = (onActionComplete: () => void) => {
         }
       }
 
+      // Important: Sign out immediately after registration since experts need approval
+      await supabase.auth.signOut();
+
       localStorage.setItem('sessionType', 'expert');
-      toast.success('Expert account created successfully! Your profile is pending approval.');
+      toast.success('Expert account created successfully! Your profile is pending approval. Please wait for admin approval before logging in.');
       onActionComplete();
       return true;
     } catch (error) {

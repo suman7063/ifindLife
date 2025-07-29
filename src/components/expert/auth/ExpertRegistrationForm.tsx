@@ -114,6 +114,9 @@ const ExpertRegistrationForm: React.FC = () => {
         throw new Error('Failed to create user account');
       }
 
+      // Important: Sign out immediately after registration since experts need approval
+      await supabase.auth.signOut();
+
       // Upload certificate to storage
       let certificateUrl = '';
       if (selectedFile) {
@@ -177,6 +180,8 @@ const ExpertRegistrationForm: React.FC = () => {
         throw new Error(expertError.message);
       }
 
+      // Show success message and prevent auto-login
+      toast.success('Expert account created successfully! Please wait for admin approval before logging in.');
       setIsSuccess(true);
     } catch (error) {
       console.error('Registration error:', error);
