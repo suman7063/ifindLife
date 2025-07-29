@@ -2,6 +2,7 @@
 import React from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { Container } from '@/components/ui/container';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -82,31 +83,35 @@ const FAQs = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-1 bg-gray-50">
-        {/* Header Band */}
-        <div className="bg-gradient-to-r from-ifind-teal/20 to-ifind-purple/20 text-ifind-charcoal py-16">
-          <div className="container mx-auto px-6 text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-6">
-              <Search className="w-8 h-8 text-primary" />
-            </div>
-            <h1 className="text-3xl md:text-4xl font-bold mb-4">Frequently Asked Questions</h1>
-            <p className="text-gray-700 max-w-3xl mx-auto">
-              Find answers to common questions about our services, programs, and platform. If you don't find what you're looking for, feel free to contact us.
-            </p>
-            <div className="mt-8 max-w-2xl mx-auto flex">
-              <Input 
-                placeholder="Search for questions..." 
-                className="bg-white/20 border-white/30 text-white placeholder:text-white/70 focus-visible:ring-white"
-              />
-              <Button className="ml-2 bg-white text-ifind-teal hover:bg-white/90">
-                <Search className="h-4 w-4" />
-              </Button>
-            </div>
+      
+      {/* Header Band */}
+      <div className="bg-gradient-to-r from-ifind-teal/20 to-ifind-purple/20 text-ifind-charcoal py-16">
+        <div className="container mx-auto px-6 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-6">
+            <Search className="w-8 h-8 text-primary" />
           </div>
+          <h1 className="text-3xl md:text-4xl font-bold mb-4">Frequently Asked Questions</h1>
+          <p className="text-gray-700 max-w-3xl mx-auto">
+            Find answers to common questions about our services, programs, and platform. If you don't find what you're looking for, feel free to contact us.
+          </p>
         </div>
+      </div>
+      
+      <main className="flex-1 py-16 bg-gray-50">
+        <Container>
+          <div className="max-w-6xl mx-auto">
+            
+            {/* Search Bar */}
+            <div className="mb-8">
+              <div className="relative max-w-md mx-auto">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  placeholder="Search for questions..."
+                  className="pl-10"
+                />
+              </div>
+            </div>
 
-        <section className="py-16">
-          <div className="container mx-auto px-4">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
               <div className="md:col-span-1">
                 <div className="sticky top-24">
@@ -152,7 +157,7 @@ const FAQs = () => {
               </div>
             </div>
           </div>
-        </section>
+        </Container>
       </main>
       <Footer />
     </div>
