@@ -702,6 +702,41 @@ export type Database = {
         }
         Relationships: []
       }
+      expert_category_duration_pricing: {
+        Row: {
+          category_id: string
+          created_at: string
+          duration_minutes: number
+          id: string
+          price_eur: number
+          price_inr: number
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          duration_minutes: number
+          id?: string
+          price_eur: number
+          price_inr: number
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          duration_minutes?: number
+          id?: string
+          price_eur?: number
+          price_inr?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expert_category_duration_pricing_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "expert_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expert_category_pricing: {
         Row: {
           active: boolean
