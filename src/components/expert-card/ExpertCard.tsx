@@ -121,7 +121,7 @@ const ExpertCard: React.FC<ExpertCardProps> = ({
   
   return (
     <Card 
-      className={`overflow-hidden transition-all hover:shadow-lg cursor-pointer ${className}`}
+      className={`overflow-hidden transition-all hover:shadow-lg cursor-pointer max-w-md ${className}`}
       onClick={onClick}
     >
       <CardContent className="p-4">

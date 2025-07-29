@@ -23,10 +23,11 @@ const ServiceExperts: React.FC<ServiceExpertsProps> = ({ serviceId, serviceData 
   // Based on the experts' selected_services data (1, 2, 3, etc.)
   const serviceIdMap: Record<string, number> = {
     'mindful-listening': 1,
-    'therapy-sessions': 2,
-    'guided-meditations': 3,
-    'offline-retreats': 4,
-    'life-coaching': 5
+    'listening-with-guidance': 2,
+    'therapy-sessions': 3,
+    'guided-meditations': 4,
+    'offline-retreats': 5,
+    'life-coaching': 6
   };
 
   const mappedServiceId = serviceIdMap[serviceId];
@@ -95,7 +96,7 @@ const ServiceExperts: React.FC<ServiceExpertsProps> = ({ serviceId, serviceData 
           <h3 className="text-xl font-semibold">Our {serviceData.title} Experts</h3>
         </div>
         
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {experts.slice(0, 4).map((expert) => (
             <div
               key={expert.id}
