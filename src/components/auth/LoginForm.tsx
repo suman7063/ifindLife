@@ -61,6 +61,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading, userType = 'use
       // Set a more user-friendly error message
       if (error.code === 'invalid_credentials') {
         setFormError("Invalid email or password. Please check your credentials and try again.");
+      } else if (error.message?.includes('Email not confirmed') || error.message?.includes('verify your email')) {
+        setFormError("Please verify your email address before logging in. Check your inbox for the verification link.");
+      } else if (error.message?.includes('signup confirmation')) {
+        setFormError("Please verify your email address before logging in. Check your inbox for the verification link.");
       } else {
         setFormError(error.message || "Login failed. Please check your credentials.");
       }

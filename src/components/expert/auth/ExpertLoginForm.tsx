@@ -50,10 +50,24 @@ const ExpertLoginForm: React.FC<ExpertLoginFormProps> = ({
         return;
       }
       
-      await onLogin(email, password);
-    } catch (error) {
+      const result = await onLogin(email, password);
+      
+      // Check if login failed due to specific reasons
+      if (result === false) {
+        // Error will be handled by the parent component
+        return;
+      }
+    } catch (error: any) {
       console.error('ExpertLoginForm: Error in submit handler:', error);
-      setFormError('An unexpected error occurred. Please try again.');
+      
+      // Handle specific error types
+      if (error.message?.includes('verify your email') || error.message?.includes('Email not confirmed')) {
+        setFormError('Please verify your email address before logging in. Check your inbox for the verification link.');
+      } else if (error.message?.includes('not approved')) {
+        setFormError('Your expert account is pending approval. Please wait for admin approval.');
+      } else {
+        setFormError(error.message || 'An unexpected error occurred. Please try again.');
+      }
     }
   };
 

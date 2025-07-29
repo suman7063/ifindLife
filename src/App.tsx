@@ -48,6 +48,7 @@ import UnifiedExpertsPage from './pages/UnifiedExpertsPage';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import ReferralProgram from './pages/ReferralProgram';
+import AuthCallback from './pages/AuthCallback';
 
 // Create QueryClient outside component to avoid hook issues
 const queryClient = new QueryClient({
@@ -141,6 +142,7 @@ const UserRoutes: React.FC = () => {
         <Route path="/logout" element={<LogoutPage />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/auth-callback" element={<AuthCallback />} />
 
         {/* Catch-all route */}
         <Route path="*" element={<NotFound />} />

@@ -27,6 +27,7 @@ export const useAuthSignup = (
         password,
         options: {
           data: metadata,
+          emailRedirectTo: `${window.location.origin}/auth-callback`,
         },
       });
 
@@ -37,11 +38,11 @@ export const useAuthSignup = (
         return false;
       }
 
-      // If email confirmation is required
+      // Email confirmation is required - user won't have a session until they verify
       if (!data.session) {
-        toast.success('Registration successful! Please check your email for verification.');
+        toast.success('Registration successful! Please check your email and click the verification link to activate your account.');
       } else {
-        toast.success('Registration successful!');
+        toast.success('Registration successful! Your account is now active.');
       }
       
       return true;

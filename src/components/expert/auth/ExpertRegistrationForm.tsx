@@ -102,7 +102,7 @@ const ExpertRegistrationForm: React.FC = () => {
         email: data.email,
         password: data.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/expert-login?status=pending`,
+          emailRedirectTo: `${window.location.origin}/auth-callback?type=expert`,
         },
       });
 
@@ -181,7 +181,7 @@ const ExpertRegistrationForm: React.FC = () => {
       }
 
       // Show success message and prevent auto-login
-      toast.success('Expert account created successfully! Please wait for admin approval before logging in.');
+      toast.success('Expert account created successfully! Please verify your email, then wait for admin approval before logging in.');
       setIsSuccess(true);
     } catch (error) {
       console.error('Registration error:', error);

@@ -360,12 +360,30 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
 
       if (error) {
         console.error('❌ SimpleAuthContext: Login error:', error.message);
+        
+        // Check for common authentication errors and provide user-friendly messages
+        if (error.message === 'Invalid login credentials') {
+          return { success: false, error: 'Invalid email or password. Please check your credentials and try again.' };
+        } else if (error.message === 'Email not confirmed') {
+          return { success: false, error: 'Please verify your email address before logging in. Check your inbox for the verification link.' };
+        } else if (error.message.includes('signup confirmation')) {
+          return { success: false, error: 'Please verify your email address before logging in. Check your inbox for the verification link.' };
+        }
+        
         return { success: false, error: error.message };
       }
 
       if (!data.user || !data.session) {
         console.error('❌ SimpleAuthContext: No user or session returned');
         return { success: false, error: 'Authentication failed' };
+      }
+
+      // Check if email is verified
+      if (!data.user.email_confirmed_at) {
+        console.error('❌ SimpleAuthContext: Email not verified');
+        // Sign out the user since they haven't verified their email
+        await supabase.auth.signOut();
+        return { success: false, error: 'Please verify your email address before logging in. Check your inbox for the verification link.' };
       }
 
       // Now validate the credentials against the intended role
