@@ -56,15 +56,19 @@ export const ProfileCompletionStep: React.FC<ProfileCompletionStepProps> = ({
           .upload(fileName, profile.profilePicture, { upsert: true });
 
         if (uploadError) {
-          throw new Error('Failed to upload profile picture: ' + uploadError.message);
+          console.error('Profile picture upload failed:', uploadError);
+          toast.error('Failed to upload profile picture, but profile will be saved without it');
+          // Continue without profile picture rather than failing the entire save
+        } else {
+          toast.success('Profile picture uploaded successfully');
+          
+          // Get public URL only if upload was successful
+          const { data: urlData } = supabase.storage
+            .from('avatars')
+            .getPublicUrl(uploadData.path);
+          
+          profilePictureUrl = urlData.publicUrl;
         }
-
-        // Get public URL
-        const { data: urlData } = supabase.storage
-          .from('avatars')
-          .getPublicUrl(uploadData.path);
-        
-        profilePictureUrl = urlData.publicUrl;
       }
 
       // Update expert account

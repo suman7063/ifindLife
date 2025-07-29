@@ -9,6 +9,7 @@ import {
   DollarSign,
   BarChart3,
   Flag,
+  Phone,
   type LucideIcon
 } from 'lucide-react';
 
@@ -53,6 +54,12 @@ export const navigationItems: NavigationItem[] = [
     href: '/expert-dashboard/schedule',
     icon: Calendar,
     description: 'Manage appointments and availability'
+  },
+  {
+    name: 'Call Management',
+    href: '/expert-dashboard/calls',
+    icon: Phone,
+    description: 'Manage live calls and communication'
   },
   {
     name: 'Clients',

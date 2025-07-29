@@ -11,6 +11,7 @@ import ServicesPage from '@/components/expert-dashboard/pages/ServicesPage';
 import EarningsPage from '@/components/expert-dashboard/pages/EarningsPage';
 import ReportPage from '@/components/expert-dashboard/pages/ReportPage';
 import AnalyticsPage from '@/components/expert-dashboard/pages/analytics/AnalyticsPage';
+import CallManagementPage from '@/components/expert-dashboard/pages/CallManagementPage';
 import ExpertOnboardingFlow from '@/components/expert/dashboard/ExpertOnboardingFlow';
 import CallReceptionWidget from '@/components/expert-dashboard/call/CallReceptionWidget';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
@@ -131,6 +132,9 @@ const NewExpertDashboard: React.FC = () => {
         
         {/* Schedule Management */}
         <Route path="schedule" element={<SchedulePage />} />
+        
+        {/* Call Management */}
+        <Route path="calls" element={<CallManagementPage />} />
         
         {/* Client Management */}
         <Route path="clients" element={<ClientsPage />} />
