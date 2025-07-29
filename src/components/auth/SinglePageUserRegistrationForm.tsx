@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { Loader2, User, Mail, Phone, Calendar, MapPin, Shield, Globe, Gift } from 'lucide-react';
 import { processReferralCode } from '@/utils/referralUtils';
 import { ReferralSettings } from '@/types/supabase';
+import { useIPBasedPricing } from '@/hooks/call/useIPBasedPricing';
 
 // Comprehensive registration schema
 const registrationSchema = z.object({
@@ -70,6 +71,7 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
   referralSettings
 }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const pricing = useIPBasedPricing();
 
   const form = useForm<RegistrationFormData>({
     resolver: zodResolver(registrationSchema),
@@ -119,7 +121,7 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
             phone: data.phone,
             country: data.country,
             city: data.city,
-            currency: 'USD', // Default currency since field is removed
+            currency: pricing.currency, // Use IP-based detection: INR for India, EUR for rest
             date_of_birth: data.dateOfBirth,
             gender: data.gender,
             occupation: data.occupation,
