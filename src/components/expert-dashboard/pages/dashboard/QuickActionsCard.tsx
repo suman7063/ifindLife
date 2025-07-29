@@ -1,10 +1,39 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calendar, MessageSquare, Users, FileText, Video, Phone } from 'lucide-react';
+import { toast } from 'sonner';
 
 const QuickActionsCard: React.FC = () => {
+  const navigate = useNavigate();
+
+  const handleAction = (actionTitle: string) => {
+    switch (actionTitle) {
+      case 'Schedule Session':
+        navigate('/expert-dashboard/schedule');
+        break;
+      case 'Send Message':
+        toast.info('Message feature coming soon');
+        break;
+      case 'View Clients':
+        toast.info('Client management feature coming soon');
+        break;
+      case 'Create Note':
+        navigate('/expert-dashboard/schedule?tab=sessions');
+        break;
+      case 'Start Video Call':
+        navigate('/expert-dashboard/calls');
+        break;
+      case 'Quick Call':
+        navigate('/expert-dashboard/calls');
+        break;
+      default:
+        toast.info('Feature coming soon');
+    }
+  };
+
   const actions = [
     {
       title: 'Schedule Session',
@@ -59,6 +88,7 @@ const QuickActionsCard: React.FC = () => {
                 key={index}
                 variant="outline"
                 className="h-auto p-4 flex flex-col items-start space-y-2 hover:shadow-md transition-shadow"
+                onClick={() => handleAction(action.title)}
               >
                 <div className="flex items-center space-x-3 w-full">
                   <div className={`p-2 rounded-md ${action.color} text-white`}>

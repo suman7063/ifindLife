@@ -41,7 +41,7 @@ export class ExpertRepository {
       };
 
       const { data, error } = await supabase
-        .from('experts')
+        .from('expert_accounts')
         .insert([insertData])
         .select()
         .single();
@@ -87,7 +87,7 @@ export class ExpertRepository {
   static async findById(id: string): Promise<ExpertProfile | null> {
     try {
       const { data, error } = await supabase
-        .from('experts')
+        .from('expert_accounts')
         .select('*')
         .eq('id', id)
         .single();
@@ -175,7 +175,7 @@ export class ExpertRepository {
   static async update(id: string, expertData: Partial<ExpertCreateData>): Promise<ExpertProfile | null> {
     try {
       const { data, error } = await supabase
-        .from('experts')
+        .from('expert_accounts')
         .update(expertData)
         .eq('id', id)
         .select()
