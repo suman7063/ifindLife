@@ -1,6 +1,6 @@
-
 import React from 'react';
 import { Brain, HeartHandshake, HeartPulse, Leaf, MessageCircle, Sparkles } from 'lucide-react';
+import listeningWithGuidanceImage from '@/assets/listening-with-guidance.jpg';
 
 // Service data with detailed descriptions and updated images - reordered and with updated color themes
 export const servicesData = [
@@ -29,7 +29,7 @@ export const servicesData = [
     id: "listening-with-guidance",
     title: "Listening Session with Guidance",
     description: "Supportive listening sessions combined with gentle guidance and insights to help navigate life challenges.",
-    image: "/src/assets/listening-with-guidance.jpg",
+    image: listeningWithGuidanceImage,
     color: "bg-ifind-blue",
     gradientColor: "from-ifind-blue/20 to-white",
     textColor: "text-ifind-blue",

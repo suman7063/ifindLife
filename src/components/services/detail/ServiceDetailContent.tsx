@@ -20,51 +20,55 @@ const ServiceDetailContent: React.FC<ServiceDetailContentProps> = ({
   onBookNowClick
 }) => {
   return (
-    <div className="grid md:grid-cols-3 gap-8 mb-12">
-      <div className="md:col-span-2">
-        {/* About Service */}
-        <ServiceAbout 
-          title={serviceData.title}
-          icon={serviceData.icon}
-          textColor={serviceData.textColor}
-          color={serviceData.color}
-          gradientColor={serviceData.gradientColor}
-          detailedDescription={serviceData.detailedDescription}
-          benefits={serviceData.benefits}
-          duration={serviceData.duration}
-          process={serviceData.process}
-        />
+    <div className="space-y-12">
+      <div className="grid md:grid-cols-3 gap-8">
+        <div className="md:col-span-2">
+          {/* About Service */}
+          <ServiceAbout 
+            title={serviceData.title}
+            icon={serviceData.icon}
+            textColor={serviceData.textColor}
+            color={serviceData.color}
+            gradientColor={serviceData.gradientColor}
+            detailedDescription={serviceData.detailedDescription}
+            benefits={serviceData.benefits}
+            duration={serviceData.duration}
+            process={serviceData.process}
+          />
+          
+          {/* FAQ Section */}
+          <ServiceFAQ color={serviceData.color} />
+        </div>
         
-        {/* FAQ Section */}
-        <ServiceFAQ color={serviceData.color} />
-        
-        {/* Service Experts Section */}
-        <ServiceExperts 
-          serviceId={serviceId}
-          serviceData={serviceData}
-        />
+        <div className="space-y-8">
+          {/* Call to Action */}
+          <ServiceCTA 
+            title={serviceData.title}
+            color={serviceData.color}
+            textColor={serviceData.textColor}
+            buttonColor={serviceData.buttonColor}
+            gradientColor={serviceData.gradientColor}
+            onBookNowClick={onBookNowClick}
+          />
+          
+          {/* Service Experts Section */}
+          <ServiceExperts 
+            serviceId={serviceId}
+            serviceData={serviceData}
+          />
+          
+          {/* Testimonial */}
+          <ServiceTestimonial serviceId={serviceId} />
+        </div>
       </div>
       
-      <div className="space-y-8">
-        {/* Call to Action */}
-        <ServiceCTA 
-          title={serviceData.title}
-          color={serviceData.color}
-          textColor={serviceData.textColor}
-          buttonColor={serviceData.buttonColor}
-          gradientColor={serviceData.gradientColor}
-          onBookNowClick={onBookNowClick}
-        />
-        
-        {/* Related Services */}
+      {/* Related Services - Horizontal at bottom */}
+      <div className="border-t border-gray-200 pt-12">
         <RelatedServices 
           currentServiceId={serviceId}
           color={serviceData.color}
           relatedServices={serviceData}
         />
-        
-        {/* Testimonial */}
-        <ServiceTestimonial serviceId={serviceId} />
       </div>
     </div>
   );
