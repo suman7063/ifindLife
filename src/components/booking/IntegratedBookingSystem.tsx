@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import ModernBookingInterface from './ModernBookingInterface';
 import EnhancedAgoraCallModal from '../call/modals/EnhancedAgoraCallModal';
-import { useRealExpertPresence } from '@/hooks/useRealExpertPresence';
+import { useExpertPresence } from '@/contexts/ExpertPresenceContext';
 import { useRazorpayPayment } from '@/hooks/useRazorpayPayment';
 import { Calendar, Phone, Video, Clock, Users } from 'lucide-react';
 import { toast } from 'sonner';
@@ -38,11 +38,14 @@ const IntegratedBookingSystem: React.FC<IntegratedBookingSystemProps> = ({
   const [isBooking, setIsBooking] = useState(false);
   const { processPayment } = useRazorpayPayment();
 
-  const { getExpertAvailability, getLastSeen, isExpertOnline } = useRealExpertPresence([expert.id]);
-
-  const expertAvailability = getExpertAvailability(expert.id);
-  const lastSeen = getLastSeen(expert.id);
-  const online = isExpertOnline(expert.id);
+  const { getExpertPresence } = useExpertPresence();
+  
+  const expertPresence = getExpertPresence(expert.id);
+  const expertAvailability = expertPresence?.status === 'online' ? 'available' : 
+                            expertPresence?.status === 'away' ? 'away' : 'offline';
+  const online = expertPresence?.isAvailable || false;
+  const lastSeen = expertPresence?.lastActivity ? 
+    new Date(expertPresence.lastActivity).toLocaleString() : 'Unknown';
 
   const handleInstantCall = (type: 'voice' | 'video') => {
     if (!isAuthenticated) {
@@ -56,10 +59,7 @@ const IntegratedBookingSystem: React.FC<IntegratedBookingSystemProps> = ({
       return;
     }
 
-    if (expertAvailability === 'busy') {
-      toast.error('Expert is currently busy with another client');
-      return;
-    }
+    // Note: 'busy' status removed from simplified system
 
     setCallType(type);
     setIsCallModalOpen(true);
@@ -188,8 +188,6 @@ const IntegratedBookingSystem: React.FC<IntegratedBookingSystemProps> = ({
     switch (expertAvailability) {
       case 'available':
         return <Badge variant="default" className="bg-green-500">Available</Badge>;
-      case 'busy':
-        return <Badge variant="destructive">Busy</Badge>;
       case 'away':
         return <Badge variant="secondary">Away</Badge>;
       default:
@@ -278,8 +276,6 @@ const IntegratedBookingSystem: React.FC<IntegratedBookingSystemProps> = ({
                     <p className="text-sm text-muted-foreground">
                       {!online 
                         ? 'Expert is currently offline. Try scheduling an appointment instead.' 
-                        : expertAvailability === 'busy'
-                        ? 'Expert is busy with another client. Try scheduling or check back later.'
                         : 'Expert is away. Try scheduling an appointment or check back later.'
                       }
                     </p>

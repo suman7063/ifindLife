@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Users, Calendar, MessageSquare, DollarSign, TrendingUp, Clock, Phone } from 'lucide-react';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
-import StatusControlWidget from '../components/StatusControlWidget';
+import MasterStatusControl from '../components/MasterStatusControl';
 import { supabase } from '@/integrations/supabase/client';
 
 interface DashboardStats {
@@ -95,7 +95,7 @@ const DashboardHome: React.FC = () => {
 
       {/* Quick Actions & Status */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <StatusControlWidget />
+        <MasterStatusControl />
         
         <Card>
           <CardHeader>

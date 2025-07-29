@@ -11,26 +11,10 @@ export function useIntegratedExpertPresence() {
   const { expert, isAuthenticated, userType } = useSimpleAuth();
   const { checkExpertPresence, updateExpertPresence } = useExpertPresence();
 
+  // REMOVED: Automatic status setting on login
+  // Experts now must explicitly set their status using MasterStatusControl
   useEffect(() => {
-    if (userType === 'expert' && expert && isAuthenticated) {
-      // Expert logged in - set them as available
-      const expertAuthId = expert.auth_id || expert.id;
-      if (expertAuthId) {
-        console.log('🟢 Expert logged in, setting presence to available:', {
-          expertAuthId,
-          expertName: expert.name,
-          status: expert.status
-        });
-        
-        // Only set available if expert is approved
-        const status = expert.status === 'approved' ? 'available' : 'offline';
-        updateExpertPresence(expertAuthId, status);
-        
-        if (expert.status === 'approved') {
-          toast.success(`Welcome back, ${expert.name}! You are now online and available.`);
-        }
-      }
-    } else if (userType === 'expert' && expert && !isAuthenticated) {
+    if (userType === 'expert' && expert && !isAuthenticated) {
       // Expert logged out - set them as offline
       const expertAuthId = expert.auth_id || expert.id;
       if (expertAuthId) {
@@ -53,25 +37,8 @@ export function useIntegratedExpertPresence() {
     };
   }, []);
 
-  // Listen for page visibility changes to update presence
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (userType === 'expert' && expert && isAuthenticated) {
-        const expertAuthId = expert.auth_id || expert.id;
-        if (expertAuthId) {
-          const status = document.hidden ? 'away' : 'available';
-          console.log('👁️ Visibility changed, updating presence:', { expertAuthId, status });
-          updateExpertPresence(expertAuthId, status);
-        }
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [expert, isAuthenticated, userType, updateExpertPresence]);
+  // REMOVED: Automatic status changes on page visibility
+  // Experts control their own status explicitly through MasterStatusControl
 
   return {
     expert,

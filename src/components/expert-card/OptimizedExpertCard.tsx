@@ -7,7 +7,7 @@ import { Star, Video, Phone, Clock, Calendar } from 'lucide-react';
 import { ExpertCardData } from './types';
 import { useAuth } from '@/contexts/auth';
 import { useAuthRedirectSystem } from '@/hooks/useAuthRedirectSystem';
-import { useLazyExpertPresence } from '@/hooks/useLazyExpertPresence';
+import { useExpertPresence } from '@/contexts/ExpertPresenceContext';
 import ExpertStatusIndicator from './ExpertStatusIndicator';
 import AwayMessageDialog from './AwayMessageDialog';
 import { toast } from 'sonner';
@@ -39,12 +39,20 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
   const { requireAuthForExpert, requireAuthForCall, executeIntendedAction } = useAuthRedirectSystem();
   const [showAwayDialog, setShowAwayDialog] = useState(false);
   
-  // Use lazy presence checking - only when user interacts
-  const { 
-    getExpertStatus, 
-    checkExpertOnInteraction,
-    isExpertLoading
-  } = useLazyExpertPresence();
+  // Use simplified expert presence
+  const { getExpertPresence } = useExpertPresence();
+  
+  const getExpertStatus = (expertId: string) => {
+    const presence = getExpertPresence(expertId);
+    return {
+      status: presence?.status === 'online' ? 'online' : 
+              presence?.status === 'away' ? 'away' : 'offline',
+      isAvailable: presence?.isAvailable || false,
+      lastActivity: presence?.lastActivity || ''
+    };
+  };
+  
+  const isExpertLoading = () => false; // Simplified - no lazy loading needed
 
   // Memoize expert data processing
   const expertData = useMemo(() => {
@@ -78,9 +86,7 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
   }, [expert, getExpertStatus]);
 
   const handleInteraction = async (action: () => void) => {
-    // Check presence only when user tries to interact
-    console.log('👆 User interacting with expert, checking availability');
-    await checkExpertOnInteraction(expert.id);
+    // Simplified - just execute the action without additional presence checking
     action();
   };
 
@@ -190,7 +196,7 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
 
   // Render buttons based on variant and state
   const renderActionButtons = () => {
-    const isLoading = isExpertLoading(expert.id);
+    const isLoading = isExpertLoading();
     
     if (showConnectOptions && expertData.isAvailable) {
       return (

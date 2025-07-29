@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { usePublicExpertsData } from '@/hooks/usePublicExpertsData';
-import { useRealExpertPresence } from '@/hooks/useRealExpertPresence';
+import { useExpertPresence } from '@/contexts/ExpertPresenceContext';
 import { useExpertAvailability } from '@/hooks/useExpertAvailability';
 import { supabase } from '@/lib/supabase';
 import { 
@@ -37,7 +37,7 @@ const ProductionTestingSuite: React.FC = () => {
 
   const { isAuthenticated, user } = useAuth();
   const { experts, loading: expertsLoading, error: expertsError } = usePublicExpertsData();
-  const { presenceData } = useRealExpertPresence(experts.map(e => e.id));
+  const { getExpertPresence } = useExpertPresence();
 
   const addTestResult = (name: string, status: TestResult['status'], message: string) => {
     const result: TestResult = {
@@ -83,9 +83,12 @@ const ProductionTestingSuite: React.FC = () => {
         addTestResult('Authentication System', 'warning', 'User not authenticated (test login to verify)');
       }
 
-      // Test 4: Presence System
+      // Test 4: Presence System  
       setCurrentTest('Presence System');
-      const onlineExperts = Object.values(presenceData).filter(p => p.isOnline).length;
+      const onlineExperts = experts.filter(expert => {
+        const presence = getExpertPresence(expert.id);
+        return presence?.isAvailable || false;
+      }).length;
       if (onlineExperts > 0) {
         addTestResult('Presence System', 'pass', `${onlineExperts} experts online`);
       } else {

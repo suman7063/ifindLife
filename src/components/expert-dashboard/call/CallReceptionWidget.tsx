@@ -25,25 +25,24 @@ const CallReceptionWidget: React.FC = () => {
   const [showPendingCalls, setShowPendingCalls] = useState(false);
   const [activeCall, setActiveCall] = useState<any>(null);
 
-  // Auto-start listening when expert is available
+  // Auto-sync listening with expert availability status
   useEffect(() => {
     if (!expert?.auth_id) return;
     
     const presence = getExpertPresence(expert.auth_id);
-    const isAvailable = presence?.isAvailable || false;
+    const shouldListen = presence?.isAvailable || false;
     
-    console.log('CallReceptionWidget: Checking presence', {
+    console.log('CallReceptionWidget: Syncing with master status', {
       expertAuthId: expert.auth_id,
-      presence,
-      isAvailable,
-      isListening
+      shouldListen,
+      currentlyListening: isListening
     });
     
-    if (isAvailable && !isListening) {
-      console.log('Starting call listening - expert is available');
+    if (shouldListen && !isListening) {
+      console.log('Starting call listening - master status says available');
       startListening();
-    } else if (!isAvailable && isListening) {
-      console.log('Stopping call listening - expert not available');
+    } else if (!shouldListen && isListening) {
+      console.log('Stopping call listening - master status says unavailable');
       stopListening();
     }
   }, [expert?.auth_id, getExpertPresence, isListening, startListening, stopListening]);
@@ -82,13 +81,7 @@ const CallReceptionWidget: React.FC = () => {
     }
   };
 
-  const handleToggleListening = () => {
-    if (isListening) {
-      stopListening();
-    } else {
-      startListening();
-    }
-  };
+  // Removed manual toggle - call listening is now controlled by MasterStatusControl
 
   const handleCallEnd = () => {
     setActiveCall(null);
@@ -127,19 +120,9 @@ const CallReceptionWidget: React.FC = () => {
           <p className="text-xs text-gray-500 mt-1">
             {isListening 
               ? "Ready to receive incoming calls" 
-              : "Set status to Available to receive calls"
+              : "Use the status control to go online for calls"
             }
           </p>
-          {expert?.auth_id && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleToggleListening}
-              className="mt-2 w-full text-xs"
-            >
-              {isListening ? 'Go Offline' : 'Go Online'}
-            </Button>
-          )}
         </div>
       </div>
 
