@@ -73,6 +73,7 @@ export interface ExpertProfile {
   average_rating?: number;
   reviews_count?: number;
   verified?: boolean;
+  category?: 'listening-volunteer' | 'listening-expert' | 'listening-coach' | 'mindfulness-expert';
 }
 
 export interface AdminProfile {

@@ -44,7 +44,8 @@ export const useExpertRegistration = (onActionComplete: () => void) => {
           experience,
           bio: expertData.bio || '',
           profile_picture: expertData.profile_picture || '',
-          selected_services: expertData.selected_services || []
+          selected_services: expertData.selected_services || [],
+          category: expertData.category || 'listening-expert' // Default category
         };
 
         const { error: profileError } = await supabase
