@@ -101,30 +101,6 @@ const CallReceptionWidget: React.FC = () => {
 
   return (
     <>
-      {/* Call Status Indicator - Always visible when expert is authenticated */}
-      <div className="fixed bottom-4 right-4 z-40">
-        <div className="bg-white shadow-lg rounded-lg border p-3 max-w-xs">
-          <div className="flex items-center gap-2">
-            {isListening ? (
-              <>
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-sm font-medium">Available for Calls</span>
-              </>
-            ) : (
-              <>
-                <div className="w-2 h-2 bg-red-400 rounded-full"></div>
-                <span className="text-sm font-medium">Unavailable for Calls</span>
-              </>
-            )}
-          </div>
-          <p className="text-xs text-gray-500 mt-1">
-            {isListening 
-              ? "Ready to receive incoming calls" 
-              : "Use the status control to go online for calls"
-            }
-          </p>
-        </div>
-      </div>
 
       {/* Show pending calls button */}
       {pendingCalls.length > 0 && (

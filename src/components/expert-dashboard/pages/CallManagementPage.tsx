@@ -19,9 +19,9 @@ import {
   Video,
   Mic,
   MicOff
-} from 'lucide-react';
+ } from 'lucide-react';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
-import { useIntegratedExpertPresence } from '@/hooks/useIntegratedExpertPresence';
+import { useExpertPresence } from '@/contexts/ExpertPresenceContext';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
@@ -48,7 +48,7 @@ interface OfflineMessage {
 
 const CallManagementPage: React.FC = () => {
   const { expert } = useSimpleAuth();
-  const { isExpertOnline } = useIntegratedExpertPresence();
+  const { getExpertPresence } = useExpertPresence();
   
   const [autoAcceptCalls, setAutoAcceptCalls] = useState(false);
   const [incomingCalls, setIncomingCalls] = useState<CallRequest[]>([]);
@@ -272,9 +272,24 @@ const CallManagementPage: React.FC = () => {
         </div>
         
         <div className="flex items-center gap-4">
-          <Badge variant={isExpertOnline ? 'default' : 'secondary'}>
-            {isExpertOnline ? 'Online' : 'Offline'}
-          </Badge>
+          {(() => {
+            if (!expert?.auth_id) return null;
+            const presence = getExpertPresence(expert.auth_id);
+            const status = presence?.status || 'offline';
+            const isAvailable = presence?.isAvailable || false;
+            
+            return (
+              <>
+                <Badge variant={status === 'online' ? 'default' : 'secondary'}>
+                  {status === 'online' ? 'Available' : 
+                   status === 'away' ? 'Away' : 'Offline'}
+                </Badge>
+                <Badge variant={isAvailable ? 'default' : 'outline'}>
+                  {isAvailable ? 'Accepting Calls' : 'Not Accepting Calls'}
+                </Badge>
+              </>
+            );
+          })()}
           <div className="text-sm text-muted-foreground">
             Use the Online Status control to manage call availability
           </div>
