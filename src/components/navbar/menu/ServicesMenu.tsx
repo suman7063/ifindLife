@@ -37,6 +37,16 @@ const ServicesMenu = () => {
           <li>
             <NavigationMenuLink asChild>
               <Link 
+                to="/services/listening-with-guidance" 
+                className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
+              >
+                Listening with Guidance
+              </Link>
+            </NavigationMenuLink>
+          </li>
+          <li>
+            <NavigationMenuLink asChild>
+              <Link
                 to="/services/therapy-sessions" 
                 className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
               >

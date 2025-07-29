@@ -22,9 +22,13 @@ const MobileMenuSections = () => {
             title="Services"
             value="services"
             items={[
-              { title: 'Therapy Sessions', href: '/services' },
-              { title: 'Programs for Business', href: '/programs-for-business' },
-              { title: 'Programs for Academic Institutes', href: '/programs-for-academic-institutes' },
+              { title: 'All Services', href: '/services' },
+              { title: 'Heart2Heart Listening', href: '/services/mindful-listening' },
+              { title: 'Listening with Guidance', href: '/services/listening-with-guidance' },
+              { title: 'Therapy Sessions', href: '/services/therapy-sessions' },
+              { title: 'Guided Meditations', href: '/services/guided-meditations' },
+              { title: 'Offline Retreats', href: '/services/offline-retreats' },
+              { title: 'Life Coaching', href: '/services/life-coaching' },
             ]}
           />
         </Accordion>

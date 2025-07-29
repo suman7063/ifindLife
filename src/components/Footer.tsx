@@ -47,6 +47,11 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
+                <Link to="/services/listening-with-guidance" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
+                  Listening with Guidance
+                </Link>
+              </li>
+              <li>
                 <Link to="/services/offline-retreats" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
                   Offline Retreats
                 </Link>
