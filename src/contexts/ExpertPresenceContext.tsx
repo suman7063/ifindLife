@@ -13,7 +13,7 @@ interface ExpertPresenceContextType {
   getExpertPresence: (expertId: string) => ExpertPresence | null;
   checkExpertPresence: (expertId: string) => Promise<ExpertPresence>;
   bulkCheckPresence: (expertIds: string[]) => Promise<void>;
-  updateExpertPresence: (expertId: string, status: 'available' | 'busy' | 'away' | 'offline') => Promise<void>;
+  updateExpertPresence: (expertId: string, status: 'available' | 'busy' | 'away' | 'offline', isAvailable?: boolean) => Promise<void>;
   trackActivity: (expertId: string) => Promise<void>;
   isLoading: boolean;
 }
@@ -217,7 +217,8 @@ export const ExpertPresenceProvider: React.FC<{ children: React.ReactNode }> = (
 
   const updateExpertPresence = useCallback(async (
     expertId: string, 
-    status: 'available' | 'busy' | 'away' | 'offline'
+    status: 'available' | 'busy' | 'away' | 'offline',
+    isAvailable?: boolean
   ) => {
     try {
       console.log('📝 Updating expert presence:', { expertId, status });
@@ -258,12 +259,15 @@ export const ExpertPresenceProvider: React.FC<{ children: React.ReactNode }> = (
       }
 
       // Update cache with correct status mapping
+      const availabilityStatus = isAvailable !== undefined ? isAvailable : 
+                                 (status === 'available' || status === 'busy' || status === 'away');
+      
       const updatedPresence: ExpertPresence = {
         expertId,
         status: status === 'available' ? 'online' : 
                 status === 'busy' ? 'away' :
                 status === 'away' ? 'away' : 'offline',
-        isAvailable: status === 'available' || status === 'busy' || status === 'away',
+        isAvailable: availabilityStatus,
         lastActivity: new Date().toISOString(),
         lastUpdate: Date.now()
       };

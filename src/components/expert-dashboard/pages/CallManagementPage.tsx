@@ -50,7 +50,6 @@ const CallManagementPage: React.FC = () => {
   const { expert } = useSimpleAuth();
   const { isExpertOnline } = useIntegratedExpertPresence();
   
-  const [availableForCalls, setAvailableForCalls] = useState(false);
   const [autoAcceptCalls, setAutoAcceptCalls] = useState(false);
   const [incomingCalls, setIncomingCalls] = useState<CallRequest[]>([]);
   const [missedCalls, setMissedCalls] = useState<CallRequest[]>([]);
@@ -177,30 +176,6 @@ const CallManagementPage: React.FC = () => {
     };
   };
 
-  const handleToggleAvailability = async (available: boolean) => {
-    setAvailableForCalls(available);
-    
-    try {
-      const { error } = await supabase
-        .from('expert_presence')
-        .upsert({
-          expert_id: expert?.id,
-          status: available ? 'online' : 'away',
-          last_activity: new Date().toISOString()
-        });
-
-      if (error) throw error;
-
-      if (available) {
-        toast.success('You are now available for calls');
-      } else {
-        toast.info('You are no longer available for calls');
-      }
-    } catch (error) {
-      console.error('Error updating availability:', error);
-      toast.error('Failed to update availability');
-    }
-  };
 
   const handleAcceptCall = async (callId: string) => {
     try {
@@ -297,16 +272,12 @@ const CallManagementPage: React.FC = () => {
         </div>
         
         <div className="flex items-center gap-4">
-          <div className="flex items-center space-x-2">
-            <span className="text-sm font-medium">Available for Calls</span>
-            <Switch 
-              checked={availableForCalls} 
-              onCheckedChange={handleToggleAvailability}
-            />
-          </div>
           <Badge variant={isExpertOnline ? 'default' : 'secondary'}>
             {isExpertOnline ? 'Online' : 'Offline'}
           </Badge>
+          <div className="text-sm text-muted-foreground">
+            Use the Online Status control to manage call availability
+          </div>
         </div>
       </div>
 

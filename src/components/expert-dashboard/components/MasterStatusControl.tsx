@@ -33,7 +33,10 @@ const MasterStatusControl: React.FC = () => {
     if (!expert?.auth_id) return;
 
     try {
-      await updateExpertPresence(expert.auth_id, newStatus);
+      // When changing status, preserve current call acceptance setting unless going offline
+      const callAcceptance = newStatus === 'offline' ? false : acceptingCalls;
+      
+      await updateExpertPresence(expert.auth_id, newStatus, callAcceptance);
       setCurrentStatus(newStatus);
       
       // Auto-disable call acceptance if going offline
@@ -56,7 +59,9 @@ const MasterStatusControl: React.FC = () => {
       if (accepting && currentStatus === 'offline') {
         await handleStatusChange('available');
       }
-      // If disabling call acceptance, just update the flag
+      
+      // Update the presence system with call acceptance status
+      await updateExpertPresence(expert.auth_id, currentStatus, accepting);
       setAcceptingCalls(accepting);
       
       toast.success(accepting ? 'Now accepting calls' : 'No longer accepting calls');
