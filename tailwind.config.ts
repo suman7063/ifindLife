@@ -65,6 +65,7 @@ export default {
 				},
 				ifind: {
 					'aqua': '#5AC8FA',
+					'blue': '#007AFF',
 					'purple': '#A88BEB',
 					'teal': '#7DD8C9',
 					'charcoal': '#2E2E2E',

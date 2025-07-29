@@ -30,7 +30,7 @@ const ServiceHero: React.FC<ServiceHeroProps> = ({
         <h1 className="text-4xl md:text-5xl font-bold mb-4">{title}</h1>
         <p className="text-xl mb-8 max-w-2xl mx-auto">{description}</p>
         <Button 
-          className={`${buttonColor} text-white px-8 py-3 text-lg hover:opacity-90 transition-opacity shadow-lg`}
+          className={`${buttonColor} text-white px-8 py-3 text-lg hover:opacity-90 transition-all duration-300 shadow-lg border-2 border-white/20 backdrop-blur-sm`}
           onClick={onInquireClick}
         >
           Book Now
