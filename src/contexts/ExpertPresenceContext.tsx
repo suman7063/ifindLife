@@ -91,10 +91,10 @@ export const ExpertPresenceProvider: React.FC<{ children: React.ReactNode }> = (
         let isAvailable = false;
 
         if (expertData.status === 'approved') {
-          if (presenceData?.status === 'online' && timeSinceActivity < 300000) { // 5 minutes
+          if ((presenceData?.status === 'online' || presenceData?.status === 'available') && timeSinceActivity < 300000) { // 5 minutes
             status = 'online';
             isAvailable = true;
-          } else if (presenceData?.status === 'away' || (timeSinceActivity >= 300000 && timeSinceActivity < 1800000)) { // 30 minutes
+          } else if (presenceData?.status === 'away' || presenceData?.status === 'busy' || (timeSinceActivity >= 300000 && timeSinceActivity < 1800000)) { // 30 minutes
             status = 'away';
             isAvailable = true; // Away but still available
           }
@@ -180,10 +180,10 @@ export const ExpertPresenceProvider: React.FC<{ children: React.ReactNode }> = (
           let isAvailable = false;
 
           if (expertData.status === 'approved') {
-            if (presenceData?.status === 'online' && timeSinceActivity < 300000) { // 5 minutes
+            if ((presenceData?.status === 'online' || presenceData?.status === 'available') && timeSinceActivity < 300000) { // 5 minutes
               status = 'online';
               isAvailable = true;
-            } else if (presenceData?.status === 'away' || (timeSinceActivity >= 300000 && timeSinceActivity < 1800000)) { // 30 minutes
+            } else if (presenceData?.status === 'away' || presenceData?.status === 'busy' || (timeSinceActivity >= 300000 && timeSinceActivity < 1800000)) { // 30 minutes
               status = 'away';
               isAvailable = true;
             }
@@ -257,17 +257,19 @@ export const ExpertPresenceProvider: React.FC<{ children: React.ReactNode }> = (
         if (error) throw error;
       }
 
-      // Update cache
+      // Update cache with correct status mapping
       const updatedPresence: ExpertPresence = {
         expertId,
-        status: status === 'available' ? 'online' : status === 'offline' ? 'offline' : 'away',
+        status: status === 'available' ? 'online' : 
+                status === 'busy' ? 'away' :
+                status === 'away' ? 'away' : 'offline',
         isAvailable: status === 'available' || status === 'busy' || status === 'away',
         lastActivity: new Date().toISOString(),
         lastUpdate: Date.now()
       };
       
       presenceCache.set(expertId, updatedPresence);
-      console.log('✅ Expert presence updated successfully');
+      console.log('✅ Expert presence updated successfully', updatedPresence);
       
     } catch (error) {
       console.error('❌ Error updating expert presence:', error);

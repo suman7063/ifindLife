@@ -27,17 +27,26 @@ const CallReceptionWidget: React.FC = () => {
 
   // Auto-start listening when expert is available
   useEffect(() => {
-    if (!expert?.id) return;
+    if (!expert?.auth_id) return;
     
-    const presence = getExpertPresence(expert.id);
+    const presence = getExpertPresence(expert.auth_id);
     const isAvailable = presence?.isAvailable || false;
     
+    console.log('CallReceptionWidget: Checking presence', {
+      expertAuthId: expert.auth_id,
+      presence,
+      isAvailable,
+      isListening
+    });
+    
     if (isAvailable && !isListening) {
+      console.log('Starting call listening - expert is available');
       startListening();
     } else if (!isAvailable && isListening) {
+      console.log('Stopping call listening - expert not available');
       stopListening();
     }
-  }, [expert?.id, getExpertPresence, isListening, startListening, stopListening]);
+  }, [expert?.auth_id, getExpertPresence, isListening, startListening, stopListening]);
 
   const handleAcceptCall = async () => {
     if (!currentCall) return;
@@ -106,12 +115,12 @@ const CallReceptionWidget: React.FC = () => {
             {isListening ? (
               <>
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-sm font-medium">Call Reception Active</span>
+                <span className="text-sm font-medium">Available for Calls</span>
               </>
             ) : (
               <>
-                <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                <span className="text-sm font-medium">Call Reception Offline</span>
+                <div className="w-2 h-2 bg-red-400 rounded-full"></div>
+                <span className="text-sm font-medium">Unavailable for Calls</span>
               </>
             )}
           </div>
@@ -121,6 +130,16 @@ const CallReceptionWidget: React.FC = () => {
               : "Set status to Available to receive calls"
             }
           </p>
+          {expert?.auth_id && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleToggleListening}
+              className="mt-2 w-full text-xs"
+            >
+              {isListening ? 'Go Offline' : 'Go Online'}
+            </Button>
+          )}
         </div>
       </div>
 
