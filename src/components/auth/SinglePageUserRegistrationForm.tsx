@@ -32,8 +32,7 @@ const registrationSchema = z.object({
   country: z.string().min(1, 'Country is required'),
   city: z.string().min(1, 'City is required'),
   
-  // Preferences
-  currency: z.string().default('USD'),
+  // Preferences (currency removed)
   
   // Legal Agreements
   termsAccepted: z.boolean().refine(val => val === true, {
@@ -75,7 +74,6 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
   const form = useForm<RegistrationFormData>({
     resolver: zodResolver(registrationSchema),
     defaultValues: {
-      currency: 'USD',
       termsAccepted: false,
       privacyAccepted: false,
       marketingConsent: false,
@@ -121,7 +119,7 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
             phone: data.phone,
             country: data.country,
             city: data.city,
-            currency: data.currency,
+            currency: 'USD', // Default currency since field is removed
             date_of_birth: data.dateOfBirth,
             gender: data.gender,
             occupation: data.occupation,
@@ -392,32 +390,6 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
               <div className="flex items-center gap-2 mb-4">
                 <Globe className="h-5 w-5 text-primary" />
                 <h3 className="text-lg font-semibold">Preferences</h3>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="currency"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Preferred Currency</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select currency" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="USD">USD - US Dollar</SelectItem>
-                          <SelectItem value="INR">INR - Indian Rupee</SelectItem>
-                          <SelectItem value="EUR">EUR - Euro</SelectItem>
-                          <SelectItem value="GBP">GBP - British Pound</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </div>
 
               <div className="space-y-3">
