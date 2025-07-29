@@ -29,7 +29,8 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from 'sonner';
-import { CheckCircle, XCircle, User, CalendarClock, RefreshCw } from 'lucide-react';
+import { CheckCircle, XCircle, User, CalendarClock, RefreshCw, Eye } from 'lucide-react';
+import ExpertDetailDialog from './ExpertDetailDialog';
 
 // Enhanced expert profile type that matches database schema
 interface ExpertProfileWithStatus extends Omit<ExpertProfile, 'status'> {
@@ -48,6 +49,8 @@ const ExpertApprovals = () => {
   const [selectedStatus, setSelectedStatus] = useState<'approved' | 'disapproved'>('approved');
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [selectedExpertId, setSelectedExpertId] = useState<string | null>(null);
   
   // Load expert applications with better error handling
   const fetchExperts = async (showLoadingState = true) => {
@@ -272,12 +275,25 @@ const ExpertApprovals = () => {
                         <span className="font-medium">Applied:</span> {expert.created_at ? new Date(expert.created_at).toLocaleDateString() : 'Unknown'}
                       </div>
                     </CardContent>
-                    <CardFooter>
+                    <CardFooter className="flex gap-2">
+                      <Button 
+                        onClick={() => {
+                          setSelectedExpertId(expert.id);
+                          setDetailDialogOpen(true);
+                        }}
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        Details
+                      </Button>
                       <Button 
                         onClick={() => openApprovalDialog(expert)}
-                        className="w-full"
+                        size="sm"
+                        className="flex-1"
                       >
-                        Review Application
+                        Review
                       </Button>
                     </CardFooter>
                   </Card>
@@ -428,6 +444,21 @@ const ExpertApprovals = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Expert Detail Dialog */}
+      <ExpertDetailDialog
+        expertId={selectedExpertId}
+        isOpen={detailDialogOpen}
+        onClose={() => {
+          setDetailDialogOpen(false);
+          setSelectedExpertId(null);
+        }}
+        onUpdate={() => {
+          fetchExperts(false);
+          setDetailDialogOpen(false);
+          setSelectedExpertId(null);
+        }}
+      />
     </div>
   );
 };
