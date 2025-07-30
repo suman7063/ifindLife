@@ -20,7 +20,7 @@ interface ExpertPresenceContextType {
 
 const ExpertPresenceContext = createContext<ExpertPresenceContextType | undefined>(undefined);
 
-const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes cache - experts explicitly control status
+const CACHE_DURATION = 60 * 60 * 1000; // 1 hour cache - real-time updates handle most changes
 const presenceCache = new Map<string, ExpertPresence>();
 
 export const ExpertPresenceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
