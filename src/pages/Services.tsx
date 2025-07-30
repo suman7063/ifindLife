@@ -6,10 +6,8 @@ import { Container } from '@/components/ui/container';
 import { Button } from '@/components/ui/button';
 import { useUnifiedServices } from '@/hooks/useUnifiedServices';
 import { Link } from 'react-router-dom';
-import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 
 const Services = () => {
-  const { ref, isVisible } = useScrollAnimation();
   const { services, loading, error } = useUnifiedServices();
 
   return (
@@ -38,18 +36,11 @@ const Services = () => {
           )}
           
           {!loading && !error && services.length > 0 && (
-            <div 
-              ref={ref}
-              className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 transition-all duration-1000 ${
-                isVisible ? 'animate-fade-in' : 'opacity-0 translate-y-8'
-              }`}
-            >
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {services.map((service, index) => (
                 <div 
                   key={service.id}
-                  className={`bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden group hover:scale-105 ${
-                    isVisible ? 'animate-fade-in' : 'opacity-0'
-                  }`}
+                  className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden group hover:scale-105 animate-fade-in"
                   style={{ animationDelay: `${index * 150}ms` }}
                 >
                   <div className="relative h-48 overflow-hidden">
