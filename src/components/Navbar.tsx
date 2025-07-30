@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import NavbarDesktopLinks from './navbar/NavbarDesktopLinks';
 import NavbarMobileMenu from './navbar/NavbarMobileMenu';
@@ -59,8 +59,8 @@ const Navbar = () => {
     return scrolled ? 'bg-white/95 backdrop-blur-sm shadow-sm' : 'bg-white';
   };
 
-  // Create enhanced compatible user object for navbar components
-  const currentUser: UserProfile | null = (() => {
+  // Memoize currentUser to prevent unnecessary re-renders
+  const currentUser: UserProfile | null = useMemo(() => {
     if (userType === 'expert' && expert) {
       // For experts, create a UserProfile-compatible object from expert data
       return {
@@ -93,9 +93,9 @@ const Navbar = () => {
       return userProfile;
     }
     return null;
-  })();
+  }, [userType, expert, userProfile]);
 
-  const hasExpertProfile = userType === 'expert' && !!expert;
+  const hasExpertProfile = useMemo(() => userType === 'expert' && !!expert, [userType, expert]);
 
   console.log('Navbar: Prepared props for NavbarDesktopLinks:', {
     isAuthenticated,
