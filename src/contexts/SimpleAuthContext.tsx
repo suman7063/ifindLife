@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { UserProfile, ExpertProfile } from '@/types/database/unified';
@@ -66,15 +66,18 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
   // Derive authentication state - CRITICAL: This must be consistent
   const isAuthenticated = Boolean(user && session);
 
-  console.log('🔄 SimpleAuthContext: Current detailed state:', {
-    user: user ? { id: user.id, email: user.email } : null,
-    session: session ? 'exists' : null,
-    isAuthenticated,
-    userType,
-    isLoading,
-    userProfile: userProfile ? { id: userProfile.id, name: userProfile.name } : null,
-    expert: expert ? { id: expert.id, name: expert.name, status: expert.status } : null
-  });
+  // Only log state changes during development, reduce console noise
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔄 SimpleAuthContext: State update:', {
+      isAuthenticated,
+      userType,
+      isLoading,
+      hasUser: !!user,
+      hasSession: !!session,
+      hasUserProfile: !!userProfile,
+      hasExpert: !!expert
+    });
+  }
 
   // Function to validate credentials against intended role
   const validateCredentialsForRole = async (userId: string, intendedRole: 'user' | 'expert'): Promise<{ isValid: boolean; actualRole?: 'user' | 'expert' | 'both' }> => {
@@ -544,7 +547,8 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
   }, []);
 
   // CRITICAL: Make sure we return all required values consistently
-  const contextValue: SimpleAuthContextType = {
+  // Memoize context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => ({
     isAuthenticated,
     isLoading,
     user,
@@ -555,17 +559,12 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
     login,
     logout,
     refreshProfiles
-  };
+  }), [isAuthenticated, isLoading, user, session, userType, userProfile, expert, login, logout, refreshProfiles]);
 
-  console.log('📡 SimpleAuthContext: Providing context value:', {
-    isAuthenticated: contextValue.isAuthenticated,
-    isLoading: contextValue.isLoading,
-    userType: contextValue.userType,
-    hasUser: !!contextValue.user,
-    hasUserProfile: !!contextValue.userProfile,
-    hasExpert: !!contextValue.expert,
-    userEmail: contextValue.user?.email
-  });
+  // Reduced logging in production
+  if (process.env.NODE_ENV === 'development') {
+    console.log('📡 SimpleAuthContext: Context value updated');
+  }
 
   return (
     <SimpleAuthContext.Provider value={contextValue}>

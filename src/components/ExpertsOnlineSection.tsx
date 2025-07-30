@@ -10,18 +10,9 @@ import { useExpertPresence } from '@/contexts/ExpertPresenceContext';
 const ExpertsOnlineSection: React.FC = () => {
   const navigate = useNavigate();
   const { experts: allExperts, loading } = usePublicExpertsData();
-  const { bulkCheckPresence, getExpertPresence } = useExpertPresence();
+  const { getExpertPresence } = useExpertPresence();
   
-  // Check presence once when experts are loaded
-  useEffect(() => {
-    if (allExperts.length > 0) {
-      const expertAuthIds = allExperts.map(e => e.auth_id || e.id).filter(Boolean) as string[];
-      if (expertAuthIds.length > 0) {
-        console.log('🏠 Home page loaded - checking expert presence once');
-        bulkCheckPresence(expertAuthIds);
-      }
-    }
-  }, [allExperts, bulkCheckPresence]);
+  // Presence checking is now handled by useOptimizedExpertData
 
   // Show online experts first, then last online experts, ensuring 3 experts total
   const approvedExperts = allExperts.filter(expert => expert.dbStatus === 'approved');
