@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { getServiceFrontendData, SERVICE_FRONTEND_MAP } from '@/data/unifiedServicesData';
+import { MessageCircle } from 'lucide-react';
 
 export interface UnifiedService {
   id: number;
@@ -53,7 +54,29 @@ export function useUnifiedServices() {
           
           if (!frontendData) {
             console.warn(`❌ No frontend data found for service ID: ${dbService.id}`);
-            return null;
+            // Return a fallback service instead of null
+            return {
+              id: dbService.id,
+              name: dbService.name,
+              description: dbService.description,
+              category: dbService.category,
+              rate_usd: dbService.rate_usd,
+              rate_inr: dbService.rate_inr,
+              rate_eur: dbService.rate_eur,
+              duration: dbService.duration,
+              featured: dbService.featured,
+              slug: `service-${dbService.id}`,
+              image: "/lovable-uploads/placeholder.png",
+              color: "bg-ifind-aqua",
+              gradientColor: "from-ifind-aqua/20 to-white",
+              textColor: "text-ifind-aqua",
+              buttonColor: "bg-ifind-aqua hover:bg-ifind-aqua/90",
+              icon: MessageCircle,
+              detailedDescription: dbService.description,
+              benefits: ["Professional service", "Expert guidance"],
+              process: "Contact us for more details",
+              formattedDuration: "50-minute sessions"
+            };
           }
 
           return {

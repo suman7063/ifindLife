@@ -31,9 +31,10 @@ const SecureAdminLogin: React.FC = () => {
 
   // Clear any existing admin login blocks since backend was fixed
   useEffect(() => {
-    localStorage.removeItem('admin_login_block_expiry');
+    localStorage.clear(); // Clear all localStorage to remove any blocking
     setIsBlocked(false);
     setLoginAttempts(0);
+    console.log('🧹 Cleared all localStorage for fresh admin login');
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
