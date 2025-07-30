@@ -35,19 +35,24 @@ export function useUnifiedServices() {
     const fetchServices = async () => {
       try {
         setLoading(true);
+        console.log('🔍 Fetching services from database...');
         const { data: dbServices, error } = await supabase
           .from('services')
           .select('*')
           .order('id');
 
         if (error) throw error;
+        
+        console.log('📊 Raw database services:', dbServices);
 
         // Merge database data with frontend data
         const unifiedServices: UnifiedService[] = (dbServices || []).map(dbService => {
+          console.log(`🔍 Processing service ID: ${dbService.id}`);
           const frontendData = getServiceFrontendData(dbService.id);
+          console.log(`📋 Frontend data for ID ${dbService.id}:`, frontendData);
           
           if (!frontendData) {
-            console.warn(`No frontend data found for service ID: ${dbService.id}`);
+            console.warn(`❌ No frontend data found for service ID: ${dbService.id}`);
             return null;
           }
 
@@ -79,6 +84,9 @@ export function useUnifiedServices() {
           };
         }).filter(Boolean) as UnifiedService[];
 
+        console.log('✅ Final unified services:', unifiedServices);
+        console.log(`📊 Total services processed: ${unifiedServices.length}`);
+        
         setServices(unifiedServices);
         setError(null);
       } catch (err) {
