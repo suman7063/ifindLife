@@ -3,7 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { servicesData } from '@/components/services/detail/servicesData';
+import { useUnifiedServices } from '@/hooks/useUnifiedServices';
+import { getDatabaseIdBySlug } from '@/data/unifiedServicesData';
 import ServiceHero from '@/components/services/detail/ServiceHero';
 import ServiceDetailContent from '@/components/services/detail/ServiceDetailContent';
 import ProtectedBookingDialog from '@/components/services/detail/ProtectedBookingDialog';
@@ -11,12 +12,28 @@ import ProtectedBookingDialog from '@/components/services/detail/ProtectedBookin
 const ServiceDetailPage: React.FC = () => {
   const { serviceId } = useParams<{ serviceId: string }>();
   const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
+  const { services, loading, getServiceById, getServiceBySlug } = useUnifiedServices();
   
-  // Find the service data from our predefined services
-  const serviceData = servicesData.find(service => service.id === serviceId);
+  // Find service by slug or database ID (backward compatibility)
+  const serviceData = React.useMemo(() => {
+    if (!serviceId) return null;
+    
+    // Try to find by slug first
+    let service = getServiceBySlug(serviceId);
+    
+    // If not found by slug, try by database ID (for backward compatibility)
+    if (!service) {
+      const numericId = parseInt(serviceId);
+      if (!isNaN(numericId)) {
+        service = getServiceById(numericId);
+      }
+    }
+    
+    return service;
+  }, [serviceId, services, getServiceById, getServiceBySlug]);
   
   useEffect(() => {
-    console.log('ServiceDetailPage component rendering with auth protection');
+    console.log('ServiceDetailPage component rendering with unified services');
     console.log('Service ID from URL params:', serviceId);
     console.log('Found service data:', serviceData);
     
@@ -29,6 +46,20 @@ const ServiceDetailPage: React.FC = () => {
     setIsBookingDialogOpen(true);
   };
   
+  // Loading state
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <div className="container mx-auto py-20 px-4 text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-ifind-aqua"></div>
+          <p className="mt-2 text-gray-600">Loading service...</p>
+        </div>
+        <Footer />
+      </>
+    );
+  }
+
   // If service not found, render a placeholder
   if (!serviceData) {
     return (
@@ -49,7 +80,7 @@ const ServiceDetailPage: React.FC = () => {
       
       {/* Hero Section with Cover Image */}
       <ServiceHero 
-        title={serviceData.title}
+        title={serviceData.name}
         image={serviceData.image}
         description={serviceData.description}
         buttonColor={serviceData.buttonColor}
@@ -59,7 +90,7 @@ const ServiceDetailPage: React.FC = () => {
       {/* Main Content */}
       <div className="container mx-auto py-12 px-4">
         <ServiceDetailContent 
-          serviceId={serviceId || ''}
+          serviceId={serviceData.id.toString()}
           serviceData={serviceData}
           onBookNowClick={handleBookNowClick}
         />
@@ -69,8 +100,8 @@ const ServiceDetailPage: React.FC = () => {
       <ProtectedBookingDialog 
         open={isBookingDialogOpen} 
         onOpenChange={setIsBookingDialogOpen}
-        serviceTitle={serviceData.title}
-        serviceId={serviceId}
+        serviceTitle={serviceData.name}
+        serviceId={serviceData.id.toString()}
         serviceType="service"
       />
       

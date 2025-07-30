@@ -1,11 +1,12 @@
-
 import React from 'react';
 import { Brain, HeartHandshake, HeartPulse, Leaf, MessageCircle, Sparkles } from 'lucide-react';
 
-// Service data with detailed descriptions and updated images - reordered and with updated color themes
-export const servicesData = [
-  {
+// Service ID to frontend data mapping - single source of truth
+export const SERVICE_FRONTEND_MAP = {
+  1: {
     id: "mindful-listening",
+    slug: "mindful-listening", 
+    frontendId: "mindful-listening",
     title: "Heart2Heart Listening Sessions",
     description: "A unique space where you can express yourself freely while being deeply heard without judgment or interruption.",
     image: "/lovable-uploads/3ba262c7-796f-46aa-92f7-23924bdc6a44.png",
@@ -17,16 +18,17 @@ export const servicesData = [
     detailedDescription: "Our Heart2Heart Listening Sessions provide a unique opportunity to be truly heard in a non-judgmental, supportive environment. Unlike traditional therapy, the focus is entirely on giving you space to express yourself without interruption or advice-giving. Our trained listeners create a safe container for you to process thoughts, feelings, and experiences aloud, which can lead to profound insights and emotional release. This practice can be particularly helpful for clarifying thoughts, processing experiences, or simply feeling acknowledged and validated.",
     benefits: [
       "Experience of being fully heard and acknowledged",
-      "Clarification of thoughts and feelings through verbal expression",
+      "Clarification of thoughts and feelings through verbal expression", 
       "Emotional release and reduced mental burden",
       "Increased self-understanding without external judgment",
       "Development of your own solutions through self-expression"
     ],
-    duration: "45-minute sessions",
     process: "You'll be welcomed into a comfortable, private setting where you can speak freely about whatever is on your mind. The listener will maintain attentive, supportive presence without interrupting or offering advice unless specifically requested."
   },
-  {
+  2: {
     id: "listening-with-guidance",
+    slug: "listening-with-guidance",
+    frontendId: "listening-with-guidance", 
     title: "Listening Session with Guidance",
     description: "Supportive listening sessions combined with gentle guidance and insights to help navigate life challenges.",
     image: "/lovable-uploads/b7c0b907-ff72-4597-8beb-61071fedf19f.png",
@@ -43,13 +45,14 @@ export const servicesData = [
       "Practical tools and strategies for moving forward",
       "Flexible sessions that adapt to your needs in the moment"
     ],
-    duration: "50-minute sessions",
     process: "Sessions begin with open listening time where you can share freely. Your facilitator will then offer gentle guidance, insights, or practical strategies based on what you've shared and what feels most helpful for your situation."
   },
-  {
+  3: {
     id: "therapy-sessions",
-    title: "Therapy Sessions",
-    description: "Professional therapy sessions to help you navigate life's challenges, manage mental health concerns, and enhance personal growth.",
+    slug: "therapy-sessions",
+    frontendId: "therapy-sessions",
+    title: "Therapy Sessions", 
+    description: "Professional therapy sessions to help you navigate life challenges, manage mental health concerns, and enhance personal growth.",
     image: "/lovable-uploads/58321caf-3b5b-4a9d-91a1-44514ae2000b.png",
     color: "bg-ifind-teal",
     gradientColor: "from-ifind-teal/20 to-white",
@@ -59,22 +62,23 @@ export const servicesData = [
     detailedDescription: "Our therapy sessions provide a safe, confidential space where you can explore your thoughts and feelings with a licensed professional. Using evidence-based approaches tailored to your unique needs, our therapists help you develop coping strategies, process difficult emotions, and work toward meaningful change. Sessions can address various concerns including anxiety, depression, relationship issues, trauma, and personal growth.",
     benefits: [
       "Personalized treatment plans designed for your specific needs",
-      "Evidence-based therapeutic techniques and approaches",
+      "Evidence-based therapeutic techniques and approaches", 
       "Convenient scheduling with both in-person and virtual options",
       "Compassionate, non-judgmental support from experienced professionals",
       "Practical strategies to implement in your daily life"
     ],
-    duration: "50-minute sessions",
     process: "Begin with an initial assessment to determine your goals and create a personalized treatment plan. Followed by regular sessions where you'll work collaboratively with your therapist to address concerns and develop strategies for improvement."
   },
-  {
+  4: {
     id: "guided-meditations",
+    slug: "guided-meditations",
+    frontendId: "guided-meditations",
     title: "Guided Meditations",
     description: "Expertly led meditation sessions to reduce stress, increase mindfulness, and cultivate inner peace and mental clarity.",
     image: "/lovable-uploads/b063443e-03be-440d-93b9-3742e49290b7.png",
     color: "bg-ifind-purple",
     gradientColor: "from-ifind-purple/20 to-white",
-    textColor: "text-ifind-purple",
+    textColor: "text-ifind-purple", 
     buttonColor: "bg-ifind-purple hover:bg-ifind-purple/90",
     icon: React.createElement(Brain, { className: "h-8 w-8 text-white" }),
     detailedDescription: "Our guided meditation sessions help you cultivate mindfulness, reduce stress, and enhance overall well-being. Led by experienced meditation instructors, these sessions combine breathing techniques, visualization, and mindfulness practices to quiet the mind and bring awareness to the present moment. Perfect for both beginners and experienced practitioners, our guided meditations can be customized to address specific concerns such as stress, sleep issues, or emotional regulation.",
@@ -82,14 +86,15 @@ export const servicesData = [
       "Reduced stress and anxiety levels",
       "Improved focus and concentration",
       "Better sleep quality and relaxation",
-      "Enhanced emotional regulation",
+      "Enhanced emotional regulation", 
       "Greater self-awareness and mindfulness in daily life"
     ],
-    duration: "30-60 minute sessions",
     process: "Sessions begin with a brief introduction and intention setting, followed by guided meditation practice. Each session concludes with time for reflection and integration of the experience."
   },
-  {
+  5: {
     id: "offline-retreats",
+    slug: "offline-retreats",
+    frontendId: "offline-retreats",
     title: "Offline Retreats",
     description: "Immersive wellness experiences in nature to disconnect from technology and reconnect with yourself and others.",
     image: "/lovable-uploads/6c427c55-7a38-4dad-8c60-cc782cbc5bd7.png",
@@ -106,16 +111,17 @@ export const servicesData = [
       "Mindfulness practices to increase present-moment awareness",
       "Time and space for reflection and personal growth"
     ],
-    duration: "Weekend (2-3 days) to week-long retreats",
     process: "Retreats begin with orientation and intention setting, followed by a structured but flexible schedule of individual and group activities. All meals and accommodations are provided in natural settings that support the retreat's purposes."
   },
-  {
+  6: {
     id: "life-coaching",
+    slug: "life-coaching", 
+    frontendId: "life-coaching",
     title: "Life Coaching",
     description: "Goal-oriented coaching to help you clarify your vision, overcome obstacles, and achieve personal and professional success.",
     image: "/lovable-uploads/1086590e-2848-41ea-a5f9-40b33666bb9d.png",
     color: "bg-ifind-teal",
-    gradientColor: "from-ifind-teal/20 to-white",
+    gradientColor: "from-ifind-teal/20 to-white", 
     textColor: "text-ifind-teal",
     buttonColor: "bg-ifind-teal hover:bg-ifind-teal/90",
     icon: React.createElement(Sparkles, { className: "h-8 w-8 text-white" }),
@@ -123,11 +129,48 @@ export const servicesData = [
     benefits: [
       "Clarity about your goals and values",
       "Actionable strategies to overcome obstacles",
-      "Accountability and support for taking consistent action",
+      "Accountability and support for taking consistent action", 
       "Expanded perspective on challenges and opportunities",
       "Accelerated progress toward meaningful objectives"
     ],
-    duration: "50-minute sessions",
     process: "Begin with a discovery session to assess your current situation and define your goals. Follow-up sessions focus on developing strategies, taking action, evaluating progress, and adjusting your approach as needed."
   }
-];
+} as const;
+
+// Helper function to get frontend data by database ID
+export const getServiceFrontendData = (databaseId: number) => {
+  return SERVICE_FRONTEND_MAP[databaseId as keyof typeof SERVICE_FRONTEND_MAP];
+};
+
+// Helper function to get service by slug/frontend ID
+export const getServiceBySlug = (slug: string) => {
+  return Object.values(SERVICE_FRONTEND_MAP).find(service => 
+    service.slug === slug || service.frontendId === slug
+  );
+};
+
+// Helper function to get database ID by slug
+export const getDatabaseIdBySlug = (slug: string) => {
+  const entry = Object.entries(SERVICE_FRONTEND_MAP).find(([_, service]) => 
+    service.slug === slug || service.frontendId === slug
+  );
+  return entry ? parseInt(entry[0]) : null;
+};
+
+// Export service IDs for easy reference
+export const SERVICE_IDS = {
+  HEART2HEART_LISTENING: 1,
+  LISTENING_WITH_GUIDANCE: 2, 
+  THERAPY_SESSIONS: 3,
+  GUIDED_MEDITATIONS: 4,
+  OFFLINE_RETREATS: 5,
+  LIFE_COACHING: 6
+} as const;
+
+// Export for backward compatibility with old servicesData
+export const servicesData = Object.values(SERVICE_FRONTEND_MAP).map(service => ({
+  ...service,
+  duration: service.title.includes('Retreat') ? 'Weekend (2-3 days) to week-long retreats' : 
+           service.title.includes('Heart2Heart') ? '45-minute sessions' :
+           '50-minute sessions'
+}));

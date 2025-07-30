@@ -71,10 +71,16 @@ const UserRoutes: React.FC = () => {
         <Routes>
         <Route path="/" element={<Home />} />
         
-        {/* Services Routes */}
+        {/* Services Routes - Support both slug and ID routing */}
         <Route path="/services" element={<Services />} />
         <Route path="/services/:serviceId" element={<ServiceDetailPage />} />
         <Route path="/service/:serviceId" element={<ServiceDetailPage />} />
+        
+        {/* Legacy service routes for backward compatibility */}
+        <Route path="/services/anxiety" element={<ServiceDetailPage />} />
+        <Route path="/services/relationships" element={<ServiceDetailPage />} />
+        <Route path="/services/family" element={<ServiceDetailPage />} />
+        <Route path="/services/personal-growth" element={<ServiceDetailPage />} />
         
         {/* Expert Routes */}
         <Route path="/experts" element={<Experts />} />

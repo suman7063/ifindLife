@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { servicesData } from './servicesData';
+import { useUnifiedServices } from '@/hooks/useUnifiedServices';
 
 interface RelatedService {
   id: string;
@@ -23,6 +23,7 @@ const RelatedServices: React.FC<RelatedServicesProps> = ({
   currentServiceId,
   color
 }) => {
+  const { services } = useUnifiedServices();
   return (
     <Card className="border border-gray-200 overflow-hidden">
       <div className={`${color} h-2 w-full`}></div>
@@ -30,8 +31,8 @@ const RelatedServices: React.FC<RelatedServicesProps> = ({
         <CardTitle className="text-xl">Related Services</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {servicesData
-          .filter(s => s.id !== currentServiceId)
+        {services
+          .filter(s => s.slug !== currentServiceId && s.id.toString() !== currentServiceId)
           .map(relatedService => (
             <div key={relatedService.id} className="flex items-start gap-3 group transition-all hover:bg-gray-50 dark:hover:bg-gray-800/50 p-3 rounded-lg">
               <div className={`p-2 rounded-full ${relatedService.color} flex-shrink-0 mt-1`}>
@@ -39,8 +40,8 @@ const RelatedServices: React.FC<RelatedServicesProps> = ({
               </div>
               <div className="flex-1 min-w-0">
                 <h4 className={`font-medium text-base group-hover:${relatedService.textColor} truncate`}>
-                  <Link to={`/services/${relatedService.id}`} className="hover:underline">
-                    {relatedService.title}
+                  <Link to={`/services/${relatedService.slug}`} className="hover:underline">
+                    {relatedService.name}
                   </Link>
                 </h4>
                 <p className="text-sm text-gray-500 line-clamp-2">{relatedService.description}</p>

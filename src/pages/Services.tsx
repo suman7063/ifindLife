@@ -4,12 +4,13 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Container } from '@/components/ui/container';
 import { Button } from '@/components/ui/button';
-import { servicesData } from '@/components/services/detail/servicesData';
+import { useUnifiedServices } from '@/hooks/useUnifiedServices';
 import { Link } from 'react-router-dom';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 
 const Services = () => {
   const { ref, isVisible } = useScrollAnimation();
+  const { services, loading, error } = useUnifiedServices();
 
   return (
     <>
@@ -22,56 +23,71 @@ const Services = () => {
               Discover our comprehensive range of wellness services designed to support your mental, emotional, and spiritual well-being.
             </p>
           </div>
+
+          {loading && (
+            <div className="text-center py-8">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-ifind-aqua"></div>
+              <p className="mt-2 text-gray-600">Loading services...</p>
+            </div>
+          )}
+
+          {error && (
+            <div className="text-center py-8">
+              <p className="text-red-600">Error loading services: {error}</p>
+            </div>
+          )}
           
-          <div 
-            ref={ref}
-            className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 transition-all duration-1000 ${
-              isVisible ? 'animate-fade-in' : 'opacity-0 translate-y-8'
-            }`}
-          >
-            {servicesData.map((service, index) => (
-              <div 
-                key={service.id}
-                className={`bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden group hover:scale-105 ${
-                  isVisible ? 'animate-fade-in' : 'opacity-0'
-                }`}
-                style={{ animationDelay: `${index * 150}ms` }}
-              >
-                <div className="relative h-48 overflow-hidden">
-                  <img 
-                    src={service.image} 
-                    alt={service.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                    style={{ objectPosition: 'center 20%' }}
-                  />
-                  <div className={`absolute top-4 left-4 p-3 rounded-full ${service.color} shadow-lg`}>
-                    {service.icon}
+          {!loading && !error && (
+            <div 
+              ref={ref}
+              className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 transition-all duration-1000 ${
+                isVisible ? 'animate-fade-in' : 'opacity-0 translate-y-8'
+              }`}
+            >
+              {services.map((service, index) => (
+                <div 
+                  key={service.id}
+                  className={`bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden group hover:scale-105 ${
+                    isVisible ? 'animate-fade-in' : 'opacity-0'
+                  }`}
+                  style={{ animationDelay: `${index * 150}ms` }}
+                >
+                  <div className="relative h-48 overflow-hidden">
+                    <img 
+                      src={service.image} 
+                      alt={service.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      style={{ objectPosition: 'center 20%' }}
+                    />
+                    <div className={`absolute top-4 left-4 p-3 rounded-full ${service.color} shadow-lg`}>
+                      {service.icon}
+                    </div>
                   </div>
-                </div>
-                
-                <div className="p-6">
-                  <h3 className={`text-xl font-semibold mb-3 ${service.textColor}`}>
-                    {service.title}
-                  </h3>
-                  <p className="text-gray-600 mb-4 line-clamp-3">
-                    {service.description}
-                  </p>
                   
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">{service.duration}</span>
-                    <Link to={`/services/${service.id}`}>
-                      <Button 
-                        className={`${service.buttonColor} text-white hover:opacity-90 transition-opacity`}
-                        size="sm"
-                      >
-                        Learn More
-                      </Button>
-                    </Link>
+                  <div className="p-6">
+                    <h3 className={`text-xl font-semibold mb-3 ${service.textColor}`}>
+                      {service.name}
+                    </h3>
+                    <p className="text-gray-600 mb-4 line-clamp-3">
+                      {service.description}
+                    </p>
+                    
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-500">{service.formattedDuration}</span>
+                      <Link to={`/services/${service.slug}`}>
+                        <Button 
+                          className={`${service.buttonColor} text-white hover:opacity-90 transition-opacity`}
+                          size="sm"
+                        >
+                          Learn More
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
           {/* Call to Action Section */}
           <div className="mt-16 text-center bg-gradient-to-r from-ifind-aqua to-ifind-teal rounded-xl p-8 text-white">
