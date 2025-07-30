@@ -60,7 +60,7 @@ const Services = () => {
                       style={{ objectPosition: 'center 20%' }}
                     />
                     <div className={`absolute top-4 left-4 p-3 rounded-full ${service.color} shadow-lg`}>
-                      {service.icon}
+                      <service.icon className="h-8 w-8 text-white" />
                     </div>
                   </div>
                   

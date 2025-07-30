@@ -19,7 +19,7 @@ export interface UnifiedService {
   gradientColor: string;
   textColor: string;
   buttonColor: string;
-  icon: React.ReactElement;
+  icon: any; // Lucide icon component
   detailedDescription: string;
   benefits: string[];
   process: string;

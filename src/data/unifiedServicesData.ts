@@ -14,7 +14,7 @@ export const SERVICE_FRONTEND_MAP = {
     gradientColor: "from-ifind-purple/20 to-white",
     textColor: "text-ifind-purple",
     buttonColor: "bg-ifind-purple hover:bg-ifind-purple/90",
-    icon: React.createElement(MessageCircle, { className: "h-8 w-8 text-white" }),
+    icon: MessageCircle,
     detailedDescription: "Our Heart2Heart Listening Sessions provide a unique opportunity to be truly heard in a non-judgmental, supportive environment. Unlike traditional therapy, the focus is entirely on giving you space to express yourself without interruption or advice-giving. Our trained listeners create a safe container for you to process thoughts, feelings, and experiences aloud, which can lead to profound insights and emotional release. This practice can be particularly helpful for clarifying thoughts, processing experiences, or simply feeling acknowledged and validated.",
     benefits: [
       "Experience of being fully heard and acknowledged",
@@ -36,7 +36,7 @@ export const SERVICE_FRONTEND_MAP = {
     gradientColor: "from-ifind-aqua/20 to-white",
     textColor: "text-ifind-aqua",
     buttonColor: "bg-ifind-aqua hover:bg-ifind-aqua/90",
-    icon: React.createElement(HeartHandshake, { className: "h-8 w-8 text-white" }),
+    icon: HeartHandshake,
     detailedDescription: "Our Listening Session with Guidance offers the perfect balance between being heard and receiving supportive insights. These sessions begin with open listening where you can express yourself freely, followed by gentle guidance when you seek direction or perspective. Our trained facilitators provide a compassionate space for processing while offering thoughtful reflections and practical insights to help you move forward. This hybrid approach is ideal for those who want both the validation of being heard and the benefit of gentle guidance.",
     benefits: [
       "Combination of deep listening and supportive guidance",
@@ -58,7 +58,7 @@ export const SERVICE_FRONTEND_MAP = {
     gradientColor: "from-ifind-teal/20 to-white",
     textColor: "text-ifind-teal",
     buttonColor: "bg-ifind-teal hover:bg-ifind-teal/90",
-    icon: React.createElement(HeartPulse, { className: "h-8 w-8 text-white" }),
+    icon: HeartPulse,
     detailedDescription: "Our therapy sessions provide a safe, confidential space where you can explore your thoughts and feelings with a licensed professional. Using evidence-based approaches tailored to your unique needs, our therapists help you develop coping strategies, process difficult emotions, and work toward meaningful change. Sessions can address various concerns including anxiety, depression, relationship issues, trauma, and personal growth.",
     benefits: [
       "Personalized treatment plans designed for your specific needs",
@@ -80,7 +80,7 @@ export const SERVICE_FRONTEND_MAP = {
     gradientColor: "from-ifind-purple/20 to-white",
     textColor: "text-ifind-purple", 
     buttonColor: "bg-ifind-purple hover:bg-ifind-purple/90",
-    icon: React.createElement(Brain, { className: "h-8 w-8 text-white" }),
+    icon: Brain,
     detailedDescription: "Our guided meditation sessions help you cultivate mindfulness, reduce stress, and enhance overall well-being. Led by experienced meditation instructors, these sessions combine breathing techniques, visualization, and mindfulness practices to quiet the mind and bring awareness to the present moment. Perfect for both beginners and experienced practitioners, our guided meditations can be customized to address specific concerns such as stress, sleep issues, or emotional regulation.",
     benefits: [
       "Reduced stress and anxiety levels",
@@ -102,7 +102,7 @@ export const SERVICE_FRONTEND_MAP = {
     gradientColor: "from-ifind-aqua/20 to-white",
     textColor: "text-ifind-aqua",
     buttonColor: "bg-ifind-aqua hover:bg-ifind-aqua/90",
-    icon: React.createElement(Leaf, { className: "h-8 w-8 text-white" }),
+    icon: Leaf,
     detailedDescription: "Our Offline Retreats offer a rare opportunity to disconnect from digital distractions and reconnect with yourself, nature, and authentic human connection. Set in carefully selected natural environments, these immersive experiences combine mindfulness practices, nature therapy, creative expression, and community building. Participants experience a digital detox while engaging in activities designed to foster presence, self-discovery, and renewal. Whether you're seeking respite from burnout, deeper connection, or simply time to reflect, our retreats provide a supportive environment for transformation.",
     benefits: [
       "Complete digital detox to reset your relationship with technology",
@@ -124,7 +124,7 @@ export const SERVICE_FRONTEND_MAP = {
     gradientColor: "from-ifind-teal/20 to-white", 
     textColor: "text-ifind-teal",
     buttonColor: "bg-ifind-teal hover:bg-ifind-teal/90",
-    icon: React.createElement(Sparkles, { className: "h-8 w-8 text-white" }),
+    icon: Sparkles,
     detailedDescription: "Our Life Coaching service helps you bridge the gap between where you are now and where you want to be. Working with a certified coach, you'll clarify your vision, identify obstacles, and develop actionable strategies to achieve your personal and professional goals. Unlike therapy, which often focuses on healing past issues, coaching is future-oriented and action-based. Your coach will provide accountability, perspective, and support as you work toward creating positive change in areas such as career development, relationships, health and wellness, or personal growth.",
     benefits: [
       "Clarity about your goals and values",
