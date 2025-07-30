@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface ExpertPresence {
@@ -20,12 +20,56 @@ interface ExpertPresenceContextType {
 
 const ExpertPresenceContext = createContext<ExpertPresenceContextType | undefined>(undefined);
 
-const CACHE_DURATION = 60000; // 1 minute cache
+const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes cache - experts explicitly control status
 const presenceCache = new Map<string, ExpertPresence>();
 
 export const ExpertPresenceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(false);
   const activeRequests = useRef(new Set<string>());
+
+  // Set up real-time subscription to expert_presence changes
+  useEffect(() => {
+    console.log('🔄 Setting up real-time expert presence subscription');
+    
+    const channel = supabase
+      .channel('expert-presence-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'expert_presence'
+        },
+        (payload: any) => {
+          console.log('🔄 Expert presence changed:', payload);
+          const presenceData = payload.new || payload.old;
+          if (!presenceData) return;
+          
+          const { expert_id, status, last_activity } = presenceData;
+          
+          if (expert_id) {
+            // Update cache with new status
+            const presence: ExpertPresence = {
+              expertId: expert_id,
+              status: status === 'available' ? 'online' : 
+                      status === 'busy' ? 'away' :
+                      status === 'away' ? 'away' : 'offline',
+              isAvailable: status !== 'offline',
+              lastActivity: last_activity,
+              lastUpdate: Date.now()
+            };
+            presenceCache.set(expert_id, presence);
+            console.log('✅ Updated presence cache:', presence);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('🔄 Cleaning up expert presence subscription');
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const getExpertPresence = useCallback((expertId: string): ExpertPresence | null => {
     const cached = presenceCache.get(expertId);
@@ -81,29 +125,16 @@ export const ExpertPresenceProvider: React.FC<{ children: React.ReactNode }> = (
 
       let presence: ExpertPresence;
 
-      if (expertData) {
-        const now = new Date();
-        const lastActivity = presenceData?.last_activity ? new Date(presenceData.last_activity) : null;
-        const timeSinceActivity = lastActivity ? now.getTime() - lastActivity.getTime() : Infinity;
+      if (expertData && expertData.status === 'approved') {
+        // Use the explicitly set status from expert_presence table
+        const status = presenceData?.status || 'offline';
         
-        // Determine status based on last activity and expert account status
-        let status: 'online' | 'away' | 'offline' = 'offline';
-        let isAvailable = false;
-
-        if (expertData.status === 'approved') {
-          if ((presenceData?.status === 'online' || presenceData?.status === 'available') && timeSinceActivity < 300000) { // 5 minutes
-            status = 'online';
-            isAvailable = true;
-          } else if (presenceData?.status === 'away' || presenceData?.status === 'busy' || (timeSinceActivity >= 300000 && timeSinceActivity < 1800000)) { // 30 minutes
-            status = 'away';
-            isAvailable = true; // Away but still available
-          }
-        }
-
         presence = {
           expertId,
-          status,
-          isAvailable,
+          status: status === 'available' ? 'online' : 
+                  status === 'busy' ? 'away' :
+                  status === 'away' ? 'away' : 'offline',
+          isAvailable: status !== 'offline',
           lastActivity: presenceData?.last_activity,
           lastUpdate: Date.now()
         };
@@ -172,27 +203,16 @@ export const ExpertPresenceProvider: React.FC<{ children: React.ReactNode }> = (
         
         let presence: ExpertPresence;
 
-        if (expertData) {
-          const lastActivity = presenceData?.last_activity ? new Date(presenceData.last_activity) : null;
-          const timeSinceActivity = lastActivity ? now.getTime() - lastActivity.getTime() : Infinity;
+        if (expertData && expertData.status === 'approved') {
+          // Use the explicitly set status from expert_presence table
+          const status = presenceData?.status || 'offline';
           
-          let status: 'online' | 'away' | 'offline' = 'offline';
-          let isAvailable = false;
-
-          if (expertData.status === 'approved') {
-            if ((presenceData?.status === 'online' || presenceData?.status === 'available') && timeSinceActivity < 300000) { // 5 minutes
-              status = 'online';
-              isAvailable = true;
-            } else if (presenceData?.status === 'away' || presenceData?.status === 'busy' || (timeSinceActivity >= 300000 && timeSinceActivity < 1800000)) { // 30 minutes
-              status = 'away';
-              isAvailable = true;
-            }
-          }
-
           presence = {
             expertId,
-            status,
-            isAvailable,
+            status: status === 'available' ? 'online' : 
+                    status === 'busy' ? 'away' :
+                    status === 'away' ? 'away' : 'offline',
+            isAvailable: status !== 'offline',
             lastActivity: presenceData?.last_activity,
             lastUpdate: Date.now()
           };
