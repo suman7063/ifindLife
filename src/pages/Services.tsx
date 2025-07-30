@@ -37,7 +37,7 @@ const Services = () => {
             </div>
           )}
           
-          {!loading && !error && (
+          {!loading && !error && services.length > 0 && (
             <div 
               ref={ref}
               className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 transition-all duration-1000 ${
@@ -86,6 +86,12 @@ const Services = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {!loading && !error && services.length === 0 && (
+            <div className="text-center py-8">
+              <p className="text-gray-600">No services available at the moment.</p>
             </div>
           )}
 

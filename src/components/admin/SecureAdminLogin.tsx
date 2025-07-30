@@ -29,29 +29,11 @@ const SecureAdminLogin: React.FC = () => {
     }
   }, [isAuthenticated, navigate, location]);
 
-  // Check if user is currently blocked
+  // Clear any existing admin login blocks since backend was fixed
   useEffect(() => {
-    const blockExpiry = localStorage.getItem('admin_login_block_expiry');
-    if (blockExpiry) {
-      const expiryTime = new Date(blockExpiry);
-      if (expiryTime > new Date()) {
-        setIsBlocked(true);
-        const timeRemaining = Math.ceil((expiryTime.getTime() - Date.now()) / 60000);
-        toast.error(`Too many failed attempts. Try again in ${timeRemaining} minutes.`);
-        
-        // Set timer to unblock
-        const timeoutId = setTimeout(() => {
-          setIsBlocked(false);
-          localStorage.removeItem('admin_login_block_expiry');
-          setLoginAttempts(0);
-        }, expiryTime.getTime() - Date.now());
-
-        return () => clearTimeout(timeoutId);
-      } else {
-        localStorage.removeItem('admin_login_block_expiry');
-        setIsBlocked(false);
-      }
-    }
+    localStorage.removeItem('admin_login_block_expiry');
+    setIsBlocked(false);
+    setLoginAttempts(0);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
