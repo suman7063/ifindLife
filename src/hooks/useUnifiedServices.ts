@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { getServiceFrontendData, SERVICE_FRONTEND_MAP } from '@/data/unifiedServicesData';
+import { Brain } from 'lucide-react';
 
 export interface UnifiedService {
   id: number;
@@ -70,7 +71,7 @@ export function useUnifiedServices() {
               gradientColor: "from-ifind-aqua/20 to-white",
               textColor: "text-ifind-aqua",
               buttonColor: "bg-ifind-aqua hover:bg-ifind-aqua/90",
-              icon: () => "🧠", // Simple icon fallback
+              icon: Brain, // Use imported icon
               detailedDescription: dbService.description,
               benefits: ["Professional service", "Expert guidance"],
               process: "Contact us for more details",
