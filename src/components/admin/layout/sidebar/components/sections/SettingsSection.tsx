@@ -19,7 +19,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
   if (hasSettingsPermission) {
     items.push({
       icon: Settings,
-      label: "Settings",
+      label: "Admin Settings",
       isActive: activeTab === 'settings',
       onClick: () => onTabChange('settings')
     });
@@ -27,7 +27,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
 
   return (
     <MenuSection
-      sectionLabel="System"
+      sectionLabel="Account"
       items={items}
       showSection={items.length > 0}
     />

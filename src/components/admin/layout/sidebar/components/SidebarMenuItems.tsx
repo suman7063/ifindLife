@@ -86,7 +86,7 @@ const SidebarMenuItems: React.FC<SidebarMenuItemsProps> = ({
       <SettingsSection
         activeTab={activeTab}
         onTabChange={onTabChange}
-        hasSettingsPermission={checkPermission('settings')}
+        hasSettingsPermission={true}
       />
     </div>
   );
