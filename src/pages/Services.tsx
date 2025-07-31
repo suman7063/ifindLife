@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -22,55 +21,58 @@ const Services = () => {
               Discover our comprehensive range of wellness services designed to support your mental, emotional, and spiritual well-being.
             </p>
           </div>
-
+          
           <div 
             ref={ref}
             className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 transition-all duration-1000 ${
               isVisible ? 'animate-fade-in' : 'opacity-0 translate-y-8'
             }`}
           >
-            {servicesData.map((service, index) => (
-              <div 
-                key={service.id}
-                className={`bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden group hover:scale-105 ${
-                  isVisible ? 'animate-fade-in' : 'opacity-0'
-                }`}
-                style={{ animationDelay: `${index * 150}ms` }}
-              >
-                <div className="relative h-48 overflow-hidden">
-                  <img 
-                    src={service.image} 
-                    alt={service.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                    style={{ objectPosition: 'center 20%' }}
-                  />
-                  <div className={`absolute top-4 left-4 p-3 rounded-full ${service.color} shadow-lg`}>
-                    {React.createElement(service.icon, { className: "h-8 w-8 text-white" })}
+            {servicesData.map((service, index) => {
+              const IconComponent = service.icon;
+              return (
+                <div 
+                  key={service.id}
+                  className={`bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden group hover:scale-105 ${
+                    isVisible ? 'animate-fade-in' : 'opacity-0'
+                  }`}
+                  style={{ animationDelay: `${index * 150}ms` }}
+                >
+                  <div className="relative h-48 overflow-hidden">
+                    <img 
+                      src={service.image} 
+                      alt={service.title}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      style={{ objectPosition: 'center 20%' }}
+                    />
+                    <div className={`absolute top-4 left-4 p-3 rounded-full ${service.color} shadow-lg`}>
+                      <IconComponent className="h-8 w-8 text-white" />
+                    </div>
                   </div>
-                </div>
-                
-                <div className="p-6">
-                  <h3 className={`text-xl font-semibold mb-3 ${service.textColor}`}>
-                    {service.title}
-                  </h3>
-                  <p className="text-gray-600 mb-4 line-clamp-3">
-                    {service.description}
-                  </p>
                   
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">{service.duration}</span>
-                    <Link to={`/services/${service.slug}`}>
-                      <Button 
-                        className={`${service.buttonColor} text-white hover:opacity-90 transition-opacity`}
-                        size="sm"
-                      >
-                        Learn More
-                      </Button>
-                    </Link>
+                  <div className="p-6">
+                    <h3 className={`text-xl font-semibold mb-3 ${service.textColor}`}>
+                      {service.title}
+                    </h3>
+                    <p className="text-gray-600 mb-4 line-clamp-3">
+                      {service.description}
+                    </p>
+                    
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-500">{service.duration}</span>
+                      <Link to={`/services/${service.slug}`}>
+                        <Button 
+                          className={`${service.buttonColor} text-white hover:opacity-90 transition-opacity`}
+                          size="sm"
+                        >
+                          Learn More
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Call to Action Section */}
