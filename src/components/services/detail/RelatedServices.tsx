@@ -33,21 +33,24 @@ const RelatedServices: React.FC<RelatedServicesProps> = ({
       <CardContent className="space-y-4">
         {services
           .filter(s => s.slug !== currentServiceId && s.id.toString() !== currentServiceId)
-          .map(relatedService => (
-            <div key={relatedService.id} className="flex items-start gap-3 group transition-all hover:bg-gray-50 dark:hover:bg-gray-800/50 p-3 rounded-lg">
-              <div className={`p-2 rounded-full ${relatedService.color} flex-shrink-0 mt-1`}>
-                {relatedService.icon}
+          .map(relatedService => {
+            const IconComponent = relatedService.icon;
+            return (
+              <div key={relatedService.id} className="flex items-start gap-3 group transition-all hover:bg-gray-50 dark:hover:bg-gray-800/50 p-3 rounded-lg">
+                <div className={`p-2 rounded-full ${relatedService.color} flex-shrink-0 mt-1`}>
+                  <IconComponent className="h-5 w-5 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className={`font-medium text-base group-hover:${relatedService.textColor} truncate`}>
+                    <Link to={`/services/${relatedService.slug}`} className="hover:underline">
+                      {relatedService.name}
+                    </Link>
+                  </h4>
+                  <p className="text-sm text-gray-500 line-clamp-2">{relatedService.description}</p>
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <h4 className={`font-medium text-base group-hover:${relatedService.textColor} truncate`}>
-                  <Link to={`/services/${relatedService.slug}`} className="hover:underline">
-                    {relatedService.name}
-                  </Link>
-                </h4>
-                <p className="text-sm text-gray-500 line-clamp-2">{relatedService.description}</p>
-              </div>
-            </div>
-          ))}
+            );
+          })}
       </CardContent>
     </Card>
   );

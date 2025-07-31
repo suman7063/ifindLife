@@ -5,7 +5,7 @@ import { Card, CardContent, CardTitle, CardDescription } from '@/components/ui/c
 
 interface ServiceAboutProps {
   title: string;
-  icon: React.ReactNode;
+  icon: React.ComponentType<any>;
   textColor: string;
   color: string;
   gradientColor: string;
@@ -26,11 +26,13 @@ const ServiceAbout: React.FC<ServiceAboutProps> = ({
   duration,
   process
 }) => {
+  const IconComponent = icon;
+  
   return (
     <Card className={`border-l-4 ${color} shadow-lg overflow-hidden mb-8`}>
       <div className="bg-gray-50 dark:bg-gray-900 p-8">
         <div className={`inline-flex items-center justify-center ${color} text-white p-4 rounded-full mb-4`}>
-          {icon}
+          <IconComponent className="h-8 w-8" />
         </div>
         <CardTitle className={`text-3xl ${textColor} mb-2`}>About {title}</CardTitle>
         <CardDescription className="text-lg">Comprehensive support for your mental wellness journey</CardDescription>
