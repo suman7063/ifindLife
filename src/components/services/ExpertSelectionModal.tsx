@@ -13,7 +13,7 @@ import { useCallSession } from '@/hooks/useCallSession';
 import { useRazorpayPayment } from '@/hooks/useRazorpayPayment';
 import { checkAndCompleteReferral } from '@/utils/referralCompletion';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
-import LazyAgoraCallModal from '@/components/call/LazyAgoraCallModal';
+import EnhancedAgoraCallModal from '@/components/call/modals/EnhancedAgoraCallModal';
 
 interface ExpertSelectionModalProps {
   isOpen: boolean;
@@ -118,57 +118,10 @@ const ExpertSelectionModal: React.FC<ExpertSelectionModalProps> = ({
       return;
     }
 
-    try {
-      console.log(`Initiating ${type} call with ${expert.name}`);
-      
-      // Create call session with 30-minute default duration
-      const selectedDuration = 30; // minutes
-      const callCost = expert.price * selectedDuration;
-      
-      const session = await createCallSession(
-        expert.id,
-        type,
-        selectedDuration,
-        callCost,
-        'INR'
-      );
-
-      if (session) {
-        console.log('Call session created, now processing payment...');
-        
-        // Process payment for the call
-        await processPayment(
-          {
-            amount: Math.round(callCost * 100), // Convert to smallest currency unit (cents)
-            currency: 'INR',
-            description: `${type} call with ${expert.name} (${selectedDuration} minutes)`,
-            expertId: expert.id,
-            callSessionId: session.id,
-          },
-          async (paymentId, orderId) => {
-            console.log('Payment successful, starting call interface...');
-            
-            // Check if this call payment completes a referral
-            if (userProfile?.id) {
-              await checkAndCompleteReferral(userProfile.id);
-            }
-            
-            setSelectedExpert(expert);
-            setIsCallModalOpen(true);
-            toast.success(`Payment successful! Starting ${type} call with ${expert.name}...`);
-          },
-          (error) => {
-            console.error('Payment failed:', error);
-            toast.error('Payment failed. Please try again.');
-          }
-        );
-      } else {
-        toast.error('Failed to start call session');
-      }
-    } catch (error) {
-      console.error('Error starting call:', error);
-      toast.error('Failed to start call');
-    }
+    // Set the expert and open the call modal - let the enhanced modal handle the flow
+    setSelectedExpert(expert);
+    setIsCallModalOpen(true);
+    console.log(`Opening enhanced call modal for ${expert.name}`);
   };
 
   const handleBookNow = (expert: ExpertCardData) => {
@@ -322,9 +275,9 @@ const ExpertSelectionModal: React.FC<ExpertSelectionModalProps> = ({
         />
       )}
 
-      {/* Call Modal */}
-      {isCallModalOpen && selectedExpert && currentSession && (
-        <LazyAgoraCallModal
+      {/* Enhanced Call Modal - handles call type selection, duration, and payment */}
+      {isCallModalOpen && selectedExpert && (
+        <EnhancedAgoraCallModal
           isOpen={isCallModalOpen}
           onClose={() => {
             setIsCallModalOpen(false);
