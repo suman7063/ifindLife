@@ -60,9 +60,8 @@ const EnhancedExpertSelectionModal: React.FC<EnhancedExpertSelectionModalProps> 
     console.log('Expert card clicked:', expert.name);
     setSelectedExpert(expert);
     
-    // Navigate to expert's booking page instead of just calling onExpertSelected
-    const expertUrl = `/experts/${expert.id}?book=true`;
-    window.location.href = expertUrl;
+    // For Heart2Heart service, directly open call modal instead of redirecting
+    setShowCallModal(true);
   };
 
   // Handle call start with enhanced protection

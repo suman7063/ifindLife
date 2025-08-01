@@ -6,6 +6,7 @@ import { useAgoraCall } from '@/hooks/useAgoraCall';
 import AgoraCallContent from '../AgoraCallContent';
 import AgoraCallControls from '../AgoraCallControls';
 import AgoraCallTypeSelector from '../AgoraCallTypeSelector';
+import SimpleCallTypeSelector from '@/components/chat/SimpleCallTypeSelector';
 import CallAuthMessage from './CallAuthMessage';
 import CallErrorMessage from './CallErrorMessage';
 import ExtensionConfirmationModal from '../extension/ExtensionConfirmationModal';
@@ -74,7 +75,7 @@ const EnhancedAgoraCallModal: React.FC<EnhancedAgoraCallModalProps> = ({
     });
   }, [isAuthenticated, userProfile, isOpen, callStatus]);
 
-  const handleStartCall = async (selectedDuration: number) => {
+  const handleStartCall = async (selectedDuration: number, selectedCallType: 'video' | 'voice') => {
     try {
       console.log('🔒 Starting call, current auth state:', { isAuthenticated, userProfile: !!userProfile });
       
@@ -85,8 +86,11 @@ const EnhancedAgoraCallModal: React.FC<EnhancedAgoraCallModalProps> = ({
         sessionType: localStorage.getItem('sessionType')
       };
       
+      // Update call type from selector
+      setCallType(selectedCallType);
+      
       setCallStatus('connecting');
-      const success = await startCall(selectedDuration, callType);
+      const success = await startCall(selectedDuration, selectedCallType);
       
       if (success) {
         setCallStatus('connected');
@@ -181,11 +185,8 @@ const EnhancedAgoraCallModal: React.FC<EnhancedAgoraCallModalProps> = ({
           </DialogHeader>
 
           {callStatus === 'choosing' && (
-            <AgoraCallTypeSelector
-              callType={callType}
-              onCallTypeChange={setCallType}
+            <SimpleCallTypeSelector
               expert={expert}
-              expertPrice={expert.price}
               onStartCall={handleStartCall}
             />
           )}
