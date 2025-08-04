@@ -2,14 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
-import { useAgoraCall } from '@/hooks/useAgoraCall';
+import { useRealAgoraCall } from '@/hooks/useRealAgoraCall';
 import AgoraCallContent from '../AgoraCallContent';
 import AgoraCallControls from '../AgoraCallControls';
 import AgoraCallTypeSelector from '../AgoraCallTypeSelector';
 import SimpleCallTypeSelector from '@/components/chat/SimpleCallTypeSelector';
 import CallAuthMessage from './CallAuthMessage';
 import CallErrorMessage from './CallErrorMessage';
-import ExtensionConfirmationModal from '../extension/ExtensionConfirmationModal';
+
 
 interface Expert {
   id: number;
@@ -33,22 +33,19 @@ const EnhancedAgoraCallModal: React.FC<EnhancedAgoraCallModalProps> = ({
   const [callType, setCallType] = useState<'voice' | 'video'>('video');
   const [callStatus, setCallStatus] = useState<'choosing' | 'connecting' | 'connected' | 'ended' | 'error'>('choosing');
   const [showChat, setShowChat] = useState(false);
-  const [isExtending, setIsExtending] = useState(false);
-  const [showExtensionModal, setShowExtensionModal] = useState(false);
-
   const {
     callState,
     duration,
     cost,
     remainingTime,
     callError,
+    isConnecting,
     startCall,
     endCall,
     handleToggleMute,
     handleToggleVideo,
-    extendCall,
     formatTime
-  } = useAgoraCall(expert.id, expert.price);
+  } = useRealAgoraCall(expert.id, expert.price);
 
   // CRITICAL: Protect authentication during video call
   useEffect(() => {
@@ -79,13 +76,6 @@ const EnhancedAgoraCallModal: React.FC<EnhancedAgoraCallModalProps> = ({
     try {
       console.log('🔒 Starting call, current auth state:', { isAuthenticated, userProfile: !!userProfile });
       
-      // Store auth state before call initialization
-      const authBackup = {
-        isAuthenticated,
-        userProfile,
-        sessionType: localStorage.getItem('sessionType')
-      };
-      
       // Update call type from selector
       setCallType(selectedCallType);
       
@@ -98,12 +88,6 @@ const EnhancedAgoraCallModal: React.FC<EnhancedAgoraCallModalProps> = ({
       } else {
         setCallStatus('error');
         console.error('🔒 Call failed to start');
-      }
-      
-      // Verify auth state wasn't affected
-      if (authBackup.isAuthenticated && !isAuthenticated) {
-        console.error('🔒 CRITICAL: Auth state lost during call initialization!');
-        // Could implement recovery here if needed
       }
     } catch (error) {
       console.error('🔒 Error starting call:', error);
@@ -127,23 +111,6 @@ const EnhancedAgoraCallModal: React.FC<EnhancedAgoraCallModalProps> = ({
     }
   };
 
-  const handleExtendCall = async () => {
-    setShowExtensionModal(true);
-  };
-
-  const handleConfirmExtension = async (extensionMinutes: number, cost: number): Promise<boolean> => {
-    try {
-      setIsExtending(true);
-      await extendCall(extensionMinutes);
-      setShowExtensionModal(false);
-      return true;
-    } catch (error) {
-      console.error('Error extending call:', error);
-      return false;
-    } finally {
-      setIsExtending(false);
-    }
-  };
 
   // Show auth message if not authenticated
   if (!isAuthenticated) {
@@ -191,11 +158,11 @@ const EnhancedAgoraCallModal: React.FC<EnhancedAgoraCallModalProps> = ({
             />
           )}
 
-          {(callStatus === 'connecting' || callStatus === 'connected') && (
+          {(callStatus === 'connecting' || callStatus === 'connected' || isConnecting) && (
             <div className="space-y-4">
               <AgoraCallContent
                 callState={callState}
-                callStatus={callStatus}
+                callStatus={isConnecting ? 'connecting' : (callState?.isJoined ? 'connected' : callStatus)}
                 showChat={showChat}
                 duration={duration}
                 remainingTime={remainingTime}
@@ -206,7 +173,7 @@ const EnhancedAgoraCallModal: React.FC<EnhancedAgoraCallModalProps> = ({
                 expertName={expert.name}
               />
               
-              {callStatus === 'connected' && (
+              {(callState?.isJoined || callStatus === 'connected') && (
                 <AgoraCallControls
                   callState={callState}
                   callType={callType === 'video' ? 'video' : 'audio'}
@@ -214,9 +181,9 @@ const EnhancedAgoraCallModal: React.FC<EnhancedAgoraCallModalProps> = ({
                   onToggleVideo={handleToggleVideo}
                   onEndCall={handleEndCall}
                   onToggleChat={() => setShowChat(!showChat)}
-                  onExtendCall={handleExtendCall}
+                  onExtendCall={() => {}}
                   showChat={showChat}
-                  isExtending={isExtending}
+                  isExtending={false}
                 />
               )}
             </div>
@@ -232,13 +199,6 @@ const EnhancedAgoraCallModal: React.FC<EnhancedAgoraCallModalProps> = ({
         </DialogContent>
       </Dialog>
 
-      <ExtensionConfirmationModal
-        isOpen={showExtensionModal}
-        onClose={() => setShowExtensionModal(false)}
-        onConfirm={handleConfirmExtension}
-        expertPrice={expert.price}
-        isExtending={isExtending}
-      />
     </>
   );
 };
