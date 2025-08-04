@@ -47,6 +47,7 @@ const ExpertGrid: React.FC<ExpertGridProps> = ({
               waitTime: 'Available Now'
             }}
             onConnectNow={(type) => onStartCall(expert)}
+            onBookNow={() => onStartCall(expert)}
             onClick={() => onExpertCardClick(expert)}
           />
           

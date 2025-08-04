@@ -33,10 +33,10 @@ const SimpleCallTypeSelector: React.FC<SimpleCallTypeSelectorProps> = ({
     
     setIsStarting(true);
     try {
+      console.log('Starting call with duration:', selectedDuration, 'type:', selectedCallType);
       await onStartCall(selectedDuration, selectedCallType);
     } catch (error) {
       console.error('Error starting call:', error);
-    } finally {
       setIsStarting(false);
     }
   };

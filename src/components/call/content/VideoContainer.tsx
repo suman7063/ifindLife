@@ -17,17 +17,29 @@ const VideoContainer: React.FC<VideoContainerProps> = ({
   userName,
   expertName
 }) => {
+  // Safety check for callState to prevent null errors
+  const safeCallState: CallState = callState || {
+    isJoined: false,
+    localVideoTrack: null,
+    localAudioTrack: null,
+    remoteUsers: [],
+    isVideoEnabled: true,
+    isAudioEnabled: true,
+    client: null,
+    isMuted: false
+  };
+
   return (
     <div className="relative w-full h-full min-h-[300px]">
       <RemoteVideoDisplay 
-        callState={callState} 
+        callState={safeCallState} 
         callStatus={callStatus} 
         expertName={expertName}
       />
       <LocalVideoPreview 
-        callState={callState} 
+        callState={safeCallState} 
         userName={userName} 
-        isJoined={callState.isJoined}
+        isJoined={safeCallState.isJoined}
       />
     </div>
   );
