@@ -48,128 +48,122 @@ const SimpleCallTypeSelector: React.FC<SimpleCallTypeSelectorProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Call Type Selection */}
-      <Card className="border-0 shadow-none">
-        <CardHeader className="text-center">
-          <CardTitle className="text-xl">Choose Call Type</CardTitle>
-          <CardDescription>
-            Select how you'd like to connect with {expert.name}
-          </CardDescription>
-        </CardHeader>
+      {/* Call Type Selection - Compact circular icons */}
+      <div className="space-y-3">
+        <h3 className="text-lg font-semibold text-center">Choose Call Type</h3>
         
-        <CardContent className="space-y-4 pb-2">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card 
-              className={`border-2 hover:border-primary/50 transition-all cursor-pointer ${
-                selectedCallType === 'video' ? 'border-primary bg-primary/5' : ''
-              }`}
-              onClick={() => setSelectedCallType('video')}
-            >
-              <CardContent className="pt-6 pb-4 flex flex-col items-center text-center">
-                <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-4">
-                  <Video className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-                </div>
-                <h3 className="font-medium text-lg">Video Call</h3>
-                <p className="text-sm text-muted-foreground mt-2">
-                  See and hear the expert with both video and audio enabled
-                </p>
-              </CardContent>
-            </Card>
-            
-            <Card 
-              className={`border-2 hover:border-primary/50 transition-all cursor-pointer ${
-                selectedCallType === 'voice' ? 'border-primary bg-primary/5' : ''
-              }`}
-              onClick={() => setSelectedCallType('voice')}
-            >
-              <CardContent className="pt-6 pb-4 flex flex-col items-center text-center">
-                <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-4">
-                  <Phone className="h-8 w-8 text-green-600 dark:text-green-400" />
-                </div>
-                <h3 className="font-medium text-lg">Audio Call</h3>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Connect with audio only for a more focused conversation
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </CardContent>
-      </Card>
+        <div className="flex justify-center gap-6">
+          {/* Video Call Option */}
+          <button
+            className={`group flex flex-col items-center space-y-2 p-3 rounded-lg transition-all ${
+              selectedCallType === 'video' 
+                ? 'bg-primary/10 border-2 border-primary' 
+                : 'hover:bg-muted/50 border-2 border-transparent'
+            }`}
+            onClick={() => setSelectedCallType('video')}
+          >
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
+              selectedCallType === 'video'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted text-muted-foreground group-hover:bg-primary/20'
+            }`}>
+              <Video className="h-6 w-6" />
+            </div>
+            <span className={`text-sm font-medium ${
+              selectedCallType === 'video' ? 'text-primary' : 'text-muted-foreground'
+            }`}>
+              Video
+            </span>
+          </button>
 
-      {/* Duration Selection */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Clock className="h-5 w-5" />
-            <span>Select Call Duration</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-3">
-            {durationOptions.map((option) => {
-              const price = calculatePrice(option.duration);
-              const isSelected = selectedDuration === option.duration;
-              
-              return (
-                <div key={option.duration} className="relative">
-                  {option.popular && (
-                    <div className="absolute -top-2 -right-2 z-10">
-                      <div className="bg-blue-500 text-white px-2 py-1 rounded-full text-xs">
-                        Popular
-                      </div>
+          {/* Voice Call Option */}
+          <button
+            className={`group flex flex-col items-center space-y-2 p-3 rounded-lg transition-all ${
+              selectedCallType === 'voice' 
+                ? 'bg-primary/10 border-2 border-primary' 
+                : 'hover:bg-muted/50 border-2 border-transparent'
+            }`}
+            onClick={() => setSelectedCallType('voice')}
+          >
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
+              selectedCallType === 'voice'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted text-muted-foreground group-hover:bg-primary/20'
+            }`}>
+              <Phone className="h-6 w-6" />
+            </div>
+            <span className={`text-sm font-medium ${
+              selectedCallType === 'voice' ? 'text-primary' : 'text-muted-foreground'
+            }`}>
+              Voice
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {/* Duration Selection - Compact design */}
+      <div className="space-y-3">
+        <h3 className="text-lg font-semibold text-center flex items-center justify-center gap-2">
+          <Clock className="h-5 w-5" />
+          Select Duration
+        </h3>
+        
+        <div className="flex justify-center gap-4">
+          {durationOptions.map((option) => {
+            const price = calculatePrice(option.duration);
+            const isSelected = selectedDuration === option.duration;
+            
+            return (
+              <button
+                key={option.duration}
+                className={`relative p-4 rounded-lg border-2 transition-all min-w-[120px] ${
+                  isSelected 
+                    ? 'border-primary bg-primary/10' 
+                    : 'border-muted-foreground/20 hover:border-primary/50 hover:bg-muted/50'
+                }`}
+                onClick={() => setSelectedDuration(option.duration)}
+              >
+                {option.popular && (
+                  <div className="absolute -top-2 -right-2">
+                    <div className="bg-primary text-primary-foreground px-2 py-1 rounded-full text-xs font-medium">
+                      Popular
                     </div>
-                  )}
-                  <Button
-                    variant={isSelected ? "default" : "outline"}
-                    className={`w-full h-auto p-4 flex justify-between items-center ${
-                      option.popular ? 'ring-2 ring-blue-200' : ''
-                    }`}
-                    onClick={() => setSelectedDuration(option.duration)}
-                  >
-                    <div className="flex flex-col items-start">
-                      <span className="font-medium">
-                        {option.duration} minutes
-                      </span>
-                      <span className="text-sm text-muted-foreground">
-                        {option.description}
-                      </span>
-                    </div>
-                    <div className="flex flex-col items-end">
-                      <span className="font-bold text-lg">
-                        ₹{price}
-                      </span>
-                      {option.popular && (
-                        <span className="text-xs text-green-600">
-                          Best Value
-                        </span>
-                      )}
-                    </div>
-                  </Button>
+                  </div>
+                )}
+                <div className="text-center space-y-1">
+                  <div className={`font-semibold ${isSelected ? 'text-primary' : ''}`}>
+                    {option.duration} min
+                  </div>
+                  <div className={`text-lg font-bold ${isSelected ? 'text-primary' : ''}`}>
+                    ₹{price}
+                  </div>
                 </div>
-              );
-            })}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Pay to Proceed Button */}
+      {selectedDuration && (
+        <div className="space-y-3 pt-2">
+          <div className="text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-muted/30 rounded-lg">
+              <span className="text-sm text-muted-foreground">Total:</span>
+              <span className="text-lg font-bold text-primary">₹{calculatePrice(selectedDuration)}</span>
+            </div>
           </div>
           
-          <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-            <p className="text-sm text-blue-700 dark:text-blue-300">
-              <strong>Note:</strong> Your session will automatically end when the selected duration is reached. 
-              You can extend the call if needed.
-            </p>
+          <div className="flex justify-center">
+            <Button 
+              onClick={handleStartCall} 
+              className="w-full max-w-xs"
+              disabled={isStarting}
+              size="lg"
+            >
+              {isStarting ? 'Processing...' : 'Pay to Proceed'}
+            </Button>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Proceed to Pay Button */}
-      {selectedDuration && (
-        <div className="flex justify-center pt-4">
-          <Button 
-            onClick={handleStartCall} 
-            className="w-full max-w-md"
-            disabled={isStarting}
-            size="lg"
-          >
-            {isStarting ? 'Starting Call...' : `Proceed to Pay ₹${calculatePrice(selectedDuration)}`}
-          </Button>
         </div>
       )}
     </div>
