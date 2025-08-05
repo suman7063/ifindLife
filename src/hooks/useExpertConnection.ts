@@ -61,46 +61,14 @@ export function useExpertConnection() {
     try {
       console.log(`Initiating ${type} call with ${expert.name}`);
       
-      // Create call session with 30-minute default duration
-      const selectedDuration = 30; // minutes
-      const callCost = (expert.price || 30) * selectedDuration;
+      // Skip payment and directly start the call for now
+      console.log('Starting call directly (payment bypassed)...');
+      updateState({
+        selectedExpert: expert,
+        isCallModalOpen: true
+      });
+      toast.success(`Starting ${type} call with ${expert.name}...`);
       
-      const session = await createCallSession(
-        expert.id,
-        type,
-        selectedDuration,
-        callCost,
-        'INR'
-      );
-
-      if (session) {
-        console.log('Call session created, now processing payment...');
-        
-        // Process payment for the call
-        await processPayment(
-          {
-            amount: Math.round(callCost * 100), // Convert to smallest currency unit (cents)
-            currency: 'INR',
-            description: `${type} call with ${expert.name} (${selectedDuration} minutes)`,
-            expertId: expert.id,
-            callSessionId: session.id,
-          },
-          (paymentId, orderId) => {
-            console.log('Payment successful, starting call interface...');
-            updateState({
-              selectedExpert: expert,
-              isCallModalOpen: true
-            });
-            toast.success(`Payment successful! Starting ${type} call with ${expert.name}...`);
-          },
-          (error) => {
-            console.error('Payment failed:', error);
-            toast.error('Payment failed. Please try again.');
-          }
-        );
-      } else {
-        toast.error('Failed to start call session');
-      }
     } catch (error) {
       console.error('Error starting call:', error);
       toast.error('Failed to start call');
