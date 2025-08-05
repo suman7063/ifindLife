@@ -105,12 +105,12 @@ const ChatModalContent: React.FC<ChatModalContentProps> = ({
           <AgoraCallControls
             callState={callState}
             callType={callType}
-            isExtending={isExtending}
+            
             isFullscreen={false}
             onToggleMute={onToggleMute}
             onToggleVideo={onToggleVideo}
             onEndCall={onEndChat}
-            onExtendCall={() => {}}
+            
             onToggleChat={onToggleChat}
             onToggleFullscreen={() => {}}
           />

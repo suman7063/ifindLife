@@ -276,12 +276,12 @@ const ProductionAgoraCallModal: React.FC<ProductionAgoraCallModalProps> = ({
             <AgoraCallControls
               callState={callState}
               callType={callType}
-              isExtending={false}
+              
               isFullscreen={false}
               onToggleMute={handleToggleMute}
               onToggleVideo={handleToggleVideo}
               onEndCall={handleEndCall}
-              onExtendCall={() => {}}
+              
               onToggleChat={handleToggleChatPanel}
               onToggleFullscreen={() => {}}
             />

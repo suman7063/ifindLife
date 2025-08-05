@@ -16,6 +16,7 @@ interface AgoraCallContentProps {
   expertPrice: number;
   userName: string;
   expertName: string;
+  videoMode?: 'side-by-side' | 'picture-in-picture';
 }
 
 const AgoraCallContent: React.FC<AgoraCallContentProps> = ({
@@ -28,7 +29,8 @@ const AgoraCallContent: React.FC<AgoraCallContentProps> = ({
   formatTime,
   expertPrice,
   userName,
-  expertName
+  expertName,
+  videoMode = 'picture-in-picture'
 }) => {
   return (
     <div className={`flex ${showChat ? 'flex-row' : 'flex-col'} items-center py-3 space-y-4 space-x-0 ${showChat ? 'sm:space-x-4 sm:space-y-0' : ''}`}>
@@ -38,6 +40,7 @@ const AgoraCallContent: React.FC<AgoraCallContentProps> = ({
           callStatus={callStatus}
           userName={userName}
           expertName={expertName}
+          videoMode={videoMode}
         />
         
         {callStatus === 'connected' && (

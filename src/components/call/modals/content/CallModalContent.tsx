@@ -82,7 +82,7 @@ export const CallModalContent: React.FC<CallModalContentProps> = ({ expert, onCl
           remainingTime={timerData.remainingTime}
           isOvertime={timerData.isOvertime}
           isInWarningPeriod={timerData.isInWarningPeriod}
-          onExtendCall={handleExtendCall}
+          
           formatTime={timerData.formatTime}
           pricePerMinute={expert.price}
           walletBalance={userProfile?.wallet_balance || 0}
@@ -108,12 +108,12 @@ export const CallModalContent: React.FC<CallModalContentProps> = ({ expert, onCl
           <AgoraCallControls
             callState={callState}
             callType={callOperations.callType}
-            isExtending={false}
+            
             isFullscreen={false}
             onToggleMute={callOperations.handleToggleMute}
             onToggleVideo={callOperations.handleToggleVideo}
             onEndCall={handleEndCall}
-            onExtendCall={() => {}} // Extension handled by timer component
+            
             onToggleChat={handleToggleChatPanel}
             onToggleFullscreen={() => {}}
           />

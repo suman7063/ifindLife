@@ -11,6 +11,7 @@ interface VideoContainerProps {
   userName: string;
   expertName: string;
   isDemoMode?: boolean;
+  videoMode?: 'side-by-side' | 'picture-in-picture';
 }
 
 const VideoContainer: React.FC<VideoContainerProps> = ({
@@ -18,7 +19,8 @@ const VideoContainer: React.FC<VideoContainerProps> = ({
   callStatus,
   userName,
   expertName,
-  isDemoMode = false
+  isDemoMode = false,
+  videoMode = 'picture-in-picture'
 }) => {
   // Safety check for callState to prevent null errors
   const safeCallState: CallState = callState || {
@@ -49,6 +51,29 @@ const VideoContainer: React.FC<VideoContainerProps> = ({
     );
   }
 
+  // Render based on video mode
+  if (videoMode === 'side-by-side') {
+    return (
+      <div className="flex gap-4 w-full h-full min-h-[300px]">
+        <div className="flex-1">
+          <RemoteVideoDisplay 
+            callState={safeCallState} 
+            callStatus={callStatus} 
+            expertName={expertName}
+          />
+        </div>
+        <div className="w-1/3">
+          <LocalVideoPreview 
+            callState={safeCallState} 
+            userName={userName} 
+            isJoined={safeCallState.isJoined}
+            isFullSize={true}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative w-full h-full min-h-[300px]">
       <RemoteVideoDisplay 
@@ -60,6 +85,7 @@ const VideoContainer: React.FC<VideoContainerProps> = ({
         callState={safeCallState} 
         userName={userName} 
         isJoined={safeCallState.isJoined}
+        isFullSize={false}
       />
     </div>
   );

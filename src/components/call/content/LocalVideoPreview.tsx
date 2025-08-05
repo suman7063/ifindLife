@@ -7,12 +7,14 @@ interface LocalVideoPreviewProps {
   callState: CallState;
   userName: string;
   isJoined: boolean;
+  isFullSize?: boolean;
 }
 
 const LocalVideoPreview: React.FC<LocalVideoPreviewProps> = ({ 
   callState, 
   userName,
-  isJoined
+  isJoined,
+  isFullSize = false
 }) => {
   const localVideoRef = useRef<HTMLDivElement>(null);
 
@@ -38,15 +40,22 @@ const LocalVideoPreview: React.FC<LocalVideoPreviewProps> = ({
     return null;
   }
 
+  const containerClass = isFullSize 
+    ? "w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 rounded-lg overflow-hidden border border-primary/30 shadow-lg"
+    : "absolute bottom-2 right-2 w-24 h-32 bg-gradient-to-br from-primary/30 to-secondary/30 rounded overflow-hidden border-2 border-primary/40 shadow-[var(--glow-primary)]";
+
+  const iconSize = isFullSize ? "h-16 w-16" : "h-8 w-8";
+  const textSize = isFullSize ? "text-base" : "text-xs";
+
   return (
-    <div className="absolute bottom-2 right-2 w-24 h-32 bg-slate-700 rounded overflow-hidden border-2 border-white/20">
+    <div className={containerClass}>
       {callState.localVideoTrack && callState.isVideoEnabled ? (
         <div ref={localVideoRef} className="w-full h-full" />
       ) : (
         <div className="w-full h-full flex items-center justify-center">
           <div className="flex flex-col items-center">
-            <UserIcon className="h-8 w-8 text-white/70" />
-            <span className="text-white text-xs mt-1">{userName}</span>
+            <UserIcon className={`${iconSize} text-primary-foreground/80`} />
+            <span className={`text-primary-foreground ${textSize} mt-1 font-medium`}>{userName}</span>
           </div>
         </div>
       )}
