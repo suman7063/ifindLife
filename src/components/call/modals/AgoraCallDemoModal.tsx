@@ -190,8 +190,8 @@ const AgoraCallDemoModal: React.FC<AgoraCallDemoModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className={`sm:max-w-[${showChat && callStatus === 'connected' ? '900px' : '600px'}] p-0 overflow-hidden`}>
-        <DialogHeader className="px-6 py-4 border-b">
+      <DialogContent className={`sm:max-w-[${showChat && callStatus === 'connected' ? '900px' : '600px'}] max-h-[90vh] p-0 overflow-hidden flex flex-col`}>
+        <DialogHeader className="px-6 py-4 border-b flex-shrink-0">
           <div className="flex items-center justify-between">
             <DialogTitle className="flex items-center gap-2">
               <Play className="w-5 h-5 text-primary" />
@@ -206,7 +206,7 @@ const AgoraCallDemoModal: React.FC<AgoraCallDemoModalProps> = ({
           </div>
         </DialogHeader>
         
-        <div className="px-6 py-4">
+        <div className="px-6 py-4 overflow-y-auto flex-1">
           {renderContent()}
         </div>
         
