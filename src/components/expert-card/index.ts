@@ -1,4 +1,4 @@
 
-import ExpertCard from './ExpertCard';
+import OptimizedExpertCard from './OptimizedExpertCard';
 export * from './types';
-export default ExpertCard;
+export default OptimizedExpertCard;

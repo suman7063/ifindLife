@@ -10,6 +10,7 @@ import { useAuthRedirectSystem } from '@/hooks/useAuthRedirectSystem';
 import { useExpertPresence } from '@/contexts/ExpertPresenceContext';
 import ExpertStatusIndicator from './ExpertStatusIndicator';
 import AwayMessageDialog from './AwayMessageDialog';
+import { getInitials } from '@/utils/getInitials';
 import { toast } from 'sonner';
 
 export interface OptimizedExpertCardProps {
@@ -76,12 +77,7 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
       price: expert.price || 0,
       waitTime: expert.waitTime || 'Unknown',
       category: (expert as any).category || '',
-      initials: expert.name
-        ?.split(' ')
-        .map(name => name.charAt(0))
-        .join('')
-        .toUpperCase()
-        .substring(0, 2) || 'EX'
+      initials: getInitials(expert.name || '')
     };
   }, [expert, getExpertStatus]);
 
@@ -278,7 +274,13 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
         <div className="flex items-start gap-4">
           <div className="relative">
             <Avatar className="h-16 w-16 border-2 border-white shadow">
-              <AvatarImage src={expertData.avatarUrl} alt={expertData.name} />
+              <AvatarImage 
+                src={expertData.avatarUrl || ''} 
+                alt={expertData.name}
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
               <AvatarFallback className="bg-primary text-primary-foreground">
                 {expertData.initials}
               </AvatarFallback>

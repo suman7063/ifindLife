@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { getInitials } from '@/utils/getInitials';
 
 export interface ExpertImageProps {
   profilePicture?: string;
@@ -9,9 +10,7 @@ export interface ExpertImageProps {
 }
 
 const ExpertImage: React.FC<ExpertImageProps> = ({ profilePicture, name, className }) => {
-  const initials = name 
-    ? name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
-    : 'EA';
+  const initials = getInitials(name || '');
 
   return (
     <Avatar className={className || "h-10 w-10"}>
