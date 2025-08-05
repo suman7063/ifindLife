@@ -72,11 +72,22 @@ const ExpertProfile: React.FC<ExpertProfileProps> = ({
     <Card className="overflow-hidden border-0 shadow-md">
         {/* Expert Image */}
         <div className="relative h-64 w-full">
-          <img 
-            src={expert.imageUrl} 
-            alt={expert.name} 
-            className="w-full h-full object-cover"
-          />
+          {expert.imageUrl ? (
+            <img 
+              src={expert.imageUrl} 
+              alt={expert.name} 
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+          ) : (
+            <div className="w-full h-full bg-primary/10 flex items-center justify-center">
+              <span className="text-6xl font-bold text-primary">
+                {expert.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+              </span>
+            </div>
+          )}
           
           {/* Online Status */}
           {expert.online && (

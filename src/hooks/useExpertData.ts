@@ -38,7 +38,7 @@ export function useExpertData({ serviceId, specialization }: UseExpertDataProps 
       id: expertId,
       auth_id: expertAuthId,
       name: dbExpert.name || 'Unknown Expert',
-      profilePicture: dbExpert.profile_picture || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=1780&auto=format&fit=crop',
+      profilePicture: dbExpert.profile_picture || '',
       specialization: dbExpert.specialization || 'General Counseling',
       experience: typeof dbExpert.experience === 'string' ? parseInt(dbExpert.experience) || 0 : Number(dbExpert.experience) || 0,
       averageRating: Number(dbExpert.average_rating) || 4.5,

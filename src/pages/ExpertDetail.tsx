@@ -98,7 +98,7 @@ const ExpertDetail = () => {
             consultations: 100, // TODO: Get from actual sessions count
             price: 30, // TODO: Get from service pricing
             waitTime: "Available",
-            imageUrl: expertData.profile_picture || "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?q=80&w=2070&auto=format&fit=crop",
+            imageUrl: expertData.profile_picture || "",
             online: expertData.status === 'approved',
             languages: ["English"], // TODO: Get from expert profile
             description: expertData.bio || "This expert is available for consultation.",
