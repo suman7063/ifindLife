@@ -8,22 +8,21 @@ import {
   Video, 
   VideoOff, 
   MessageCircle,
-  PictureInPicture,
-  Grid2X2
+  PlusCircle
 } from 'lucide-react';
 
 interface AgoraCallControlsProps {
   callState: any;
   callType?: 'audio' | 'video';
+  isExtending?: boolean;
   isFullscreen?: boolean;
   onToggleMute: () => void;
   onToggleVideo: () => void;
   onEndCall: () => void;
   onToggleChat?: () => void;
-  onToggleVideoMode?: () => void;
+  onExtendCall?: () => void;
   onToggleFullscreen?: () => void;
   showChat?: boolean;
-  videoMode?: 'side-by-side' | 'picture-in-picture';
 }
 
 interface AgoraCallControlButtonProps {
@@ -46,10 +45,7 @@ const AgoraCallControlButton: React.FC<AgoraCallControlButtonProps> = ({
   className = ""
 }) => {
   const displayIcon = active && activeIcon ? activeIcon : icon;
-  const activeClass = active 
-    ? 'bg-gradient-to-br from-secondary/20 to-accent/20 border-secondary/40 shadow-[var(--glow-accent)]' 
-    : 'hover:bg-gradient-to-br hover:from-primary/10 hover:to-accent/10';
-  const buttonClass = `rounded-full p-3 ${className} ${activeClass} transition-all duration-300`;
+  const buttonClass = `rounded-full p-3 ${className} ${active ? 'bg-red-100 border-red-300' : ''}`;
   
   return (
     <Button
@@ -66,18 +62,18 @@ const AgoraCallControlButton: React.FC<AgoraCallControlButtonProps> = ({
 const AgoraCallControls: React.FC<AgoraCallControlsProps> = ({
   callState,
   callType,
+  isExtending = false,
   isFullscreen = false,
   onToggleMute,
   onToggleVideo,
   onEndCall,
+  onExtendCall,
   onToggleChat,
-  onToggleVideoMode,
   onToggleFullscreen,
-  showChat = false,
-  videoMode = 'picture-in-picture'
+  showChat = false
 }) => {
   return (
-    <div className="flex justify-center items-center space-x-4 p-4 bg-gradient-to-r from-primary/10 to-accent/10 rounded-xl backdrop-blur-sm border border-primary/20 shadow-[var(--glow-accent)]">
+    <div className="flex justify-center items-center space-x-4 p-2 bg-background/80 rounded-lg backdrop-blur-sm">
       {callState?.isJoined && (
         <>
           <AgoraCallControlButton
@@ -86,7 +82,6 @@ const AgoraCallControls: React.FC<AgoraCallControlsProps> = ({
             icon={<Mic className="h-5 w-5" />}
             activeIcon={<MicOff className="h-5 w-5" />}
             title={callState.isMuted ? "Unmute microphone" : "Mute microphone"}
-            className="hover:shadow-[var(--glow-primary)] transition-all duration-200"
           />
           
           <AgoraCallControlButton
@@ -95,19 +90,7 @@ const AgoraCallControls: React.FC<AgoraCallControlsProps> = ({
             icon={<Video className="h-5 w-5" />}
             activeIcon={<VideoOff className="h-5 w-5" />}
             title={callState.isVideoEnabled ? "Turn off camera" : "Turn on camera"}
-            className="hover:shadow-[var(--glow-primary)] transition-all duration-200"
           />
-          
-          {onToggleVideoMode && callType === 'video' && (
-            <AgoraCallControlButton
-              onClick={onToggleVideoMode}
-              active={videoMode === 'side-by-side'}
-              icon={<PictureInPicture className="h-5 w-5" />}
-              activeIcon={<Grid2X2 className="h-5 w-5" />}
-              title={videoMode === 'picture-in-picture' ? "Switch to side-by-side" : "Switch to picture-in-picture"}
-              className="hover:shadow-[var(--glow-accent)] transition-all duration-200"
-            />
-          )}
           
           {onToggleChat && (
             <AgoraCallControlButton
@@ -115,7 +98,15 @@ const AgoraCallControls: React.FC<AgoraCallControlsProps> = ({
               active={showChat}
               icon={<MessageCircle className="h-5 w-5" />}
               title="Toggle chat"
-              className="hover:shadow-[var(--glow-accent)] transition-all duration-200"
+            />
+          )}
+          
+          {onExtendCall && !isExtending && (
+            <AgoraCallControlButton
+              onClick={onExtendCall}
+              icon={<PlusCircle className="h-5 w-5 text-green-600" />}
+              className="bg-green-100 border-green-300"
+              title="Extend call by 15 minutes"
             />
           )}
         </>
@@ -126,7 +117,6 @@ const AgoraCallControls: React.FC<AgoraCallControlsProps> = ({
         icon={<PhoneOff className="h-5 w-5" />}
         variant="destructive"
         title="End call"
-        className="hover:shadow-lg transition-all duration-200"
       />
     </div>
   );

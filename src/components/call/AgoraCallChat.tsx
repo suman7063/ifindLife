@@ -73,27 +73,27 @@ const AgoraCallChat: React.FC<AgoraCallChatProps> = ({
   if (!visible) return null;
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-br from-background via-primary/5 to-accent/5 rounded-xl shadow-lg border border-primary/20">
-      <div className="border-b border-primary/20 p-4 bg-gradient-to-r from-primary/10 to-accent/10">
-        <h3 className="font-semibold text-foreground">Chat with {expertName}</h3>
+    <div className="flex flex-col h-full bg-white rounded-lg shadow-lg">
+      <div className="border-b p-3">
+        <h3 className="font-medium">Chat with {expertName}</h3>
       </div>
       
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-3 space-y-3">
         {messages.map(message => (
           <div 
             key={message.id} 
             className={`flex flex-col ${message.sender === userName ? 'items-end' : 'items-start'}`}
           >
             <div 
-              className={`px-4 py-3 rounded-2xl max-w-[80%] shadow-sm ${
+              className={`px-3 py-2 rounded-lg max-w-[80%] ${
                 message.sender === userName 
-                  ? 'bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-[var(--glow-primary)]' 
-                  : 'bg-gradient-to-br from-secondary/20 to-accent/20 text-foreground border border-secondary/30'
+                  ? 'bg-blue-500 text-white' 
+                  : 'bg-gray-100 text-gray-800'
               }`}
             >
               {message.text}
             </div>
-            <div className="text-xs text-muted-foreground mt-1 font-medium">
+            <div className="text-xs text-gray-500 mt-1">
               {message.sender} • {formatTime(message.timestamp)}
             </div>
           </div>
@@ -101,24 +101,21 @@ const AgoraCallChat: React.FC<AgoraCallChatProps> = ({
         <div ref={messagesEndRef} />
       </div>
       
-      <div className="border-t border-primary/20 p-4 bg-gradient-to-r from-primary/5 to-accent/5">
-        <div className="flex gap-3">
-          <Input 
-            value={messageText}
-            onChange={(e) => setMessageText(e.target.value)}
-            placeholder="Type your message..."
-            onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-            className="flex-1 bg-background/70 border-primary/30 focus:border-primary/50 focus:ring-primary/20 rounded-xl"
-          />
-          <Button 
-            onClick={handleSendMessage}
-            size="icon"
-            className="shrink-0 bg-gradient-to-r from-primary to-accent hover:shadow-[var(--glow-primary)] transition-all duration-200 rounded-xl"
-            disabled={messageText.trim() === ''}
-          >
-            <Send className="h-4 w-4" />
-          </Button>
-        </div>
+      <div className="border-t p-3 flex gap-2">
+        <Input 
+          value={messageText}
+          onChange={(e) => setMessageText(e.target.value)}
+          placeholder="Type a message..."
+          onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+        />
+        <Button 
+          onClick={handleSendMessage}
+          size="icon"
+          className="shrink-0"
+          disabled={messageText.trim() === ''}
+        >
+          <Send className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   );

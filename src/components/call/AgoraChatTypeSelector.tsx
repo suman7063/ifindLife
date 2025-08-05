@@ -19,33 +19,29 @@ const AgoraChatTypeSelector: React.FC<AgoraChatTypeSelectorProps> = ({ expert, o
   const chatPrice = Math.round(expert.price * 0.7); // 30% discount for chat
   
   return (
-    <div className="bg-gradient-to-br from-background via-primary/5 to-accent/5 rounded-xl border border-primary/20 p-6">
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-semibold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-2">
-          Chat with {expert.name}
-        </h2>
-        <p className="text-muted-foreground">
+    <Card className="border-0 shadow-none">
+      <CardHeader className="text-center">
+        <CardTitle className="text-xl">Chat with {expert.name}</CardTitle>
+        <CardDescription>
           Start a text conversation with {expert.name} for real-time guidance
-        </p>
-      </div>
+        </CardDescription>
+      </CardHeader>
       
-      <div className="space-y-6">
-        <Card className="border-2 border-primary/30 hover:border-primary/60 hover:shadow-[var(--glow-primary)] transition-all duration-300 cursor-pointer bg-gradient-to-br from-background to-primary/5">
+      <CardContent className="space-y-6 pb-2">
+        <Card className="border-2 hover:border-primary/50 transition-all cursor-pointer">
           <CardContent className="pt-6 pb-4 flex flex-col items-center text-center">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-accent/20 to-primary/20 flex items-center justify-center mb-4 shadow-[var(--glow-accent)]">
-              <MessageCircle className="h-8 w-8 text-primary" />
+            <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-4">
+              <MessageCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
             </div>
-            <h3 className="font-semibold text-lg">Text Chat</h3>
+            <h3 className="font-medium text-lg">Text Chat</h3>
             <p className="text-sm text-muted-foreground mt-2">
               Connect through text messaging for convenient communication
             </p>
-            <p className="mt-4 font-semibold text-lg bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              ₹{chatPrice}/min
-            </p>
+            <p className="mt-4 font-medium">₹{chatPrice}/min</p>
           </CardContent>
           <CardFooter className="pt-0">
             <Button 
-              className="w-full bg-gradient-to-r from-primary to-accent hover:shadow-[var(--glow-primary)] transition-all duration-300" 
+              className="w-full" 
               onClick={() => onSelectChatType('text')}
             >
               Start Chat Session
@@ -53,13 +49,15 @@ const AgoraChatTypeSelector: React.FC<AgoraChatTypeSelectorProps> = ({ expert, o
           </CardFooter>
         </Card>
         
-        <div className="bg-gradient-to-r from-accent/10 to-primary/10 p-4 rounded-xl border border-accent/20">
-          <p className="text-sm text-foreground">
-            💫 The first 15 minutes are free. After that, you'll be charged at ₹{chatPrice} per minute.
-          </p>
+        <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-md">
+          <div className="flex gap-2">
+            <p className="text-sm text-blue-700 dark:text-blue-300">
+              The first 15 minutes are free. After that, you'll be charged at ₹{chatPrice} per minute.
+            </p>
+          </div>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 

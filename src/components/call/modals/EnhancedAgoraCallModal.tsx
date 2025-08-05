@@ -181,9 +181,9 @@ const EnhancedAgoraCallModal: React.FC<EnhancedAgoraCallModalProps> = ({
                   onToggleVideo={handleToggleVideo}
                   onEndCall={handleEndCall}
                   onToggleChat={() => setShowChat(!showChat)}
-                  
+                  onExtendCall={() => {}}
                   showChat={showChat}
-                  
+                  isExtending={false}
                 />
               )}
             </div>

@@ -34,7 +34,6 @@ const AgoraChatModal: React.FC<AgoraChatModalProps> = ({
   const [chatType, setChatType] = useState<'text' | 'video'>('text');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showChat, setShowChat] = useState(false);
-  const [videoMode, setVideoMode] = useState<'side-by-side' | 'picture-in-picture'>('picture-in-picture');
 
   const { callState, setCallState, initializeCall, endCall } = useCallState();
   const {
@@ -73,15 +72,14 @@ const AgoraChatModal: React.FC<AgoraChatModalProps> = ({
   // Reset state when modal is closed
   useEffect(() => {
     if (!isOpen) {
-        setTimeout(() => {
-          setChatStatus('choosing');
-          setChatType('text');
-          setErrorMessage(null);
-          setShowChat(false);
-          setVideoMode('picture-in-picture');
-          resetTimer();
-          endCall();
-        }, 300);
+      setTimeout(() => {
+        setChatStatus('choosing');
+        setChatType('text');
+        setErrorMessage(null);
+        setShowChat(false);
+        resetTimer();
+        endCall();
+      }, 300);
     }
   }, [isOpen, resetTimer, endCall]);
 
@@ -153,10 +151,6 @@ const AgoraChatModal: React.FC<AgoraChatModalProps> = ({
     setShowChat(!showChat);
   };
 
-  const handleToggleVideoMode = () => {
-    setVideoMode(prev => prev === 'picture-in-picture' ? 'side-by-side' : 'picture-in-picture');
-  };
-
   // Modal content based on state
   const renderModalContent = () => {
     // Show auth message if not authenticated
@@ -196,7 +190,6 @@ const AgoraChatModal: React.FC<AgoraChatModalProps> = ({
           expertPrice={expert.price}
           userName={userProfile?.name || 'You'}
           expertName={expert.name}
-          videoMode={videoMode}
         />
         
         {chatStatus === 'connected' && (
@@ -204,17 +197,14 @@ const AgoraChatModal: React.FC<AgoraChatModalProps> = ({
             <AgoraCallControls
               callState={callState}
               callType={callType}
-              
+              isExtending={isExtending}
               isFullscreen={false}
               onToggleMute={handleToggleMute}
               onToggleVideo={handleToggleVideo}
               onEndCall={handleEndChat}
-              
+              onExtendCall={() => {}}
               onToggleChat={handleToggleChatPanel}
-              onToggleVideoMode={handleToggleVideoMode}
               onToggleFullscreen={() => {}}
-              showChat={showChat}
-              videoMode={videoMode}
             />
           </div>
         )}
@@ -224,18 +214,18 @@ const AgoraChatModal: React.FC<AgoraChatModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[800px] p-0 overflow-hidden bg-gradient-to-br from-background via-primary/5 to-accent/5 border border-primary/20">
-        <div className="p-6 bg-gradient-to-r from-primary/10 to-accent/10 border-b border-primary/20">
+      <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden">
+        <div className="p-4">
           <AgoraCallModalHeader
             callStatus={chatStatus}
             expertName={expert.name}
             currency="₹"
             expertPrice={expert.price}
           />
-        </div>
-        
-        <div className="p-6">
-          {renderModalContent()}
+          
+          <div className="my-4">
+            {renderModalContent()}
+          </div>
         </div>
       </DialogContent>
     </Dialog>

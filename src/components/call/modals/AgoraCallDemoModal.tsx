@@ -22,7 +22,6 @@ const AgoraCallDemoModal: React.FC<AgoraCallDemoModalProps> = ({
   const [callStatus, setCallStatus] = useState<'choosing' | 'connecting' | 'connected' | 'ended'>('choosing');
   const [callType, setCallType] = useState<'video' | 'voice'>('video');
   const [showChat, setShowChat] = useState(false);
-  const [videoMode, setVideoMode] = useState<'side-by-side' | 'picture-in-picture'>('picture-in-picture');
 
   // Mock expert data for demo
   const mockExpert = {
@@ -142,7 +141,6 @@ const AgoraCallDemoModal: React.FC<AgoraCallDemoModalProps> = ({
                   userName="Demo User"
                   expertName={mockExpert.name}
                   isDemoMode={true}
-                  videoMode={videoMode}
                 />
                 
                 {callStatus === 'connected' && (
@@ -174,15 +172,14 @@ const AgoraCallDemoModal: React.FC<AgoraCallDemoModalProps> = ({
               <AgoraCallControls
                 callState={callState}
                 callType={callType === 'voice' ? 'audio' : 'video'}
+                isExtending={false}
                 isFullscreen={false}
                 onToggleMute={handleToggleMute}
                 onToggleVideo={handleToggleVideo}
                 onEndCall={handleEndCall}
+                onExtendCall={() => {}}
                 onToggleChat={() => setShowChat(!showChat)}
-                onToggleVideoMode={() => setVideoMode(prev => prev === 'picture-in-picture' ? 'side-by-side' : 'picture-in-picture')}
                 onToggleFullscreen={() => {}}
-                showChat={showChat}
-                videoMode={videoMode}
               />
             </div>
           </>
