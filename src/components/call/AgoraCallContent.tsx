@@ -33,12 +33,25 @@ const AgoraCallContent: React.FC<AgoraCallContentProps> = ({
   expertName
 }) => {
   const isInPictureInPictureMode = videoMode === 'picture-in-picture';
-  const layoutClass = showChat && !isInPictureInPictureMode ? 'flex-row' : 'flex-col';
-  const videoContainerClass = showChat && !isInPictureInPictureMode ? 'w-1/2' : 'w-full';
+  
+  // Dynamic layout based on video mode and chat visibility
+  const getLayoutClass = () => {
+    if (isInPictureInPictureMode) {
+      return 'flex-col'; // PiP mode stacks video and chat vertically
+    }
+    return showChat ? 'flex-row' : 'flex-col'; // Side-by-side when chat is open
+  };
+  
+  const getVideoContainerClass = () => {
+    if (isInPictureInPictureMode) {
+      return 'w-full'; // Full width for main video in PiP mode
+    }
+    return showChat ? 'w-1/2' : 'w-full'; // Half width when chat is open in side-by-side
+  };
 
   return (
-    <div className={`flex ${layoutClass} items-start py-4 space-y-4 space-x-0 ${showChat && !isInPictureInPictureMode ? 'sm:space-x-6 sm:space-y-0' : ''}`}>
-      <div className={`${videoContainerClass} space-y-4 relative`}>
+    <div className={`flex ${getLayoutClass()} items-start py-4 space-y-4 space-x-0 ${showChat && !isInPictureInPictureMode ? 'sm:space-x-6 sm:space-y-0' : ''}`}>
+      <div className={`${getVideoContainerClass()} space-y-4 relative`}>
         <VideoContainer 
           callState={callState}
           callStatus={callStatus}
@@ -47,19 +60,11 @@ const AgoraCallContent: React.FC<AgoraCallContentProps> = ({
           videoMode={videoMode}
         />
         
-        {callStatus === 'connected' && (
-          <CallCostDisplay 
-            duration={duration}
-            remainingTime={remainingTime}
-            cost={cost}
-            formatTime={formatTime}
-            expertPrice={expertPrice}
-          />
-        )}
+        {/* Cost display removed as per user request */}
       </div>
       
       {showChat && callStatus === 'connected' && (
-        <div className={`${isInPictureInPictureMode ? 'w-full mt-4' : 'w-1/2'} h-[400px]`}>
+        <div className={`${isInPictureInPictureMode ? 'w-full mt-4' : 'w-1/2'} h-[400px] ${!isInPictureInPictureMode ? 'border-l-2 border-primary/20 pl-4' : ''}`}>
           <AgoraCallChat 
             visible={showChat}
             userName={userName}
