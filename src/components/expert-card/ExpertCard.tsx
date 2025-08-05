@@ -9,6 +9,7 @@ import { ExpertCardData } from './types';
 import { useAuth } from '@/contexts/auth';
 import { useAuthRedirectSystem } from '@/hooks/useAuthRedirectSystem';
 import { toast } from 'sonner';
+import AgoraCallDemoButton from '@/components/call/AgoraCallDemoButton';
 
 export interface ExpertCardProps {
   expert: ExpertCardData;
@@ -204,24 +205,33 @@ const ExpertCard: React.FC<ExpertCardProps> = ({
           
           {/* Default buttons when connect options are not shown */}
           {!showConnectOptions && (
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant={status === 'online' ? 'default' : 'outline'}
-                className="flex-1"
-                onClick={handleConnectNow}
-                disabled={status !== 'online'}
-              >
-                {status === 'online' ? 'Connect Now' : 'Offline'}
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="flex-1"
-                onClick={handleBookNow}
-              >
-                Book Now
-              </Button>
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant={status === 'online' ? 'default' : 'outline'}
+                  className="flex-1"
+                  onClick={handleConnectNow}
+                  disabled={status !== 'online'}
+                >
+                  {status === 'online' ? 'Connect Now' : 'Offline'}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={handleBookNow}
+                >
+                  Book Now
+                </Button>
+              </div>
+              <div className="flex justify-center">
+                <AgoraCallDemoButton
+                  variant="secondary"
+                  size="sm"
+                  className="text-xs"
+                />
+              </div>
             </div>
           )}
         </div>
