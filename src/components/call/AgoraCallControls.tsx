@@ -46,7 +46,10 @@ const AgoraCallControlButton: React.FC<AgoraCallControlButtonProps> = ({
   className = ""
 }) => {
   const displayIcon = active && activeIcon ? activeIcon : icon;
-  const buttonClass = `rounded-full p-3 ${className} ${active ? 'bg-red-100 border-red-300' : ''}`;
+  const activeClass = active 
+    ? 'bg-gradient-to-br from-secondary/20 to-accent/20 border-secondary/40 shadow-[var(--glow-accent)]' 
+    : 'hover:bg-gradient-to-br hover:from-primary/10 hover:to-accent/10';
+  const buttonClass = `rounded-full p-3 ${className} ${activeClass} transition-all duration-300`;
   
   return (
     <Button
