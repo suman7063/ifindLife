@@ -8,6 +8,7 @@ import CallAuthMessage from '@/components/chat/modals/CallAuthMessage';
 import CallErrorMessage from '@/components/chat/modals/CallErrorMessage';
 import { CallState } from '@/utils/agoraService';
 import { ChatStatus, ChatType } from '@/hooks/chat/useChatModalState';
+import { useVideoMode } from '@/hooks/call/useVideoMode';
 
 interface ChatModalContentProps {
   expertId: number;
@@ -55,6 +56,7 @@ const ChatModalContent: React.FC<ChatModalContentProps> = ({
   onRetry
 }) => {
   const { isAuthenticated, isLoading: authLoading, userProfile } = useAuth();
+  const { videoMode, toggleVideoMode } = useVideoMode();
   
   // Show auth message if not authenticated
   if (!isAuthenticated && !authLoading) {
@@ -105,14 +107,13 @@ const ChatModalContent: React.FC<ChatModalContentProps> = ({
           <AgoraCallControls
             callState={callState}
             callType={callType}
-            isExtending={isExtending}
-            isFullscreen={false}
+            videoMode={videoMode}
             onToggleMute={onToggleMute}
             onToggleVideo={onToggleVideo}
             onEndCall={onEndChat}
-            onExtendCall={() => {}}
             onToggleChat={onToggleChat}
-            onToggleFullscreen={() => {}}
+            onToggleVideoMode={toggleVideoMode}
+            showChat={showChat}
           />
         </div>
       )}

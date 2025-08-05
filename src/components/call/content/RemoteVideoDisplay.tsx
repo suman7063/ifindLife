@@ -7,9 +7,10 @@ interface RemoteVideoDisplayProps {
   callState: CallState;
   callStatus: 'choosing' | 'connecting' | 'connected' | 'ended' | 'error';
   expertName: string;
+  videoMode?: 'side-by-side' | 'picture-in-picture';
 }
 
-const RemoteVideoDisplay: React.FC<RemoteVideoDisplayProps> = ({ callState, callStatus, expertName }) => {
+const RemoteVideoDisplay: React.FC<RemoteVideoDisplayProps> = ({ callState, callStatus, expertName, videoMode = 'side-by-side' }) => {
   const remoteVideoRef = useRef<HTMLDivElement>(null);
   
   // Handle remote video display
@@ -86,8 +87,12 @@ const RemoteVideoDisplay: React.FC<RemoteVideoDisplayProps> = ({ callState, call
     }
   };
   
+  const containerClass = videoMode === 'picture-in-picture' 
+    ? "w-full h-full min-h-[300px] bg-gradient-to-br from-primary/20 to-accent/20 rounded-lg overflow-hidden relative border border-primary/30"
+    : "w-full h-full min-h-[240px] bg-gradient-to-br from-primary/20 to-accent/20 rounded-lg overflow-hidden relative border border-primary/30";
+
   return (
-    <div className="w-full h-full min-h-[240px] bg-slate-800 rounded-lg overflow-hidden relative">
+    <div className={containerClass}>
       {renderVideoContent()}
     </div>
   );

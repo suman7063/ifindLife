@@ -10,6 +10,7 @@ interface VideoContainerProps {
   callStatus: 'choosing' | 'connecting' | 'connected' | 'ended' | 'error';
   userName: string;
   expertName: string;
+  videoMode?: 'side-by-side' | 'picture-in-picture';
   isDemoMode?: boolean;
 }
 
@@ -18,6 +19,7 @@ const VideoContainer: React.FC<VideoContainerProps> = ({
   callStatus,
   userName,
   expertName,
+  videoMode = 'side-by-side',
   isDemoMode = false
 }) => {
   // Safety check for callState to prevent null errors
@@ -49,17 +51,23 @@ const VideoContainer: React.FC<VideoContainerProps> = ({
     );
   }
 
+  const containerClass = videoMode === 'picture-in-picture' 
+    ? "relative w-full h-full min-h-[400px] rounded-xl overflow-hidden bg-gradient-to-br from-primary/5 to-accent/5 border border-primary/20"
+    : "relative w-full h-full min-h-[300px] rounded-xl overflow-hidden bg-gradient-to-br from-primary/5 to-accent/5 border border-primary/20";
+
   return (
-    <div className="relative w-full h-full min-h-[300px]">
+    <div className={containerClass}>
       <RemoteVideoDisplay 
         callState={safeCallState} 
         callStatus={callStatus} 
         expertName={expertName}
+        videoMode={videoMode}
       />
       <LocalVideoPreview 
         callState={safeCallState} 
         userName={userName} 
         isJoined={safeCallState.isJoined}
+        videoMode={videoMode}
       />
     </div>
   );

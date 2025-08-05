@@ -197,14 +197,11 @@ const AgoraChatModal: React.FC<AgoraChatModalProps> = ({
             <AgoraCallControls
               callState={callState}
               callType={callType}
-              isExtending={isExtending}
-              isFullscreen={false}
               onToggleMute={handleToggleMute}
               onToggleVideo={handleToggleVideo}
               onEndCall={handleEndChat}
-              onExtendCall={() => {}}
               onToggleChat={handleToggleChatPanel}
-              onToggleFullscreen={() => {}}
+              showChat={showChat}
             />
           </div>
         )}

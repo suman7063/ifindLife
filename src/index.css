@@ -37,6 +37,13 @@
 
     --radius: 0.5rem;
 
+    /* Enhanced gradients and colors */
+    --gradient-primary: linear-gradient(135deg, hsl(196 94% 67%) 0%, hsl(173 52% 66%) 100%);
+    --gradient-secondary: linear-gradient(135deg, hsl(260 67% 73%) 0%, hsl(196 94% 67%) 100%);
+    --gradient-call: linear-gradient(135deg, hsl(260 67% 73%) 0%, hsl(173 52% 66%) 50%, hsl(196 94% 67%) 100%);
+    --shadow-vibrant: 0 8px 32px hsla(196 94% 67% / 0.25);
+    --shadow-glow: 0 0 40px hsla(173 52% 66% / 0.3);
+
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;

@@ -10,6 +10,7 @@ import AgoraCallControls from '../../AgoraCallControls';
 import CallAuthMessage from '../CallAuthMessage';
 import CallErrorMessage from '../CallErrorMessage';
 import EnhancedCallTimer from '../../timer/EnhancedCallTimer';
+import { useVideoMode } from '@/hooks/call/useVideoMode';
 
 interface CallModalContentProps {
   expert: {
@@ -36,6 +37,8 @@ export const CallModalContent: React.FC<CallModalContentProps> = ({ expert, onCl
     handleRetry,
     handleToggleChatPanel
   } = useCallModal();
+
+  const { videoMode, toggleVideoMode } = useVideoMode();
 
   const { handleEndCall } = useCallEndHandler({ onClose });
   const { handleExtendCall } = useCallExtensionHandler();
@@ -94,6 +97,7 @@ export const CallModalContent: React.FC<CallModalContentProps> = ({ expert, onCl
         callState={callState}
         callStatus={callStatus}
         showChat={showChat}
+        videoMode={videoMode}
         duration={timerData.duration}
         remainingTime={timerData.remainingTime}
         cost={timerData.calculateFinalCost()}
@@ -108,14 +112,13 @@ export const CallModalContent: React.FC<CallModalContentProps> = ({ expert, onCl
           <AgoraCallControls
             callState={callState}
             callType={callOperations.callType}
-            isExtending={false}
-            isFullscreen={false}
+            videoMode={videoMode}
             onToggleMute={callOperations.handleToggleMute}
             onToggleVideo={callOperations.handleToggleVideo}
             onEndCall={handleEndCall}
-            onExtendCall={() => {}} // Extension handled by timer component
             onToggleChat={handleToggleChatPanel}
-            onToggleFullscreen={() => {}}
+            onToggleVideoMode={toggleVideoMode}
+            showChat={showChat}
           />
         </div>
       )}

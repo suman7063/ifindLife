@@ -73,27 +73,27 @@ const AgoraCallChat: React.FC<AgoraCallChatProps> = ({
   if (!visible) return null;
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-lg shadow-lg">
-      <div className="border-b p-3">
-        <h3 className="font-medium">Chat with {expertName}</h3>
+    <div className="flex flex-col h-full bg-gradient-to-br from-card via-card to-accent/5 rounded-xl shadow-xl border border-primary/20">
+      <div className="border-b border-primary/20 p-4 bg-gradient-to-r from-primary/10 to-accent/10 rounded-t-xl">
+        <h3 className="font-semibold text-primary">Chat with {expertName}</h3>
       </div>
       
-      <div className="flex-1 overflow-y-auto p-3 space-y-3">
+      <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.map(message => (
           <div 
             key={message.id} 
             className={`flex flex-col ${message.sender === userName ? 'items-end' : 'items-start'}`}
           >
             <div 
-              className={`px-3 py-2 rounded-lg max-w-[80%] ${
+              className={`px-4 py-3 rounded-xl max-w-[80%] shadow-sm ${
                 message.sender === userName 
-                  ? 'bg-blue-500 text-white' 
-                  : 'bg-gray-100 text-gray-800'
+                  ? 'bg-gradient-to-r from-primary to-accent text-primary-foreground' 
+                  : 'bg-gradient-to-r from-muted to-secondary/20 text-foreground border border-border/50'
               }`}
             >
               {message.text}
             </div>
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-muted-foreground mt-1 font-medium">
               {message.sender} • {formatTime(message.timestamp)}
             </div>
           </div>
@@ -101,17 +101,18 @@ const AgoraCallChat: React.FC<AgoraCallChatProps> = ({
         <div ref={messagesEndRef} />
       </div>
       
-      <div className="border-t p-3 flex gap-2">
+      <div className="border-t border-primary/20 p-4 flex gap-3 bg-gradient-to-r from-background to-muted/30 rounded-b-xl">
         <Input 
           value={messageText}
           onChange={(e) => setMessageText(e.target.value)}
           placeholder="Type a message..."
           onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+          className="flex-1 border-primary/20 focus:border-primary/40 bg-background/80"
         />
         <Button 
           onClick={handleSendMessage}
           size="icon"
-          className="shrink-0"
+          className="shrink-0 bg-gradient-to-r from-primary to-accent hover:from-primary/80 hover:to-accent/80 shadow-lg"
           disabled={messageText.trim() === ''}
         >
           <Send className="h-4 w-4" />

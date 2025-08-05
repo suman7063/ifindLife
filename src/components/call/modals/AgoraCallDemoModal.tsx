@@ -172,14 +172,11 @@ const AgoraCallDemoModal: React.FC<AgoraCallDemoModalProps> = ({
               <AgoraCallControls
                 callState={callState}
                 callType={callType === 'voice' ? 'audio' : 'video'}
-                isExtending={false}
-                isFullscreen={false}
                 onToggleMute={handleToggleMute}
                 onToggleVideo={handleToggleVideo}
                 onEndCall={handleEndCall}
-                onExtendCall={() => {}}
                 onToggleChat={() => setShowChat(!showChat)}
-                onToggleFullscreen={() => {}}
+                showChat={showChat}
               />
             </div>
           </>

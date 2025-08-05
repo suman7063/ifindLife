@@ -7,12 +7,14 @@ interface LocalVideoPreviewProps {
   callState: CallState;
   userName: string;
   isJoined: boolean;
+  videoMode?: 'side-by-side' | 'picture-in-picture';
 }
 
 const LocalVideoPreview: React.FC<LocalVideoPreviewProps> = ({ 
   callState, 
   userName,
-  isJoined
+  isJoined,
+  videoMode = 'side-by-side'
 }) => {
   const localVideoRef = useRef<HTMLDivElement>(null);
 
@@ -38,15 +40,19 @@ const LocalVideoPreview: React.FC<LocalVideoPreviewProps> = ({
     return null;
   }
 
+  const containerClass = videoMode === 'picture-in-picture' 
+    ? "absolute bottom-4 right-4 w-32 h-40 bg-gradient-to-br from-secondary/90 to-accent/90 rounded-lg overflow-hidden border-2 border-primary/40 shadow-lg"
+    : "absolute bottom-2 right-2 w-24 h-32 bg-gradient-to-br from-secondary/90 to-accent/90 rounded overflow-hidden border-2 border-primary/40 shadow-lg";
+
   return (
-    <div className="absolute bottom-2 right-2 w-24 h-32 bg-slate-700 rounded overflow-hidden border-2 border-white/20">
+    <div className={containerClass}>
       {callState.localVideoTrack && callState.isVideoEnabled ? (
         <div ref={localVideoRef} className="w-full h-full" />
       ) : (
         <div className="w-full h-full flex items-center justify-center">
           <div className="flex flex-col items-center">
-            <UserIcon className="h-8 w-8 text-white/70" />
-            <span className="text-white text-xs mt-1">{userName}</span>
+            <UserIcon className="h-6 w-6 text-primary-foreground" />
+            <span className="text-primary-foreground text-xs mt-1 font-medium">{userName}</span>
           </div>
         </div>
       )}
