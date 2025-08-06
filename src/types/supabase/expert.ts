@@ -23,6 +23,8 @@ export interface ExpertProfile {
   status?: 'pending' | 'approved' | 'disapproved'; // Use union type instead of string
   created_at?: string;
   updated_at?: string;
+  languages?: string[]; // Add languages field
+  category?: string; // Add category field
 }
 
 // Export types related to expert reviews

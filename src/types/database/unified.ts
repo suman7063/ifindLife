@@ -74,6 +74,7 @@ export interface ExpertProfile {
   reviews_count?: number;
   verified?: boolean;
   category?: 'listening-volunteer' | 'listening-expert' | 'listening-coach' | 'mindfulness-expert';
+  languages?: string[]; // Add languages field
 }
 
 export interface AdminProfile {

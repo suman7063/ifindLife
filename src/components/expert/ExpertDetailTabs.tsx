@@ -27,18 +27,27 @@ interface ExpertDetailTabsProps {
 
 const ExpertDetailTabs: React.FC<ExpertDetailTabsProps> = ({ expert }) => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [currentTab, setCurrentTab] = React.useState<string>('about');
+  const [currentTab, setCurrentTab] = React.useState<string>(() => {
+    // Set initial tab based on URL parameters
+    if (searchParams.get('book') === 'true') {
+      return 'booking';
+    } else if (searchParams.get('call') === 'true') {
+      return 'about'; // Default to about for call since we don't have a call tab
+    } else {
+      return 'about';
+    }
+  });
 
   // Effect to handle URL params for direct booking or call tab access
   useEffect(() => {
-    if (searchParams.get('book') === 'true') {
+    if (searchParams.get('book') === 'true' && currentTab !== 'booking') {
       setCurrentTab('booking');
       // Don't remove the parameter immediately to allow for page refreshes
     } else if (searchParams.get('call') === 'true') {
       // In case we want to handle call tabs in the future
       console.log('Call parameter detected');
     }
-  }, [searchParams]);
+  }, [searchParams, currentTab]);
 
   // Handle tab change
   const handleTabChange = (value: string) => {

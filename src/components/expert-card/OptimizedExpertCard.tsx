@@ -80,7 +80,8 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
       price: expert.price || 0,
       waitTime: expert.waitTime || 'Unknown',
       category: (expert as any).category || '',
-      initials: getInitials(expert.name || '')
+      initials: getInitials(expert.name || ''),
+      languages: (expert as any).languages || ['English']
     };
   }, [expert, getExpertStatus]);
 
@@ -358,7 +359,7 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
         <div className="w-full space-y-2">
           <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
             <Languages className="h-3 w-3" />
-            <span>English, Hindi</span>
+            <span>{expertData.languages.join(', ')}</span>
           </div>
           {renderActionButtons()}
         </div>

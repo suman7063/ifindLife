@@ -523,6 +523,7 @@ export type Database = {
           email: string
           experience: string | null
           id: string
+          languages: string[] | null
           name: string
           onboarding_completed: boolean | null
           phone: string | null
@@ -551,6 +552,7 @@ export type Database = {
           email: string
           experience?: string | null
           id?: string
+          languages?: string[] | null
           name: string
           onboarding_completed?: boolean | null
           phone?: string | null
@@ -579,6 +581,7 @@ export type Database = {
           email?: string
           experience?: string | null
           id?: string
+          languages?: string[] | null
           name?: string
           onboarding_completed?: boolean | null
           phone?: string | null

@@ -87,10 +87,11 @@ const ExpertDetail = () => {
             waitTime: "Available",
             imageUrl: expertData.profile_picture || "",
             online: expertData.status === 'approved',
-            languages: ["English"], // TODO: Get from expert profile
+            languages: expertData.languages || ["English"],
             description: expertData.bio || "This expert is available for consultation.",
             education: "Professional Qualifications", // TODO: Get from expert profile
-            reviews: [] // TODO: Get from reviews table
+            reviews: [], // TODO: Get from reviews table
+            category: expertData.category
           };
           setExpert(transformedExpert);
         }
