@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
-import ExpertAvailabilityForm from './ExpertAvailabilityForm';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import EnhancedAvailabilityForm from './EnhancedAvailabilityForm';
 import ExpertAvailabilityList from './ExpertAvailabilityList';
 
 const AvailabilityManagement: React.FC = () => {
   const { expert, userProfile, isLoading } = useSimpleAuth();
+  const [refreshKey, setRefreshKey] = useState(0);
   
   // Use expert profile if available, otherwise fall back to user profile
   const currentUser = expert || userProfile;
@@ -26,10 +28,32 @@ const AvailabilityManagement: React.FC = () => {
     );
   }
 
+  const handleAvailabilityUpdated = () => {
+    setRefreshKey(prev => prev + 1);
+  };
+
   return (
     <div className="space-y-6">
-      <ExpertAvailabilityForm user={currentUser} />
-      <ExpertAvailabilityList user={currentUser} />
+      <Tabs defaultValue="create" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="create">Create New Availability</TabsTrigger>
+          <TabsTrigger value="manage">Manage Existing</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="create">
+          <EnhancedAvailabilityForm 
+            user={currentUser} 
+            onAvailabilityUpdated={handleAvailabilityUpdated}
+          />
+        </TabsContent>
+        
+        <TabsContent value="manage">
+          <ExpertAvailabilityList 
+            key={refreshKey}
+            user={currentUser} 
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

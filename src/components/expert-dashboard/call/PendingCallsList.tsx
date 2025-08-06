@@ -73,7 +73,9 @@ const PendingCallsList: React.FC<PendingCallsListProps> = ({
             calls.map((call) => {
               const userDisplayName = call.user_metadata?.name || 'Anonymous User';
               const userAvatar = call.user_metadata?.avatar || null;
-              const estimatedCost = call.estimated_cost_usd || call.estimated_cost_inr || 0;
+              const estimatedCost = call.estimated_cost_inr || call.estimated_cost_usd || 0;
+              const currency = call.estimated_cost_inr ? 'INR' : 'EUR';
+              const currencySymbol = currency === 'INR' ? '₹' : '€';
 
               return (
                 <div

@@ -29,8 +29,9 @@ interface CallRequest {
   id: string;
   user_id: string;
   call_type: string;
-  estimated_cost_usd: number;
-  estimated_cost_inr: number;
+  estimated_cost_eur?: number;
+  estimated_cost_inr?: number;
+  estimated_cost_usd?: number; // Keep for backward compatibility
   status: string;
   created_at: string;
   expires_at: string;
@@ -401,9 +402,9 @@ const CallManagementPage: React.FC = () => {
                             <h3 className="font-semibold">
                               {call.user_metadata?.name || 'Anonymous User'}
                             </h3>
-                            <p className="text-sm text-gray-600">
-                              {call.call_type} call • ${call.estimated_cost_usd}
-                            </p>
+                             <p className="text-sm text-gray-600">
+                               {call.call_type} call • {call.estimated_cost_inr ? `₹${call.estimated_cost_inr}` : call.estimated_cost_eur ? `€${call.estimated_cost_eur}` : `$${call.estimated_cost_usd || 0}`}
+                             </p>
                             <p className="text-xs text-gray-500">
                               Requested at {formatTime(call.created_at)}
                             </p>
@@ -462,9 +463,9 @@ const CallManagementPage: React.FC = () => {
                             <h3 className="font-semibold">
                               {call.user_metadata?.name || 'Anonymous User'}
                             </h3>
-                            <p className="text-sm text-gray-600">
-                              {call.call_type} call • ${call.estimated_cost_usd}
-                            </p>
+                             <p className="text-sm text-gray-600">
+                               {call.call_type} call • {call.estimated_cost_inr ? `₹${call.estimated_cost_inr}` : call.estimated_cost_eur ? `€${call.estimated_cost_eur}` : `$${call.estimated_cost_usd || 0}`}
+                             </p>
                             <p className="text-xs text-gray-500">
                               Missed at {formatTime(call.created_at)}
                             </p>

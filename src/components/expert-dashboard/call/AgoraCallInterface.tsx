@@ -36,7 +36,9 @@ interface AgoraCallInterfaceProps {
     channel_name: string;
     agora_token: string | null;
     agora_uid: number | null;
-    estimated_cost_usd: number | null;
+    estimated_cost_eur?: number | null;
+    estimated_cost_inr?: number | null;
+    estimated_cost_usd?: number | null; // Keep for backward compatibility
     user_metadata: any;
   };
   onCallEnd: () => void;
@@ -240,7 +242,9 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
 
   const userDisplayName = callRequest.user_metadata?.name || 'Anonymous User';
   const userAvatar = callRequest.user_metadata?.avatar || null;
-  const estimatedCost = callRequest.estimated_cost_usd || 0;
+  const estimatedCost = callRequest.estimated_cost_inr || callRequest.estimated_cost_usd || 0;
+  const currency = callRequest.estimated_cost_inr ? 'INR' : 'EUR';
+  const currencySymbol = currency === 'INR' ? '₹' : '€';
 
   return (
     <Card className="w-full max-w-4xl mx-auto">

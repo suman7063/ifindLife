@@ -62,60 +62,12 @@ const AnalyticsPage: React.FC = () => {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardDescription>Total Revenue</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">$14,250</div>
-                <p className="text-xs text-muted-foreground">
-                  +15% from last period
-                </p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardDescription>Total Sessions</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">127</div>
-                <p className="text-xs text-muted-foreground">
-                  +8 from last period
-                </p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardDescription>Active Clients</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">42</div>
-                <p className="text-xs text-muted-foreground">
-                  +3 new this period
-                </p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardDescription>Avg Rating</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">4.8</div>
-                <p className="text-xs text-muted-foreground">
-                  +0.1 from last period
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-          
-          {/* Quick Overview Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <RevenueAnalytics timeRange={timeRange} />
-            <SessionAnalytics timeRange={timeRange} />
+          <div className="text-center py-12">
+            <TrendingUp className="h-24 w-24 mx-auto text-muted-foreground mb-6" />
+            <h2 className="text-2xl font-bold mb-4">No Analytics Data Available</h2>
+            <p className="text-muted-foreground max-w-md mx-auto">
+              Start conducting sessions to see detailed analytics about your practice performance.
+            </p>
           </div>
         </TabsContent>
 
