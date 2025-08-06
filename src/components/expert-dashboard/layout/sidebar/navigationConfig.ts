@@ -10,6 +10,7 @@ import {
   BarChart3,
   Flag,
   Phone,
+  LogOut,
   type LucideIcon
 } from 'lucide-react';
 
@@ -85,5 +86,11 @@ export const navigationItems: NavigationItem[] = [
     href: '/expert-dashboard/reports',
     icon: Flag,
     description: 'Handle user reports'
+  },
+  {
+    name: 'Log Out',
+    href: '/logout',
+    icon: LogOut,
+    description: 'Sign out of your account'
   }
 ];

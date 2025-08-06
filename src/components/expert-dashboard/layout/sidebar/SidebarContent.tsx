@@ -16,8 +16,6 @@ const SidebarContent: React.FC = () => {
       <div className="flex-1">
         <SidebarNavigation />
       </div>
-      
-      <SidebarLogout />
     </div>
   );
 };

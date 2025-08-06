@@ -37,20 +37,6 @@ const PayoutSetup: React.FC<PayoutSetupProps> = ({ onBack }) => {
       label: 'Bank Transfer',
       icon: <Building2 className="h-5 w-5" />,
       fields: ['accountHolderName', 'bankName', 'accountNumber', 'routingNumber', 'swiftCode']
-    },
-    {
-      id: 'debit_card',
-      type: 'card',
-      label: 'Debit Card',
-      icon: <CreditCard className="h-5 w-5" />,
-      fields: ['cardHolderName', 'cardNumber', 'expiryDate', 'cvv']
-    },
-    {
-      id: 'digital_wallet',
-      type: 'digital_wallet',
-      label: 'Digital Wallet',
-      icon: <Wallet className="h-5 w-5" />,
-      fields: ['walletProvider', 'walletId', 'walletEmail']
     }
   ];
 
@@ -145,9 +131,7 @@ const PayoutSetup: React.FC<PayoutSetupProps> = ({ onBack }) => {
                   <div className="flex-1">
                     <h3 className="font-medium">{method.label}</h3>
                     <p className="text-sm text-muted-foreground">
-                      {method.type === 'bank' && 'Direct transfer to your bank account'}
-                      {method.type === 'card' && 'Quick transfer to your debit card'}
-                      {method.type === 'digital_wallet' && 'Transfer to your digital wallet'}
+                      Direct transfer to your bank account
                     </p>
                   </div>
                   {selectedMethod === method.id && (
