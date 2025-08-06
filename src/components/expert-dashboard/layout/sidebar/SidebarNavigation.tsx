@@ -4,13 +4,13 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { navigationItems } from './navigationConfig';
 import SidebarNavItem from './SidebarNavItem';
-import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { showLogoutSuccessToast, showLogoutErrorToast } from '@/utils/toastConfig';
 
 const SidebarNavigation: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout } = useUnifiedAuth();
+  const { logout } = useSimpleAuth();
   
   // Function to check if a path is active - improved logic
   const isActive = (path: string) => {
