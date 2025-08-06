@@ -17,7 +17,8 @@ import {
   Lock,
   Calendar,
   TrendingUp,
-  History
+  History,
+  Star
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -65,6 +66,7 @@ const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({
     { icon: History, label: 'Booking History', path: '/user-dashboard/booking-history' },
     { icon: TrendingUp, label: 'Progress Tracking', path: '/user-dashboard/progress' },
     { icon: Heart, label: 'Favorites', path: '/user-dashboard/favorites' },
+    { icon: Star, label: 'Reviews & Ratings', path: '/user-dashboard/reviews' },
     { icon: MessageSquare, label: 'Messages', path: '/user-dashboard/messages' },
     { icon: Lock, label: 'Security', path: '/user-dashboard/security' },
     { icon: Settings, label: 'Settings', path: '/user-dashboard/settings' },

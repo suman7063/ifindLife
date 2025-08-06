@@ -20,6 +20,7 @@ import SupportSection from '@/components/user/dashboard/sections/SupportSection'
 import ProgramsSection from '@/components/user/dashboard/sections/ProgramsSection';
 import BookingHistorySection from '@/components/user/dashboard/sections/BookingHistorySection';
 import ProgressTrackingSection from '@/components/user/dashboard/sections/ProgressTrackingSection';
+import ReviewsSection from '@/components/user/dashboard/sections/ReviewsSection';
 
 const UserDashboardWrapper = () => {
   const simpleAuth = useSimpleAuth();
@@ -160,6 +161,7 @@ const UserDashboardWrapper = () => {
               <Route path="/settings" element={<SettingsSection user={userProfile} />} />
               <Route path="/support" element={<SupportSection />} />
               <Route path="/consultations" element={<ConsultationsSection user={userProfile} />} />
+              <Route path="/reviews" element={<ReviewsSection user={userProfile} />} />
               {/* Fallback to dashboard home */}
               <Route path="*" element={<DashboardHome user={userProfile} />} />
             </Routes>

@@ -11,6 +11,7 @@ import ServicesPage from '@/components/expert-dashboard/pages/ServicesPage';
 import EarningsPage from '@/components/expert-dashboard/pages/EarningsPage';
 import ReportPage from '@/components/expert-dashboard/pages/ReportPage';
 import AnalyticsPage from '@/components/expert-dashboard/pages/analytics/AnalyticsPage';
+import ExpertReviewsPage from '@/components/expert-dashboard/pages/ExpertReviewsPage';
 import CallManagementPage from '@/components/expert-dashboard/pages/CallManagementPage';
 import ExpertOnboardingFlow from '@/components/expert/dashboard/ExpertOnboardingFlow';
 import CallReceptionWidget from '@/components/expert-dashboard/call/CallReceptionWidget';
@@ -150,6 +151,9 @@ const NewExpertDashboard: React.FC = () => {
         
         {/* User Reports */}
         <Route path="reports" element={<ReportPage />} />
+        
+        {/* Reviews & Ratings */}
+        <Route path="reviews" element={<ExpertReviewsPage />} />
         
         {/* Fallback route */}
         <Route path="*" element={<Navigate to="/expert-dashboard" replace />} />

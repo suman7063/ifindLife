@@ -52,7 +52,7 @@ const ExpertProfile: React.FC<ExpertProfileProps> = ({
     onBookClick();
   };
 
-  const handleFavoriteClick = (e: React.MouseEvent) => {
+  const handleFavoriteClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
@@ -60,7 +60,11 @@ const ExpertProfile: React.FC<ExpertProfileProps> = ({
       return; // FavoriteButton will handle auth redirect
     }
     
-    toggleExpertFavorite(expert.id.toString());
+    try {
+      await toggleExpertFavorite(expert.id.toString());
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+    }
   };
   return (
     <Card className="overflow-hidden border border-ifind-teal/20 bg-white">
