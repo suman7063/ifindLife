@@ -3,10 +3,11 @@ import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Languages, Star, Phone, Calendar, MessageCircle } from "lucide-react";
+import { MapPin, Languages, Star, Phone, Calendar } from "lucide-react";
 import { useAuthRedirectSystem } from '@/hooks/useAuthRedirectSystem';
 import FavoriteButton from '@/components/favorites/FavoriteButton';
 import { useFavorites } from '@/contexts/favorites/FavoritesContext';
+import { useExpertProfilePricing } from '@/hooks/useExpertProfilePricing';
 
 interface ExpertProfileProps {
   expert: {
@@ -22,20 +23,20 @@ interface ExpertProfileProps {
     online: boolean;
     languages: string[];
     description: string;
+    category?: string;
   };
   onCallClick: () => void;
   onBookClick: () => void;
-  onChatClick: () => void;
 }
 
 const ExpertProfile: React.FC<ExpertProfileProps> = ({ 
   expert, 
   onCallClick, 
-  onBookClick,
-  onChatClick 
+  onBookClick
 }) => {
   const { requireAuthForExpert, requireAuthForCall, isAuthenticated } = useAuthRedirectSystem();
   const { isExpertFavorite, toggleExpertFavorite } = useFavorites();
+  const { getPrice30, getPrice60, formatPrice, loading: pricingLoading } = useExpertProfilePricing(expert.id.toString());
 
   const handleCallClick = () => {
     if (!requireAuthForCall(expert.id.toString(), expert.name, 'video')) {
@@ -51,13 +52,6 @@ const ExpertProfile: React.FC<ExpertProfileProps> = ({
     onBookClick();
   };
 
-  const handleChatClick = () => {
-    if (!requireAuthForExpert(expert.id.toString(), expert.name, 'connect')) {
-      return; // User will be redirected to login
-    }
-    onChatClick();
-  };
-
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -69,21 +63,21 @@ const ExpertProfile: React.FC<ExpertProfileProps> = ({
     toggleExpertFavorite(expert.id.toString());
   };
   return (
-    <Card className="overflow-hidden border-0 shadow-md">
+    <Card className="overflow-hidden border-0 shadow-xl bg-gradient-to-br from-white via-white to-primary/5 backdrop-blur-sm">
         {/* Expert Image */}
-        <div className="relative h-64 w-full">
+        <div className="relative h-72 w-full">
           {expert.imageUrl ? (
             <img 
               src={expert.imageUrl} 
               alt={expert.name} 
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
               }}
             />
           ) : (
-            <div className="w-full h-full bg-primary/10 flex items-center justify-center">
-              <span className="text-6xl font-bold text-primary">
+            <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+              <span className="text-6xl font-bold text-primary drop-shadow-md">
                 {expert.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
               </span>
             </div>
@@ -91,8 +85,11 @@ const ExpertProfile: React.FC<ExpertProfileProps> = ({
           
           {/* Online Status */}
           {expert.online && (
-            <div className="absolute top-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-              Online
+            <div className="absolute top-4 right-4 bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg backdrop-blur-sm border border-white/20">
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                <span>Online</span>
+              </div>
             </div>
           )}
 
@@ -104,8 +101,12 @@ const ExpertProfile: React.FC<ExpertProfileProps> = ({
               expertId={expert.id.toString()}
               expertName={expert.name}
               tooltipText={isExpertFavorite(expert.id.toString()) ? 'Remove from favorites' : 'Add to favorites'}
+              className="backdrop-blur-sm bg-white/20 hover:bg-white/30 border border-white/30"
             />
           </div>
+
+          {/* Overlay gradient for better text readability */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
         </div>
       
       <CardContent className="p-6">
@@ -148,17 +149,28 @@ const ExpertProfile: React.FC<ExpertProfileProps> = ({
           </div>
         </div>
         
-        {/* Price and CTA */}
+        {/* Session Rates & CTA */}
         <div className="space-y-4">
-          <div className="border-t pt-4">
-            <p className="text-lg font-semibold">₹{expert.price}/min</p>
-            <p className="text-sm text-green-600">{expert.waitTime}</p>
+          <div className="border-t pt-4 space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">30 min session</span>
+              <span className="font-semibold">
+                {pricingLoading ? '...' : formatPrice(getPrice30())}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">60 min session</span>
+              <span className="font-semibold">
+                {pricingLoading ? '...' : formatPrice(getPrice60())}
+              </span>
+            </div>
+            <p className="text-sm text-green-600 pt-2">{expert.waitTime}</p>
           </div>
           
           <div className="grid grid-cols-2 gap-3">
             <Button
               onClick={handleCallClick}
-              className="flex items-center justify-center gap-2"
+              className="flex items-center justify-center gap-2 bg-gradient-to-r from-primary to-primary-glow hover:from-primary-glow hover:to-primary transition-all duration-300"
               variant="default"
             >
               <Phone className="h-4 w-4" />
@@ -167,7 +179,7 @@ const ExpertProfile: React.FC<ExpertProfileProps> = ({
             
             <Button 
               onClick={handleBookClick} 
-              className="flex items-center justify-center gap-2"
+              className="flex items-center justify-center gap-2 border-primary text-primary hover:bg-primary hover:text-white transition-all duration-300"
               variant="outline"
               data-id="booking-tab-button"
             >
@@ -175,16 +187,6 @@ const ExpertProfile: React.FC<ExpertProfileProps> = ({
               <span>Book</span>
             </Button>
           </div>
-          
-          <Button 
-            onClick={handleChatClick}
-            className="w-full flex items-center justify-center gap-2"
-            variant="secondary"
-            data-id="chat-button"
-          >
-            <MessageCircle className="h-4 w-4" />
-            <span>Message Expert</span>
-          </Button>
         </div>
       </CardContent>
     </Card>

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import StreamlinedBooking from './StreamlinedBooking';
+import EnhancedStreamlinedBooking from './EnhancedStreamlinedBooking';
 
 // Define the props interface for the component
 interface BookingTabProps {
@@ -12,7 +12,7 @@ interface BookingTabProps {
 const BookingTab: React.FC<BookingTabProps> = ({ expertId, expertName, onBookingComplete = () => {} }) => {
   return (
     <div className="w-full">
-      <StreamlinedBooking 
+      <EnhancedStreamlinedBooking 
         expertId={expertId} 
         expertName={expertName}
         onBookingComplete={onBookingComplete}

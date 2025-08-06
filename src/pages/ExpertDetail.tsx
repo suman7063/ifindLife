@@ -4,7 +4,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import AgoraCallModal from '@/components/AgoraCallModal';
-import AgoraChatModal from '@/components/AgoraChatModal';
+
 import { toast } from 'sonner';
 import { useAuthRedirectSystem } from '@/hooks/useAuthRedirectSystem';
 import { useFetchExpertProfile } from '@/contexts/auth/hooks/useFetchExpertProfile';
@@ -16,7 +16,7 @@ const ExpertDetail = () => {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const [isCallModalOpen, setIsCallModalOpen] = useState(false);
-  const [isChatModalOpen, setIsChatModalOpen] = useState(false);
+  
   const { executeIntendedAction, isAuthenticated } = useAuthRedirectSystem();
   
   // Define handler functions early to avoid temporal dead zone errors
@@ -35,20 +35,10 @@ const ExpertDetail = () => {
     }
   };
   
-  const handleChatClick = () => {
-    // This will be properly defined after expert state is loaded  
-    const tabElement = document.getElementById('chat-action');
-    if (tabElement) {
-      tabElement.click();
-    }
-  };
   
   useEffect(() => {
     if (searchParams.get('call') === 'true') {
       setIsCallModalOpen(true);
-    }
-    if (searchParams.get('chat') === 'true') {
-      setIsChatModalOpen(true);
     }
     if (searchParams.get('book') === 'true') {
       // Activate the booking tab automatically
@@ -66,8 +56,6 @@ const ExpertDetail = () => {
         // Execute the appropriate action based on the pending action type
         if (pendingAction.action === 'call') {
           setIsCallModalOpen(true);
-        } else if (pendingAction.action === 'connect') {
-          setIsChatModalOpen(true);
         } else if (pendingAction.action === 'book') {
           handleBookClick();
         }
@@ -182,34 +170,34 @@ const ExpertDetail = () => {
     }
   };
   
-  const handleChatClickWithExpert = () => {
-    if (expert?.online && expert?.waitTime === "Available") {
-      setIsChatModalOpen(true);
-    } else {
-      toast.error("Expert Unavailable", {
-        description: "This expert is currently offline or busy. Please try again later."
-      });
-    }
-  };
   
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <ExpertHeader />
       
-      <main className="flex-1 py-8">
-        <div className="container">
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="md:col-span-1">
-              <ExpertProfile 
-                expert={expert} 
-                onCallClick={handleCallClickWithExpert}
-                onBookClick={handleBookClick}
-                onChatClick={handleChatClickWithExpert}
-              />
+      <main className="flex-1 py-8 bg-gradient-to-br from-background via-background/95 to-primary/5">
+        <div className="container max-w-7xl mx-auto px-4">
+          {/* Enhanced Header Section */}
+          <div className="mb-8">
+            <div className="bg-gradient-to-r from-primary/10 to-transparent p-6 rounded-xl border border-primary/20">
+              <h1 className="text-3xl font-bold text-primary mb-2">Expert Profile</h1>
+              <p className="text-muted-foreground">Connect with {expert.name} for professional guidance and support</p>
+            </div>
+          </div>
+
+          <div className="grid lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-1">
+              <div className="sticky top-8">
+                <ExpertProfile 
+                  expert={expert} 
+                  onCallClick={handleCallClickWithExpert}
+                  onBookClick={handleBookClick}
+                />
+              </div>
             </div>
             
-            <div className="md:col-span-2">
+            <div className="lg:col-span-2">
               <ExpertDetailTabs expert={expert} />
             </div>
           </div>
@@ -229,16 +217,6 @@ const ExpertDetail = () => {
         }}
       />
       
-      <AgoraChatModal 
-        isOpen={isChatModalOpen}
-        onClose={() => setIsChatModalOpen(false)}
-        expert={{
-          id: expert.id,
-          name: expert.name,
-          imageUrl: expert.imageUrl,
-          price: expert.price
-        }}
-      />
     </div>
   );
 };
