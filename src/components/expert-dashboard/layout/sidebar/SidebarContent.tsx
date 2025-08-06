@@ -13,7 +13,9 @@ const SidebarContent: React.FC = () => {
       
       <Separator />
       
-      <SidebarNavigation />
+      <div className="flex-1">
+        <SidebarNavigation />
+      </div>
       
       <SidebarLogout />
     </div>

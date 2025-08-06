@@ -22,6 +22,7 @@ import {
  } from 'lucide-react';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { useExpertPresence } from '@/contexts/ExpertPresenceContext';
+import { useUserCurrency } from '@/hooks/call/useUserCurrency';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
@@ -50,6 +51,8 @@ interface OfflineMessage {
 const CallManagementPage: React.FC = () => {
   const { expert } = useSimpleAuth();
   const { getExpertPresence } = useExpertPresence();
+  const { currency } = useUserCurrency();
+  const currencySymbol = currency === 'INR' ? '₹' : '€';
   
   const [autoAcceptCalls, setAutoAcceptCalls] = useState(false);
   const [incomingCalls, setIncomingCalls] = useState<CallRequest[]>([]);
@@ -328,9 +331,9 @@ const CallManagementPage: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Today's Earnings</p>
-                <p className="text-3xl font-bold">${callStats.earnings}</p>
+                <p className="text-3xl font-bold">{currencySymbol}{callStats.earnings}</p>
               </div>
-              <Badge className="h-8 w-8 p-0 text-purple-500" variant="outline">$</Badge>
+              <Badge className="h-8 w-8 p-0 text-purple-500" variant="outline">{currencySymbol}</Badge>
             </div>
           </CardContent>
         </Card>
