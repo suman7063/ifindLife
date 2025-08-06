@@ -1138,6 +1138,42 @@ export type Database = {
           },
         ]
       }
+      expert_user_reports: {
+        Row: {
+          created_at: string
+          details: string | null
+          expert_id: string
+          id: string
+          reason: string
+          reported_user_email: string | null
+          reported_user_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          details?: string | null
+          expert_id: string
+          id?: string
+          reason: string
+          reported_user_email?: string | null
+          reported_user_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          details?: string | null
+          expert_id?: string
+          id?: string
+          reason?: string
+          reported_user_email?: string | null
+          reported_user_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       experts: {
         Row: {
           address: string | null
