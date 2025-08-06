@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,54 +8,59 @@ import { Badge } from '@/components/ui/badge';
 import { AlertCircle, Search, Filter, FileText } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { supabase } from '@/lib/supabase';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
+import { toast } from 'sonner';
 
 const ReportPage = () => {
+  const { expert } = useSimpleAuth();
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
+  const [reports, setReports] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [reasonFilter, setReasonFilter] = useState('all');
   const [reportForm, setReportForm] = useState({
-    userId: '',
+    reportedUserEmail: '',
     reason: '',
     details: ''
   });
 
-  // Mock data for existing reports
-  const reports = [
-    {
-      id: '1',
-      userId: 'user_123',
-      userName: 'John Doe',
-      reason: 'inappropriate_behavior',
-      details: 'User was being disrespectful during the session',
-      status: 'pending',
-      date: '2024-01-15',
-      sessionId: 'session_456'
-    },
-    {
-      id: '2',
-      userId: 'user_789',
-      userName: 'Jane Smith',
-      reason: 'no_show',
-      details: 'Client did not attend scheduled appointment without notice',
-      status: 'resolved',
-      date: '2024-01-12',
-      sessionId: 'session_789'
-    },
-    {
-      id: '3',
-      userId: 'user_321',
-      userName: 'Mike Johnson',
-      reason: 'payment_issue',
-      details: 'Client disputed payment after session completion',
-      status: 'under_review',
-      date: '2024-01-10',
-      sessionId: 'session_321'
+  // Load reports from database
+  useEffect(() => {
+    if (expert?.auth_id) {
+      loadReports();
     }
-  ];
+  }, [expert?.auth_id]);
+
+  const loadReports = async () => {
+    if (!expert?.auth_id) return;
+
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('expert_user_reports')
+        .select('*')
+        .eq('expert_id', expert.auth_id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setReports(data || []);
+    } catch (error) {
+      console.error('Error loading reports:', error);
+      toast.error('Failed to load reports');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const reasonLabels = {
     inappropriate_behavior: 'Inappropriate Behavior',
     no_show: 'No Show',
     payment_issue: 'Payment Issue',
     harassment: 'Harassment',
+    abusive_language: 'Abusive Language',
+    privacy_violation: 'Privacy Violation',
     other: 'Other'
   };
 
@@ -71,11 +75,59 @@ const ReportPage = () => {
     return <Badge variant={variants[status as keyof typeof variants] || 'default'}>{status.replace('_', ' ')}</Badge>;
   };
 
-  const handleSubmitReport = () => {
-    // Handle report submission logic here
-    console.log('Submitting report:', reportForm);
-    setIsReportDialogOpen(false);
-    setReportForm({ userId: '', reason: '', details: '' });
+  const handleSubmitReport = async () => {
+    if (!expert?.auth_id) {
+      toast.error('You must be logged in to submit a report');
+      return;
+    }
+
+    if (!reportForm.reportedUserEmail || !reportForm.reason) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('expert_user_reports')
+        .insert({
+          expert_id: expert.auth_id,
+          reported_user_email: reportForm.reportedUserEmail,
+          reason: reportForm.reason,
+          details: reportForm.details,
+          status: 'pending'
+        });
+
+      if (error) throw error;
+
+      toast.success('Report submitted successfully');
+      setIsReportDialogOpen(false);
+      setReportForm({ reportedUserEmail: '', reason: '', details: '' });
+      loadReports(); // Reload reports
+    } catch (error) {
+      console.error('Error submitting report:', error);
+      toast.error('Failed to submit report');
+    }
+  };
+
+  // Filter reports based on search and filters
+  const filteredReports = reports.filter(report => {
+    const matchesSearch = !searchTerm || 
+      report.reported_user_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.details?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      reasonLabels[report.reason as keyof typeof reasonLabels]?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || report.status === statusFilter;
+    const matchesReason = reasonFilter === 'all' || report.reason === reasonFilter;
+    
+    return matchesSearch && matchesStatus && matchesReason;
+  });
+
+  // Calculate stats
+  const stats = {
+    total: reports.length,
+    pending: reports.filter(r => r.status === 'pending').length,
+    under_review: reports.filter(r => r.status === 'under_review').length,
+    resolved: reports.filter(r => r.status === 'resolved').length
   };
 
   return (
@@ -98,12 +150,12 @@ const ReportPage = () => {
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="userId">User ID or Email</Label>
+                <Label htmlFor="reportedUserEmail">User Email</Label>
                 <Input
-                  id="userId"
-                  placeholder="Enter user ID or email"
-                  value={reportForm.userId}
-                  onChange={(e) => setReportForm({ ...reportForm, userId: e.target.value })}
+                  id="reportedUserEmail"
+                  placeholder="Enter user email address"
+                  value={reportForm.reportedUserEmail}
+                  onChange={(e) => setReportForm({ ...reportForm, reportedUserEmail: e.target.value })}
                 />
               </div>
               
@@ -116,8 +168,10 @@ const ReportPage = () => {
                   <SelectContent>
                     <SelectItem value="inappropriate_behavior">Inappropriate Behavior</SelectItem>
                     <SelectItem value="harassment">Harassment</SelectItem>
+                    <SelectItem value="abusive_language">Abusive Language</SelectItem>
                     <SelectItem value="no_show">No Show</SelectItem>
                     <SelectItem value="payment_issue">Payment Issue</SelectItem>
+                    <SelectItem value="privacy_violation">Privacy Violation</SelectItem>
                     <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>
@@ -154,7 +208,7 @@ const ReportPage = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Reports</p>
-                <p className="text-3xl font-bold">{reports.length}</p>
+                <p className="text-3xl font-bold">{stats.total}</p>
               </div>
               <FileText className="h-8 w-8 text-blue-500" />
             </div>
@@ -166,11 +220,11 @@ const ReportPage = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Pending</p>
-                <p className="text-3xl font-bold">
-                  {reports.filter(r => r.status === 'pending').length}
-                </p>
+                <p className="text-3xl font-bold">{stats.pending}</p>
               </div>
-              <AlertCircle className="h-8 w-8 text-orange-500" />
+              <div className="h-8 w-8 rounded-full bg-yellow-100 flex items-center justify-center">
+                <AlertCircle className="h-5 w-5 text-yellow-600" />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -180,11 +234,11 @@ const ReportPage = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Under Review</p>
-                <p className="text-3xl font-bold">
-                  {reports.filter(r => r.status === 'under_review').length}
-                </p>
+                <p className="text-3xl font-bold">{stats.under_review}</p>
               </div>
-              <AlertCircle className="h-8 w-8 text-yellow-500" />
+              <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                <Search className="h-5 w-5 text-blue-600" />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -194,11 +248,11 @@ const ReportPage = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Resolved</p>
-                <p className="text-3xl font-bold">
-                  {reports.filter(r => r.status === 'resolved').length}
-                </p>
+                <p className="text-3xl font-bold">{stats.resolved}</p>
               </div>
-              <AlertCircle className="h-8 w-8 text-green-500" />
+              <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
+                <div className="h-5 w-5 rounded-full bg-green-600"></div>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -210,36 +264,55 @@ const ReportPage = () => {
           <CardTitle>Filter Reports</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input placeholder="Search by user name or ID..." className="pl-10" />
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1">
+              <Label htmlFor="search">Search</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  id="search"
+                  placeholder="Search by user email, reason, or details..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
             </div>
-            <Select>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="under_review">Under Review</SelectItem>
-                <SelectItem value="resolved">Resolved</SelectItem>
-                <SelectItem value="dismissed">Dismissed</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Filter by reason" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Reasons</SelectItem>
-                <SelectItem value="inappropriate_behavior">Inappropriate Behavior</SelectItem>
-                <SelectItem value="harassment">Harassment</SelectItem>
-                <SelectItem value="no_show">No Show</SelectItem>
-                <SelectItem value="payment_issue">Payment Issue</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
-              </SelectContent>
-            </Select>
+            
+            <div>
+              <Label htmlFor="status-filter">Status</Label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="under_review">Under Review</SelectItem>
+                  <SelectItem value="resolved">Resolved</SelectItem>
+                  <SelectItem value="dismissed">Dismissed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <Label htmlFor="reason-filter">Reason</Label>
+              <Select value={reasonFilter} onValueChange={setReasonFilter}>
+                <SelectTrigger className="w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Reasons</SelectItem>
+                  <SelectItem value="inappropriate_behavior">Inappropriate Behavior</SelectItem>
+                  <SelectItem value="harassment">Harassment</SelectItem>
+                  <SelectItem value="abusive_language">Abusive Language</SelectItem>
+                  <SelectItem value="no_show">No Show</SelectItem>
+                  <SelectItem value="payment_issue">Payment Issue</SelectItem>
+                  <SelectItem value="privacy_violation">Privacy Violation</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -251,49 +324,53 @@ const ReportPage = () => {
           <CardDescription>Reports you have submitted against users</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {reports.map((report) => (
-              <div key={report.id} className="border rounded-lg p-4">
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <h3 className="font-semibold">{report.userName}</h3>
-                    <p className="text-sm text-gray-600">User ID: {report.userId}</p>
-                    <p className="text-sm text-gray-600">Session: {report.sessionId}</p>
+          {loading ? (
+            <div className="text-center py-8">
+              <p>Loading reports...</p>
+            </div>
+          ) : filteredReports.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <AlertCircle className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+              <p>No reports found</p>
+              <p className="text-sm">
+                {reports.length === 0 ? "You haven't submitted any reports yet" : "No reports match your current filters"}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredReports.map((report) => (
+                <div key={report.id} className="border rounded-lg p-4 hover:bg-gray-50">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h3 className="font-semibold">
+                          {report.reported_user_email || 'No email provided'}
+                        </h3>
+                        {getStatusBadge(report.status)}
+                      </div>
+                      <p className="text-sm text-gray-600 mb-2">
+                        <span className="font-medium">Reason:</span> {reasonLabels[report.reason as keyof typeof reasonLabels] || report.reason}
+                      </p>
+                      {report.details && (
+                        <p className="text-sm text-gray-700 mb-3">
+                          <span className="font-medium">Details:</span> {report.details}
+                        </p>
+                      )}
+                      <p className="text-xs text-gray-500">
+                        Reported on {new Date(report.created_at).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long', 
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    {getStatusBadge(report.status)}
-                    <p className="text-sm text-gray-500 mt-1">{report.date}</p>
-                  </div>
                 </div>
-                
-                <div className="mb-3">
-                  <Badge variant="outline" className="mb-2">
-                    {reasonLabels[report.reason as keyof typeof reasonLabels] || report.reason}
-                  </Badge>
-                  <p className="text-sm text-gray-700">{report.details}</p>
-                </div>
-                
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm">
-                    View Details
-                  </Button>
-                  {report.status === 'pending' && (
-                    <Button variant="outline" size="sm">
-                      Update Report
-                    </Button>
-                  )}
-                </div>
-              </div>
-            ))}
-            
-            {reports.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                <AlertCircle className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                <p>No reports submitted yet</p>
-                <p className="text-sm">Reports you submit will appear here</p>
-              </div>
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
