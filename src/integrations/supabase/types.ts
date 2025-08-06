@@ -169,6 +169,8 @@ export type Database = {
           google_calendar_event_id: string | null
           id: string
           notes: string | null
+          payment_status: string | null
+          razorpay_payment_id: string | null
           reminder_sent: boolean | null
           service_id: number | null
           start_time: string | null
@@ -190,6 +192,8 @@ export type Database = {
           google_calendar_event_id?: string | null
           id?: string
           notes?: string | null
+          payment_status?: string | null
+          razorpay_payment_id?: string | null
           reminder_sent?: boolean | null
           service_id?: number | null
           start_time?: string | null
@@ -211,6 +215,8 @@ export type Database = {
           google_calendar_event_id?: string | null
           id?: string
           notes?: string | null
+          payment_status?: string | null
+          razorpay_payment_id?: string | null
           reminder_sent?: boolean | null
           service_id?: number | null
           start_time?: string | null
@@ -376,11 +382,14 @@ export type Database = {
           expert_auth_id: string | null
           expert_category: string | null
           expert_id: number
+          failure_reason: string | null
           id: string
           missed_call: boolean | null
           payment_method: string | null
+          payment_status: string | null
           pricing_tier: string | null
           rating: number | null
+          razorpay_payment_id: string | null
           recording_url: string | null
           review: string | null
           selected_duration: number | null
@@ -408,11 +417,14 @@ export type Database = {
           expert_auth_id?: string | null
           expert_category?: string | null
           expert_id: number
+          failure_reason?: string | null
           id: string
           missed_call?: boolean | null
           payment_method?: string | null
+          payment_status?: string | null
           pricing_tier?: string | null
           rating?: number | null
+          razorpay_payment_id?: string | null
           recording_url?: string | null
           review?: string | null
           selected_duration?: number | null
@@ -440,11 +452,14 @@ export type Database = {
           expert_auth_id?: string | null
           expert_category?: string | null
           expert_id?: number
+          failure_reason?: string | null
           id?: string
           missed_call?: boolean | null
           payment_method?: string | null
+          payment_status?: string | null
           pricing_tier?: string | null
           rating?: number | null
+          razorpay_payment_id?: string | null
           recording_url?: string | null
           review?: string | null
           selected_duration?: number | null
@@ -2364,6 +2379,36 @@ export type Database = {
           reward_points?: number | null
           terms_accepted?: boolean | null
           wallet_balance?: number | null
+        }
+        Relationships: []
+      }
+      webhook_logs: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          payload: Json
+          processed_at: string
+          provider: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          payload: Json
+          processed_at?: string
+          provider: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          payload?: Json
+          processed_at?: string
+          provider?: string
+          status?: string
         }
         Relationships: []
       }
