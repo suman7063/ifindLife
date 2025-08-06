@@ -3,13 +3,15 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Star, Video, Phone, Clock, Calendar } from 'lucide-react';
+import { Star, Video, Phone, Clock, Calendar, Languages } from 'lucide-react';
 import { ExpertCardData } from './types';
 import { useAuth } from '@/contexts/auth';
 import { useAuthRedirectSystem } from '@/hooks/useAuthRedirectSystem';
 import { useExpertPresence } from '@/contexts/ExpertPresenceContext';
 import ExpertStatusIndicator from './ExpertStatusIndicator';
 import AwayMessageDialog from './AwayMessageDialog';
+import FavoriteButton from '@/components/favorites/FavoriteButton';
+import { useFavorites } from '@/contexts/favorites/FavoritesContext';
 import { getInitials } from '@/utils/getInitials';
 import { toast } from 'sonner';
 
@@ -38,6 +40,7 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
 }) => {
   const { isAuthenticated } = useAuth();
   const { requireAuthForExpert, requireAuthForCall, executeIntendedAction } = useAuthRedirectSystem();
+  const { isExpertFavorite, toggleExpertFavorite } = useFavorites();
   const [showAwayDialog, setShowAwayDialog] = useState(false);
   
   // Use simplified expert presence
@@ -165,6 +168,18 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
     });
   }, [requireAuthForExpert, expertData.id, expertData.name, onBookNow, handleInteraction]);
 
+  // Handle favorite click
+  const handleFavoriteClick = React.useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!isAuthenticated) {
+      return; // FavoriteButton will handle auth redirect
+    }
+    
+    toggleExpertFavorite(expertData.id);
+  }, [isAuthenticated, toggleExpertFavorite, expertData.id]);
+
   // Handle specific connection type
   const handleConnectOption = React.useCallback(async (type: 'video' | 'voice') => {
     if (!requireAuthForCall(expertData.id, expertData.name, type)) {
@@ -232,7 +247,7 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
         <Button
           size="sm"
           variant={expertData.isAvailable ? 'default' : 'outline'}
-          className="flex-1"
+          className={`flex-1 ${expertData.isAvailable ? 'bg-ifind-aqua hover:bg-ifind-aqua/90 text-white' : ''}`}
           disabled={isLoading}
           onClick={handleConnectNow}
         >
@@ -241,7 +256,12 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
           ) : expertData.isAvailable ? (
             <>
               <Video className="h-3 w-3 mr-1" />
-              Connect Now
+              <span className="text-xs">
+                Connect Now
+                {expertData.status === 'available' && (
+                  <span className="ml-1 inline-flex h-2 w-2 rounded-full bg-green-400"></span>
+                )}
+              </span>
             </>
           ) : expertData.status === 'away' ? (
             <>
@@ -285,24 +305,29 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
                 {expertData.initials}
               </AvatarFallback>
             </Avatar>
-            <span 
-              className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-background ${
-                expertData.isAvailable ? 'bg-green-500' : 'bg-gray-400'
-              }`}
-            />
           </div>
           
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-1">
               <h3 className="font-semibold text-lg truncate">{expertData.name}</h3>
-              {showCategoryBadge && expertData.category && (
-                <Badge 
-                  variant="secondary"
-                  className={getCategoryBadgeColor(expertData.category)}
-                >
-                  {formatCategoryName(expertData.category)}
-                </Badge>
-              )}
+              <div className="flex items-center gap-2">
+                {showCategoryBadge && expertData.category && (
+                  <Badge 
+                    variant="secondary"
+                    className={getCategoryBadgeColor(expertData.category)}
+                  >
+                    {formatCategoryName(expertData.category)}
+                  </Badge>
+                )}
+                <FavoriteButton
+                  isFavorite={isExpertFavorite(expertData.id)}
+                  onClick={handleFavoriteClick}
+                  expertId={expertData.id}
+                  expertName={expertData.name}
+                  tooltipText={isExpertFavorite(expertData.id) ? 'Remove from favorites' : 'Add to favorites'}
+                  size="sm"
+                />
+              </div>
             </div>
             
             <p className="text-sm text-muted-foreground truncate mb-2">{expertData.specialization}</p>
@@ -331,12 +356,9 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
       
       <CardFooter className="bg-muted/50 px-4 py-3">
         <div className="w-full space-y-2">
-          <div className="flex justify-center">
-            <ExpertStatusIndicator
-              status={expertData.status}
-              isOnline={expertData.isAvailable}
-              size="sm"
-            />
+          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+            <Languages className="h-3 w-3" />
+            <span>English, Hindi</span>
           </div>
           {renderActionButtons()}
         </div>

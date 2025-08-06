@@ -63,8 +63,8 @@ const ExpertDetailTabs: React.FC<ExpertDetailTabsProps> = ({ expert }) => {
     <Tabs value={currentTab} onValueChange={handleTabChange}>
       <TabsList className="w-full grid grid-cols-3 mb-8">
         <TabsTrigger value="about">About</TabsTrigger>
-        <TabsTrigger value="reviews">Reviews</TabsTrigger>
         <TabsTrigger id="booking-tab" value="booking">Book Session</TabsTrigger>
+        <TabsTrigger value="reviews">Reviews</TabsTrigger>
       </TabsList>
       
       <TabsContent value="about">
@@ -76,15 +76,15 @@ const ExpertDetailTabs: React.FC<ExpertDetailTabsProps> = ({ expert }) => {
         />
       </TabsContent>
       
-      <TabsContent value="reviews">
-        <ExpertReviews reviews={expert.reviews} />
-      </TabsContent>
-      
       <TabsContent value="booking">
         <BookingTab 
           expertId={expert.id.toString()} 
           expertName={expert.name} 
         />
+      </TabsContent>
+      
+      <TabsContent value="reviews">
+        <ExpertReviews reviews={expert.reviews} />
       </TabsContent>
     </Tabs>
   );

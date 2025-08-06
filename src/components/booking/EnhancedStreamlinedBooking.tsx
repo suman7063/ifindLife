@@ -425,10 +425,10 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
                 })}
               </div>
               
-              <div className="border-t border-ifind-teal/20 pt-4 space-y-2">
+               <div className="border-t border-ifind-teal/20 pt-4 space-y-2">
                 <div className="flex justify-between text-sm text-ifind-charcoal/70">
                   <span>Session breakdown:</span>
-                  <span>{getSessionBreakdown()}</span>
+                  <span>{getSessionBreakdown()} ({formatCurrency(calculateTotalCost())})</span>
                 </div>
                 <div className="flex justify-between items-center font-semibold text-lg text-ifind-charcoal">
                   <span>Total Cost:</span>
@@ -449,7 +449,7 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
                   </div>
                 ) : (
                   <div className="flex items-center space-x-2">
-                    <span>Book {selectedSlots.length} Session{selectedSlots.length > 1 ? 's' : ''} - {formatCurrency(calculateTotalCost())}</span>
+                    <span>Book {selectedSlots.length} Session{selectedSlots.length > 1 ? 's' : ''}</span>
                     <ChevronRight className="h-4 w-4" />
                   </div>
                 )}
