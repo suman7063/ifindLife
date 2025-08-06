@@ -75,15 +75,15 @@ export const navigationItems: NavigationItem[] = [
     badge: '3'
   },
   {
-    name: 'Reports',
-    href: '/expert-dashboard/reports',
-    icon: Flag,
-    description: 'Handle user reports'
-  },
-  {
     name: 'Earnings',
     href: '/expert-dashboard/earnings',
     icon: DollarSign,
     description: 'Track earnings and payouts'
+  },
+  {
+    name: 'Reports',
+    href: '/expert-dashboard/reports',
+    icon: Flag,
+    description: 'Handle user reports'
   }
 ];

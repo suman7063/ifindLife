@@ -4,7 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Calendar, Download, Filter, TrendingUp } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Calendar, Download, Filter, TrendingUp, FileText, FileSpreadsheet } from 'lucide-react';
+import { exportToPDF, exportToExcel, generateAnalyticsExportData } from '@/utils/exportUtils';
+import { toast } from 'sonner';
 import RevenueAnalytics from './RevenueAnalytics';
 import ClientAnalytics from './ClientAnalytics';
 import PerformanceAnalytics from './PerformanceAnalytics';
@@ -12,7 +15,18 @@ import SessionAnalytics from './SessionAnalytics';
 
 const AnalyticsPage: React.FC = () => {
   const [timeRange, setTimeRange] = useState('30days');
-  const [exportFormat, setExportFormat] = useState('pdf');
+
+  const handleExport = (format: 'pdf' | 'excel') => {
+    const data = generateAnalyticsExportData(timeRange);
+    
+    if (format === 'pdf') {
+      exportToPDF(data);
+      toast.success('Analytics PDF downloaded successfully!');
+    } else {
+      exportToExcel(data);
+      toast.success('Analytics Excel downloaded successfully!');
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -44,10 +58,24 @@ const AnalyticsPage: React.FC = () => {
             Filters
           </Button>
           
-          <Button variant="outline">
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <Download className="h-4 w-4 mr-2" />
+                Export
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => handleExport('pdf')}>
+                <FileText className="h-4 w-4 mr-2" />
+                Download PDF
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport('excel')}>
+                <FileSpreadsheet className="h-4 w-4 mr-2" />
+                Download Excel
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
