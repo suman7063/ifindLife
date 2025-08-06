@@ -8,7 +8,6 @@ import AgoraCallModal from '@/components/AgoraCallModal';
 import { toast } from 'sonner';
 import { useAuthRedirectSystem } from '@/hooks/useAuthRedirectSystem';
 import { useFetchExpertProfile } from '@/contexts/auth/hooks/useFetchExpertProfile';
-import ExpertHeader from '@/components/expert/ExpertHeader';
 import ExpertProfile from '@/components/expert/ExpertProfile';
 import ExpertDetailTabs from '@/components/expert/ExpertDetailTabs';
 
@@ -109,7 +108,6 @@ const ExpertDetail = () => {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <ExpertHeader />
         <main className="flex-1 py-8">
           <div className="container">
             <div className="grid md:grid-cols-3 gap-8">
@@ -139,7 +137,6 @@ const ExpertDetail = () => {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <ExpertHeader />
         <main className="flex-1 py-8">
           <div className="container">
             <div className="text-center py-16">
@@ -174,18 +171,9 @@ const ExpertDetail = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <ExpertHeader />
       
-      <main className="flex-1 py-8 bg-gradient-to-br from-background via-background/95 to-primary/5">
+      <main className="flex-1 py-8 bg-ifind-offwhite">
         <div className="container max-w-7xl mx-auto px-4">
-          {/* Enhanced Header Section */}
-          <div className="mb-8">
-            <div className="bg-gradient-to-r from-primary/10 to-transparent p-6 rounded-xl border border-primary/20">
-              <h1 className="text-3xl font-bold text-primary mb-2">Expert Profile</h1>
-              <p className="text-muted-foreground">Connect with {expert.name} for professional guidance and support</p>
-            </div>
-          </div>
-
           <div className="grid lg:grid-cols-3 gap-8">
             <div className="lg:col-span-1">
               <div className="sticky top-8">

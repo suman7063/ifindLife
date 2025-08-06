@@ -148,30 +148,61 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
     );
   };
 
-  // Enhanced pricing calculation based on dynamic slot combinations
+  // Helper function to check if slots are continuous
+  const areSlotsContinuous = (slots: string[]): boolean => {
+    if (slots.length <= 1) return true;
+    
+    // Sort slots by time
+    const sortedSlots = slots.sort((a, b) => {
+      const timeA = a.split('-')[1];
+      const timeB = b.split('-')[1];
+      return timeA.localeCompare(timeB);
+    });
+    
+    // Check if each slot follows the previous one
+    for (let i = 1; i < sortedSlots.length; i++) {
+      const prevSlot = availableSlots.find(s => s.id === sortedSlots[i - 1]);
+      const currentSlot = availableSlots.find(s => s.id === sortedSlots[i]);
+      
+      if (!prevSlot || !currentSlot) return false;
+      
+      // Check if current slot start time equals previous slot end time
+      if (currentSlot.start_time !== prevSlot.end_time) {
+        return false;
+      }
+    }
+    
+    return true;
+  };
+
+  // Enhanced pricing calculation based on continuous vs non-continuous slots
   const calculateTotalCost = (): number => {
     if (!pricing || selectedSlots.length === 0) return 0;
 
-    const totalMinutes = selectedSlots.length * 30;
-    
-    // Calculate cost based on 60-min and 30-min session pricing
-    const fullHours = Math.floor(totalMinutes / 60);
-    const remainingMinutes = totalMinutes % 60;
-    
     const session60Price = userCurrency === 'INR' ? pricing.session_60_inr : pricing.session_60_eur;
     const session30Price = userCurrency === 'INR' ? pricing.session_30_inr : pricing.session_30_eur;
     
-    let totalCost = 0;
-    
-    // Add full hour sessions
-    totalCost += fullHours * session60Price;
-    
-    // Add remaining 30-minute sessions
-    if (remainingMinutes === 30) {
-      totalCost += session30Price;
+    // If slots are continuous, calculate as blocks of 60-min sessions + remaining 30-min
+    if (areSlotsContinuous(selectedSlots)) {
+      const totalMinutes = selectedSlots.length * 30;
+      const fullHours = Math.floor(totalMinutes / 60);
+      const remainingMinutes = totalMinutes % 60;
+      
+      let totalCost = 0;
+      
+      // Add full hour sessions at 60-min rate
+      totalCost += fullHours * session60Price;
+      
+      // Add remaining 30-minute session at 30-min rate
+      if (remainingMinutes === 30) {
+        totalCost += session30Price;
+      }
+      
+      return totalCost;
+    } else {
+      // If slots are not continuous, charge each 30-min slot at 30-min rate
+      return selectedSlots.length * session30Price;
     }
-    
-    return totalCost;
   };
 
   const formatCurrency = (amount: number): string => {
@@ -182,20 +213,24 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
   const getSessionBreakdown = () => {
     if (selectedSlots.length === 0) return '';
     
-    const totalMinutes = selectedSlots.length * 30;
-    const fullHours = Math.floor(totalMinutes / 60);
-    const remainingMinutes = totalMinutes % 60;
-    
-    let breakdown = '';
-    if (fullHours > 0) {
-      breakdown += `${fullHours} × 60min session${fullHours > 1 ? 's' : ''}`;
+    if (areSlotsContinuous(selectedSlots)) {
+      const totalMinutes = selectedSlots.length * 30;
+      const fullHours = Math.floor(totalMinutes / 60);
+      const remainingMinutes = totalMinutes % 60;
+      
+      let breakdown = '';
+      if (fullHours > 0) {
+        breakdown += `${fullHours} × 60min session${fullHours > 1 ? 's' : ''}`;
+      }
+      if (remainingMinutes > 0) {
+        if (breakdown) breakdown += ' + ';
+        breakdown += `1 × 30min session`;
+      }
+      
+      return breakdown;
+    } else {
+      return `${selectedSlots.length} × 30min session${selectedSlots.length > 1 ? 's' : ''}`;
     }
-    if (remainingMinutes > 0) {
-      if (breakdown) breakdown += ' + ';
-      breakdown += `1 × 30min session`;
-    }
-    
-    return breakdown;
   };
 
   const handleBookAppointments = async () => {
@@ -267,13 +302,13 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
   return (
     <div className="space-y-6">
       {/* Header with session pricing info */}
-      <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-transparent">
+      <Card className="border-ifind-teal/20 bg-ifind-offwhite">
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
+          <CardTitle className="flex items-center justify-between text-ifind-charcoal">
             <span>Book Session with {expertName}</span>
             <div className="text-right text-sm space-y-1">
-              <div className="text-muted-foreground">Session Rates</div>
-              <div className="font-medium">
+              <div className="text-ifind-charcoal/70">Session Rates</div>
+              <div className="font-medium text-ifind-charcoal">
                 30min: {formatCurrency(pricing?.session_30_inr || 450)} • 
                 60min: {formatCurrency(pricing?.session_60_inr || 800)}
               </div>
@@ -284,9 +319,9 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Date Selection */}
-        <Card>
+        <Card className="border-ifind-teal/20">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
+            <CardTitle className="flex items-center space-x-2 text-ifind-charcoal">
               <CalendarIcon className="h-5 w-5" />
               <span>Select Date</span>
             </CardTitle>
@@ -303,9 +338,9 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
         </Card>
 
         {/* Time Slots */}
-        <Card>
+        <Card className="border-ifind-teal/20">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
+            <CardTitle className="flex items-center space-x-2 text-ifind-charcoal">
               <Clock className="h-5 w-5" />
               <span>Available 30-Min Slots</span>
             </CardTitle>
@@ -315,7 +350,7 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
               <>
                 {loadingSlots ? (
                   <div className="flex justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-ifind-aqua"></div>
                   </div>
                 ) : availableSlots.length > 0 ? (
                   <div className="grid grid-cols-2 gap-2 max-h-96 overflow-y-auto">
@@ -328,7 +363,13 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
                           key={slot.id}
                           variant={isSelected ? "default" : isBooked ? "secondary" : "outline"}
                           size="sm"
-                          className={`h-auto py-3 px-2 text-xs ${isBooked ? 'opacity-50 cursor-not-allowed' : ''} ${isSelected ? 'bg-primary text-primary-foreground' : ''}`}
+                          className={`h-auto py-3 px-2 text-xs ${
+                            isBooked ? 'opacity-50 cursor-not-allowed' : ''
+                          } ${
+                            isSelected 
+                              ? 'bg-ifind-aqua text-white hover:bg-ifind-aqua/90' 
+                              : 'border-ifind-teal/30 text-ifind-charcoal hover:bg-ifind-teal/10'
+                          }`}
                           onClick={() => !isBooked && toggleSlotSelection(slot.id)}
                           disabled={isBooked}
                         >
@@ -350,7 +391,7 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
                     })}
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-muted-foreground">
+                  <div className="text-center py-8 text-ifind-charcoal/70">
                     No available time slots for this date.
                   </div>
                 )}
@@ -362,12 +403,12 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
 
       {/* Selected Slots Summary & Booking */}
       {selectedSlots.length > 0 && (
-        <Card className="border-green-200 bg-green-50/50">
+        <Card className="border-ifind-teal/50 bg-ifind-teal/5">
           <CardContent className="p-6">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h5 className="font-semibold text-green-800">Selected Sessions</h5>
-                <Badge variant="secondary" className="bg-green-100 text-green-800">
+                <h5 className="font-semibold text-ifind-charcoal">Selected Sessions</h5>
+                <Badge variant="secondary" className="bg-ifind-teal/20 text-ifind-charcoal">
                   {selectedSlots.length} slot{selectedSlots.length > 1 ? 's' : ''} selected
                 </Badge>
               </div>
@@ -376,22 +417,22 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
                 {selectedSlots.map(slotId => {
                   const slot = availableSlots.find(s => s.id === slotId);
                   return slot ? (
-                    <div key={slotId} className="text-sm flex items-center space-x-2 bg-white p-2 rounded border">
-                      <Check className="h-3 w-3 text-green-600 flex-shrink-0" />
-                      <span className="truncate">{formatTime(slot.start_time)} - {formatTime(slot.end_time)}</span>
+                    <div key={slotId} className="text-sm flex items-center space-x-2 bg-white p-2 rounded border border-ifind-teal/20">
+                      <Check className="h-3 w-3 text-ifind-teal flex-shrink-0" />
+                      <span className="truncate text-ifind-charcoal">{formatTime(slot.start_time)} - {formatTime(slot.end_time)}</span>
                     </div>
                   ) : null;
                 })}
               </div>
               
-              <div className="border-t pt-4 space-y-2">
-                <div className="flex justify-between text-sm text-muted-foreground">
+              <div className="border-t border-ifind-teal/20 pt-4 space-y-2">
+                <div className="flex justify-between text-sm text-ifind-charcoal/70">
                   <span>Session breakdown:</span>
                   <span>{getSessionBreakdown()}</span>
                 </div>
-                <div className="flex justify-between items-center font-semibold text-lg">
+                <div className="flex justify-between items-center font-semibold text-lg text-ifind-charcoal">
                   <span>Total Cost:</span>
-                  <span className="text-green-600">{formatCurrency(calculateTotalCost())}</span>
+                  <span className="text-ifind-teal">{formatCurrency(calculateTotalCost())}</span>
                 </div>
               </div>
               
@@ -399,7 +440,7 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
                 onClick={handleBookAppointments}
                 disabled={loading}
                 size="lg"
-                className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white"
+                className="w-full bg-ifind-aqua hover:bg-ifind-aqua/90 text-white"
               >
                 {loading ? (
                   <div className="flex items-center space-x-2">

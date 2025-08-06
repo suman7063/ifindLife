@@ -63,7 +63,7 @@ const ExpertProfile: React.FC<ExpertProfileProps> = ({
     toggleExpertFavorite(expert.id.toString());
   };
   return (
-    <Card className="overflow-hidden border-0 shadow-xl bg-gradient-to-br from-white via-white to-primary/5 backdrop-blur-sm">
+    <Card className="overflow-hidden border border-ifind-teal/20 bg-white">
         {/* Expert Image */}
         <div className="relative h-72 w-full">
           {expert.imageUrl ? (
@@ -76,8 +76,8 @@ const ExpertProfile: React.FC<ExpertProfileProps> = ({
               }}
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
-              <span className="text-6xl font-bold text-primary drop-shadow-md">
+            <div className="w-full h-full bg-ifind-offwhite flex items-center justify-center">
+              <span className="text-6xl font-bold text-ifind-charcoal">
                 {expert.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
               </span>
             </div>
@@ -85,9 +85,9 @@ const ExpertProfile: React.FC<ExpertProfileProps> = ({
           
           {/* Online Status */}
           {expert.online && (
-            <div className="absolute top-4 right-4 bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg backdrop-blur-sm border border-white/20">
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            <div className="absolute top-4 right-4 bg-ifind-teal text-white px-2 py-1 rounded-full text-xs font-medium">
+              <div className="flex items-center space-x-1">
+                <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
                 <span>Online</span>
               </div>
             </div>
@@ -170,7 +170,7 @@ const ExpertProfile: React.FC<ExpertProfileProps> = ({
           <div className="grid grid-cols-2 gap-3">
             <Button
               onClick={handleCallClick}
-              className="flex items-center justify-center gap-2 bg-gradient-to-r from-primary to-primary-glow hover:from-primary-glow hover:to-primary transition-all duration-300"
+              className="flex items-center justify-center gap-2 bg-ifind-aqua hover:bg-ifind-aqua/90 text-white transition-all duration-300"
               variant="default"
             >
               <Phone className="h-4 w-4" />
@@ -179,7 +179,7 @@ const ExpertProfile: React.FC<ExpertProfileProps> = ({
             
             <Button 
               onClick={handleBookClick} 
-              className="flex items-center justify-center gap-2 border-primary text-primary hover:bg-primary hover:text-white transition-all duration-300"
+              className="flex items-center justify-center gap-2 border-ifind-purple text-ifind-purple hover:bg-ifind-purple hover:text-white transition-all duration-300"
               variant="outline"
               data-id="booking-tab-button"
             >
