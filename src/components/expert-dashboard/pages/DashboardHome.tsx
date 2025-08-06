@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Users, Calendar, MessageSquare, DollarSign, TrendingUp, Clock, Phone } from 'lucide-react';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import MasterStatusControl from '../components/MasterStatusControl';
+import SessionScheduleCard from './dashboard/SessionScheduleCard';
 import { supabase } from '@/integrations/supabase/client';
 
 interface DashboardStats {
@@ -93,30 +94,10 @@ const DashboardHome: React.FC = () => {
         </div>
       </div>
 
-      {/* Quick Actions & Status */}
+      {/* Status Control & Session Schedule */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <MasterStatusControl />
-        
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>Manage your expert activities</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Button className="w-full justify-start" variant="outline">
-              <Calendar className="h-4 w-4 mr-2" />
-              View Schedule
-            </Button>
-            <Button className="w-full justify-start" variant="outline">
-              <MessageSquare className="h-4 w-4 mr-2" />
-              Check Messages
-            </Button>
-            <Button className="w-full justify-start" variant="outline">
-              <Users className="h-4 w-4 mr-2" />
-              View Clients
-            </Button>
-          </CardContent>
-        </Card>
+        <SessionScheduleCard />
       </div>
 
       {/* Stats Overview */}
