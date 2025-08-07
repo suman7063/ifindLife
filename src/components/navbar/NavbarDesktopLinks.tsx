@@ -26,33 +26,25 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
   sessionType,
   isLoggingOut
 }) => {
-  console.log('NavbarDesktopLinks detailed render state:', {
-    isAuthenticated,
-    sessionType,
-    hasCurrentUser: !!currentUser,
-    hasExpertProfile,
-    userEmail: currentUser?.email,
-    currentUserName: currentUser?.name,
-    renderingDecision: 'about to decide what to render'
-  });
+  // NavbarDesktopLinks render state
 
   // Determine authentication UI to show
   let authComponent;
   
   if (isAuthenticated) {
     if (sessionType === 'expert' && hasExpertProfile) {
-      console.log('NavbarDesktopLinks: Rendering expert menu');
+      // Rendering expert menu
       authComponent = <NavbarExpertMenu onLogout={expertLogout} isLoggingOut={isLoggingOut} />;
     } else if (sessionType === 'user' || currentUser) {
-      console.log('NavbarDesktopLinks: Rendering user avatar for user session or existing currentUser');
+      // Rendering user avatar for user session
       authComponent = <NavbarUserAvatar currentUser={currentUser || { name: 'User', email: '' }} onLogout={userLogout} isLoggingOut={isLoggingOut} />;
     } else {
       // Authenticated but profile not loaded yet - show basic avatar
-      console.log('NavbarDesktopLinks: Rendering basic user avatar (profile loading)');
+      // Rendering basic user avatar (profile loading)
       authComponent = <NavbarUserAvatar currentUser={{ name: 'User', email: '' }} onLogout={userLogout} isLoggingOut={isLoggingOut} />;
     }
   } else {
-    console.log('NavbarDesktopLinks: Rendering user login/signup link - user not authenticated');
+    // Rendering user login/signup link
     authComponent = (
       <Button asChild variant="outline">
         <Link to="/user-login">User login/Signup</Link>
@@ -60,7 +52,7 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
     );
   }
 
-  console.log('NavbarDesktopLinks: Final auth component decision made, rendering navbar');
+  // Final auth component decision made
 
   return (
     <div className="hidden md:flex items-center space-x-4">

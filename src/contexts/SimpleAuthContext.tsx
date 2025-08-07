@@ -66,23 +66,12 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
   // Derive authentication state - CRITICAL: This must be consistent
   const isAuthenticated = Boolean(user && session);
 
-  // Only log state changes during development, reduce console noise
-  if (process.env.NODE_ENV === 'development') {
-    console.log('🔄 SimpleAuthContext: State update:', {
-      isAuthenticated,
-      userType,
-      isLoading,
-      hasUser: !!user,
-      hasSession: !!session,
-      hasUserProfile: !!userProfile,
-      hasExpert: !!expert
-    });
-  }
+  // Reduced logging for performance
 
   // Function to validate credentials against intended role
   const validateCredentialsForRole = async (userId: string, intendedRole: 'user' | 'expert'): Promise<{ isValid: boolean; actualRole?: 'user' | 'expert' | 'both' }> => {
     try {
-      console.log('🔍 Validating credentials for role:', intendedRole, 'userId:', userId);
+      // Validate credentials for role
       
       // Check if user has user profile - use profiles table instead of users table for compatibility
       const { data: userProfileData, error: userError } = await supabase
@@ -101,14 +90,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
       const hasUserProfile = userProfileData && !userError;
       const hasExpertProfile = expertData && !expertError;
 
-      console.log('🔍 Profile validation results:', {
-        hasUserProfile,
-        hasExpertProfile,
-        expertStatus: expertData?.status,
-        intendedRole,
-        userError: userError?.message,
-        expertError: expertError?.message
-      });
+      // Profile validation results processed
 
       if (hasUserProfile && hasExpertProfile) {
         // User has both profiles
@@ -135,7 +117,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         }
       } else {
         // No profiles exist - still allow login but will create profiles later
-        console.log('ℹ️ No existing profiles found, allowing login to proceed');
+        // No existing profiles found, allowing login to proceed
         return { isValid: true, actualRole: intendedRole === 'expert' ? 'expert' : 'user' };
       }
     } catch (error) {
@@ -148,7 +130,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
   // Improved profile loading function
   const loadUserProfile = async (userId: string): Promise<UserProfile | null> => {
     try {
-      console.log('📊 Loading user profile for:', userId);
+      // Loading user profile
       
       // Try both tables to ensure compatibility
       let profile = null;
@@ -179,12 +161,11 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
       }
 
       if (error && !profile) {
-        console.log('ℹ️ No user profile found:', error.message);
         setUserProfile(null);
         return null;
       }
 
-      console.log('✅ User profile loaded:', profile);
+      // User profile loaded successfully
       
       // Transform database response to match UserProfile interface
       const transformedProfile: UserProfile = {

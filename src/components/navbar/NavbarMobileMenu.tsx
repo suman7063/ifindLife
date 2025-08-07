@@ -31,12 +31,7 @@ const NavbarMobileMenu: React.FC<NavbarMobileMenuProps> = ({
 }) => {
   const [open, setOpen] = useState(false);
 
-  console.log('NavbarMobileMenu state:', {
-    isAuthenticated,
-    hasExpertProfile,
-    currentUser: !!currentUser,
-    sessionType
-  });
+  // NavbarMobileMenu state tracking
 
   const handleLogout = async () => {
     if (hasExpertProfile) {

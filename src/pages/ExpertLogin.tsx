@@ -20,14 +20,7 @@ const ExpertLogin: React.FC = () => {
   const simpleAuth = useSimpleAuth();
   const { isLoading, login } = simpleAuth;
 
-  console.log('ExpertLogin - Auth state:', {
-    isAuthenticated: Boolean(simpleAuth.isAuthenticated),
-    userType: simpleAuth.userType,
-    hasExpertProfile: Boolean(simpleAuth.expert),
-    isLoading: Boolean(isLoading),
-    expertStatus: simpleAuth.expert?.status,
-    isExpertAuthenticated: isExpertAuthenticated(simpleAuth)
-  });
+  // ExpertLogin auth state tracking
 
   // Enhanced redirect logic - check if already authenticated as expert
   useEffect(() => {
@@ -38,20 +31,14 @@ const ExpertLogin: React.FC = () => {
       toast.error('Your expert account application has been disapproved.');
     }
 
-    console.log('ExpertLogin: Checking auth state for redirect...');
-
     // Wait for auth loading to complete
     if (isLoading) {
-      console.log('ExpertLogin: Still loading auth state...');
       return;
     }
 
     // Check if authenticated as expert with approved status
     if (isExpertAuthenticated(simpleAuth)) {
-      console.log('ExpertLogin: Expert authenticated, redirecting to dashboard');
       navigate('/expert-dashboard', { replace: true });
-    } else {
-      console.log('ExpertLogin: Expert not authenticated, staying on login page');
     }
   }, [simpleAuth.isAuthenticated, simpleAuth.userType, simpleAuth.expert, isLoading, navigate, searchParams]);
 
@@ -66,23 +53,18 @@ const ExpertLogin: React.FC = () => {
     setLoginError(null);
     
     try {
-      console.log('ExpertLogin: Attempting expert login:', email);
-      
       const result = await login(email, password, { asExpert: true });
       
       if (result.success) {
-        console.log('Expert login successful');
         toast.success('Login successful!');
         
         // Wait for auth state to update, then redirect to expert dashboard
         setTimeout(() => {
-          console.log('Redirecting to expert dashboard after successful login');
           navigate('/expert-dashboard', { replace: true });
         }, 1000);
         
         return true;
       } else {
-        console.error('Expert login failed:', result.error);
         setLoginError(result.error || 'Login failed. Please check your credentials and try again.');
         toast.error(result.error || 'Login failed. Please check your credentials and try again.', { duration: 3000 });
         return false;

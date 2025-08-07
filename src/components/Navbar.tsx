@@ -14,17 +14,7 @@ const Navbar = () => {
 
   const { isAuthenticated, userType, user, expert, userProfile, isLoading, logout } = useSimpleAuth();
 
-  console.log('Navbar: Detailed rendering state:', {
-    isAuthenticated,
-    userType,
-    isLoading,
-    hasUser: !!user,
-    hasExpert: !!expert,
-    hasUserProfile: !!userProfile,
-    userEmail: user?.email,
-    userProfileName: userProfile?.name,
-    expertName: expert?.name
-  });
+  // Navbar rendering state tracking
 
   // Scroll effect
   useEffect(() => {
@@ -43,7 +33,6 @@ const Navbar = () => {
   // Handle logout
   const handleLogout = async (): Promise<boolean> => {
     try {
-      console.log("Navbar: Initiating logout...");
       await logout();
       showLogoutSuccessToast();
       navigate('/');
@@ -97,18 +86,11 @@ const Navbar = () => {
 
   const hasExpertProfile = useMemo(() => userType === 'expert' && !!expert, [userType, expert]);
 
-  console.log('Navbar: Prepared props for NavbarDesktopLinks:', {
-    isAuthenticated,
-    currentUser: !!currentUser,
-    hasExpertProfile,
-    sessionType: userType,
-    isLoading,
-    currentUserProfilePicture: currentUser?.profile_picture
-  });
+  // Prepared props for NavbarDesktopLinks
 
   // Only show loading during the initial auth check - not after each render
   if (isLoading) {
-    console.log('Navbar: Showing loading state');
+    // Showing loading state
     return (
       <div className={`sticky top-0 w-full z-50 transition-colors ${getNavbarBackground()} border-b border-gray-100`}>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex h-20 items-center justify-between">
@@ -128,7 +110,7 @@ const Navbar = () => {
     );
   }
 
-  console.log('Navbar: Rendering full navbar - about to render NavbarDesktopLinks');
+  // Rendering full navbar
   
   return (
     <div className={`sticky top-0 w-full z-50 transition-colors ${getNavbarBackground()} border-b border-gray-100`}>
