@@ -3,12 +3,12 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
-import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { showLogoutSuccessToast, showLogoutErrorToast } from '@/utils/toastConfig';
 
 const SidebarLogout: React.FC = () => {
   const navigate = useNavigate();
-  const { logout } = useUnifiedAuth();
+  const { logout } = useSimpleAuth();
 
   const handleLogout = async () => {
     try {

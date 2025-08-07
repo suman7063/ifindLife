@@ -1,7 +1,7 @@
-// Unified auth exports - single source of truth
-export { useUnifiedAuth as useAuth } from './UnifiedAuthContext';
-export type { UnifiedAuthContextType as AuthContextType } from './UnifiedAuthContext';
+// Primary auth exports - SimpleAuth for users/experts
+export { useSimpleAuth as useAuth } from '@/contexts/SimpleAuthContext';
+export type { SimpleAuthContextType as AuthContextType } from '@/contexts/SimpleAuthContext';
 
-// Legacy exports for backward compatibility
+// Direct exports for backward compatibility
 export { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 export type { SimpleAuthContextType } from '@/contexts/SimpleAuthContext';

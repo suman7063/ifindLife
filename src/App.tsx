@@ -1,7 +1,7 @@
 
 import * as React from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import { UnifiedAuthProvider } from '@/contexts/auth/UnifiedAuthContext';
+import { SimpleAuthProvider } from '@/contexts/SimpleAuthContext';
 import { ExpertPresenceProvider } from '@/contexts/ExpertPresenceContext';
 import { FavoritesProvider } from '@/contexts/favorites/FavoritesProvider';
 import { SecureAdminAuthProvider } from '@/contexts/SecureAdminAuth';
@@ -65,7 +65,7 @@ const queryClient = new QueryClient({
 // Component wrapper for user/expert routes with SimpleAuthProvider
 const UserRoutes: React.FC = () => {
   return (
-    <UnifiedAuthProvider>
+    <SimpleAuthProvider>
       <ExpertPresenceProvider>
         <FavoritesProvider>
         <Routes>
@@ -155,7 +155,7 @@ const UserRoutes: React.FC = () => {
         </Routes>
       </FavoritesProvider>
         </ExpertPresenceProvider>
-    </UnifiedAuthProvider>
+    </SimpleAuthProvider>
   );
 };
 
