@@ -8,7 +8,10 @@ import { PendingAction } from '@/hooks/useAuthJourneyPreservation';
  */
 export async function directUserLogin(email: string, password: string): Promise<{ success: boolean; data?: any; error?: any }> {
   try {
-    console.log('Attempting direct user login for:', email);
+    // Log attempt without exposing email
+    if (import.meta.env.DEV) {
+      console.log('Attempting direct user login');
+    }
     
     const { data, error } = await supabase.auth.signInWithPassword({
       email, 
@@ -16,16 +19,23 @@ export async function directUserLogin(email: string, password: string): Promise<
     });
     
     if (error) {
-      console.error('Direct login error:', error);
+      // Log error without exposing sensitive details
+      if (import.meta.env.DEV) {
+        console.error('Direct login error:', error.message);
+      }
       return { success: false, error };
     }
     
     if (!data.session) {
-      console.error('No session returned from Supabase');
+      if (import.meta.env.DEV) {
+        console.error('No session returned from Supabase');
+      }
       return { success: false, error: { message: 'Authentication failed. Please try again.' } };
     }
     
-    console.log('Login successful, session established:', !!data.session);
+    if (import.meta.env.DEV) {
+      console.log('Login successful, session established');
+    }
     
     // Store session type for role determination
     localStorage.setItem('sessionType', 'user');
@@ -49,14 +59,18 @@ export async function checkAuthStatus() {
     // If session exists, ensure we have role information stored
     if (sessionValid && !localStorage.getItem('sessionType')) {
       localStorage.setItem('sessionType', 'user');
-      console.log('Auth check: Adding missing sessionType to localStorage');
+      if (import.meta.env.DEV) {
+        console.log('Auth check: Adding missing sessionType to localStorage');
+      }
     }
 
-    console.log('Auth check result:', { 
-      isAuthenticated: sessionValid,
-      session: data.session ? 'exists' : 'null',
-      user: data.session?.user ? data.session.user.id : 'null'
-    });
+    if (import.meta.env.DEV) {
+      console.log('Auth check result:', { 
+        isAuthenticated: sessionValid,
+        session: data.session ? 'exists' : 'null',
+        hasUser: !!data.session?.user
+      });
+    }
     
     return {
       isAuthenticated: sessionValid,
@@ -82,7 +96,9 @@ export function getRedirectPath(): string {
   if (pendingActionStr) {
     try {
       const pendingAction = JSON.parse(pendingActionStr) as PendingAction;
-      console.log('Processing pending action for redirect:', pendingAction);
+      if (import.meta.env.DEV) {
+        console.log('Processing pending action for redirect');
+      }
       sessionStorage.removeItem('pendingAction');
       
       if (pendingAction.type === 'book' && pendingAction.id) {
@@ -103,7 +119,9 @@ export function getRedirectPath(): string {
   
   // Default redirects based on role
   const sessionType = localStorage.getItem('sessionType') || 'user';
-  console.log('No pending action, redirecting based on session type:', sessionType);
+  if (import.meta.env.DEV) {
+    console.log('No pending action, redirecting based on session type');
+  }
   
   if (sessionType === 'expert') {
     return '/expert-dashboard';
