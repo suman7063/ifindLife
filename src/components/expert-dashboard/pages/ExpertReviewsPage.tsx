@@ -28,7 +28,7 @@ const ExpertReviewsPage: React.FC = () => {
       const { data, error } = await supabase
         .from('user_reviews')
         .select('*')
-        .eq('expert_id', parseInt(expert?.id || '0'))
+        .eq('expert_id', expert?.id || '')
         .order('date', { ascending: false });
 
       if (error) throw error;

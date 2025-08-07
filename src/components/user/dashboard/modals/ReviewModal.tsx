@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 
 interface Review {
   id: string;
-  expert_id: number;
+  expert_id: string; // Changed to string (UUID)
   rating: number;
   comment: string;
   date: string;
@@ -61,7 +61,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
       
       const reviewData = {
         user_id: userId,
-        expert_id: review ? review.expert_id : (session ? parseInt(session.expert_id) : 0),
+        expert_id: review ? review.expert_id : (session ? session.expert_id : ''),
         rating,
         comment: comment.trim(),
         date: new Date().toISOString().split('T')[0],

@@ -10,7 +10,7 @@ import ReviewModal from '../modals/ReviewModal';
 
 interface Review {
   id: string;
-  expert_id: number;
+  expert_id: string; // Changed to string (UUID)
   rating: number;
   comment: string;
   date: string;
@@ -77,7 +77,7 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({ user }) => {
       
       // Filter sessions that haven't been reviewed yet
       const unreviewed = data?.filter(session => 
-        !reviews.some(review => review.expert_id.toString() === session.expert_id)
+        !reviews.some(review => review.expert_id === session.expert_id)
       ) || [];
       
       setCompletedSessions(unreviewed);

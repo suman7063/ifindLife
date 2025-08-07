@@ -25,7 +25,7 @@ export const useExpertInteractions = (userId: string | undefined) => {
         .from('user_reviews')
         .select('*')
         .eq('user_id', userId)
-        .eq('expert_id', parseInt(expertId, 10));
+        .eq('expert_id', expertId);
 
       if (checkError) {
         console.error('Error checking existing reviews:', checkError);
@@ -40,7 +40,7 @@ export const useExpertInteractions = (userId: string | undefined) => {
 
       // Add new review
       const reviewData = {
-        expert_id: parseInt(expertId, 10),
+        expert_id: expertId, // Now using string UUID
         user_id: userId,
         rating,
         comment,
@@ -83,7 +83,7 @@ export const useExpertInteractions = (userId: string | undefined) => {
       setIsSubmitting(true);
 
       const reportData = {
-        expert_id: parseInt(expertId, 10),
+        expert_id: expertId, // Now using string UUID
         user_id: userId,
         reason,
         details,

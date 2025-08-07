@@ -18,7 +18,7 @@ export const useUserReviews = (
       const expertId = reviewData.expert_id || reviewData.expertId;
       const newReview = {
         user_id: currentUser.id,
-        expert_id: parseInt(String(expertId), 10), // Convert to number for database
+        expert_id: String(expertId), // Convert to string for UUID
         rating: reviewData.rating,
         comment: reviewData.comment,
         date: new Date().toISOString(),

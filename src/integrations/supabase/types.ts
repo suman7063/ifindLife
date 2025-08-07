@@ -2150,31 +2150,44 @@ export type Database = {
         Row: {
           comment: string | null
           date: string
-          expert_id: number
+          expert_id: string | null
+          expert_name: string | null
           id: string
           rating: number
           user_id: string | null
+          user_name: string | null
           verified: boolean | null
         }
         Insert: {
           comment?: string | null
           date: string
-          expert_id: number
+          expert_id?: string | null
+          expert_name?: string | null
           id?: string
           rating: number
           user_id?: string | null
+          user_name?: string | null
           verified?: boolean | null
         }
         Update: {
           comment?: string | null
           date?: string
-          expert_id?: number
+          expert_id?: string | null
+          expert_name?: string | null
           id?: string
           rating?: number
           user_id?: string | null
+          user_name?: string | null
           verified?: boolean | null
         }
         Relationships: [
+          {
+            foreignKeyName: "user_reviews_expert_id_fkey"
+            columns: ["expert_id"]
+            isOneToOne: false
+            referencedRelation: "expert_accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "user_reviews_user_id_fkey"
             columns: ["user_id"]
