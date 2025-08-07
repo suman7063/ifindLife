@@ -24,6 +24,7 @@ export interface SimpleAuthContextType {
   expert: ExpertProfile | null;
   login: (email: string, password: string, options?: LoginOptions) => Promise<boolean>;
   logout: () => Promise<boolean>;
+  updatePassword: (password: string) => Promise<boolean>;
   refreshProfiles: (userId?: string) => Promise<void>;
 }
 
@@ -174,6 +175,24 @@ export const SimpleAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   }, [withTimeout, storeSessionData]);
 
+  // Update password function
+  const updatePassword = useCallback(async (password: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      
+      if (error) {
+        toast.error(error.message);
+        return false;
+      }
+      
+      toast.success('Password updated successfully');
+      return true;
+    } catch (error: any) {
+      toast.error('Failed to update password');
+      return false;
+    }
+  }, []);
+
   // Logout function
   const logout = useCallback(async (): Promise<boolean> => {
     try {
@@ -299,8 +318,9 @@ export const SimpleAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     expert,
     login,
     logout,
+    updatePassword,
     refreshProfiles
-  }), [isAuthenticated, isLoading, user, session, userType, userProfile, expert, login, logout, refreshProfiles]);
+  }), [isAuthenticated, isLoading, user, session, userType, userProfile, expert, login, logout, updatePassword, refreshProfiles]);
 
   return (
     <SimpleAuthContext.Provider value={contextValue}>

@@ -43,7 +43,7 @@ const PasswordChangeModal: React.FC = () => {
 
     try {
       setIsLoading(true);
-      // Note: updatePassword function needs to be implemented in SimpleAuth context
+      const success = await auth.updatePassword(newPassword);
       
       if (success) {
         toast.success('Password updated successfully');

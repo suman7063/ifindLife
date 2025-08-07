@@ -49,7 +49,7 @@ const AdminPasswordChange: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      // Note: updatePassword function needs to be implemented in SimpleAuth context
+      const success = await auth.updatePassword(passwordData.newPassword);
       
       if (success) {
         toast.success("Admin password updated successfully.");
