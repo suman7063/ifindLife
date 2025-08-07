@@ -36,7 +36,7 @@ const ExpertRegister: React.FC = () => {
       country: '',
       title: '',
       experience: 0,
-      languages: [],
+      
       
       bio: '',
       expertCategory: 'listening-volunteer',
@@ -84,7 +84,7 @@ const ExpertRegister: React.FC = () => {
           specialization: data.title,
           experience: data.experience.toString(),
           bio: data.bio,
-          languages: data.languages,
+          
           status: 'pending',
         });
 
@@ -299,32 +299,6 @@ const ExpertRegister: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Languages */}
-                  <div>
-                    <Label className="text-base font-medium">Languages Spoken *</Label>
-                    <div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-2">
-                      {['English', 'Hindi', 'Bengali', 'Telugu', 'Marathi', 'Tamil', 'Gujarati', 'Urdu', 'Kannada', 'Odia', 'Punjabi', 'Malayalam'].map((language) => (
-                        <div key={language} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={language}
-                            checked={form.watch('languages')?.includes(language) || false}
-                            onCheckedChange={(checked) => {
-                              const currentLanguages = form.watch('languages') || [];
-                              if (checked) {
-                                form.setValue('languages', [...currentLanguages, language]);
-                              } else {
-                                form.setValue('languages', currentLanguages.filter(lang => lang !== language));
-                              }
-                            }}
-                          />
-                          <Label htmlFor={language} className="text-sm">{language}</Label>
-                        </div>
-                      ))}
-                    </div>
-                    {form.formState.errors.languages && (
-                      <p className="text-sm text-red-500 mt-1">{form.formState.errors.languages.message}</p>
-                    )}
-                  </div>
 
                   <div>
                     <Label htmlFor="bio">Professional Bio *</Label>

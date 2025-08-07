@@ -70,7 +70,6 @@ const ExpertRegistrationForm: React.FC = () => {
       country: '',
       title: '',
       experience: 0,
-      
       bio: '',
       expertCategory: 'listening-volunteer',
       captchaAnswer: 0,
@@ -95,6 +94,8 @@ const ExpertRegistrationForm: React.FC = () => {
 
     setIsSubmitting(true);
     setSubmitError(null);
+
+    console.log('Form submission started', { data, selectedFile, selectedProfilePicture });
 
     try {
       // Create auth user
@@ -434,8 +435,8 @@ const ExpertRegistrationForm: React.FC = () => {
                 )}
               </div>
             </div>
-            {form.formState.errors.certificate && (
-              <p className="text-sm text-red-500 mt-1">{form.formState.errors.certificate.message}</p>
+            {!selectedFile && submitError && submitError.includes('certificate') && (
+              <p className="text-sm text-red-500 mt-1">Please upload your Soulversity certificate.</p>
             )}
           </div>
 
