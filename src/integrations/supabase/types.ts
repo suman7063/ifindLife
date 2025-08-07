@@ -2112,7 +2112,7 @@ export type Database = {
         Row: {
           date: string
           details: string | null
-          expert_id: number
+          expert_id: string | null
           id: string
           reason: string
           status: string
@@ -2121,7 +2121,7 @@ export type Database = {
         Insert: {
           date: string
           details?: string | null
-          expert_id: number
+          expert_id?: string | null
           id?: string
           reason: string
           status: string
@@ -2130,13 +2130,20 @@ export type Database = {
         Update: {
           date?: string
           details?: string | null
-          expert_id?: number
+          expert_id?: string | null
           id?: string
           reason?: string
           status?: string
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "user_reports_expert_id_fkey"
+            columns: ["expert_id"]
+            isOneToOne: false
+            referencedRelation: "expert_accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "user_reports_user_id_fkey"
             columns: ["user_id"]
