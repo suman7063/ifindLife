@@ -209,7 +209,6 @@ const ExpertRegistrationForm: React.FC = () => {
       }
       
       setSelectedFile(file);
-      form.setValue('certificate', file);
     }
   };
 
@@ -230,7 +229,6 @@ const ExpertRegistrationForm: React.FC = () => {
       }
       
       setSelectedProfilePicture(file);
-      form.setValue('profilePicture', file);
     }
   };
 
