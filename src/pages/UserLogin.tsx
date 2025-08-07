@@ -67,17 +67,17 @@ const UserLogin: React.FC = () => {
     try {
       console.log('UserLogin: Attempting user login:', email);
       
-      const result = await login(email, password, { asExpert: false });
+      const success = await login(email, password, { asExpert: false });
       
-      if (result.success) {
-        console.log('UserLogin: Login successful, userType:', result.userType);
+      if (success) {
+        console.log('UserLogin: Login successful');
         toast.success('Login successful!', { duration: 2000 });
         
         // Navigation will be handled by the useEffect after auth state updates
         return true;
       } else {
-        console.error('UserLogin: Login failed:', result.error);
-        toast.error(result.error || 'Login failed', { duration: 3000 });
+        console.error('UserLogin: Login failed');
+        toast.error('Login failed', { duration: 3000 });
         return false;
       }
     } catch (error: any) {

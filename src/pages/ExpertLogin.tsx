@@ -53,9 +53,9 @@ const ExpertLogin: React.FC = () => {
     setLoginError(null);
     
     try {
-      const result = await login(email, password, { asExpert: true });
+      const success = await login(email, password, { asExpert: true });
       
-      if (result.success) {
+      if (success) {
         toast.success('Login successful!');
         
         // Wait for auth state to update, then redirect to expert dashboard
@@ -65,8 +65,8 @@ const ExpertLogin: React.FC = () => {
         
         return true;
       } else {
-        setLoginError(result.error || 'Login failed. Please check your credentials and try again.');
-        toast.error(result.error || 'Login failed. Please check your credentials and try again.', { duration: 3000 });
+        setLoginError('Login failed. Please check your credentials and try again.');
+        toast.error('Login failed. Please check your credentials and try again.', { duration: 3000 });
         return false;
       }
     } catch (error) {

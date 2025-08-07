@@ -19,7 +19,7 @@ import {
   CheckCheck
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/hooks/useAuth';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -45,7 +45,7 @@ interface NotificationPreferences {
 }
 
 export const NotificationCenter: React.FC = () => {
-  const { user } = useAuth();
+  const { user } = useSimpleAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [preferences, setPreferences] = useState<NotificationPreferences | null>(null);
   const [loading, setLoading] = useState(true);

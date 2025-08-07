@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 
 // Define the AuthInitializationState type here or import it properly
 interface AuthInitializationState {
@@ -12,7 +12,7 @@ export const useAuthSessionEffects = (
   fetchProfile: () => Promise<void>,
   setAuthLoading: (loading: boolean) => void
 ) => {
-  const { user, loading } = useSupabaseAuth();
+  const { user, isLoading } = useSimpleAuth();
   const profileFetchAttempted = useRef(false);
   const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isMounted = useRef(true);
@@ -62,7 +62,7 @@ export const useAuthSessionEffects = (
         });
     } 
     // If Supabase has completed loading and still no user, force loading to complete
-    else if (loading === false) {
+    else if (isLoading === false) {
       console.log("Supabase loading completed");
       
       // Force complete loading after a short timeout
@@ -77,7 +77,7 @@ export const useAuthSessionEffects = (
         }, 200);
       }
     }
-  }, [user, loading, authState.authLoading, authState.authInitialized, fetchProfile, setAuthLoading]);
+  }, [user, isLoading, authState.authLoading, authState.authInitialized, fetchProfile, setAuthLoading]);
 
   // Add a definitive maximum loading timeout to prevent infinite loading
   useEffect(() => {

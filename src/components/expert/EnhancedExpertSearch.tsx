@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import ExpertCard from '@/components/expert-card/ExpertCard';
-import { useAuth } from '@/hooks/useAuth';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { toast } from 'sonner';
 
 interface Expert {
@@ -53,7 +53,7 @@ interface SearchFilters {
 }
 
 export const EnhancedExpertSearch: React.FC = () => {
-  const { user } = useAuth();
+  const { user } = useSimpleAuth();
   const [experts, setExperts] = useState<Expert[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
