@@ -1,7 +1,7 @@
 
 import { z } from "zod";
 
-// Define form schema with validation - simplified for working registration
+// Define form schema with validation - includes languages field
 export const expertFormSchema = z.object({
   // Personal Info
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -17,6 +17,7 @@ export const expertFormSchema = z.object({
   // Professional Info
   title: z.string().min(1, "Professional title is required"),
   experience: z.number().min(0, "Please specify years of experience"),
+  languages: z.string().min(1, "Please specify languages you speak"),
   
   bio: z.string().min(50, "Bio should be at least 50 characters"),
   expertCategory: z.enum(["listening-volunteer", "listening-expert", "mindfulness-coach", "mindfulness-expert", "spiritual-mentor"], {

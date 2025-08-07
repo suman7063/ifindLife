@@ -69,7 +69,7 @@ const ExpertRegistrationForm: React.FC = () => {
       state: '',
       country: '',
       title: '',
-      experience: 0,
+      languages: '',
       bio: '',
       expertCategory: 'listening-volunteer',
       captchaAnswer: 0,
@@ -170,6 +170,7 @@ const ExpertRegistrationForm: React.FC = () => {
           certificate_urls: certificateUrl ? [certificateUrl] : [],
           profile_picture: profilePictureUrl || null,
           category: data.expertCategory,
+          languages: data.languages.split(',').map(lang => lang.trim()).filter(lang => lang),
           status: 'pending',
           onboarding_completed: false,
           pricing_set: false,
@@ -491,7 +492,22 @@ const ExpertRegistrationForm: React.FC = () => {
               {form.formState.errors.experience && (
                 <p className="text-sm text-red-500 mt-1">{form.formState.errors.experience.message}</p>
               )}
-            </div>
+          </div>
+
+          {/* Languages Field */}
+          <div>
+            <Label htmlFor="languages">Languages Spoken *</Label>
+            <Input
+              id="languages"
+              {...form.register('languages')}
+              placeholder="e.g., English, Hindi, Bengali, Spanish"
+              className={form.formState.errors.languages ? 'border-red-500' : ''}
+            />
+            <p className="text-sm text-gray-500 mt-1">Enter languages separated by commas</p>
+            {form.formState.errors.languages && (
+              <p className="text-sm text-red-500 mt-1">{form.formState.errors.languages.message}</p>
+            )}
+          </div>
           </div>
 
 
