@@ -8,6 +8,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { validatePasswordStrength } from '@/utils/passwordValidation';
 import { Lock, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { secureLogger } from '@/utils/secureLogger';
+import { sanitizeInput } from '@/utils/securityHelpers';
 
 const PasswordChangeForm: React.FC = () => {
   const auth = useAuth();

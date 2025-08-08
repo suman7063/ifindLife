@@ -5,6 +5,9 @@ import { fetchUserProfile } from '@/utils/profileFetcher';
 import { ExpertProfile, UserProfile } from '@/types/database/unified';
 import { expertRepository } from '@/repositories';
 import { toast } from 'sonner';
+import { validatePasswordStrength } from '@/utils/passwordValidation';
+import { secureLogger } from '@/utils/secureLogger';
+import { secureStorage } from '@/utils/secureStorage';
 
 export type UserType = 'user' | 'expert' | 'dual' | 'none';
 
@@ -178,6 +181,13 @@ export const SimpleAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // Update password function
   const updatePassword = useCallback(async (password: string): Promise<boolean> => {
     try {
+      // Validate password strength before updating
+      const validation = validatePasswordStrength(password);
+      if (!validation.isValid) {
+        toast.error(validation.feedback);
+        return false;
+      }
+
       const { error } = await supabase.auth.updateUser({ password });
       
       if (error) {
@@ -188,6 +198,7 @@ export const SimpleAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       toast.success('Password updated successfully');
       return true;
     } catch (error: any) {
+      secureLogger.error('Password update failed:', error);
       toast.error('Failed to update password');
       return false;
     }
