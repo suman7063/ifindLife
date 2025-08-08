@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ExpertCard from '../expert-card';
-import ExpertDetailModal from '../expert-card/ExpertDetailModal';
+
 import { ExpertCardData } from '../expert-card/types';
 import { toast } from 'sonner';
 
@@ -18,16 +18,14 @@ const ExpertsGrid: React.FC<ExpertsGridProps> = ({
   onResetFilters
 }) => {
   const navigate = useNavigate();
-  const [selectedExpert, setSelectedExpert] = useState<ExpertCardData | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [expertConnectOptions, setExpertConnectOptions] = useState<{[key: string]: boolean}>({});
 
   // Use provided experts or show empty state
   const displayExperts = experts;
 
   const handleExpertCardClick = (expert: ExpertCardData) => {
-    setSelectedExpert(expert);
-    setIsModalOpen(true);
+    // Navigate to dedicated expert page instead of opening modal
+    navigate(`/experts/${expert.auth_id || expert.id}`);
   };
 
   const handleConnectNow = (expert: ExpertCardData, type: 'video' | 'voice') => {
@@ -51,20 +49,6 @@ const ExpertsGrid: React.FC<ExpertsGridProps> = ({
     }));
   };
 
-  const handleModalConnectNow = (type: 'video' | 'voice') => {
-    if (selectedExpert) {
-      handleConnectNow(selectedExpert, type);
-      setIsModalOpen(false);
-    }
-  };
-
-  const handleModalBookNow = () => {
-    if (selectedExpert) {
-      // Navigate to expert's booking page with booking tab active
-      const expertUrl = `/experts/${selectedExpert.auth_id || selectedExpert.id}?book=true`;
-      window.location.href = expertUrl;
-    }
-  };
 
   if (loading) {
     return (
@@ -113,16 +97,6 @@ const ExpertsGrid: React.FC<ExpertsGridProps> = ({
         ))}
       </div>
 
-      <ExpertDetailModal
-        expert={selectedExpert}
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setSelectedExpert(null);
-        }}
-        onConnectNow={handleModalConnectNow}
-        onBookNow={handleModalBookNow}
-      />
     </>
   );
 };
