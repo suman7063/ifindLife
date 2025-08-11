@@ -37,13 +37,13 @@ const ServiceExperts: React.FC<ServiceExpertsProps> = ({ serviceId, serviceData 
     serviceId: mappedServiceId ? mappedServiceId.toString() : undefined 
   });
 
-  const handleExpertClick = (expert: any) => {
-    navigate(`/experts/${expert.auth_id || expert.id}`);
+  const handleExpertClick = (expertId: string) => {
+    navigate(`/experts/${expertId}`);
   };
 
-  const handleConnectClick = (expert: any, e: React.MouseEvent) => {
+  const handleConnectClick = (expertId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    navigate(`/experts/${expert.auth_id || expert.id}?action=connect`);
+    navigate(`/experts/${expertId}?action=connect`);
   };
 
   if (loading) {
@@ -101,7 +101,7 @@ const ServiceExperts: React.FC<ServiceExpertsProps> = ({ serviceId, serviceData 
             <div
               key={expert.id}
               className="border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => handleExpertClick(expert)}
+              onClick={() => handleExpertClick(expert.id)}
             >
               <div className="flex items-start space-x-4">
                 <div className="relative">
@@ -153,7 +153,7 @@ const ServiceExperts: React.FC<ServiceExpertsProps> = ({ serviceId, serviceData 
                     <Button
                       size="sm"
                       className={`${serviceData.buttonColor} text-white`}
-                      onClick={(e) => handleConnectClick(expert, e)}
+                      onClick={(e) => handleConnectClick(expert.id, e)}
                     >
                       <MessageCircle className="h-4 w-4 mr-1" />
                       Connect

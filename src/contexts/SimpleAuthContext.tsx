@@ -227,7 +227,7 @@ export const SimpleAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   }, []);
 
-  // Single auth initialization with timeout protection and memory leak prevention
+  // Single auth initialization with timeout protection
   useEffect(() => {
     if (initializationRef.current) return;
     initializationRef.current = true;
@@ -313,7 +313,7 @@ export const SimpleAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     
     return () => {
       mounted = false;
-      if (authTimeout) clearTimeout(authTimeout);
+      clearTimeout(authTimeout);
       subscription.unsubscribe();
     };
   }, [withTimeout, refreshProfiles, getStoredSessionData]);

@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Upload, Lock, Bell } from 'lucide-react';
 import { getUserProfile, getUpdateUserProfile } from '@/utils/profileConverters';
-import { supabase } from '@/lib/supabase';
 
 interface UserProfileSectionProps {
   user: UserProfile | null;
@@ -115,32 +114,17 @@ const UserProfileSection: React.FC<UserProfileSectionProps> = ({ user }) => {
     }
   };
   
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !userProfile) return;
+    if (!file) return;
     
+    // TODO: Implement profile photo upload
     setIsUploadingPhoto(true);
-    try {
-      const fileName = `user-${userProfile.id}-${Date.now()}`;
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(fileName, file);
-      
-      if (uploadError) throw uploadError;
-      
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({ profile_picture: fileName })
-        .eq('id', userProfile.id);
-        
-      if (updateError) throw updateError;
-      
-      toast.success("Profile photo updated successfully");
-    } catch (error) {
-      toast.error("Failed to upload photo. Please try again.");
-    } finally {
+    
+    setTimeout(() => {
+      toast.success("Profile photo updated");
       setIsUploadingPhoto(false);
-    }
+    }, 2000);
   };
   
   return (

@@ -1,5 +1,5 @@
 
-import React, { useState, memo, useCallback, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ExpertCard from './expert-card';
 import ExpertDetailModal from './expert-card/ExpertDetailModal';
@@ -11,14 +11,14 @@ interface TopTherapistsSectionProps {
   experts?: ExpertCardData[];
 }
 
-const TopTherapistsSection: React.FC<TopTherapistsSectionProps> = memo(({ experts = [] }) => {
+const TopTherapistsSection: React.FC<TopTherapistsSectionProps> = ({ experts = [] }) => {
   const navigate = useNavigate();
   const [selectedExpert, setSelectedExpert] = useState<ExpertCardData | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expertConnectOptions, setExpertConnectOptions] = useState<{[key: string]: boolean}>({});
 
-  // Memoized default experts
-  const defaultExperts: ExpertCardData[] = useMemo(() => experts.length > 0 ? experts : [
+  // Default experts if none provided
+  const defaultExperts: ExpertCardData[] = experts.length > 0 ? experts : [
     {
       id: '1',
       name: 'Dr. Sarah Johnson',
@@ -58,43 +58,47 @@ const TopTherapistsSection: React.FC<TopTherapistsSectionProps> = memo(({ expert
       price: 150,
       waitTime: 'Same day'
     }
-  ], [experts.length]);
+  ];
 
-  const handleExpertCardClick = useCallback((expert: ExpertCardData) => {
+  const handleExpertCardClick = (expert: ExpertCardData) => {
     setSelectedExpert(expert);
     setIsModalOpen(true);
-  }, []);
+  };
 
-  const handleConnectNow = useCallback((expert: ExpertCardData, type: 'video' | 'voice') => {
+  const handleConnectNow = (expert: ExpertCardData, type: 'video' | 'voice') => {
+    console.log(`Connecting to ${expert.name} via ${type}`);
     toast.success(`Initiating ${type} call with ${expert.name}...`);
-    navigate(`/experts/${expert.auth_id || expert.id}?action=connect&type=${type}`);
-  }, [navigate]);
+    // Here you would integrate with Agora SDK for video/voice calls
+  };
 
-  const handleBookNow = useCallback((expert: ExpertCardData) => {
+  const handleBookNow = (expert: ExpertCardData) => {
+    console.log(`Booking session with ${expert.name}`);
+    
+    // Navigate to expert's booking page with booking tab active
     const expertUrl = `/experts/${expert.auth_id || expert.id}?book=true`;
     window.location.href = expertUrl;
-  }, []);
+  };
 
-  const handleShowConnectOptions = useCallback((expertId: string, show: boolean) => {
+  const handleShowConnectOptions = (expertId: string, show: boolean) => {
     setExpertConnectOptions(prev => ({
       ...prev,
       [expertId]: show
     }));
-  }, []);
+  };
 
-  const handleModalConnectNow = useCallback((type: 'video' | 'voice') => {
+  const handleModalConnectNow = (type: 'video' | 'voice') => {
     if (selectedExpert) {
       handleConnectNow(selectedExpert, type);
       setIsModalOpen(false);
     }
-  }, [selectedExpert, handleConnectNow]);
+  };
 
-  const handleModalBookNow = useCallback(() => {
+  const handleModalBookNow = () => {
     if (selectedExpert) {
       handleBookNow(selectedExpert);
       setIsModalOpen(false);
     }
-  }, [selectedExpert, handleBookNow]);
+  };
 
   return (
     <>
@@ -145,8 +149,6 @@ const TopTherapistsSection: React.FC<TopTherapistsSectionProps> = memo(({ expert
       />
     </>
   );
-});
-
-TopTherapistsSection.displayName = 'TopTherapistsSection';
+};
 
 export default TopTherapistsSection;
