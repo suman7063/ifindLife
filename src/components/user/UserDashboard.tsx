@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -35,20 +35,14 @@ interface UserDashboardData {
   };
 }
 
-export const UserDashboard: React.FC = () => {
+export const UserDashboard: React.FC = memo(() => {
   const { user } = useSimpleAuth();
   const navigate = useNavigate();
   const { initiateCallFromAppointment, getAppointmentStatus } = useAppointmentToCall();
   const [data, setData] = useState<UserDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user) {
-      fetchDashboardData();
-    }
-  }, [user]);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -127,22 +121,27 @@ export const UserDashboard: React.FC = () => {
         }
       });
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
       toast.error('Failed to load dashboard data');
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
-  const formatDate = (dateStr: string) => {
+  useEffect(() => {
+    if (user) {
+      fetchDashboardData();
+    }
+  }, [user, fetchDashboardData]);
+
+  const formatDate = useCallback((dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric'
     });
-  };
+  }, []);
 
-  const handleJoinCall = async (appointmentId: string, callType: 'video' | 'audio' = 'video') => {
+  const handleJoinCall = useCallback(async (appointmentId: string, callType: 'video' | 'audio' = 'video') => {
     try {
       const status = await getAppointmentStatus(appointmentId);
       
@@ -159,18 +158,17 @@ export const UserDashboard: React.FC = () => {
 
       await initiateCallFromAppointment(appointmentId, callType);
     } catch (error) {
-      console.error('Error joining call:', error);
       toast.error('Failed to join call');
     }
-  };
+  }, [getAppointmentStatus, initiateCallFromAppointment]);
 
-  const formatTime = (timeStr: string) => {
+  const formatTime = useCallback((timeStr: string) => {
     return new Date(`2000-01-01T${timeStr}`).toLocaleTimeString('en-US', {
       hour: 'numeric',
       minute: '2-digit',
       hour12: true
     });
-  };
+  }, []);
 
   if (loading) {
     return (
@@ -496,4 +494,6 @@ export const UserDashboard: React.FC = () => {
       </Card>
     </div>
   );
-};
+});
+
+UserDashboard.displayName = 'UserDashboard';

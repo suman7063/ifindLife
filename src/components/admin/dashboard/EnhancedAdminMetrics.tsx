@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -26,18 +26,12 @@ interface AdminMetrics {
   pending_tickets: number;
 }
 
-export const EnhancedAdminMetrics: React.FC = () => {
+export const EnhancedAdminMetrics: React.FC = memo(() => {
   const [metrics, setMetrics] = useState<AdminMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [revenueGrowth, setRevenueGrowth] = useState<number>(0);
 
-  useEffect(() => {
-    fetchMetrics();
-    const interval = setInterval(fetchMetrics, 30000); // Refresh every 30 seconds
-    return () => clearInterval(interval);
-  }, []);
-
-  const fetchMetrics = async () => {
+  const fetchMetrics = useCallback(async () => {
     try {
       // Use the admin metrics function we created in the database
       const { data, error } = await supabase.rpc('get_admin_metrics');
@@ -56,42 +50,25 @@ export const EnhancedAdminMetrics: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const getStatusColor = (value: number, type: 'warning' | 'success' | 'danger') => {
+  useEffect(() => {
+    fetchMetrics();
+    const interval = setInterval(fetchMetrics, 30000); // Refresh every 30 seconds
+    return () => clearInterval(interval);
+  }, [fetchMetrics]);
+
+  const getStatusColor = useCallback((value: number, type: 'warning' | 'success' | 'danger') => {
     if (type === 'warning' && value > 0) return 'bg-yellow-500';
     if (type === 'danger' && value > 0) return 'bg-red-500';
     if (type === 'success') return 'bg-green-500';
     return 'bg-gray-500';
-  };
+  }, []);
 
-  if (loading) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <Card key={i} className="animate-pulse">
-            <CardContent className="p-6">
-              <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-              <div className="h-8 bg-gray-200 rounded w-1/2"></div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
-  }
-
-  if (!metrics) {
-    return (
-      <Card>
-        <CardContent className="p-6 text-center">
-          <p className="text-muted-foreground">Failed to load metrics</p>
-          <Button onClick={fetchMetrics} className="mt-2">Retry</Button>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const metricCards = [
+  const metricCards = useMemo(() => {
+    if (!metrics) return [];
+    
+    return [
     {
       title: 'Pending Expert Reviews',
       value: metrics.pending_experts,
@@ -160,6 +137,33 @@ export const EnhancedAdminMetrics: React.FC = () => {
       description: 'Disapproved experts'
     }
   ];
+  }, [metrics, revenueGrowth]);
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <Card key={i} className="animate-pulse">
+            <CardContent className="p-6">
+              <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+              <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
+  if (!metrics) {
+    return (
+      <Card>
+        <CardContent className="p-6 text-center">
+          <p className="text-muted-foreground">Failed to load metrics</p>
+          <Button onClick={fetchMetrics} className="mt-2">Retry</Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -248,4 +252,6 @@ export const EnhancedAdminMetrics: React.FC = () => {
       </Card>
     </div>
   );
-};
+});
+
+EnhancedAdminMetrics.displayName = 'EnhancedAdminMetrics';
