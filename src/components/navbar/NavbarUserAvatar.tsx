@@ -32,15 +32,28 @@ const NavbarUserAvatar: React.FC<NavbarUserAvatarProps> = ({
   // Get initials with improved logic
   const getInitials = () => {
     const name = getDisplayName();
-    const words = name.split(' ').filter(word => word.length > 0);
     
+    // Check if it's an email address and extract the part before @
+    if (name.includes('@')) {
+      const emailPrefix = name.split('@')[0];
+      const words = emailPrefix.split(/[._-]/).filter(word => word.length > 0);
+      if (words.length >= 2) {
+        return `${words[0][0]}${words[1][0]}`.toUpperCase();
+      } else if (words.length === 1 && words[0].length >= 2) {
+        return words[0].slice(0, 2).toUpperCase();
+      }
+      return emailPrefix.slice(0, 2).toUpperCase();
+    }
+    
+    // Handle regular names
+    const words = name.split(' ').filter(word => word.length > 0);
     if (words.length >= 2) {
       return `${words[0][0]}${words[1][0]}`.toUpperCase();
-    } else if (words.length === 1) {
+    } else if (words.length === 1 && words[0].length >= 2) {
       return words[0].slice(0, 2).toUpperCase();
     }
     
-    return 'U';
+    return name.length >= 2 ? name.slice(0, 2).toUpperCase() : 'U';
   };
 
   // Get profile picture with proper fallback

@@ -29,30 +29,25 @@ const UserLogin: React.FC = () => {
   // Redirect authenticated users to appropriate dashboard
   useEffect(() => {
     if (!isLoading && isAuthenticated && user && userType !== 'none') {
-      console.log('UserLogin: User authenticated, checking for redirect data');
       
       // Check for intended action first
       const pendingAction = executeIntendedAction();
       if (pendingAction) {
-        console.log('UserLogin: Found pending action, staying on page for action execution:', pendingAction);
-        // Don't navigate away - let the component that initiated the action handle it
-        // Navigate back to where the user came from instead of dashboard
-        setTimeout(() => {
+        // Navigate back to the stored current path or go back in history
+        if (pendingAction.currentPath) {
+          navigate(pendingAction.currentPath, { replace: true });
+        } else {
           window.history.back();
-        }, 1000);
+        }
         return;
       }
       
       // Otherwise, redirect to appropriate dashboard based on userType
-      setTimeout(() => {
-        if (userType === 'expert') {
-          console.log('UserLogin: Redirecting to expert dashboard');
-          navigate('/expert-dashboard', { replace: true });
-        } else {
-          console.log('UserLogin: Redirecting to home page instead of dashboard');
-          navigate('/', { replace: true });
-        }
-      }, 500);
+      if (userType === 'expert') {
+        navigate('/expert-dashboard', { replace: true });
+      } else {
+        navigate('/', { replace: true });
+      }
     }
   }, [isLoading, isAuthenticated, user, userType, navigate, executeIntendedAction]);
 

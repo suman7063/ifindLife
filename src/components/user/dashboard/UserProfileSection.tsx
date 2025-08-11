@@ -121,22 +121,42 @@ const UserProfileSection: React.FC<UserProfileSectionProps> = ({ user }) => {
     
     setIsUploadingPhoto(true);
     try {
-      const fileName = `user-${userProfile.id}-${Date.now()}`;
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${userProfile.id}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      
+      // Upload to storage
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(fileName, file);
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
       
       if (uploadError) throw uploadError;
       
+      // Get public URL
+      const { data } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+      
+      const publicUrl = data.publicUrl;
+      
+      // Update user profile with the new profile picture URL
       const { error: updateError } = await supabase
         .from('users')
-        .update({ profile_picture: fileName })
+        .update({ profile_picture: publicUrl })
         .eq('id', userProfile.id);
         
       if (updateError) throw updateError;
       
+      // Refresh the auth profiles to update the UI
+      if (auth.refreshProfile) {
+        await auth.refreshProfile();
+      }
+      
       toast.success("Profile photo updated successfully");
     } catch (error) {
+      console.error("Photo upload error:", error);
       toast.error("Failed to upload photo. Please try again.");
     } finally {
       setIsUploadingPhoto(false);
