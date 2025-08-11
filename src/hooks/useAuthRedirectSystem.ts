@@ -83,21 +83,21 @@ export const useAuthRedirectSystem = () => {
 
     try {
       const pendingAction = JSON.parse(pendingActionStr);
-      console.log('Executing intended action:', pendingAction);
-      
-      // Clear the action first
-      clearIntendedAction();
       
       // Check if action is not too old (30 minutes)
       const maxAge = 30 * 60 * 1000; // 30 minutes
       if (Date.now() - pendingAction.timestamp > maxAge) {
-        console.log('Pending action expired');
+        clearIntendedAction();
         return null;
       }
 
+      // Delay clearing action to allow for proper redirect
+      setTimeout(() => {
+        clearIntendedAction();
+      }, 1000);
+      
       return pendingAction;
     } catch (error) {
-      console.error('Error parsing pending action:', error);
       clearIntendedAction();
       return null;
     }

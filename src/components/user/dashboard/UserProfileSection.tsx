@@ -117,12 +117,24 @@ const UserProfileSection: React.FC<UserProfileSectionProps> = ({ user }) => {
   
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !userProfile) return;
+    if (!file) return;
     
     setIsUploadingPhoto(true);
     try {
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("File size must be less than 5MB");
+        return;
+      }
+      
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast.error("Please select an image file");
+        return;
+      }
+      
       const fileExt = file.name.split('.').pop();
-      const fileName = `${userProfile.id}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const fileName = `${auth.user?.id || 'user'}-${Date.now()}.${fileExt}`;
       
       // Upload to storage
       const { error: uploadError } = await supabase.storage
@@ -142,21 +154,27 @@ const UserProfileSection: React.FC<UserProfileSectionProps> = ({ user }) => {
       const publicUrl = data.publicUrl;
       
       // Update user profile with the new profile picture URL
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({ profile_picture: publicUrl })
-        .eq('id', userProfile.id);
-        
-      if (updateError) throw updateError;
-      
-      // Refresh the auth profiles to update the UI
-      if (auth.refreshProfile) {
-        await auth.refreshProfile();
+      if (auth.updateProfile) {
+        const success = await auth.updateProfile({ profile_picture: publicUrl });
+        if (success) {
+          toast.success("Profile photo updated successfully");
+          // Update local profile data
+          setProfileData(prev => ({ ...prev, profile_picture: publicUrl }));
+        } else {
+          throw new Error("Failed to update profile");
+        }
+      } else {
+        // Direct database update as fallback
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({ profile_picture: publicUrl })
+          .eq('id', auth.user?.id);
+          
+        if (updateError) throw updateError;
+        toast.success("Profile photo updated successfully");
       }
       
-      toast.success("Profile photo updated successfully");
     } catch (error) {
-      console.error("Photo upload error:", error);
       toast.error("Failed to upload photo. Please try again.");
     } finally {
       setIsUploadingPhoto(false);

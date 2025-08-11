@@ -31,11 +31,19 @@ const NavbarUserAvatar: React.FC<NavbarUserAvatarProps> = ({
 
   // Get initials with improved logic
   const getInitials = () => {
-    const name = getDisplayName();
+    // First check if we have a user name
+    if (currentUser?.name) {
+      const words = currentUser.name.split(' ').filter(word => word.length > 0);
+      if (words.length >= 2) {
+        return `${words[0][0]}${words[1][0]}`.toUpperCase();
+      } else if (words.length === 1 && words[0].length >= 2) {
+        return words[0].slice(0, 2).toUpperCase();
+      }
+    }
     
-    // Check if it's an email address and extract the part before @
-    if (name.includes('@')) {
-      const emailPrefix = name.split('@')[0];
+    // Fallback to email if no name
+    if (currentUser?.email) {
+      const emailPrefix = currentUser.email.split('@')[0];
       const words = emailPrefix.split(/[._-]/).filter(word => word.length > 0);
       if (words.length >= 2) {
         return `${words[0][0]}${words[1][0]}`.toUpperCase();
@@ -45,15 +53,7 @@ const NavbarUserAvatar: React.FC<NavbarUserAvatarProps> = ({
       return emailPrefix.slice(0, 2).toUpperCase();
     }
     
-    // Handle regular names
-    const words = name.split(' ').filter(word => word.length > 0);
-    if (words.length >= 2) {
-      return `${words[0][0]}${words[1][0]}`.toUpperCase();
-    } else if (words.length === 1 && words[0].length >= 2) {
-      return words[0].slice(0, 2).toUpperCase();
-    }
-    
-    return name.length >= 2 ? name.slice(0, 2).toUpperCase() : 'U';
+    return 'U';
   };
 
   // Get profile picture with proper fallback
