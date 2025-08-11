@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, memo, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -52,7 +52,7 @@ interface SearchFilters {
   service: string;
 }
 
-export const EnhancedExpertSearch: React.FC = () => {
+export const EnhancedExpertSearch: React.FC = memo(() => {
   const { user } = useSimpleAuth();
   const [experts, setExperts] = useState<Expert[]>([]);
   const [services, setServices] = useState<Service[]>([]);
@@ -83,15 +83,7 @@ export const EnhancedExpertSearch: React.FC = () => {
     'Financial Planning'
   ];
 
-  useEffect(() => {
-    fetchExperts();
-    fetchServices();
-    if (user) {
-      fetchFavorites();
-    }
-  }, [user]);
-
-  const fetchExperts = async () => {
+  const fetchExperts = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('expert_accounts')
@@ -118,9 +110,9 @@ export const EnhancedExpertSearch: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchServices = async () => {
+  const fetchServices = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('services')
@@ -130,11 +122,11 @@ export const EnhancedExpertSearch: React.FC = () => {
       if (error) throw error;
       setServices(data || []);
     } catch (error) {
-      console.error('Error fetching services:', error);
+      // Error handled silently to prevent UI disruption
     }
-  };
+  }, []);
 
-  const fetchFavorites = async () => {
+  const fetchFavorites = useCallback(async () => {
     if (!user) return;
     
     try {
@@ -146,11 +138,19 @@ export const EnhancedExpertSearch: React.FC = () => {
       if (error) throw error;
       setFavorites(data?.map(f => f.expert_id) || []);
     } catch (error) {
-      console.error('Error fetching favorites:', error);
+      // Error handled silently to prevent UI disruption
     }
-  };
+  }, [user]);
 
-  const toggleFavorite = async (expertId: string) => {
+  useEffect(() => {
+    fetchExperts();
+    fetchServices();
+    if (user) {
+      fetchFavorites();
+    }
+  }, [user, fetchExperts, fetchServices, fetchFavorites]);
+
+  const toggleFavorite = useCallback(async (expertId: string) => {
     if (!user) {
       toast.error('Please sign in to save favorites');
       return;
@@ -177,10 +177,21 @@ export const EnhancedExpertSearch: React.FC = () => {
         toast.success('Added to favorites');
       }
     } catch (error) {
-      console.error('Error toggling favorite:', error);
       toast.error('Failed to update favorites');
     }
-  };
+  }, [user, favorites]);
+
+  const clearFilters = useCallback(() => {
+    setFilters({
+      searchTerm: '',
+      specialization: '',
+      priceRange: [0, 200],
+      rating: 0,
+      availability: '',
+      experience: '',
+      service: ''
+    });
+  }, []);
 
   const filteredExperts = useMemo(() => {
     return experts.filter(expert => {
@@ -234,17 +245,6 @@ export const EnhancedExpertSearch: React.FC = () => {
     });
   }, [experts, filters]);
 
-  const clearFilters = () => {
-    setFilters({
-      searchTerm: '',
-      specialization: '',
-      priceRange: [0, 200],
-      rating: 0,
-      availability: '',
-      experience: '',
-      service: ''
-    });
-  };
 
   const activeFiltersCount = useMemo(() => {
     let count = 0;
@@ -510,4 +510,6 @@ export const EnhancedExpertSearch: React.FC = () => {
       )}
     </div>
   );
-};
+});
+
+EnhancedExpertSearch.displayName = 'EnhancedExpertSearch';

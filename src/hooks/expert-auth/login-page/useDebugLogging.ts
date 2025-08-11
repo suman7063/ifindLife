@@ -10,16 +10,10 @@ export const useDebugLogging = (
   userProfile: UserProfile | null,
   redirectAttempted: boolean
 ) => {
-  // Debug logging only in development environment
+  // Monitor auth states for debugging in development
   useEffect(() => {
     if (import.meta.env.DEV) {
-      console.log('ExpertLogin component - Auth states:', {
-        expertLoading: loading,
-        expertAuthInitialized: initialized,
-        hasExpertProfile: !!expert,
-        directlyFetchedUserProfile: !!userProfile,
-        redirectAttempted,
-      });
+      // Auth state monitoring for development debugging
     }
   }, [loading, initialized, expert, userProfile, redirectAttempted]);
 };
