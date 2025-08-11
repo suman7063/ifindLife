@@ -49,6 +49,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import ReferralProgram from './pages/ReferralProgram';
 import AuthCallback from './pages/AuthCallback';
+import MindfulnessTeacherTrainingLP from './pages/lp/MindfulnessTeacherTrainingLP';
 
 // Create QueryClient outside component to avoid hook issues
 const queryClient = new QueryClient({
@@ -70,6 +71,7 @@ const UserRoutes: React.FC = () => {
         <FavoritesProvider>
         <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/lp/mtt" element={<MindfulnessTeacherTrainingLP />} />
         
         {/* Services Routes - Support both slug and ID routing */}
         <Route path="/services" element={<Services />} />
