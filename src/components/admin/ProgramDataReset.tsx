@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from 'sonner';
+import { errorHandler } from '@/utils/errorHandler';
 import { addSamplePrograms } from '@/utils/sampleProgramsData';
 import { RefreshCw, Database } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -13,7 +14,6 @@ const ProgramDataReset = () => {
   
   // Function to reset database program data
   const resetProgramData = async () => {
-    console.log("Program data reset initiated");
     setIsResetting(true);
     
     try {
@@ -28,36 +28,26 @@ const ProgramDataReset = () => {
           .neq('id', 0); // Delete all rows
           
         if (!error) {
-          console.log("Successfully deleted programs from Supabase");
           deleted = true;
-        } else {
-          console.error("Error deleting from Supabase:", error);
         }
       } catch (e) {
-        console.log("Supabase deletion not available, using localStorage fallback");
+        // Fallback to localStorage
       }
       
       // If Supabase deletion failed or isn't available, clear localStorage
       if (!deleted) {
         localStorage.removeItem('ifindlife-programs');
-        console.log("Cleared programs from localStorage");
       }
       
       // Add sample data for each program type
-      const wellnessAdded = await addSamplePrograms('wellness');
-      console.log("Wellness programs added:", wellnessAdded);
-      
-      const academicAdded = await addSamplePrograms('academic' as ProgramType);
-      console.log("Academic programs added:", academicAdded);
-      
-      const businessAdded = await addSamplePrograms('business' as ProgramType);
-      console.log("Business programs added:", businessAdded);
+      await addSamplePrograms('wellness');
+      await addSamplePrograms('academic' as ProgramType);
+      await addSamplePrograms('business' as ProgramType);
       
       // Show success message
       toast.success("Program data has been reset successfully!");
     } catch (error) {
-      console.error("Error resetting program data:", error);
-      toast.error("Failed to reset program data. See console for details.");
+      errorHandler.handleError(error, "Failed to reset program data");
     } finally {
       setIsResetting(false);
     }

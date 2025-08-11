@@ -19,6 +19,7 @@ import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { useIntegratedExpertPresence } from '@/hooks/useIntegratedExpertPresence';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import LoadingFallback from '@/components/common/LoadingFallback';
 
 const NewExpertDashboard: React.FC = () => {
   const { expert, isAuthenticated, isLoading, userType } = useSimpleAuth();
@@ -44,7 +45,6 @@ const NewExpertDashboard: React.FC = () => {
           .single();
 
         if (error) {
-          console.error('Error fetching expert account:', error);
           setNeedsOnboarding(false);
           return;
         }
@@ -58,16 +58,7 @@ const NewExpertDashboard: React.FC = () => {
         const needsOnboardingFlow = !hasServices || !hasPricing || !hasAvailability || !data.onboarding_completed;
         setNeedsOnboarding(needsOnboardingFlow);
 
-        console.log('Onboarding check:', {
-          status: data.status,
-          onboardingCompleted: data.onboarding_completed,
-          hasServices,
-          hasPricing,
-          hasAvailability,
-          needsOnboarding: needsOnboardingFlow
-        });
       } catch (error) {
-        console.error('Error checking onboarding status:', error);
         setNeedsOnboarding(false);
       }
     };
@@ -75,36 +66,21 @@ const NewExpertDashboard: React.FC = () => {
     checkOnboardingStatus();
   }, [isAuthenticated, expert]);
 
-  // Enhanced debug logging
+  // Set user role when authenticated
   useEffect(() => {
-    console.log('NewExpertDashboard - Auth state:', {
-      isAuthenticated,
-      hasExpertProfile: !!expert,
-      isLoading,
-      userType,
-      needsOnboarding
-    });
-    
-    // Ensure userType is set to expert when accessing this page
     if (isAuthenticated && expert) {
-      console.log('Setting preferred role to expert');
       localStorage.setItem('preferredRole', 'expert');
       localStorage.setItem('sessionType', 'expert');
     }
-  }, [isAuthenticated, expert, isLoading, userType, needsOnboarding]);
+  }, [isAuthenticated, expert]);
   
   // Display loading state
   if (isLoading || needsOnboarding === null) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+    return <LoadingFallback message="Loading expert dashboard..." />;
   }
   
   // Handle unauthorized access
   if (!isAuthenticated || userType !== 'expert' || !expert) {
-    console.error('User not authenticated as expert, redirecting to expert login', {
-      isAuthenticated,
-      userType,
-      hasExpertProfile: !!expert
-    });
     
     // Show toast and redirect
     toast.error('You must be logged in as an expert to access this page');

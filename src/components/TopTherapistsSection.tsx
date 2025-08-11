@@ -66,14 +66,12 @@ const TopTherapistsSection: React.FC<TopTherapistsSectionProps> = ({ experts = [
   };
 
   const handleConnectNow = (expert: ExpertCardData, type: 'video' | 'voice') => {
-    console.log(`Connecting to ${expert.name} via ${type}`);
     toast.success(`Initiating ${type} call with ${expert.name}...`);
-    // Here you would integrate with Agora SDK for video/voice calls
+    // Navigate to expert page with connect action
+    navigate(`/experts/${expert.auth_id || expert.id}?action=connect&type=${type}`);
   };
 
   const handleBookNow = (expert: ExpertCardData) => {
-    console.log(`Booking session with ${expert.name}`);
-    
     // Navigate to expert's booking page with booking tab active
     const expertUrl = `/experts/${expert.auth_id || expert.id}?book=true`;
     window.location.href = expertUrl;
