@@ -31,26 +31,13 @@ const NavbarUserAvatar: React.FC<NavbarUserAvatarProps> = ({
 
   // Get initials with improved logic
   const getInitials = () => {
-    // First check if we have a user name
-    if (currentUser?.name) {
-      const words = currentUser.name.split(' ').filter(word => word.length > 0);
-      if (words.length >= 2) {
-        return `${words[0][0]}${words[1][0]}`.toUpperCase();
-      } else if (words.length === 1 && words[0].length >= 2) {
-        return words[0].slice(0, 2).toUpperCase();
-      }
-    }
+    const name = getDisplayName();
+    const words = name.split(' ').filter(word => word.length > 0);
     
-    // Fallback to email if no name
-    if (currentUser?.email) {
-      const emailPrefix = currentUser.email.split('@')[0];
-      const words = emailPrefix.split(/[._-]/).filter(word => word.length > 0);
-      if (words.length >= 2) {
-        return `${words[0][0]}${words[1][0]}`.toUpperCase();
-      } else if (words.length === 1 && words[0].length >= 2) {
-        return words[0].slice(0, 2).toUpperCase();
-      }
-      return emailPrefix.slice(0, 2).toUpperCase();
+    if (words.length >= 2) {
+      return `${words[0][0]}${words[1][0]}`.toUpperCase();
+    } else if (words.length === 1) {
+      return words[0].slice(0, 2).toUpperCase();
     }
     
     return 'U';

@@ -62,12 +62,13 @@ const NavbarUserMenu: React.FC<NavbarUserMenuProps> = ({
       
       if (success) {
         toast.success('Successfully logged out');
-        // Force immediate redirect to clear auth state
-        window.location.href = '/';
+        navigate('/logout', { state: { userType: 'user' } });
       } else {
+        console.error("Logout failed");
         toast.error('Failed to log out. Please try again.');
       }
     } catch (error) {
+      console.error('Error during logout:', error);
       toast.error('Failed to log out. Please try again.');
     } finally {
       setIsLoggingOut(false);

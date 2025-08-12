@@ -51,20 +51,17 @@ export function useCategoryPricing(expertCategory?: string) {
     }
   };
 
-  // Detect user currency based on browser timezone/locale (no external calls)
+  // Detect user currency based on geolocation
   const detectUserCurrency = async () => {
     try {
-      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
-      const isIndiaTz = tz.includes('Asia/Kolkata') || tz.includes('Asia/Calcutta') || tz.includes('Kolkata') || tz.includes('Calcutta');
-
-      const locales = [navigator.language, ...(navigator.languages || [])].filter(Boolean) as string[];
-      const lc = locales.join(' ').toLowerCase();
-      const isIndiaLocale = lc.includes('en-in') || lc.includes('hi') || lc.includes('te') || lc.includes('ta') || lc.includes('bn') || lc.includes('gu') || lc.includes('mr') || lc.includes('kn') || lc.includes('ml') || lc.includes('pa');
-
-      const currency = (isIndiaTz || isIndiaLocale) ? 'INR' : 'USD';
+      // Try to detect based on timezone or IP geolocation
+      const response = await fetch('https://ipapi.co/json/');
+      const geoInfo = await response.json();
+      
+      const currency = geoInfo.country_code === 'IN' ? 'INR' : 'USD';
       setUserCurrency(currency);
     } catch (error) {
-      console.error('Error detecting currency via timezone/locale:', error);
+      console.error('Error detecting currency:', error);
       setUserCurrency('USD'); // Default fallback
     }
   };

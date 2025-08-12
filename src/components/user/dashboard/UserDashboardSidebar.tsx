@@ -61,7 +61,7 @@ const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({
   const menuItems = [
     { icon: Home, label: 'Dashboard', path: '/user-dashboard', exact: true },
     { icon: User2, label: 'My Profile', path: '/user-dashboard/profile' },
-    { icon: Wallet, label: 'Rewards', path: '/user-dashboard/wallet' },
+    { icon: Wallet, label: 'Wallet', path: '/user-dashboard/wallet' },
     { icon: BookOpen, label: 'My Programs', path: '/user-dashboard/programs' },
     { icon: History, label: 'Booking History', path: '/user-dashboard/booking-history' },
     { icon: TrendingUp, label: 'Progress Tracking', path: '/user-dashboard/progress' },
@@ -104,7 +104,7 @@ const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({
             </div>
           </div>
           
-          {/* Reward balance and date */}
+          {/* Wallet balance and date */}
           <div className="mt-2 text-sm">
             <div className="flex items-center text-green-600 font-medium">
               <Wallet className="h-4 w-4 mr-2" />

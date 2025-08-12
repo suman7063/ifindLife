@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Upload, Lock, Bell } from 'lucide-react';
 import { getUserProfile, getUpdateUserProfile } from '@/utils/profileConverters';
-import { supabase } from '@/lib/supabase';
 
 interface UserProfileSectionProps {
   user: UserProfile | null;
@@ -115,70 +114,17 @@ const UserProfileSection: React.FC<UserProfileSectionProps> = ({ user }) => {
     }
   };
   
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     
+    // TODO: Implement profile photo upload
     setIsUploadingPhoto(true);
-    try {
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("File size must be less than 5MB");
-        return;
-      }
-      
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        toast.error("Please select an image file");
-        return;
-      }
-      
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${auth.user?.id || 'user'}-${Date.now()}.${fileExt}`;
-      
-      // Upload to storage
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: true
-        });
-      
-      if (uploadError) throw uploadError;
-      
-      // Get public URL
-      const { data } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(fileName);
-      
-      const publicUrl = data.publicUrl;
-      
-      // Update user profile with the new profile picture URL
-      if (auth.updateProfile) {
-        const success = await auth.updateProfile({ profile_picture: publicUrl });
-        if (success) {
-          toast.success("Profile photo updated successfully");
-          // Update local profile data
-          setProfileData(prev => ({ ...prev, profile_picture: publicUrl }));
-        } else {
-          throw new Error("Failed to update profile");
-        }
-      } else {
-        // Direct database update as fallback
-        const { error: updateError } = await supabase
-          .from('users')
-          .update({ profile_picture: publicUrl })
-          .eq('id', auth.user?.id);
-          
-        if (updateError) throw updateError;
-        toast.success("Profile photo updated successfully");
-      }
-      
-    } catch (error) {
-      toast.error("Failed to upload photo. Please try again.");
-    } finally {
+    
+    setTimeout(() => {
+      toast.success("Profile photo updated");
       setIsUploadingPhoto(false);
-    }
+    }, 2000);
   };
   
   return (

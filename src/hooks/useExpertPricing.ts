@@ -67,27 +67,24 @@ export const useExpertPricing = (expertId?: string) => {
         return;
       }
 
-      // If no existing data, use browser-based detection (no external calls)
-      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
-      const isIndiaTz = tz.includes('Asia/Kolkata') || tz.includes('Asia/Calcutta') || tz.includes('Kolkata') || tz.includes('Calcutta');
-
-      const locales = [navigator.language, ...(navigator.languages || [])].filter(Boolean) as string[];
-      const lc = locales.join(' ').toLowerCase();
-      const isIndiaLocale = lc.includes('en-in') || lc.includes('hi') || lc.includes('te') || lc.includes('ta') || lc.includes('bn') || lc.includes('gu') || lc.includes('mr') || lc.includes('kn') || lc.includes('ml') || lc.includes('pa');
-
-      const isIndia = isIndiaTz || isIndiaLocale;
-
+      // If no existing data, use a simple IP-based detection
+      const response = await fetch('https://ipapi.co/json/');
+      const geoData = await response.json();
+      
       // Currency detection: INR for India, EUR for rest of world
-      const currency: 'INR' | 'EUR' = isIndia ? 'INR' : 'EUR';
+      let currency: 'INR' | 'EUR' = 'EUR';
+      if (geoData.country_code === 'IN') {
+        currency = 'INR';
+      }
       setUserCurrency(currency);
 
-      // Store geolocation data (best-effort)
+      // Store geolocation data
       const user = (await supabase.auth.getUser()).data.user;
       if (user) {
         await supabase.from('user_geolocations').insert({
           user_id: user.id,
-          country_code: isIndia ? 'IN' : 'XX',
-          country_name: isIndia ? 'India' : 'Unknown',
+          country_code: geoData.country_code,
+          country_name: geoData.country_name,
           currency: currency
         });
       }

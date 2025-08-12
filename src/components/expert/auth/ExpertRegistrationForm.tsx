@@ -98,60 +98,31 @@ const ExpertRegistrationForm: React.FC = () => {
     console.log('Form submission started', { data, selectedFile, selectedProfilePicture });
 
     try {
-      let userId: string;
-
-      // Check if user already exists by trying to sign in
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      // Create auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth-callback?type=expert`,
+        },
       });
 
-      if (signInData.user) {
-        // User exists, check if they already have an expert profile
-        const { data: existingExpert } = await supabase
-          .from('expert_accounts')
-          .select('id')
-          .eq('auth_id', signInData.user.id)
-          .maybeSingle();
-
-        if (existingExpert) {
-          throw new Error('An expert account with this email already exists');
-        }
-
-        userId = signInData.user.id;
-        // Sign out immediately since we just needed to verify credentials
-        await supabase.auth.signOut();
-      } else if (signInError && signInError.message.includes('Invalid login credentials')) {
-        // User doesn't exist, create new account
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-          email: data.email,
-          password: data.password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/auth-callback?type=expert`,
-          },
-        });
-
-        if (authError) {
-          throw new Error(authError.message);
-        }
-
-        if (!authData.user) {
-          throw new Error('Failed to create user account');
-        }
-
-        userId = authData.user.id;
-        // Sign out immediately after registration since experts need approval
-        await supabase.auth.signOut();
-      } else {
-        // Other auth error
-        throw new Error(signInError?.message || 'Authentication failed');
+      if (authError) {
+        throw new Error(authError.message);
       }
+
+      if (!authData.user) {
+        throw new Error('Failed to create user account');
+      }
+
+      // Important: Sign out immediately after registration since experts need approval
+      await supabase.auth.signOut();
 
       // Upload certificate to storage
       let certificateUrl = '';
       if (selectedFile) {
         const fileExt = selectedFile.name.split('.').pop();
-        const fileName = `${userId}-certificate.${fileExt}`;
+        const fileName = `${authData.user.id}-certificate.${fileExt}`;
         
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('expert-certificates')
@@ -168,7 +139,7 @@ const ExpertRegistrationForm: React.FC = () => {
       let profilePictureUrl = '';
       if (selectedProfilePicture) {
         const fileExt = selectedProfilePicture.name.split('.').pop();
-        const fileName = `${userId}-profile.${fileExt}`;
+        const fileName = `${authData.user.id}-profile.${fileExt}`;
         
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('avatars')
@@ -185,7 +156,7 @@ const ExpertRegistrationForm: React.FC = () => {
       const { error: expertError } = await supabase
         .from('expert_accounts')
         .insert({
-          auth_id: userId,
+          auth_id: authData.user.id,
           name: data.name,
           email: data.email,
           phone: data.phone,

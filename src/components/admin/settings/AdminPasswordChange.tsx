@@ -6,10 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { validatePasswordStrength } from '@/utils/passwordValidation';
 import { Lock, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 
 const AdminPasswordChange: React.FC = () => {
-  const auth = useSimpleAuth();
+  const { updatePassword } = useSupabaseAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [passwordData, setPasswordData] = useState({
     newPassword: '',
@@ -49,7 +49,7 @@ const AdminPasswordChange: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      const success = await auth.updatePassword(passwordData.newPassword);
+      const success = await updatePassword(passwordData.newPassword);
       
       if (success) {
         toast.success("Admin password updated successfully.");

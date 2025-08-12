@@ -48,59 +48,59 @@ import {
   AlertCircle 
 } from 'lucide-react';
 
-import { useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-
-// User interface for type safety
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  status: string;
-  joinDate: string;
-  lastActive: string;
-}
+// Sample user data for demonstration
+const users = [
+  { 
+    id: "1", 
+    name: "John Doe", 
+    email: "john@example.com", 
+    role: "Client", 
+    status: "Active",
+    joinDate: "2025-01-15",
+    lastActive: "2025-04-07"
+  },
+  { 
+    id: "2", 
+    name: "Jane Smith", 
+    email: "jane@example.com", 
+    role: "Client", 
+    status: "Active",
+    joinDate: "2025-02-20",
+    lastActive: "2025-04-06"
+  },
+  { 
+    id: "3", 
+    name: "Robert Johnson", 
+    email: "robert@example.com", 
+    role: "Client", 
+    status: "Inactive",
+    joinDate: "2025-03-05",
+    lastActive: "2025-03-15"
+  },
+  { 
+    id: "4", 
+    name: "Sarah Williams", 
+    email: "sarah@example.com", 
+    role: "Client", 
+    status: "Suspended",
+    joinDate: "2025-01-10",
+    lastActive: "2025-02-25"
+  },
+  { 
+    id: "5", 
+    name: "Michael Brown", 
+    email: "michael@example.com", 
+    role: "Client", 
+    status: "Active",
+    joinDate: "2025-03-28",
+    lastActive: "2025-04-05"
+  }
+];
 
 const AdminUsersList: React.FC = () => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-
-  // Fetch real users from database
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from('users')
-          .select('id, name, email, created_at, profile_picture')
-          .order('created_at', { ascending: false });
-
-        if (error) throw error;
-
-        const formattedUsers: User[] = (data || []).map(user => ({
-          id: user.id,
-          name: user.name || 'Unknown',
-          email: user.email || 'No email',
-          role: 'Client',
-          status: 'Active', // Default status
-          joinDate: new Date(user.created_at).toISOString().split('T')[0],
-          lastActive: new Date().toISOString().split('T')[0] // Mock last active
-        }));
-
-        setUsers(formattedUsers);
-      } catch (error) {
-        toast.error('Failed to fetch users');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUsers();
-  }, []);
 
   const filteredUsers = users.filter(user => 
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -192,16 +192,7 @@ const AdminUsersList: React.FC = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-4">
-                      <div className="flex flex-col items-center py-4">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-2" />
-                        <p className="text-muted-foreground">Loading users...</p>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : filteredUsers.length === 0 ? (
+                {filteredUsers.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-4">
                       <div className="flex flex-col items-center py-4">

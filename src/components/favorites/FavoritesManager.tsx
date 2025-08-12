@@ -13,7 +13,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -32,7 +32,7 @@ interface FavoriteExpert {
 }
 
 export const FavoritesManager: React.FC = () => {
-  const { user } = useSimpleAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [favorites, setFavorites] = useState<FavoriteExpert[]>([]);
   const [loading, setLoading] = useState(true);

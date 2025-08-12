@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { Lock } from 'lucide-react';
 
 const PasswordChangeModal: React.FC = () => {
@@ -14,7 +14,7 @@ const PasswordChangeModal: React.FC = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const auth = useSimpleAuth();
+  const { updatePassword } = useSupabaseAuth();
 
   const resetForm = () => {
     setCurrentPassword('');
@@ -43,7 +43,7 @@ const PasswordChangeModal: React.FC = () => {
 
     try {
       setIsLoading(true);
-      const success = await auth.updatePassword(newPassword);
+      const success = await updatePassword(newPassword);
       
       if (success) {
         toast.success('Password updated successfully');

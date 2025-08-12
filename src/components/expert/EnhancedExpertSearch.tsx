@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, memo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import ExpertCard from '@/components/expert-card/ExpertCard';
-import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
 interface Expert {
@@ -52,8 +52,8 @@ interface SearchFilters {
   service: string;
 }
 
-export const EnhancedExpertSearch: React.FC = memo(() => {
-  const { user } = useSimpleAuth();
+export const EnhancedExpertSearch: React.FC = () => {
+  const { user } = useAuth();
   const [experts, setExperts] = useState<Expert[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
@@ -83,7 +83,15 @@ export const EnhancedExpertSearch: React.FC = memo(() => {
     'Financial Planning'
   ];
 
-  const fetchExperts = useCallback(async () => {
+  useEffect(() => {
+    fetchExperts();
+    fetchServices();
+    if (user) {
+      fetchFavorites();
+    }
+  }, [user]);
+
+  const fetchExperts = async () => {
     try {
       const { data, error } = await supabase
         .from('expert_accounts')
@@ -110,9 +118,9 @@ export const EnhancedExpertSearch: React.FC = memo(() => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
-  const fetchServices = useCallback(async () => {
+  const fetchServices = async () => {
     try {
       const { data, error } = await supabase
         .from('services')
@@ -122,11 +130,11 @@ export const EnhancedExpertSearch: React.FC = memo(() => {
       if (error) throw error;
       setServices(data || []);
     } catch (error) {
-      // Error handled silently to prevent UI disruption
+      console.error('Error fetching services:', error);
     }
-  }, []);
+  };
 
-  const fetchFavorites = useCallback(async () => {
+  const fetchFavorites = async () => {
     if (!user) return;
     
     try {
@@ -138,19 +146,11 @@ export const EnhancedExpertSearch: React.FC = memo(() => {
       if (error) throw error;
       setFavorites(data?.map(f => f.expert_id) || []);
     } catch (error) {
-      // Error handled silently to prevent UI disruption
+      console.error('Error fetching favorites:', error);
     }
-  }, [user]);
+  };
 
-  useEffect(() => {
-    fetchExperts();
-    fetchServices();
-    if (user) {
-      fetchFavorites();
-    }
-  }, [user, fetchExperts, fetchServices, fetchFavorites]);
-
-  const toggleFavorite = useCallback(async (expertId: string) => {
+  const toggleFavorite = async (expertId: string) => {
     if (!user) {
       toast.error('Please sign in to save favorites');
       return;
@@ -177,21 +177,10 @@ export const EnhancedExpertSearch: React.FC = memo(() => {
         toast.success('Added to favorites');
       }
     } catch (error) {
+      console.error('Error toggling favorite:', error);
       toast.error('Failed to update favorites');
     }
-  }, [user, favorites]);
-
-  const clearFilters = useCallback(() => {
-    setFilters({
-      searchTerm: '',
-      specialization: '',
-      priceRange: [0, 200],
-      rating: 0,
-      availability: '',
-      experience: '',
-      service: ''
-    });
-  }, []);
+  };
 
   const filteredExperts = useMemo(() => {
     return experts.filter(expert => {
@@ -245,6 +234,17 @@ export const EnhancedExpertSearch: React.FC = memo(() => {
     });
   }, [experts, filters]);
 
+  const clearFilters = () => {
+    setFilters({
+      searchTerm: '',
+      specialization: '',
+      priceRange: [0, 200],
+      rating: 0,
+      availability: '',
+      experience: '',
+      service: ''
+    });
+  };
 
   const activeFiltersCount = useMemo(() => {
     let count = 0;
@@ -510,6 +510,4 @@ export const EnhancedExpertSearch: React.FC = memo(() => {
       )}
     </div>
   );
-});
-
-EnhancedExpertSearch.displayName = 'EnhancedExpertSearch';
+};

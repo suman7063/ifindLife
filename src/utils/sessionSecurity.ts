@@ -1,6 +1,4 @@
 import { supabase } from '@/lib/supabase';
-import { secureStorage } from './secureStorage';
-import { secureLogger } from './secureLogger';
 
 /**
  * Enhanced session security utilities
@@ -65,7 +63,9 @@ class SessionSecurityManager {
         await this.handleSessionTimeout('invalid');
       }
     } catch (error) {
-      secureLogger.error('Session security check failed:', error);
+      if (import.meta.env.DEV) {
+        console.error('Session security check failed:', error);
+      }
       await this.handleSessionTimeout('error');
     }
   }
@@ -73,8 +73,7 @@ class SessionSecurityManager {
   private async handleSessionTimeout(reason: 'idle' | 'duration' | 'invalid' | 'error'): Promise<void> {
     this.cleanup();
     
-    // Clear secure storage
-    secureStorage.clearSecureStorage();
+    // Clear local storage
     localStorage.removeItem('sessionType');
     sessionStorage.clear();
     
@@ -82,7 +81,9 @@ class SessionSecurityManager {
     try {
       await supabase.auth.signOut();
     } catch (error) {
-      secureLogger.error('Error during forced logout:', error);
+      if (import.meta.env.DEV) {
+        console.error('Error during forced logout:', error);
+      }
     }
     
     // Redirect to login with reason

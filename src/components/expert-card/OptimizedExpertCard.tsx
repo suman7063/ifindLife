@@ -14,7 +14,6 @@ import FavoriteButton from '@/components/favorites/FavoriteButton';
 import { useFavorites } from '@/contexts/favorites/FavoritesContext';
 import { getInitials } from '@/utils/getInitials';
 import { toast } from 'sonner';
-import { useExpertCategoryPricing } from '@/hooks/useExpertCategoryPricing';
 
 export interface OptimizedExpertCardProps {
   expert: ExpertCardData;
@@ -43,9 +42,6 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
   const { requireAuthForExpert, requireAuthForCall, executeIntendedAction } = useAuthRedirectSystem();
   const { isExpertFavorite, toggleExpertFavorite } = useFavorites();
   const [showAwayDialog, setShowAwayDialog] = useState(false);
-  
-  // Use category-based pricing hook
-  const { getFormattedPrice } = useExpertCategoryPricing((expert as any).category);
   
   // Use simplified expert presence
   const { getExpertPresence } = useExpertPresence();
@@ -351,7 +347,7 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
                 </div>
                 <div>
                   <p className="text-muted-foreground">Price</p>
-                  <p className="font-medium">From {getFormattedPrice()}/session</p>
+                  <p className="font-medium">₹{expertData.price}/session</p>
                 </div>
               </div>
             )}

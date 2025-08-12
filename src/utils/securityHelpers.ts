@@ -24,48 +24,11 @@ export const sanitizeInput = (input: string): string => {
 };
 
 /**
- * Validate email format with enhanced security checks
+ * Validate email format
  */
 export const isValidEmail = (email: string): boolean => {
-  if (!email || typeof email !== 'string' || email.length > 254) return false;
-  
-  // Enhanced email regex that prevents most injection attempts
-  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
-  
-  if (!emailRegex.test(email)) return false;
-  
-  // Additional security checks
-  const localPart = email.split('@')[0];
-  const domain = email.split('@')[1];
-  
-  // Check for suspicious patterns
-  if (localPart.includes('..') || 
-      domain.includes('..') || 
-      email.includes('<') || 
-      email.includes('>') ||
-      email.includes('javascript:') ||
-      email.includes('data:')) {
-    return false;
-  }
-  
-  return true;
-};
-
-/**
- * Validate phone number format
- */
-export const isValidPhone = (phone: string): boolean => {
-  if (!phone || typeof phone !== 'string') return false;
-  
-  // Remove all non-digit characters for validation
-  const cleanPhone = phone.replace(/\D/g, '');
-  
-  // Check length (between 7 and 15 digits as per international standards)
-  if (cleanPhone.length < 7 || cleanPhone.length > 15) return false;
-  
-  // Basic phone number regex that allows international formats
-  const phoneRegex = /^[\+]?[1-9][\d]{0,14}$/;
-  return phoneRegex.test(cleanPhone);
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
 };
 
 /**

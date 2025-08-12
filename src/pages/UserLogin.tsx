@@ -13,7 +13,6 @@ import Footer from '@/components/Footer';
 const UserLogin: React.FC = () => {
   const navigate = useNavigate();
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [loginSuccess, setLoginSuccess] = useState(false);
   
   const simpleAuth = useSimpleAuth();
   const { isAuthenticated, userType, user, isLoading, login } = simpleAuth;
@@ -30,26 +29,27 @@ const UserLogin: React.FC = () => {
   // Redirect authenticated users to appropriate dashboard
   useEffect(() => {
     if (!isLoading && isAuthenticated && user && userType !== 'none') {
-      setLoginSuccess(true);
+      console.log('UserLogin: User authenticated, checking for redirect data');
       
-      // Small delay to ensure UI state updates
+      // Check for intended action first
+      const pendingAction = executeIntendedAction();
+      if (pendingAction) {
+        console.log('UserLogin: Found pending action, staying on page for action execution:', pendingAction);
+        // Don't navigate away - let the component that initiated the action handle it
+        // Navigate back to where the user came from instead of dashboard
+        setTimeout(() => {
+          window.history.back();
+        }, 1000);
+        return;
+      }
+      
+      // Otherwise, redirect to appropriate dashboard based on userType
       setTimeout(() => {
-        // Check for intended action first
-        const pendingAction = executeIntendedAction();
-        if (pendingAction) {
-          // Navigate back to the stored current path
-          if (pendingAction.currentPath) {
-            navigate(pendingAction.currentPath, { replace: true });
-          } else {
-            navigate('/', { replace: true });
-          }
-          return;
-        }
-        
-        // Otherwise, redirect to appropriate dashboard based on userType
         if (userType === 'expert') {
+          console.log('UserLogin: Redirecting to expert dashboard');
           navigate('/expert-dashboard', { replace: true });
         } else {
+          console.log('UserLogin: Redirecting to home page instead of dashboard');
           navigate('/', { replace: true });
         }
       }, 500);
@@ -67,17 +67,17 @@ const UserLogin: React.FC = () => {
     try {
       console.log('UserLogin: Attempting user login:', email);
       
-      const success = await login(email, password, { asExpert: false });
+      const result = await login(email, password, { asExpert: false });
       
-      if (success) {
-        setLoginSuccess(true);
+      if (result.success) {
+        console.log('UserLogin: Login successful, userType:', result.userType);
         toast.success('Login successful!', { duration: 2000 });
         
         // Navigation will be handled by the useEffect after auth state updates
         return true;
       } else {
-        console.error('UserLogin: Login failed');
-        toast.error('Login failed', { duration: 3000 });
+        console.error('UserLogin: Login failed:', result.error);
+        toast.error(result.error || 'Login failed', { duration: 3000 });
         return false;
       }
     } catch (error: any) {
@@ -98,22 +98,6 @@ const UserLogin: React.FC = () => {
           <div className="text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto" />
             <span className="ml-2">Checking authentication...</span>
-          </div>
-        </div>
-        <Footer />
-      </>
-    );
-  }
-
-  // Don't show login form if user is already authenticated or login was successful
-  if (isAuthenticated || loginSuccess) {
-    return (
-      <>
-        <Navbar />
-        <div className="flex justify-center items-center min-h-screen">
-          <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto" />
-            <span className="ml-2">Redirecting...</span>
           </div>
         </div>
         <Footer />

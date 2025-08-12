@@ -14,29 +14,39 @@ export const useIPBasedPricing = () => {
   });
 
   useEffect(() => {
-    try {
-      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
-      const isIndiaTz = tz.includes('Asia/Kolkata') || tz.includes('Asia/Calcutta') || tz.includes('Kolkata') || tz.includes('Calcutta');
+    const detectLocation = async () => {
+      try {
+        // Try to detect user location via IP
+        const response = await fetch('https://ipapi.co/json/');
+        const data = await response.json();
+        
+        if (data.country_code) {
+          const currency = data.country_code === 'IN' ? 'INR' : 'EUR';
+          setPricing({
+            currency,
+            country: data.country_name || data.country_code,
+            detected: true
+          });
+          
+          console.log('IP-based pricing detection:', {
+            country: data.country_name,
+            countryCode: data.country_code,
+            currency
+          });
+        } else {
+          throw new Error('No country data from IP API');
+        }
+      } catch (error) {
+        console.error('Failed to detect location, using EUR fallback:', error);
+        setPricing({
+          currency: 'EUR',
+          country: 'Unknown',
+          detected: false
+        });
+      }
+    };
 
-      const locales = [navigator.language, ...(navigator.languages || [])].filter(Boolean) as string[];
-      const lc = locales.join(' ').toLowerCase();
-      const isIndiaLocale = lc.includes('en-in') || lc.includes('hi') || lc.includes('te') || lc.includes('ta') || lc.includes('bn') || lc.includes('gu') || lc.includes('mr') || lc.includes('kn') || lc.includes('ml') || lc.includes('pa');
-
-      const isIndia = isIndiaTz || isIndiaLocale;
-
-      setPricing({
-        currency: isIndia ? 'INR' : 'EUR',
-        country: isIndia ? 'India' : 'Unknown',
-        detected: true
-      });
-    } catch (error) {
-      console.error('Failed to detect location (timezone/locale), using EUR fallback:', error);
-      setPricing({
-        currency: 'EUR',
-        country: 'Unknown',
-        detected: false
-      });
-    }
+    detectLocation();
   }, []);
 
   return pricing;

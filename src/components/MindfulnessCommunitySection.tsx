@@ -41,7 +41,7 @@ const MindfulnessCommunitySection = () => {
                     <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900">Daily Mindfulness Activity Group</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Daily Activities Newsletter</h3>
               </div>
               <p className="text-gray-600 mb-4 text-sm">
                 Join our email list to receive daily mindfulness practices and activities directly to 

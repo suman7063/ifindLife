@@ -6,8 +6,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Camera, Star } from 'lucide-react';
 import { ExpertProfile } from '@/types/database/unified';
-import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
 
 interface ProfileImageCardProps {
   expert: ExpertProfile | null;
@@ -28,25 +26,10 @@ const ProfileImageCard: React.FC<ProfileImageCardProps> = ({
 
     setIsUploadingImage(true);
     try {
-      // Upload image to storage
-      const fileName = `expert-${expert.id}-${Date.now()}`;
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(fileName, file);
-      
-      if (uploadError) throw uploadError;
-      
-      // Update expert profile with new image URL
-      const { error: updateError } = await supabase
-        .from('experts')
-        .update({ profile_picture: fileName })
-        .eq('id', expert.id);
-        
-      if (updateError) throw updateError;
-      
-      toast.success('Profile image updated successfully');
+      // TODO: Implement image upload functionality
+      console.log('Image upload functionality to be implemented');
     } catch (error) {
-      toast.error('Failed to upload image. Please try again.');
+      console.error('Error uploading image:', error);
     } finally {
       setIsUploadingImage(false);
     }

@@ -10,6 +10,8 @@ import { lazy, Suspense } from 'react';
 import HomepageIssueSessions from '@/components/HomepageIssueSessions';
 import ExpertsOnlineSection from '@/components/ExpertsOnlineSection';
 import Footer from '@/components/Footer';
+import AuthDebugPanel from '@/components/debug/AuthDebugPanel';
+import EmergencyAuthFix from '@/components/debug/EmergencyAuthFix';
 import TestimonialsSection from '@/components/TestimonialsSection';
 import PresencePerformanceMonitor from '@/components/expert-card/PresencePerformanceMonitor';
 
@@ -35,14 +37,22 @@ const SectionLoadingFallback = () => (
 );
 
 const Index = () => {
+  console.log('Index: Page component is rendering');
+  
   // Ensure page loads from top
   useEffect(() => {
+    console.log('Index: Page mounted, scrolling to top');
     window.scrollTo(0, 0);
   }, []);
+
+  console.log('Index: About to render page content');
 
   return (
     <div className="min-h-screen flex flex-col home-page">
       <Navbar />
+      
+      {/* Emergency Auth Debug - only in development */}
+      <EmergencyAuthFix />
       
       
       <main className="flex-1">
@@ -90,6 +100,9 @@ const Index = () => {
 
       {/* Footer */}
       <Footer />
+      
+      {/* Debug Panel - Only in development */}
+      <AuthDebugPanel />
       
       {/* Performance monitoring for expert presence system */}
       <PresencePerformanceMonitor variant="compact" />
