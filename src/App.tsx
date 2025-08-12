@@ -50,7 +50,7 @@ import ResetPassword from './pages/ResetPassword';
 import ReferralProgram from './pages/ReferralProgram';
 import AuthCallback from './pages/AuthCallback';
 import MindfulnessTeacherTrainingLP from './pages/lp/MindfulnessTeacherTrainingLP';
-
+import { HelmetProvider } from 'react-helmet-async';
 // Create QueryClient outside component to avoid hook issues
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -166,25 +166,27 @@ function App(): JSX.Element {
   
   return (
     <QueryClientProvider client={queryClient}>
-      <Toaster />
-      <BrowserRouter>
-        <Routes>
-          {/* CRITICAL: Admin routes with secure authentication */}
-          <Route path="/admin-login" element={
-            <SecureAdminAuthProvider>
-              <SecureAdminLogin />
-            </SecureAdminAuthProvider>
-          } />
-          <Route path="/admin/*" element={
-            <SecureAdminAuthProvider>
-              <AdminDashboard />
-            </SecureAdminAuthProvider>
-          } />
-          
-          {/* All other routes with SimpleAuthProvider */}
-          <Route path="/*" element={<UserRoutes />} />
-        </Routes>
-      </BrowserRouter>
+      <HelmetProvider>
+        <Toaster />
+        <BrowserRouter>
+          <Routes>
+            {/* CRITICAL: Admin routes with secure authentication */}
+            <Route path="/admin-login" element={
+              <SecureAdminAuthProvider>
+                <SecureAdminLogin />
+              </SecureAdminAuthProvider>
+            } />
+            <Route path="/admin/*" element={
+              <SecureAdminAuthProvider>
+                <AdminDashboard />
+              </SecureAdminAuthProvider>
+            } />
+            
+            {/* All other routes with SimpleAuthProvider */}
+            <Route path="/*" element={<UserRoutes />} />
+          </Routes>
+        </BrowserRouter>
+      </HelmetProvider>
     </QueryClientProvider>
   );
 }
