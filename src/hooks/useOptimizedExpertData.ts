@@ -103,9 +103,8 @@ export function useOptimizedExpertData({
         expertDataCache.loading = true;
         
         let query = supabase
-          .from('expert_accounts')
-          .select('*')
-          .eq('status', 'approved');
+          .from('expert_public_profiles')
+          .select('*');
 
         // Apply filters
         if (specialization) {

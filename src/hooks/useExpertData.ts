@@ -68,9 +68,8 @@ export function useExpertData({ serviceId, specialization }: UseExpertDataProps 
         console.log('Fetching experts with filters:', { serviceId, specialization });
         
         let query = supabase
-          .from('expert_accounts')
-          .select('*')
-          .eq('status', 'approved');
+          .from('expert_public_profiles')
+          .select('*');
 
         // Filter by specialization if provided
         if (specialization) {
