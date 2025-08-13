@@ -321,6 +321,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "booking_requests_expert_id_fkey"
+            columns: ["expert_id"]
+            isOneToOne: false
+            referencedRelation: "expert_public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "booking_requests_service_id_fkey"
             columns: ["service_id"]
             isOneToOne: false
@@ -688,6 +695,13 @@ export type Database = {
             referencedRelation: "expert_accounts"
             referencedColumns: ["auth_id"]
           },
+          {
+            foreignKeyName: "expert_away_messages_expert_id_fkey"
+            columns: ["expert_id"]
+            isOneToOne: false
+            referencedRelation: "expert_public_profiles"
+            referencedColumns: ["auth_id"]
+          },
         ]
       }
       expert_categories: {
@@ -902,6 +916,13 @@ export type Database = {
             referencedRelation: "expert_accounts"
             referencedColumns: ["auth_id"]
           },
+          {
+            foreignKeyName: "expert_presence_expert_id_fkey"
+            columns: ["expert_id"]
+            isOneToOne: true
+            referencedRelation: "expert_public_profiles"
+            referencedColumns: ["auth_id"]
+          },
         ]
       }
       expert_pricing_tiers: {
@@ -968,6 +989,13 @@ export type Database = {
             columns: ["expert_id"]
             isOneToOne: false
             referencedRelation: "expert_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expert_pricing_tiers_expert_id_fkey"
+            columns: ["expert_id"]
+            isOneToOne: false
+            referencedRelation: "expert_public_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1065,6 +1093,13 @@ export type Database = {
             columns: ["expert_id"]
             isOneToOne: false
             referencedRelation: "expert_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expert_service_specializations_expert_id_fkey"
+            columns: ["expert_id"]
+            isOneToOne: false
+            referencedRelation: "expert_public_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -1359,6 +1394,13 @@ export type Database = {
             columns: ["expert_id"]
             isOneToOne: false
             referencedRelation: "expert_accounts"
+            referencedColumns: ["auth_id"]
+          },
+          {
+            foreignKeyName: "incoming_call_requests_expert_id_fkey"
+            columns: ["expert_id"]
+            isOneToOne: false
+            referencedRelation: "expert_public_profiles"
             referencedColumns: ["auth_id"]
           },
         ]
@@ -1773,6 +1815,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "service_pricing_expert_id_fkey"
+            columns: ["expert_id"]
+            isOneToOne: false
+            referencedRelation: "expert_public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "service_pricing_service_id_fkey"
             columns: ["service_id"]
             isOneToOne: false
@@ -2145,6 +2194,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "user_reports_expert_id_fkey"
+            columns: ["expert_id"]
+            isOneToOne: false
+            referencedRelation: "expert_public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "user_reports_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -2193,6 +2249,13 @@ export type Database = {
             columns: ["expert_id"]
             isOneToOne: false
             referencedRelation: "expert_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_reviews_expert_id_fkey"
+            columns: ["expert_id"]
+            isOneToOne: false
+            referencedRelation: "expert_public_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -2437,7 +2500,54 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      expert_public_profiles: {
+        Row: {
+          auth_id: string | null
+          average_rating: number | null
+          category: string | null
+          experience: string | null
+          id: string | null
+          languages: string[] | null
+          name: string | null
+          profile_picture: string | null
+          reviews_count: number | null
+          selected_services: number[] | null
+          specialization: string | null
+          status: string | null
+          verified: boolean | null
+        }
+        Insert: {
+          auth_id?: string | null
+          average_rating?: number | null
+          category?: string | null
+          experience?: string | null
+          id?: string | null
+          languages?: string[] | null
+          name?: string | null
+          profile_picture?: string | null
+          reviews_count?: number | null
+          selected_services?: number[] | null
+          specialization?: string | null
+          status?: never
+          verified?: boolean | null
+        }
+        Update: {
+          auth_id?: string | null
+          average_rating?: number | null
+          category?: string | null
+          experience?: string | null
+          id?: string | null
+          languages?: string[] | null
+          name?: string | null
+          profile_picture?: string | null
+          reviews_count?: number | null
+          selected_services?: number[] | null
+          specialization?: string | null
+          status?: never
+          verified?: boolean | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       authenticate_admin: {
