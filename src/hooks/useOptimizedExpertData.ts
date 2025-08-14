@@ -9,14 +9,14 @@ interface UseOptimizedExpertDataProps {
   enablePresenceChecking?: boolean;
 }
 
-// Global cache to prevent duplicate API calls
+// Global cache to prevent duplicate API calls - Clear cache by setting timestamp to 0
 let expertDataCache: {
   data: any[] | null;
   timestamp: number;
   loading: boolean;
 } = {
   data: null,
-  timestamp: 0,
+  timestamp: 0, // Force fresh fetch
   loading: false
 };
 
