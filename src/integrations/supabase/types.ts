@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -2551,7 +2551,7 @@ export type Database = {
     }
     Functions: {
       authenticate_admin: {
-        Args: { p_username: string; p_password: string }
+        Args: { p_password: string; p_username: string }
         Returns: Json
       }
       check_if_table_exists: {
@@ -2560,9 +2560,9 @@ export type Database = {
       }
       deduct_reward_points: {
         Args: {
-          user_id: string
           points_to_deduct: number
           redemption_description: string
+          user_id: string
         }
         Returns: undefined
       }
@@ -2581,14 +2581,14 @@ export type Database = {
       get_user_reviews_with_experts: {
         Args: { user_id_param: string }
         Returns: {
-          review_id: string
-          expert_id: number
-          rating: number
           comment: string
           date: string
-          verified: boolean
-          user_name: string
+          expert_id: number
           expert_name: string
+          rating: number
+          review_id: string
+          user_name: string
+          verified: boolean
         }[]
       }
       handle_completed_referral: {
