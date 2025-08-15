@@ -13,7 +13,7 @@ const EnhancedHero: React.FC = () => {
   // Slider images - Using both images for rotation
   const sliderImages = [
     "/lovable-uploads/35d6ff96-c06b-4787-84bc-64318cfa9fb0.png", // Man image
-    "/lovable-uploads/2ce75196-58b1-4f39-b5cb-9b4a559c53b2.png", // Woman image
+    "/lovable-uploads/a82b0776-f1d8-4ac8-b107-f1ce533cdd9a.png", // Woman image (replaced)
   ];
 
   // Auto slide rotation every 5 seconds
