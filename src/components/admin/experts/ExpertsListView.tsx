@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Star, MapPin, Clock, Edit, Eye, RefreshCw, AlertCircle } from "lucide-react";
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface AdminExpert {
@@ -49,10 +49,7 @@ const ExpertsListView: React.FC<ExpertsListViewProps> = ({
       console.log('ExpertsListView: Fetching experts from expert_accounts...');
       
       const { data, error } = await supabase
-        .from('expert_accounts')
-        .select('*')
-        .eq('status', 'approved')
-        .order('created_at', { ascending: false });
+        .rpc('admin_list_approved_experts');
       
       if (error) {
         console.error('ExpertsListView: Error fetching experts:', error);

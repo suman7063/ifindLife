@@ -48,7 +48,7 @@ import {
   AlertCircle,
   RefreshCw
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 
 interface User {
   id: string;
@@ -80,9 +80,7 @@ const AdminUsersList: React.FC = () => {
       console.log('AdminUsersList: Fetching users from Supabase...');
       
       const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .rpc('admin_list_users');
       
       if (error) {
         console.error('AdminUsersList: Error fetching users:', error);

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -35,10 +35,7 @@ export const ExpertApprovals = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('expert_accounts')
-        .select('*')
-        .eq('status', 'pending')
-        .order('created_at', { ascending: false });
+        .rpc('admin_list_pending_experts');
 
       if (error) throw error;
       setPendingExperts(data || []);

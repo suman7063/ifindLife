@@ -2550,6 +2550,96 @@ export type Database = {
       }
     }
     Functions: {
+      admin_list_approved_experts: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          address: string | null
+          auth_id: string | null
+          availability_set: boolean | null
+          average_rating: number | null
+          bio: string | null
+          category: string | null
+          certificate_urls: string[] | null
+          city: string | null
+          country: string | null
+          created_at: string | null
+          email: string
+          experience: string | null
+          id: string
+          languages: string[] | null
+          name: string
+          onboarding_completed: boolean | null
+          phone: string | null
+          pricing_set: boolean | null
+          profile_completed: boolean | null
+          profile_picture: string | null
+          reviews_count: number | null
+          selected_services: number[] | null
+          specialization: string | null
+          state: string | null
+          status: string | null
+          user_id: string | null
+          verified: boolean | null
+        }[]
+      }
+      admin_list_pending_experts: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          address: string | null
+          auth_id: string | null
+          availability_set: boolean | null
+          average_rating: number | null
+          bio: string | null
+          category: string | null
+          certificate_urls: string[] | null
+          city: string | null
+          country: string | null
+          created_at: string | null
+          email: string
+          experience: string | null
+          id: string
+          languages: string[] | null
+          name: string
+          onboarding_completed: boolean | null
+          phone: string | null
+          pricing_set: boolean | null
+          profile_completed: boolean | null
+          profile_picture: string | null
+          reviews_count: number | null
+          selected_services: number[] | null
+          specialization: string | null
+          state: string | null
+          status: string | null
+          user_id: string | null
+          verified: boolean | null
+        }[]
+      }
+      admin_list_users: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          city: string | null
+          country: string | null
+          created_at: string | null
+          currency: string | null
+          date_of_birth: string | null
+          email: string | null
+          gender: string | null
+          id: string
+          marketing_consent: boolean | null
+          name: string | null
+          occupation: string | null
+          phone: string | null
+          preferences: Json | null
+          privacy_accepted: boolean | null
+          profile_picture: string | null
+          referral_code: string | null
+          referral_link: string | null
+          referred_by: string | null
+          reward_points: number | null
+          terms_accepted: boolean | null
+          wallet_balance: number | null
+        }[]
+      }
       authenticate_admin: {
         Args: { p_password: string; p_username: string }
         Returns: Json
