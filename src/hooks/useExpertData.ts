@@ -67,38 +67,34 @@ export function useExpertData({ serviceId, specialization }: UseExpertDataProps 
         
         console.log('Fetching experts with filters:', { serviceId, specialization });
         
-        let query = supabase
-          .from('expert_public_profiles')
-          .select('*');
+        const { data, error } = await supabase
+          .rpc('get_approved_experts');
 
-        // Filter by specialization if provided
-        if (specialization) {
-          query = query.ilike('specialization', `%${specialization}%`);
+        if (error) {
+          console.error('Error fetching experts:', error);
+          throw error;
         }
 
-        // Filter by service if serviceId is provided
+        let filteredData = data || [];
+
+        // Apply filters in JavaScript since we're using RPC
+        if (specialization) {
+          filteredData = filteredData.filter(expert => 
+            expert.specialization?.toLowerCase().includes(specialization.toLowerCase())
+          );
+        }
+
         if (serviceId) {
           const serviceIdNum = parseInt(serviceId);
           if (!isNaN(serviceIdNum)) {
-            query = query.contains('selected_services', [serviceIdNum]);
+            filteredData = filteredData.filter(expert => 
+              expert.selected_services?.includes(serviceIdNum)
+            );
           }
         }
-        
-        const { data: expertsData, error: expertsError } = await query;
-        
-        if (expertsError) {
-          console.error('Error fetching experts:', expertsError);
-          throw expertsError;
-        }
-        
-        if (expertsData && expertsData.length > 0) {
-          console.log(`Loaded ${expertsData.length} filtered experts`);
-          setRawExperts(expertsData);
-        } else {
-          console.log('No experts found with filters');
-          setRawExperts([]);
-          setExperts([]);
-        }
+
+        console.log(`Loaded ${filteredData.length} filtered experts`);
+        setRawExperts(filteredData);
       } catch (err) {
         console.error('Error loading experts:', err);
         setError('Failed to load experts');

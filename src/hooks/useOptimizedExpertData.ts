@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { ExpertCardData } from '@/components/expert-card/types';
 import { useExpertPresence } from '@/contexts/ExpertPresenceContext';
 
@@ -102,38 +102,41 @@ export function useOptimizedExpertData({
         console.log('🔄 Fetching fresh expert data');
         expertDataCache.loading = true;
         
-        let query = supabase
-          .from('expert_public_profiles')
-          .select('*');
+        const { data, error } = await supabase
+          .rpc('get_approved_experts');
 
-        // Apply filters
+        if (error) {
+          console.error('❌ Error fetching experts:', error);
+          throw error;
+        }
+
+        let filteredData = data || [];
+
+        // Apply filters in JavaScript since we're using RPC
         if (specialization) {
-          query = query.ilike('specialization', `%${specialization}%`);
+          filteredData = filteredData.filter(expert => 
+            expert.specialization?.toLowerCase().includes(specialization.toLowerCase())
+          );
         }
 
         if (serviceId) {
           const serviceIdNum = parseInt(serviceId);
           if (!isNaN(serviceIdNum)) {
-            query = query.contains('selected_services', [serviceIdNum]);
+            filteredData = filteredData.filter(expert => 
+              expert.selected_services?.includes(serviceIdNum)
+            );
           }
-        }
-        
-        const { data: expertsData, error: expertsError } = await query;
-        
-        if (expertsError) {
-          console.error('❌ Error fetching experts:', expertsError);
-          throw expertsError;
         }
         
         // Update cache
         expertDataCache = {
-          data: expertsData || [],
+          data: filteredData,
           timestamp: now,
           loading: false
         };
         
-        console.log(`✅ Loaded ${expertsData?.length || 0} experts`);
-        setRawExperts(expertsData || []);
+        console.log(`✅ Loaded ${filteredData.length} experts`);
+        setRawExperts(filteredData);
         
       } catch (err) {
         console.error('❌ Error loading experts:', err);

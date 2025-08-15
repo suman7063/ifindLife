@@ -321,13 +321,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "booking_requests_expert_id_fkey"
-            columns: ["expert_id"]
-            isOneToOne: false
-            referencedRelation: "expert_public_profiles"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "booking_requests_service_id_fkey"
             columns: ["service_id"]
             isOneToOne: false
@@ -695,13 +688,6 @@ export type Database = {
             referencedRelation: "expert_accounts"
             referencedColumns: ["auth_id"]
           },
-          {
-            foreignKeyName: "expert_away_messages_expert_id_fkey"
-            columns: ["expert_id"]
-            isOneToOne: false
-            referencedRelation: "expert_public_profiles"
-            referencedColumns: ["auth_id"]
-          },
         ]
       }
       expert_categories: {
@@ -916,13 +902,6 @@ export type Database = {
             referencedRelation: "expert_accounts"
             referencedColumns: ["auth_id"]
           },
-          {
-            foreignKeyName: "expert_presence_expert_id_fkey"
-            columns: ["expert_id"]
-            isOneToOne: true
-            referencedRelation: "expert_public_profiles"
-            referencedColumns: ["auth_id"]
-          },
         ]
       }
       expert_pricing_tiers: {
@@ -989,13 +968,6 @@ export type Database = {
             columns: ["expert_id"]
             isOneToOne: false
             referencedRelation: "expert_accounts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "expert_pricing_tiers_expert_id_fkey"
-            columns: ["expert_id"]
-            isOneToOne: false
-            referencedRelation: "expert_public_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1093,13 +1065,6 @@ export type Database = {
             columns: ["expert_id"]
             isOneToOne: false
             referencedRelation: "expert_accounts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "expert_service_specializations_expert_id_fkey"
-            columns: ["expert_id"]
-            isOneToOne: false
-            referencedRelation: "expert_public_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -1394,13 +1359,6 @@ export type Database = {
             columns: ["expert_id"]
             isOneToOne: false
             referencedRelation: "expert_accounts"
-            referencedColumns: ["auth_id"]
-          },
-          {
-            foreignKeyName: "incoming_call_requests_expert_id_fkey"
-            columns: ["expert_id"]
-            isOneToOne: false
-            referencedRelation: "expert_public_profiles"
             referencedColumns: ["auth_id"]
           },
         ]
@@ -1815,13 +1773,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "service_pricing_expert_id_fkey"
-            columns: ["expert_id"]
-            isOneToOne: false
-            referencedRelation: "expert_public_profiles"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "service_pricing_service_id_fkey"
             columns: ["service_id"]
             isOneToOne: false
@@ -2194,13 +2145,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "user_reports_expert_id_fkey"
-            columns: ["expert_id"]
-            isOneToOne: false
-            referencedRelation: "expert_public_profiles"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "user_reports_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -2249,13 +2193,6 @@ export type Database = {
             columns: ["expert_id"]
             isOneToOne: false
             referencedRelation: "expert_accounts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_reviews_expert_id_fkey"
-            columns: ["expert_id"]
-            isOneToOne: false
-            referencedRelation: "expert_public_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -2500,54 +2437,7 @@ export type Database = {
       }
     }
     Views: {
-      expert_public_profiles: {
-        Row: {
-          auth_id: string | null
-          average_rating: number | null
-          category: string | null
-          experience: string | null
-          id: string | null
-          languages: string[] | null
-          name: string | null
-          profile_picture: string | null
-          reviews_count: number | null
-          selected_services: number[] | null
-          specialization: string | null
-          status: string | null
-          verified: boolean | null
-        }
-        Insert: {
-          auth_id?: string | null
-          average_rating?: number | null
-          category?: string | null
-          experience?: string | null
-          id?: string | null
-          languages?: string[] | null
-          name?: string | null
-          profile_picture?: string | null
-          reviews_count?: number | null
-          selected_services?: number[] | null
-          specialization?: string | null
-          status?: never
-          verified?: boolean | null
-        }
-        Update: {
-          auth_id?: string | null
-          average_rating?: number | null
-          category?: string | null
-          experience?: string | null
-          id?: string | null
-          languages?: string[] | null
-          name?: string | null
-          profile_picture?: string | null
-          reviews_count?: number | null
-          selected_services?: number[] | null
-          specialization?: string | null
-          status?: never
-          verified?: boolean | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       admin_list_approved_experts: {
@@ -2663,6 +2553,24 @@ export type Database = {
       get_admin_metrics: {
         Args: Record<PropertyKey, never>
         Returns: Json
+      }
+      get_approved_experts: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          auth_id: string
+          average_rating: number
+          category: string
+          experience: string
+          id: string
+          languages: string[]
+          name: string
+          profile_picture: string
+          reviews_count: number
+          selected_services: number[]
+          specialization: string
+          status: string
+          verified: boolean
+        }[]
       }
       get_expert_onboarding_progress: {
         Args: { expert_auth_id: string }
