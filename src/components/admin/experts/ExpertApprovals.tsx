@@ -64,11 +64,9 @@ const ExpertApprovals = () => {
       
       console.log('ExpertApprovals: Fetching expert applications...');
       
-      // Fetch from expert_accounts table (RLS is disabled for easier access)
+      // Use RPC function that has SECURITY DEFINER for admin access
       const { data, error } = await supabase
-        .from('expert_accounts')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .rpc('admin_list_all_experts');
       
       if (error) {
         console.error('ExpertApprovals: Error fetching expert accounts:', error);

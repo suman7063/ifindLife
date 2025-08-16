@@ -90,14 +90,15 @@ const ExpertManagement: React.FC = () => {
   const fetchExperts = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('expert_accounts')
-        .select('*')
-        .neq('status', 'pending')
-        .order('created_at', { ascending: false });
+      // Use RPC function that has SECURITY DEFINER for admin access
+      const { data: allData, error } = await supabase
+        .rpc('admin_list_all_experts');
 
       if (error) throw error;
-      setExperts((data || []) as ExpertData[]);
+      
+      // Filter out pending experts (as the original code did)
+      const nonPendingExperts = (allData || []).filter((expert: any) => expert.status !== 'pending');
+      setExperts(nonPendingExperts as ExpertData[]);
     } catch (error) {
       console.error('Error fetching experts:', error);
       toast.error('Failed to load experts');
