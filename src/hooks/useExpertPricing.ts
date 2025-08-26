@@ -20,6 +20,7 @@ export interface UserGeolocation {
 }
 
 export const useExpertPricing = (expertId?: string) => {
+  console.log('🔧 useExpertPricing: Hook initialized with expertId:', expertId);
   const [pricing, setPricing] = useState<ExpertPricing | null>(null);
   const [userCurrency, setUserCurrency] = useState<'INR' | 'EUR'>('EUR');
   const [loading, setLoading] = useState(false);
@@ -153,11 +154,16 @@ export const useExpertPricing = (expertId?: string) => {
   };
 
   useEffect(() => {
+    console.log('🔧 useExpertPricing: useEffect triggered with expertId:', expertId);
     const initializePricing = async () => {
       if (expertId) {
+        console.log('🔧 useExpertPricing: Starting initialization for expertId:', expertId);
         setLoading(true);
         await Promise.all([fetchExpertPricing(expertId), detectUserCurrency()]);
         setLoading(false);
+        console.log('🔧 useExpertPricing: Initialization complete, current pricing:', pricing);
+      } else {
+        console.log('🔧 useExpertPricing: No expertId provided, skipping initialization');
       }
     };
 
@@ -166,9 +172,15 @@ export const useExpertPricing = (expertId?: string) => {
 
   // Get price for 30-minute session
   const getSlotPrice = (): number => {
-    if (!pricing) return 0;
+    console.log('🔧 useExpertPricing: getSlotPrice called, pricing:', pricing, 'userCurrency:', userCurrency);
+    if (!pricing) {
+      console.log('🔧 useExpertPricing: No pricing available, returning 0');
+      return 0;
+    }
     
-    return userCurrency === 'INR' ? pricing.session_30_inr : pricing.session_30_eur;
+    const price = userCurrency === 'INR' ? pricing.session_30_inr : pricing.session_30_eur;
+    console.log('🔧 useExpertPricing: Slot price calculated:', price);
+    return price;
   };
 
   // Calculate total price for multiple slots with correct currency

@@ -48,6 +48,8 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
     formatPrice, 
     getSlotPrice 
   } = useExpertPricing(expertId);
+  
+  console.log('🔧 EnhancedStreamlinedBooking: Hook results - pricing:', pricing, 'pricingLoading:', pricingLoading, 'userCurrency:', userCurrency);
 
   // Use the expert availability hook
   const {
@@ -205,26 +207,20 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
   };
 
   const calculateTotalCost = (): number => {
+    console.log('🔧 EnhancedStreamlinedBooking: calculateTotalCost called');
+    console.log('🔧 EnhancedStreamlinedBooking: pricing:', pricing);
+    console.log('🔧 EnhancedStreamlinedBooking: selectedSlots:', selectedSlots);
+    console.log('🔧 EnhancedStreamlinedBooking: userCurrency:', userCurrency);
+    
     if (!pricing || selectedSlots.length === 0) {
-      console.log('No pricing or selected slots:', { pricing, selectedSlots: selectedSlots.length });
+      console.log('🔧 EnhancedStreamlinedBooking: No pricing or selected slots, returning 0');
       return 0;
     }
 
     const session60Price = userCurrency === 'INR' ? pricing.session_60_inr : pricing.session_60_eur;
     const session30Price = userCurrency === 'INR' ? pricing.session_30_inr : pricing.session_30_eur;
     
-    console.log('Calculating total cost:', {
-      selectedSlots: selectedSlots.length,
-      session30Price,
-      session60Price,
-      userCurrency,
-      pricing: {
-        session_30_inr: pricing.session_30_inr,
-        session_30_eur: pricing.session_30_eur,
-        session_60_inr: pricing.session_60_inr, 
-        session_60_eur: pricing.session_60_eur
-      }
-    });
+    console.log('🔧 EnhancedStreamlinedBooking: Prices - 30min:', session30Price, '60min:', session60Price);
     
     // If slots are continuous, calculate as blocks of 60-min sessions + remaining 30-min
     if (areSlotsContinuous(selectedSlots)) {
@@ -242,12 +238,12 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
         totalCost += session30Price;
       }
       
-      console.log('Continuous slots calculation:', { fullHours, remainingMinutes, totalCost });
+      console.log('🔧 EnhancedStreamlinedBooking: Continuous slots calculation:', { fullHours, remainingMinutes, totalCost });
       return totalCost;
     } else {
       // If slots are not continuous, charge each 30-min slot at 30-min rate
       const totalCost = selectedSlots.length * session30Price;
-      console.log('Non-continuous slots calculation:', { slotsCount: selectedSlots.length, session30Price, totalCost });
+      console.log('🔧 EnhancedStreamlinedBooking: Non-continuous slots calculation:', { slotsCount: selectedSlots.length, session30Price, totalCost });
       return totalCost;
     }
   };
@@ -313,6 +309,7 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
               duration: 30,
               payment_status: 'completed',
               payment_id: paymentId,
+              razorpay_payment_id: paymentId,
               order_id: orderId
             };
           }).filter(Boolean);
