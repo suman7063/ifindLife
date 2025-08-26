@@ -73,6 +73,8 @@ export function useExpertAvailability(expertId?: string) {
       expert_id: string;
       availability_id: string;
     }> = [];
+    
+    const seenSlotIds = new Set<string>(); // Prevent duplicates
 
     availabilities.forEach(availability => {
       const startDate = new Date(availability.start_date);
@@ -85,6 +87,12 @@ export function useExpertAvailability(expertId?: string) {
         console.log('Date is within range, checking time slots:', availability.time_slots?.length);
         
         availability.time_slots?.forEach(slot => {
+          // Skip if we've already seen this slot
+          if (seenSlotIds.has(slot.id)) {
+            console.log('Skipping duplicate slot:', slot.id);
+            return;
+          }
+          
           let shouldInclude = false;
           
           console.log('Checking slot:', slot.id, 'day_of_week:', slot.day_of_week, 'specific_date:', slot.specific_date, 'is_booked:', slot.is_booked, 'target dayOfWeek:', dayOfWeek);
@@ -103,6 +111,7 @@ export function useExpertAvailability(expertId?: string) {
           }
 
           if (shouldInclude) {
+            seenSlotIds.add(slot.id);
             // Use the existing slot directly (they're already 30-minute slots)
             availableSlots.push({
               id: slot.id,

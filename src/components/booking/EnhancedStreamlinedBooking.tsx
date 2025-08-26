@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { useExpertPricing } from '@/hooks/useExpertPricing';
 import { useExpertAvailability } from '@/hooks/useExpertAvailability';
+import { useRazorpayPayment } from '@/hooks/call/useRazorpayPayment';
 
 interface TimeSlot {
   id: string;
@@ -55,6 +56,9 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
     error: availabilityError,
     hasAvailability
   } = useExpertAvailability(expertId);
+
+  // Use the payment hook
+  const { processPayment, isLoading: paymentLoading } = useRazorpayPayment();
 
   // Fetch expert data
   useEffect(() => {
@@ -264,48 +268,68 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
       return;
     }
 
+    const totalCost = calculateTotalCost();
+    if (totalCost <= 0) {
+      toast.error('Unable to calculate session cost. Please try again.');
+      return;
+    }
+
     try {
       setLoading(true);
       
-      const appointments = selectedSlots.map(slotId => {
-        const slot = availableSlots.find(s => s.id === slotId);
-        if (!slot) return null;
+      // Process payment first using Razorpay
+      await processPayment(
+        totalCost,
+        userCurrency,
+        `Booking ${selectedSlots.length} session(s) with ${expertName}`,
+        async (paymentId: string, orderId: string) => {
+          // Payment successful, create appointments
+          const appointments = selectedSlots.map(slotId => {
+            const slot = availableSlots.find(s => s.id === slotId);
+            if (!slot) return null;
 
-        return {
-          user_id: user.id,
-          expert_id: expert.auth_id,
-          expert_name: expert.name,
-          appointment_date: selectedDate.toISOString().split('T')[0],
-          start_time: slot.start_time,
-          end_time: slot.end_time,
-          status: 'confirmed',
-          duration: 30,
-          payment_status: 'completed' // Since we're not handling payment in this implementation
-        };
-      }).filter(Boolean);
+            return {
+              user_id: user.id,
+              expert_id: expert.auth_id,
+              expert_name: expert.name,
+              appointment_date: selectedDate.toISOString().split('T')[0],
+              start_time: slot.start_time,
+              end_time: slot.end_time,
+              status: 'confirmed',
+              duration: 30,
+              payment_status: 'completed',
+              payment_id: paymentId,
+              order_id: orderId
+            };
+          }).filter(Boolean);
 
-      const { data, error } = await supabase
-        .from('appointments')
-        .insert(appointments)
-        .select();
+          const { data, error } = await supabase
+            .from('appointments')
+            .insert(appointments);
 
-      if (error) {
-        console.error('Error creating appointments:', error);
-        throw error;
-      }
+          if (error) {
+            console.error('Error creating appointments:', error);
+            throw error;
+          }
 
-      toast.success(`Successfully booked ${selectedSlots.length} session(s)!`, {
-        description: `Total cost: ${formatCurrency(calculateTotalCost())}`
-      });
-      
-      onBookingComplete();
-      
-      // Reset form
-      setSelectedSlots([]);
-      fetchAvailableTimeSlots(); // Refresh slots
+          toast.success(`Successfully booked ${selectedSlots.length} session(s)!`, {
+            description: `Total cost: ${formatCurrency(totalCost)}`
+          });
+          
+          onBookingComplete();
+          
+          // Reset form
+          setSelectedSlots([]);
+          fetchAvailableTimeSlots(); // Refresh slots
+        },
+        (error: any) => {
+          console.error('Payment failed:', error);
+          toast.error('Payment failed. Please try again.');
+        }
+      );
     } catch (error) {
       console.error('Error booking appointments:', error);
-      toast.error('Failed to book appointments');
+      toast.error('Failed to initiate booking process');
     } finally {
       setLoading(false);
     }
@@ -331,13 +355,13 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
         <CardHeader>
           <CardTitle className="flex items-center justify-between text-ifind-charcoal">
             <span>Book Session with {expertName}</span>
-            <div className="text-right text-sm space-y-1">
-              <div className="text-ifind-charcoal/70">Session Rates</div>
-              <div className="font-medium text-ifind-charcoal">
-                30min: {formatCurrency(pricing?.session_30_inr || 450)} • 
-                60min: {formatCurrency(pricing?.session_60_inr || 800)}
+              <div className="text-right text-sm space-y-1">
+                <div className="text-ifind-charcoal/70">Session Rates ({userCurrency})</div>
+                <div className="font-medium text-ifind-charcoal">
+                  30min: {formatPrice(userCurrency === 'INR' ? (pricing?.session_30_inr || 2400) : (pricing?.session_30_eur || 30))} • 
+                  60min: {formatPrice(userCurrency === 'INR' ? (pricing?.session_60_inr || 4500) : (pricing?.session_60_eur || 55))}
+                </div>
               </div>
-            </div>
           </CardTitle>
         </CardHeader>
       </Card>

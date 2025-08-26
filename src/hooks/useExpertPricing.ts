@@ -40,7 +40,7 @@ export const useExpertPricing = (expertId?: string) => {
         .from('expert_accounts')
         .select('id')
         .eq('auth_id', authId)
-        .single();
+        .maybeSingle();
 
       if (expertError) {
         console.error('useExpertPricing: Error fetching expert account:', expertError);
