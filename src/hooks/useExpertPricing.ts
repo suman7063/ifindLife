@@ -27,7 +27,10 @@ export const useExpertPricing = (expertId?: string) => {
 
   // Fetch expert pricing
   const fetchExpertPricing = async (authId: string) => {
-    if (!authId) return;
+    if (!authId) {
+      console.log('useExpertPricing: No authId provided');
+      return;
+    }
     
     try {
       setLoading(true);
@@ -47,6 +50,14 @@ export const useExpertPricing = (expertId?: string) => {
         throw expertError;
       }
 
+      if (!expertAccount) {
+        console.error('useExpertPricing: No expert account found for auth_id:', authId);
+        setError('Expert account not found');
+        return;
+      }
+
+      console.log('useExpertPricing: Found expert account:', expertAccount);
+
       // Then get pricing using the expert account ID
       const { data, error: pricingError } = await supabase
         .from('expert_pricing_tiers')
@@ -55,9 +66,9 @@ export const useExpertPricing = (expertId?: string) => {
         .single();
 
       if (pricingError) {
-        console.log('useExpertPricing: No pricing found for expert, using defaults');
+        console.log('useExpertPricing: No pricing found for expert, using defaults for account:', expertAccount.id);
         // Set default pricing if none exists
-        setPricing({
+        const defaultPricing = {
           id: 'default',
           expert_id: expertAccount.id,
           category: 'standard',
@@ -67,7 +78,9 @@ export const useExpertPricing = (expertId?: string) => {
           session_60_eur: 55,   // €55 for 60 min
           price_per_min_inr: 80,
           price_per_min_eur: 1
-        });
+        };
+        console.log('useExpertPricing: Setting default pricing:', defaultPricing);
+        setPricing(defaultPricing);
         return;
       }
 
