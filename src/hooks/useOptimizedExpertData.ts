@@ -25,7 +25,7 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes cache
 export function useOptimizedExpertData({ 
   serviceId, 
   specialization, 
-  enablePresenceChecking = true 
+  enablePresenceChecking = false // Disabled bulk checking by default
 }: UseOptimizedExpertDataProps = {}) {
   const [experts, setExperts] = useState<ExpertCardData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -177,19 +177,13 @@ export function useOptimizedExpertData({
     setExperts(formattedExperts);
   }, [formattedExperts]);
 
-  // Optimized presence checking - only when needed
-  useEffect(() => {
-    if (enablePresenceChecking && rawExperts.length > 0) {
-      const authIds = rawExperts
-        .map(e => e.auth_id)
-        .filter(id => id !== null && id !== undefined);
-      
-      if (authIds.length > 0) {
-        console.log('🔍 Checking expert presence for', authIds.length, 'experts');
-        bulkCheckPresence(authIds);
-      }
-    }
-  }, [rawExperts, enablePresenceChecking, bulkCheckPresence]);
+  // REMOVED: Bulk presence checking on every expert list load
+  // Presence is now only checked when:
+  // 1. Expert logs in/out (handled by useIntegratedExpertPresence)
+  // 2. User interacts with individual expert card (handled by ExpertDetail page)
+  // 3. Expert manually changes status (handled by MasterStatusControl)
+  
+  // No automatic bulk checking to reduce unnecessary API calls
 
   return {
     experts,
