@@ -26,24 +26,55 @@ export const useExpertPricing = (expertId?: string) => {
   const [error, setError] = useState<string | null>(null);
 
   // Fetch expert pricing
-  const fetchExpertPricing = async (id: string) => {
-    if (!id) return;
+  const fetchExpertPricing = async (authId: string) => {
+    if (!authId) return;
     
     try {
       setLoading(true);
       setError(null);
+      
+      console.log('useExpertPricing: Fetching pricing for auth_id:', authId);
 
+      // First get the actual expert account ID from auth_id
+      const { data: expertAccount, error: expertError } = await supabase
+        .from('expert_accounts')
+        .select('id')
+        .eq('auth_id', authId)
+        .single();
+
+      if (expertError) {
+        console.error('useExpertPricing: Error fetching expert account:', expertError);
+        throw expertError;
+      }
+
+      // Then get pricing using the expert account ID
       const { data, error: pricingError } = await supabase
         .from('expert_pricing_tiers')
         .select('*')
-        .eq('expert_id', id)
+        .eq('expert_id', expertAccount.id)
         .single();
 
-      if (pricingError) throw pricingError;
+      if (pricingError) {
+        console.log('useExpertPricing: No pricing found for expert, using defaults');
+        // Set default pricing if none exists
+        setPricing({
+          id: 'default',
+          expert_id: expertAccount.id,
+          category: 'standard',
+          session_30_inr: 2400, // ₹2400 for 30 min
+          session_30_eur: 30,   // €30 for 30 min  
+          session_60_inr: 4500, // ₹4500 for 60 min
+          session_60_eur: 55,   // €55 for 60 min
+          price_per_min_inr: 80,
+          price_per_min_eur: 1
+        });
+        return;
+      }
 
+      console.log('useExpertPricing: Pricing loaded:', data);
       setPricing(data);
     } catch (err: any) {
-      console.error('Error fetching expert pricing:', err);
+      console.error('useExpertPricing: Error fetching expert pricing:', err);
       setError(err.message);
     } finally {
       setLoading(false);

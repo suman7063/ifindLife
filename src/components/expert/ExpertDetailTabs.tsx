@@ -8,7 +8,8 @@ import BookingTab from '@/components/booking/BookingTab';
 
 interface ExpertDetailTabsProps {
   expert: {
-    id: number;
+    id: string; // Changed from number to string for UUID
+    auth_id?: string; // Add auth_id field
     name: string;
     experience: number;
     description: string;
@@ -87,7 +88,7 @@ const ExpertDetailTabs: React.FC<ExpertDetailTabsProps> = ({ expert }) => {
       
       <TabsContent value="booking">
         <BookingTab 
-          expertId={expert.id.toString()} 
+          expertId={expert.auth_id || expert.id} 
           expertName={expert.name} 
         />
       </TabsContent>

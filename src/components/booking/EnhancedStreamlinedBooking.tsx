@@ -61,16 +61,23 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
 
   const fetchExpertData = async () => {
     try {
+      console.log('BookingTab: Fetching expert data for expertId:', expertId);
+      
       const { data, error } = await supabase
         .from('expert_accounts')
         .select('*')
-        .eq('id', expertId)
+        .eq('auth_id', expertId) // Use auth_id instead of id since expertId is the auth_id from URL
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('BookingTab: Error fetching expert:', error);
+        throw error;
+      }
+      
+      console.log('BookingTab: Expert data loaded:', data);
       setExpert(data);
     } catch (error) {
-      console.error('Error fetching expert:', error);
+      console.error('BookingTab: Error fetching expert:', error);
       toast.error('Failed to load expert information');
     }
   };
