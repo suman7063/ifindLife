@@ -63,11 +63,9 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
     try {
       console.log('BookingTab: Fetching expert data for expertId:', expertId);
       
+      // Use the RPC function to get public expert profile
       const { data, error } = await supabase
-        .from('expert_accounts')
-        .select('*')
-        .eq('auth_id', expertId) // Use auth_id instead of id since expertId is the auth_id from URL
-        .single();
+        .rpc('get_public_expert_profile', { p_auth_id: expertId });
 
       if (error) {
         console.error('BookingTab: Error fetching expert:', error);
