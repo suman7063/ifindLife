@@ -7,6 +7,7 @@ export interface TimeSlot {
   end_time: string;
   day_of_week: number;
   specific_date: string | null;
+  timezone?: string;
 }
 
 export function useAvailabilityManagement(user: any) {
@@ -19,7 +20,8 @@ export function useAvailabilityManagement(user: any) {
     startDate: string,
     endDate: string,
     availabilityType: 'date_range' | 'recurring',
-    timeSlots: TimeSlot[]
+    timeSlots: TimeSlot[],
+    availabilityTimezone?: string
   ) => {
     try {
       setLoading(true);
@@ -33,7 +35,8 @@ export function useAvailabilityManagement(user: any) {
           expert_id: expertAuthId,
           start_date: startDate,
           end_date: endDate,
-          availability_type: availabilityType
+          availability_type: availabilityType,
+          timezone: availabilityTimezone || 'UTC'
         })
         .select()
         .single();
@@ -41,12 +44,22 @@ export function useAvailabilityManagement(user: any) {
       if (availabilityError) throw availabilityError;
 
       // Then, create time slots for this availability
-      const timeSlotsToInsert = timeSlots.map(slot => ({
+      // De-duplicate slots to prevent identical entries
+      const uniqueMap = new Map<string, TimeSlot>();
+      timeSlots.forEach(slot => {
+        const key = `${slot.start_time}-${slot.end_time}-${slot.day_of_week}-${slot.specific_date || 'null'}`;
+        if (!uniqueMap.has(key)) uniqueMap.set(key, slot);
+      });
+
+      const dedupedSlots = Array.from(uniqueMap.values());
+
+      const timeSlotsToInsert = dedupedSlots.map(slot => ({
         availability_id: availability.id,
         start_time: slot.start_time,
         end_time: slot.end_time,
         day_of_week: slot.day_of_week,
         specific_date: slot.specific_date,
+        timezone: slot.timezone || availabilityTimezone || 'UTC',
         is_booked: false
       }));
 

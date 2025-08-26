@@ -633,6 +633,7 @@ export type Database = {
           expert_id: string
           id: string
           start_date: string
+          timezone: string | null
         }
         Insert: {
           availability_type: string
@@ -641,6 +642,7 @@ export type Database = {
           expert_id: string
           id?: string
           start_date: string
+          timezone?: string | null
         }
         Update: {
           availability_type?: string
@@ -649,6 +651,7 @@ export type Database = {
           expert_id?: string
           id?: string
           start_date?: string
+          timezone?: string | null
         }
         Relationships: []
       }
@@ -1128,6 +1131,7 @@ export type Database = {
           is_booked: boolean | null
           specific_date: string | null
           start_time: string
+          timezone: string | null
         }
         Insert: {
           availability_id: string
@@ -1138,6 +1142,7 @@ export type Database = {
           is_booked?: boolean | null
           specific_date?: string | null
           start_time: string
+          timezone?: string | null
         }
         Update: {
           availability_id?: string
@@ -1148,6 +1153,7 @@ export type Database = {
           is_booked?: boolean | null
           specific_date?: string | null
           start_time?: string
+          timezone?: string | null
         }
         Relationships: [
           {
@@ -2571,6 +2577,16 @@ export type Database = {
       }
       check_if_table_exists: {
         Args: { table_name: string }
+        Returns: boolean
+      }
+      check_time_slot_overlap: {
+        Args: {
+          p_availability_id: string
+          p_day_of_week?: number
+          p_end_time: string
+          p_specific_date?: string
+          p_start_time: string
+        }
         Returns: boolean
       }
       deduct_reward_points: {

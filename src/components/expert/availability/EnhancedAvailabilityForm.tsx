@@ -222,7 +222,8 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
         startDate,
         endDate,
         'recurring',
-        timeSlots
+        timeSlots as any,
+        selectedTimezone
       );
 
       if (result) {
