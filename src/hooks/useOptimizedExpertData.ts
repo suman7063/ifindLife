@@ -55,9 +55,9 @@ export function useOptimizedExpertData({
         reviewsCount: Number(dbExpert.reviews_count) || 0,
         price: 30,
         verified: Boolean(dbExpert.verified),
-        status: isApproved && expertStatus === 'online' ? 'online' : 'offline',
+        status: isApproved && expertStatus === 'available' ? 'online' : 'offline',
         waitTime: isApproved && presence?.isAvailable ? 
-                    expertStatus === 'online' ? 'Available Now' : 
+                    expertStatus === 'available' ? 'Available Now' : 
                     expertStatus === 'away' ? 'Away' : 'Available' : 'Not Available',
         category: dbExpert.category || 'listening-volunteer',
         dbStatus: dbExpert.status

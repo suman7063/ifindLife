@@ -3,7 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface ExpertPresence {
   expertId: string;
-  status: 'online' | 'away' | 'offline';
+  status: 'available' | 'busy' | 'away' | 'offline';
+  acceptingCalls: boolean;
   isAvailable: boolean;
   lastActivity?: string;
   lastUpdate: number;
@@ -13,7 +14,7 @@ interface ExpertPresenceContextType {
   getExpertPresence: (expertId: string) => ExpertPresence | null;
   checkExpertPresence: (expertId: string) => Promise<ExpertPresence>;
   bulkCheckPresence: (expertIds: string[]) => Promise<void>;
-  updateExpertPresence: (expertId: string, status: 'available' | 'busy' | 'away' | 'offline', isAvailable?: boolean) => Promise<void>;
+  updateExpertPresence: (expertId: string, status: 'available' | 'busy' | 'away' | 'offline', acceptingCalls?: boolean) => Promise<void>;
   trackActivity: (expertId: string) => Promise<void>;
   isLoading: boolean;
 }
@@ -45,16 +46,15 @@ export const ExpertPresenceProvider: React.FC<{ children: React.ReactNode }> = (
           const presenceData = payload.new || payload.old;
           if (!presenceData) return;
           
-          const { expert_id, status, last_activity } = presenceData;
+          const { expert_id, status, accepting_calls, last_activity } = presenceData;
           
           if (expert_id) {
-            // Update cache with new status
+            // Update cache with new status - keep status fidelity
             const presence: ExpertPresence = {
               expertId: expert_id,
-              status: status === 'available' ? 'online' : 
-                      status === 'busy' ? 'away' :
-                      status === 'away' ? 'away' : 'offline',
-              isAvailable: status !== 'offline',
+              status: status as 'available' | 'busy' | 'away' | 'offline',
+              acceptingCalls: accepting_calls ?? true,
+              isAvailable: status === 'available' && (accepting_calls ?? true),
               lastActivity: last_activity,
               lastUpdate: Date.now()
             };
@@ -106,42 +106,32 @@ export const ExpertPresenceProvider: React.FC<{ children: React.ReactNode }> = (
     setIsLoading(true);
 
     try {
-      // Get expert account and presence data
-      const [expertResponse, presenceResponse] = await Promise.all([
-        supabase
-          .from('expert_accounts')
-          .select('auth_id, status')
-          .eq('auth_id', expertId)
-          .single(),
-        supabase
-          .from('expert_presence')
-          .select('status, last_activity')
-          .eq('expert_id', expertId)
-          .single()
-      ]);
-
-      const expertData = expertResponse.data;
-      const presenceData = presenceResponse.data;
+      // Get presence data directly - approval check handled elsewhere
+      const { data: presenceData } = await supabase
+        .from('expert_presence')
+        .select('status, accepting_calls, last_activity')
+        .eq('expert_id', expertId)
+        .single();
 
       let presence: ExpertPresence;
 
-      if (expertData && expertData.status === 'approved') {
-        // Use the explicitly set status from expert_presence table
-        const status = presenceData?.status || 'offline';
+      if (presenceData) {
+        const status = presenceData.status as 'available' | 'busy' | 'away' | 'offline';
+        const acceptingCalls = presenceData.accepting_calls ?? true;
         
         presence = {
           expertId,
-          status: status === 'available' ? 'online' : 
-                  status === 'busy' ? 'away' :
-                  status === 'away' ? 'away' : 'offline',
-          isAvailable: status !== 'offline',
-          lastActivity: presenceData?.last_activity,
+          status,
+          acceptingCalls,
+          isAvailable: status === 'available' && acceptingCalls,
+          lastActivity: presenceData.last_activity,
           lastUpdate: Date.now()
         };
       } else {
         presence = {
           expertId,
           status: 'offline',
+          acceptingCalls: false,
           isAvailable: false,
           lastUpdate: Date.now()
         };
@@ -154,6 +144,7 @@ export const ExpertPresenceProvider: React.FC<{ children: React.ReactNode }> = (
       const fallbackPresence: ExpertPresence = {
         expertId,
         status: 'offline',
+        acceptingCalls: false,
         isAvailable: false,
         lastUpdate: Date.now()
       };
@@ -180,46 +171,32 @@ export const ExpertPresenceProvider: React.FC<{ children: React.ReactNode }> = (
 
       console.log('📡 Fetching fresh presence data for:', expertsToCheck.length, 'experts');
 
-      // Batch query expert accounts and presence data
-      const [expertsResponse, presenceResponse] = await Promise.all([
-        supabase
-          .from('expert_accounts')
-          .select('auth_id, status')
-          .in('auth_id', expertsToCheck),
-        supabase
-          .from('expert_presence')
-          .select('expert_id, status, last_activity')
-          .in('expert_id', expertsToCheck)
-      ]);
-
-      const expertsData = expertsResponse.data || [];
-      const presenceDataArray = presenceResponse.data || [];
-
-      const now = new Date();
+      // Use the new RPC to get presence for approved experts
+      const { data: presenceDataArray } = await supabase
+        .rpc('get_approved_expert_presence', { expert_auth_ids: expertsToCheck });
 
       expertsToCheck.forEach(expertId => {
-        const expertData = expertsData.find(e => e.auth_id === expertId);
-        const presenceData = presenceDataArray.find(p => p.expert_id === expertId);
+        const presenceData = presenceDataArray?.find(p => p.expert_id === expertId);
         
         let presence: ExpertPresence;
 
-        if (expertData && expertData.status === 'approved') {
-          // Use the explicitly set status from expert_presence table
-          const status = presenceData?.status || 'offline';
+        if (presenceData) {
+          const status = presenceData.status as 'available' | 'busy' | 'away' | 'offline';
+          const acceptingCalls = presenceData.accepting_calls ?? true;
           
           presence = {
             expertId,
-            status: status === 'available' ? 'online' : 
-                    status === 'busy' ? 'away' :
-                    status === 'away' ? 'away' : 'offline',
-            isAvailable: status !== 'offline',
-            lastActivity: presenceData?.last_activity,
+            status,
+            acceptingCalls,
+            isAvailable: status === 'available' && acceptingCalls,
+            lastActivity: presenceData.last_activity,
             lastUpdate: Date.now()
           };
         } else {
           presence = {
             expertId,
             status: 'offline',
+            acceptingCalls: false,
             isAvailable: false,
             lastUpdate: Date.now()
           };
@@ -238,7 +215,7 @@ export const ExpertPresenceProvider: React.FC<{ children: React.ReactNode }> = (
   const updateExpertPresence = useCallback(async (
     expertId: string, 
     status: 'available' | 'busy' | 'away' | 'offline',
-    isAvailable?: boolean
+    acceptingCalls?: boolean
   ) => {
     try {
       console.log('📝 Updating expert presence:', { expertId, status });
@@ -256,12 +233,18 @@ export const ExpertPresenceProvider: React.FC<{ children: React.ReactNode }> = (
 
       if (existingPresence) {
         // Update existing record
+        const updateData: any = {
+          status,
+          last_activity: new Date().toISOString()
+        };
+        
+        if (acceptingCalls !== undefined) {
+          updateData.accepting_calls = acceptingCalls;
+        }
+
         const { error } = await supabase
           .from('expert_presence')
-          .update({
-            status,
-            last_activity: new Date().toISOString()
-          })
+          .update(updateData)
           .eq('expert_id', expertId);
 
         if (error) throw error;
@@ -272,22 +255,21 @@ export const ExpertPresenceProvider: React.FC<{ children: React.ReactNode }> = (
           .insert({
             expert_id: expertId,
             status,
+            accepting_calls: acceptingCalls ?? true,
             last_activity: new Date().toISOString()
           });
 
         if (error) throw error;
       }
 
-      // Update cache with correct status mapping
-      const availabilityStatus = isAvailable !== undefined ? isAvailable : 
-                                 (status === 'available' || status === 'busy' || status === 'away');
+      // Update cache with correct status mapping - keep status fidelity
+      const currentAcceptingCalls = acceptingCalls ?? true;
       
       const updatedPresence: ExpertPresence = {
         expertId,
-        status: status === 'available' ? 'online' : 
-                status === 'busy' ? 'away' :
-                status === 'away' ? 'away' : 'offline',
-        isAvailable: availabilityStatus,
+        status: status as 'available' | 'busy' | 'away' | 'offline',
+        acceptingCalls: currentAcceptingCalls,
+        isAvailable: status === 'available' && currentAcceptingCalls,
         lastActivity: new Date().toISOString(),
         lastUpdate: Date.now()
       };

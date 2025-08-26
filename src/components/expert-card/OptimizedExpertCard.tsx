@@ -49,7 +49,7 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
   const getExpertStatus = (expertId: string) => {
     const presence = getExpertPresence(expertId);
     return {
-      status: presence?.status === 'online' ? 'online' : 
+      status: presence?.status === 'available' ? 'online' : 
               presence?.status === 'away' ? 'away' : 'offline',
       isAvailable: presence?.isAvailable || false,
       lastActivity: presence?.lastActivity || ''

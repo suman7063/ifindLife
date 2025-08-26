@@ -45,7 +45,7 @@ export function useExpertData({ serviceId, specialization }: UseExpertDataProps 
       reviewsCount: Number(dbExpert.reviews_count) || 0,
       price,
       verified: Boolean(dbExpert.verified),
-      status: isApproved && presence?.status === 'online' ? 'online' : 'offline',
+      status: isApproved && presence?.status === 'available' ? 'online' : 'offline',
       waitTime: isApproved && presence?.isAvailable ? 'Available Now' : 'Not Available',
       dbStatus: dbExpert.status
     };

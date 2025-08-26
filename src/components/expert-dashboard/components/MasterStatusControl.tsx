@@ -21,10 +21,11 @@ const MasterStatusControl: React.FC = () => {
       const presenceData = getExpertPresence(expert.auth_id);
       if (presenceData) {
         // Map presence status to our status
-        const mappedStatus = presenceData.status === 'online' ? 'available' : 
+        const mappedStatus = presenceData.status === 'available' ? 'available' : 
+                           presenceData.status === 'busy' ? 'busy' :
                            presenceData.status === 'away' ? 'away' : 'offline';
         setCurrentStatus(mappedStatus);
-        setAcceptingCalls(presenceData.isAvailable && mappedStatus !== 'offline');
+        setAcceptingCalls(presenceData.acceptingCalls && mappedStatus !== 'offline');
       }
     }
   }, [expert?.auth_id, getExpertPresence]);

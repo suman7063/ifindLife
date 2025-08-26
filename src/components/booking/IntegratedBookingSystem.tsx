@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 
 interface Expert {
   id: string;
+  auth_id?: string;
   name: string;
   profile_picture?: string;
   specialization?: string;
@@ -40,8 +41,8 @@ const IntegratedBookingSystem: React.FC<IntegratedBookingSystemProps> = ({
 
   const { getExpertPresence } = useExpertPresence();
   
-  const expertPresence = getExpertPresence(expert.id);
-  const expertAvailability = expertPresence?.status === 'online' ? 'available' : 
+  const expertPresence = getExpertPresence(expert.auth_id || expert.id);
+  const expertAvailability = expertPresence?.status === 'available' ? 'available' : 
                             expertPresence?.status === 'away' ? 'away' : 'offline';
   const online = expertPresence?.isAvailable || false;
   const lastSeen = expertPresence?.lastActivity ? 

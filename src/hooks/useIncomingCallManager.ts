@@ -206,16 +206,12 @@ export const useIncomingCallManager = (): UseIncomingCallManagerReturn => {
     setIsListening(false);
   }, []);
 
-  // Auto-start listening when expert is available
+  // Cleanup on unmount (removed auto-start to allow presence-based control)
   useEffect(() => {
-    if (expert?.id) {
-      startListening();
-    }
-    
     return () => {
       stopListening();
     };
-  }, [expert?.id]);
+  }, [stopListening]);
 
   // Cleanup expired calls
   useEffect(() => {

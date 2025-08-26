@@ -284,8 +284,9 @@ const CallManagementPage: React.FC = () => {
             
             return (
               <>
-                <Badge variant={status === 'online' ? 'default' : 'secondary'}>
-                  {status === 'online' ? 'Available' : 
+                <Badge variant={status === 'available' ? 'default' : 'secondary'}>
+                  {status === 'available' ? 'Available' : 
+                   status === 'busy' ? 'Busy' :
                    status === 'away' ? 'Away' : 'Offline'}
                 </Badge>
                 <Badge variant={isAvailable ? 'default' : 'outline'}>

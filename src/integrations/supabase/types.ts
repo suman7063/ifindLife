@@ -865,6 +865,7 @@ export type Database = {
       }
       expert_presence: {
         Row: {
+          accepting_calls: boolean
           auto_away_enabled: boolean | null
           away_timeout_minutes: number | null
           created_at: string
@@ -875,6 +876,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          accepting_calls?: boolean
           auto_away_enabled?: boolean | null
           away_timeout_minutes?: number | null
           created_at?: string
@@ -885,6 +887,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          accepting_calls?: boolean
           auto_away_enabled?: boolean | null
           away_timeout_minutes?: number | null
           created_at?: string
@@ -2585,6 +2588,15 @@ export type Database = {
       get_admin_metrics: {
         Args: Record<PropertyKey, never>
         Returns: Json
+      }
+      get_approved_expert_presence: {
+        Args: { expert_auth_ids: string[] }
+        Returns: {
+          accepting_calls: boolean
+          expert_id: string
+          last_activity: string
+          status: string
+        }[]
       }
       get_approved_experts: {
         Args: Record<PropertyKey, never>
