@@ -32,7 +32,21 @@ export function useOptimizedExpertData({
   const [error, setError] = useState<string | null>(null);
   const [rawExperts, setRawExperts] = useState<any[]>([]);
 
-  const { getExpertPresence, bulkCheckPresence } = useExpertPresence();
+  // Safe context access to prevent errors when provider is not available
+  const presenceContext = (() => {
+    try {
+      return useExpertPresence();
+    } catch (error) {
+      console.warn('ExpertPresence context not available, using fallback');
+      return {
+        getExpertPresence: () => null,
+        bulkCheckPresence: () => Promise.resolve(),
+        isLoading: false
+      };
+    }
+  })();
+  
+  const { getExpertPresence, bulkCheckPresence } = presenceContext;
 
   // Memoized expert mapping to prevent unnecessary recalculations
   const mapDbExpertToExpertCard = useMemo(() => {

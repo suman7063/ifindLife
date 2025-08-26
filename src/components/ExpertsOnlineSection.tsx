@@ -5,38 +5,27 @@ import { Button } from '@/components/ui/button';
 import ExpertCard from '@/components/expert-card';
 import UnifiedExpertConnection from '@/components/expert-connection/UnifiedExpertConnection';
 import { usePublicExpertsData } from '@/hooks/usePublicExpertsData';
-import { useExpertPresence } from '@/contexts/ExpertPresenceContext';
 
 const ExpertsOnlineSection: React.FC = () => {
   const navigate = useNavigate();
   const { experts: allExperts, loading } = usePublicExpertsData();
-  const { getExpertPresence } = useExpertPresence();
   
   // Presence checking is now handled by useOptimizedExpertData
 
   // Show online experts first, then last online experts, ensuring 3 experts total
   const approvedExperts = allExperts.filter(expert => expert.dbStatus === 'approved');
   
-  // Separate online and offline experts
-  const onlineExperts = approvedExperts.filter(expert => {
-    const presence = getExpertPresence(expert.auth_id || expert.id);
-    return presence?.isAvailable;
-  });
+  // Separate online and offline experts based on waitTime (which reflects presence)
+  const onlineExperts = approvedExperts.filter(expert => 
+    expert.status === 'online' && expert.waitTime === 'Available Now'
+  );
   
-  const offlineExperts = approvedExperts.filter(expert => {
-    const presence = getExpertPresence(expert.auth_id || expert.id);
-    return !presence?.isAvailable;
-  });
+  const offlineExperts = approvedExperts.filter(expert => 
+    expert.status !== 'online' || expert.waitTime !== 'Available Now'
+  );
   
-  // Sort offline experts by last seen (most recent first)
-  const sortedOfflineExperts = offlineExperts.sort((a, b) => {
-    const presenceA = getExpertPresence(a.auth_id || a.id);
-    const presenceB = getExpertPresence(b.auth_id || b.id);
-    return new Date(presenceB?.lastActivity || 0).getTime() - new Date(presenceA?.lastActivity || 0).getTime();
-  });
-  
-  // Combine online first, then offline (last seen), and take first 3
-  const displayExperts = [...onlineExperts, ...sortedOfflineExperts].slice(0, 3);
+  // Combine online first, then offline, and take first 3
+  const displayExperts = [...onlineExperts, ...offlineExperts].slice(0, 3);
 
   return (
     <UnifiedExpertConnection serviceTitle="Expert Consultation" serviceId="consultation">
