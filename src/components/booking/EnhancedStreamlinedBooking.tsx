@@ -204,7 +204,6 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
     return true;
   };
 
-  // Enhanced pricing calculation based on continuous vs non-continuous slots
   const calculateTotalCost = (): number => {
     if (!pricing || selectedSlots.length === 0) return 0;
 
@@ -234,10 +233,6 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
     }
   };
 
-  const formatCurrency = (amount: number): string => {
-    const symbol = userCurrency === 'INR' ? '₹' : '€';
-    return `${symbol}${amount.toFixed(0)}`;
-  };
 
   const getSessionBreakdown = () => {
     if (selectedSlots.length === 0) return '';
@@ -313,7 +308,7 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
           }
 
           toast.success(`Successfully booked ${selectedSlots.length} session(s)!`, {
-            description: `Total cost: ${formatCurrency(totalCost)}`
+            description: `Total cost: ${formatPrice(totalCost)}`
           });
           
           onBookingComplete();
@@ -483,10 +478,10 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
                   <span>Session breakdown:</span>
                   <span>{getSessionBreakdown()}</span>
                 </div>
-                <div className="flex justify-between items-center font-semibold text-lg text-ifind-charcoal">
-                  <span>Total Cost:</span>
-                  <span className="text-2xl font-bold text-ifind-teal">{formatCurrency(calculateTotalCost())}</span>
-                </div>
+                 <div className="flex justify-between items-center font-semibold text-lg text-ifind-charcoal">
+                   <span>Total Cost:</span>
+                   <span className="text-2xl font-bold text-ifind-teal">{formatPrice(calculateTotalCost())}</span>
+                 </div>
               </div>
               
                <Button
@@ -501,10 +496,10 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
                     <span>Booking...</span>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-between w-full">
-                    <span>Book {selectedSlots.length} Session{selectedSlots.length > 1 ? 's' : ''}</span>
-                    <span className="font-bold">{formatCurrency(calculateTotalCost())}</span>
-                  </div>
+                   <div className="flex items-center justify-between w-full">
+                     <span>Book {selectedSlots.length} Session{selectedSlots.length > 1 ? 's' : ''}</span>
+                     <span className="font-bold">{formatPrice(calculateTotalCost())}</span>
+                   </div>
                 )}
               </Button>
             </div>
