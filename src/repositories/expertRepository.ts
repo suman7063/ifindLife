@@ -133,20 +133,18 @@ export class ExpertRepository {
       console.log(`🔍 Fetching expert by auth_id: ${authId}`);
       
       const { data, error } = await supabase
-        .from('expert_accounts')
-        .select('*')
-        .eq('auth_id', authId)
-        .limit(1);
+        .rpc('get_public_expert_profile', { p_auth_id: authId })
+        .maybeSingle();
 
       if (error) {
-        console.error('❌ Database error fetching expert:', error);
+        console.error('❌ RPC error fetching expert:', error);
         return null;
       }
 
-      const expertData = Array.isArray(data) ? data[0] : data;
+      const expertData = data;
       
       if (!expertData) {
-        console.log(`❌ No expert found with auth_id: ${authId}`);
+        console.log(`❌ No approved expert found with auth_id: ${authId}`);
         return null;
       }
 
@@ -166,14 +164,14 @@ export class ExpertRepository {
         status: expertData.status as 'pending' | 'approved' | 'disapproved',
         profilePicture: expertData.profile_picture,
         created_at: expertData.created_at,
-        updated_at: expertData.created_at, // Use created_at as fallback since updated_at may not exist
+        updated_at: expertData.created_at, // fallback
         address: expertData.address,
         city: expertData.city,
         state: expertData.state,
         country: expertData.country,
         specialization: expertData.specialization,
         experience: expertData.experience,
-        certificate_urls: expertData.certificate_urls,
+        certificate_urls: (expertData as any).certificate_urls || [],
         selected_services: expertData.selected_services,
         average_rating: expertData.average_rating,
         reviews_count: expertData.reviews_count,

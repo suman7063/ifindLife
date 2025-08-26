@@ -2636,6 +2636,32 @@ export type Database = {
         Args: { expert_auth_id: string }
         Returns: Json
       }
+      get_public_expert_profile: {
+        Args: { p_auth_id: string }
+        Returns: {
+          address: string
+          auth_id: string
+          average_rating: number
+          bio: string
+          category: string
+          city: string
+          country: string
+          created_at: string
+          email: string
+          experience: string
+          id: string
+          languages: string[]
+          name: string
+          phone: string
+          profile_picture: string
+          reviews_count: number
+          selected_services: number[]
+          specialization: string
+          state: string
+          status: string
+          verified: boolean
+        }[]
+      }
       get_user_reviews_with_experts: {
         Args: { user_id_param: string }
         Returns: {
