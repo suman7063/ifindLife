@@ -52,7 +52,8 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
   const {
     getAvailableSlots,
     loading: availabilityLoading,
-    error: availabilityError
+    error: availabilityError,
+    hasAvailability
   } = useExpertAvailability(expertId);
 
   // Fetch expert data
@@ -62,10 +63,10 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
 
   // Fetch available time slots for selected date
   useEffect(() => {
-    if (selectedDate && expert?.auth_id) {
+    if (selectedDate && expert?.auth_id && !availabilityLoading && hasAvailability) {
       fetchAvailableTimeSlots();
     }
-  }, [selectedDate, expert?.auth_id]);
+  }, [selectedDate, expert?.auth_id, availabilityLoading, hasAvailability]);
 
   const fetchExpertData = async () => {
     try {
@@ -89,7 +90,11 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
   };
 
   const fetchAvailableTimeSlots = async () => {
-    if (!selectedDate || !expert?.auth_id) return;
+    if (!selectedDate || !expert?.auth_id || availabilityLoading || !hasAvailability) {
+      setAvailableSlots([]);
+      setLoadingSlots(false);
+      return;
+    }
 
     try {
       setLoadingSlots(true);
