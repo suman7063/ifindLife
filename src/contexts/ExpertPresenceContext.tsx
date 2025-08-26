@@ -59,7 +59,7 @@ export const ExpertPresenceProvider: React.FC<{ children: React.ReactNode }> = (
               lastUpdate: Date.now()
             };
             presenceCache.set(expert_id, presence);
-            console.log('✅ Updated presence cache:', presence);
+            console.log('✅ Updated presence cache for real-time change:', presence);
           }
         }
       )
@@ -74,7 +74,11 @@ export const ExpertPresenceProvider: React.FC<{ children: React.ReactNode }> = (
   const getExpertPresence = useCallback((expertId: string): ExpertPresence | null => {
     const cached = presenceCache.get(expertId);
     if (cached && (Date.now() - cached.lastUpdate) < CACHE_DURATION) {
+      console.log(`📱 Using cached presence for ${expertId}: ${cached.status} (${cached.isAvailable ? 'available' : 'not available'})`);
       return cached;
+    }
+    if (cached) {
+      console.log(`⏰ Stale cache for ${expertId}, age: ${Date.now() - cached.lastUpdate}ms`);
     }
     return null;
   }, []);
@@ -162,10 +166,17 @@ export const ExpertPresenceProvider: React.FC<{ children: React.ReactNode }> = (
     
     try {
       // Filter out experts we already have fresh data for
-      const expertsToCheck = expertIds.filter(id => !getExpertPresence(id));
+      const expertsToCheck = expertIds.filter(id => {
+        const cached = getExpertPresence(id);
+        const isFresh = cached && (Date.now() - cached.lastUpdate) < CACHE_DURATION;
+        if (!isFresh) {
+          console.log(`🔄 Need fresh data for expert: ${id} (cached: ${!!cached}, fresh: ${isFresh})`);
+        }
+        return !isFresh;
+      });
       
       if (expertsToCheck.length === 0) {
-        console.log('✅ All expert presence data is cached');
+        console.log('✅ All expert presence data is fresh');
         return;
       }
 
@@ -218,7 +229,7 @@ export const ExpertPresenceProvider: React.FC<{ children: React.ReactNode }> = (
     acceptingCalls?: boolean
   ) => {
     try {
-      console.log('📝 Updating expert presence:', { expertId, status });
+      console.log('📝 Updating expert presence:', { expertId, status, acceptingCalls });
       
       // First, check if expert_presence record exists
       const { data: existingPresence, error: checkError } = await supabase
@@ -262,7 +273,7 @@ export const ExpertPresenceProvider: React.FC<{ children: React.ReactNode }> = (
         if (error) throw error;
       }
 
-      // Update cache with correct status mapping - keep status fidelity
+      // Force cache update with new status
       const currentAcceptingCalls = acceptingCalls ?? true;
       
       const updatedPresence: ExpertPresence = {
@@ -276,6 +287,12 @@ export const ExpertPresenceProvider: React.FC<{ children: React.ReactNode }> = (
       
       presenceCache.set(expertId, updatedPresence);
       console.log('✅ Expert presence updated successfully', updatedPresence);
+      
+      // Broadcast the change to trigger real-time updates across the app
+      // The real-time subscription will handle this, but force immediate local update
+      if (status === 'available') {
+        console.log('🚀 Expert came online, broadcasting presence update');
+      }
       
     } catch (error) {
       console.error('❌ Error updating expert presence:', error);

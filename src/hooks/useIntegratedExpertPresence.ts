@@ -24,18 +24,55 @@ export function useIntegratedExpertPresence() {
     }
   }, [expert, isAuthenticated, userType, updateExpertPresence]);
 
-  // Set offline when component unmounts (page closes)
+  // Set offline when the last tab closes - use page visibility and localStorage to coordinate
   useEffect(() => {
-    return () => {
-      if (userType === 'expert' && expert) {
-        const expertAuthId = expert.auth_id || expert.id;
-        if (expertAuthId) {
-          console.log('🔴 Page unload, setting expert offline:', expertAuthId);
-          updateExpertPresence(expertAuthId, 'offline');
-        }
+    if (userType !== 'expert' || !expert) return;
+    
+    const expertAuthId = expert.auth_id || expert.id;
+    if (!expertAuthId) return;
+
+    // Track this tab
+    const tabId = Date.now().toString();
+    const storageKey = `expert_tabs_${expertAuthId}`;
+    
+    // Add this tab to the list
+    const updateTabsList = () => {
+      const existingTabs = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      const updatedTabs = [...existingTabs, tabId];
+      localStorage.setItem(storageKey, JSON.stringify(updatedTabs));
+    };
+    
+    updateTabsList();
+    
+    const handleBeforeUnload = () => {
+      const existingTabs = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      const remainingTabs = existingTabs.filter((id: string) => id !== tabId);
+      
+      if (remainingTabs.length === 0) {
+        // This was the last tab, set expert offline
+        console.log('🔴 Last tab closing, setting expert offline:', expertAuthId);
+        updateExpertPresence(expertAuthId, 'offline');
+        localStorage.removeItem(storageKey);
+      } else {
+        // Other tabs still open, just remove this tab
+        localStorage.setItem(storageKey, JSON.stringify(remainingTabs));
       }
     };
-  }, []);
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      // Clean up tab tracking when component unmounts normally
+      const existingTabs = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      const remainingTabs = existingTabs.filter((id: string) => id !== tabId);
+      if (remainingTabs.length > 0) {
+        localStorage.setItem(storageKey, JSON.stringify(remainingTabs));
+      } else {
+        localStorage.removeItem(storageKey);
+      }
+    };
+  }, [expert, userType, updateExpertPresence]);
 
   // REMOVED: Automatic status changes on page visibility
   // Experts control their own status explicitly through MasterStatusControl

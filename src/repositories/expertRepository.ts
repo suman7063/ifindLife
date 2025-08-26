@@ -130,41 +130,54 @@ export class ExpertRepository {
 
   static async getExpertByAuthId(authId: string): Promise<ExpertProfile | null> {
     try {
+      console.log(`🔍 Fetching expert by auth_id: ${authId}`);
+      
       const { data, error } = await supabase
         .from('expert_accounts')
         .select('*')
         .eq('auth_id', authId)
-        .single();
+        .limit(1);
 
-      if (error || !data) {
+      if (error) {
+        console.error('❌ Database error fetching expert:', error);
         return null;
       }
 
+      const expertData = Array.isArray(data) ? data[0] : data;
+      
+      if (!expertData) {
+        console.log(`❌ No expert found with auth_id: ${authId}`);
+        return null;
+      }
+
+      console.log(`✅ Found expert: ${expertData.name}`);
+      
+      // Transform to ExpertProfile format
       return {
-        id: data.id,
-        auth_id: data.auth_id,
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
-        bio: data.bio,
+        id: expertData.id,
+        auth_id: expertData.auth_id,
+        name: expertData.name,
+        email: expertData.email,
+        phone: expertData.phone,
+        bio: expertData.bio,
         specialties: [],
-        experience_years: 0,
+        experience_years: parseInt(expertData.experience) || 0,
         hourly_rate: 0,
-        status: data.status as 'pending' | 'approved' | 'disapproved',
-        profilePicture: data.profile_picture,
-        created_at: data.created_at,
-        updated_at: data.created_at,
-        address: data.address,
-        city: data.city,
-        state: data.state,
-        country: data.country,
-        specialization: data.specialization,
-        experience: data.experience,
-        certificate_urls: data.certificate_urls,
-        selected_services: data.selected_services,
-        average_rating: data.average_rating,
-        reviews_count: data.reviews_count,
-        verified: data.verified
+        status: expertData.status as 'pending' | 'approved' | 'disapproved',
+        profilePicture: expertData.profile_picture,
+        created_at: expertData.created_at,
+        updated_at: expertData.created_at, // Use created_at as fallback since updated_at may not exist
+        address: expertData.address,
+        city: expertData.city,
+        state: expertData.state,
+        country: expertData.country,
+        specialization: expertData.specialization,
+        experience: expertData.experience,
+        certificate_urls: expertData.certificate_urls,
+        selected_services: expertData.selected_services,
+        average_rating: expertData.average_rating,
+        reviews_count: expertData.reviews_count,
+        verified: expertData.verified
       };
     } catch (error) {
       console.error('Error finding expert by auth ID:', error);
