@@ -210,6 +210,14 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
     const session60Price = userCurrency === 'INR' ? pricing.session_60_inr : pricing.session_60_eur;
     const session30Price = userCurrency === 'INR' ? pricing.session_30_inr : pricing.session_30_eur;
     
+    console.log('Calculating total cost:', {
+      selectedSlots: selectedSlots.length,
+      session30Price,
+      session60Price,
+      userCurrency,
+      pricing
+    });
+    
     // If slots are continuous, calculate as blocks of 60-min sessions + remaining 30-min
     if (areSlotsContinuous(selectedSlots)) {
       const totalMinutes = selectedSlots.length * 30;

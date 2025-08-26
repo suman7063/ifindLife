@@ -30,14 +30,26 @@ export function useExpertAvailability(expertId?: string) {
       setLoading(true);
       setError(null);
 
-      // Fetch expert availabilities with time slots
+      // Fetch expert availabilities with time slots (ensuring no duplicates)
       const { data: availabilityData, error: availabilityError } = await supabase
         .from('expert_availabilities')
         .select(`
-          *,
-          time_slots:expert_time_slots(*)
+          id,
+          expert_id,
+          start_date,
+          end_date,
+          availability_type,
+          time_slots:expert_time_slots!inner(
+            id,
+            start_time,
+            end_time,
+            day_of_week,
+            specific_date,
+            is_booked
+          )
         `)
-        .eq('expert_id', id);
+        .eq('expert_id', id)
+        .order('start_date', { ascending: true });
 
       if (availabilityError) throw availabilityError;
 
@@ -117,8 +129,13 @@ export function useExpertAvailability(expertId?: string) {
       }
     });
 
-    console.log('Final available slots:', availableSlots.length, availableSlots);
-    return availableSlots.sort((a, b) => a.start_time.localeCompare(b.start_time));
+    // Remove any potential duplicates based on start_time and end_time
+    const uniqueSlots = availableSlots.filter((slot, index, self) =>
+      index === self.findIndex(s => s.start_time === slot.start_time && s.end_time === slot.end_time)
+    );
+    
+    console.log('Final available slots (after deduplication):', uniqueSlots.length, uniqueSlots);
+    return uniqueSlots.sort((a, b) => a.start_time.localeCompare(b.start_time));
   };
 
   // Get available time slots for a specific date (original function for compatibility)
