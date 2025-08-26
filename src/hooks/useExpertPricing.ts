@@ -52,7 +52,20 @@ export const useExpertPricing = (expertId?: string) => {
 
       if (!expertAccount) {
         console.error('useExpertPricing: No expert account found for auth_id:', authId);
-        setError('Expert account not found');
+        // Set fallback pricing when expert account not found
+        const fallbackPricing = {
+          id: 'fallback',
+          expert_id: authId, // Use auth_id as fallback
+          category: 'standard',
+          session_30_inr: 450,  // ₹450 for 30 min
+          session_30_eur: 25,   // €25 for 30 min
+          session_60_inr: 800,  // ₹800 for 60 min
+          session_60_eur: 40,   // €40 for 60 min
+          price_per_min_inr: 15,  // ₹15 per minute
+          price_per_min_eur: 0.83 // €0.83 per minute
+        };
+        console.log('useExpertPricing: Setting fallback pricing:', fallbackPricing);
+        setPricing(fallbackPricing);
         return;
       }
 
@@ -67,17 +80,17 @@ export const useExpertPricing = (expertId?: string) => {
 
       if (pricingError) {
         console.log('useExpertPricing: No pricing found for expert, using defaults for account:', expertAccount.id);
-        // Set default pricing if none exists
+        // Set default pricing if none exists - using user specified rates
         const defaultPricing = {
           id: 'default',
           expert_id: expertAccount.id,
           category: 'standard',
-          session_30_inr: 2400, // ₹2400 for 30 min
-          session_30_eur: 30,   // €30 for 30 min  
-          session_60_inr: 4500, // ₹4500 for 60 min
-          session_60_eur: 55,   // €55 for 60 min
-          price_per_min_inr: 80,
-          price_per_min_eur: 1
+          session_30_inr: 450,  // ₹450 for 30 min (user specified)
+          session_30_eur: 25,   // €25 for 30 min (user specified)
+          session_60_inr: 800,  // ₹800 for 60 min (user specified)
+          session_60_eur: 40,   // €40 for 60 min (user specified)
+          price_per_min_inr: 15,  // ₹15 per minute (450/30)
+          price_per_min_eur: 0.83 // €0.83 per minute (25/30)
         };
         console.log('useExpertPricing: Setting default pricing:', defaultPricing);
         setPricing(defaultPricing);

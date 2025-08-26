@@ -372,8 +372,8 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
               <div className="text-right text-sm space-y-1">
                 <div className="text-ifind-charcoal/70">Session Rates ({userCurrency})</div>
                 <div className="font-medium text-ifind-charcoal">
-                  30min: {formatPrice(userCurrency === 'INR' ? (pricing?.session_30_inr || 2400) : (pricing?.session_30_eur || 30))} • 
-                  60min: {formatPrice(userCurrency === 'INR' ? (pricing?.session_60_inr || 4500) : (pricing?.session_60_eur || 55))}
+                  30min: {formatPrice(userCurrency === 'INR' ? (pricing?.session_30_inr || 450) : (pricing?.session_30_eur || 25))} • 
+                  60min: {formatPrice(userCurrency === 'INR' ? (pricing?.session_60_inr || 800) : (pricing?.session_60_eur || 40))}
                 </div>
               </div>
           </CardTitle>
