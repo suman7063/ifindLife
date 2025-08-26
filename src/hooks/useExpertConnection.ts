@@ -43,8 +43,24 @@ export function useExpertConnection() {
   };
 
   const handleExpertCardClick = (expert: ExpertCardData) => {
+    console.log('Expert card clicked:', expert);
+    console.log('Expert ID:', expert.id);
+    console.log('Expert auth_id:', expert.auth_id);
+    
+    const expertId = expert.auth_id || expert.id;
+    console.log('Using expertId for navigation:', expertId);
+    
+    if (!expertId) {
+      console.error('No valid expert ID found:', expert);
+      toast.error('Unable to navigate to expert page - missing ID');
+      return;
+    }
+    
+    const targetUrl = `/experts/${expertId}`;
+    console.log('Navigating to:', targetUrl);
+    
     // Redirect to dedicated expert page instead of opening modal
-    navigate(`/experts/${expert.auth_id || expert.id}`);
+    navigate(targetUrl);
   };
 
   const handleConnectNow = async (expert: ExpertCardData, type: 'video' | 'voice') => {
