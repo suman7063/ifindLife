@@ -183,11 +183,12 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
   const areSlotsContinuous = (slots: string[]): boolean => {
     if (slots.length <= 1) return true;
     
-    // Sort slots by time
-    const sortedSlots = slots.sort((a, b) => {
-      const timeA = a.split('-')[1];
-      const timeB = b.split('-')[1];
-      return timeA.localeCompare(timeB);
+    // Sort slots by start_time using availableSlots reference
+    const sortedSlots = [...slots].sort((a, b) => {
+      const slotA = availableSlots.find(s => s.id === a);
+      const slotB = availableSlots.find(s => s.id === b);
+      if (!slotA || !slotB) return 0;
+      return slotA.start_time.localeCompare(slotB.start_time);
     });
     
     // Check if each slot follows the previous one
@@ -212,13 +213,15 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
     console.log('🔧 EnhancedStreamlinedBooking: selectedSlots:', selectedSlots);
     console.log('🔧 EnhancedStreamlinedBooking: userCurrency:', userCurrency);
     
-    if (!pricing || selectedSlots.length === 0) {
-      console.log('🔧 EnhancedStreamlinedBooking: No pricing or selected slots, returning 0');
+    if (selectedSlots.length === 0) {
       return 0;
     }
 
-    const session60Price = userCurrency === 'INR' ? pricing.session_60_inr : pricing.session_60_eur;
-    const session30Price = userCurrency === 'INR' ? pricing.session_30_inr : pricing.session_30_eur;
+    const fallback30 = userCurrency === 'INR' ? 450 : 25;
+    const fallback60 = userCurrency === 'INR' ? 800 : 40;
+
+    const session60Price = pricing ? (userCurrency === 'INR' ? pricing.session_60_inr : pricing.session_60_eur) : fallback60;
+    const session30Price = pricing ? (userCurrency === 'INR' ? pricing.session_30_inr : pricing.session_30_eur) : fallback30;
     
     console.log('🔧 EnhancedStreamlinedBooking: Prices - 30min:', session30Price, '60min:', session60Price);
     

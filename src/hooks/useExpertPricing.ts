@@ -39,10 +39,10 @@ export const useExpertPricing = (expertId?: string) => {
       
       console.log('useExpertPricing: Fetching pricing for auth_id:', authId);
 
-      // First get the actual expert account ID from auth_id
+      // First get the actual expert account ID and category from auth_id
       const { data: expertAccount, error: expertError } = await supabase
         .from('expert_accounts')
-        .select('id')
+        .select('id, category')
         .eq('auth_id', authId)
         .maybeSingle();
 
@@ -72,20 +72,56 @@ export const useExpertPricing = (expertId?: string) => {
 
       console.log('useExpertPricing: Found expert account:', expertAccount);
 
-      // Then get pricing using the expert account ID
+      // Try category-based pricing first if available
+      let pricingSet = false;
+      if (expertAccount.category) {
+        try {
+          const { data: tableExists } = await supabase.rpc('check_if_table_exists', { table_name: 'category_pricing' });
+          if (tableExists) {
+            const { data: catPricing, error: catErr } = await (supabase as any)
+              .from('category_pricing' as any)
+              .select('*')
+              .eq('category', expertAccount.category)
+              .maybeSingle();
+            
+            if (catPricing && !catErr) {
+              const mapped = {
+                id: catPricing.id || 'category',
+                expert_id: expertAccount.id,
+                category: expertAccount.category,
+                session_30_inr: catPricing.session_30_inr ?? 450,
+                session_30_eur: catPricing.session_30_eur ?? 25,
+                session_60_inr: catPricing.session_60_inr ?? 800,
+                session_60_eur: catPricing.session_60_eur ?? 40,
+                price_per_min_inr: (catPricing.session_30_inr ?? 450) / 30,
+                price_per_min_eur: (catPricing.session_30_eur ?? 25) / 30
+              } as ExpertPricing;
+              console.log('useExpertPricing: Using category-based pricing:', mapped);
+              setPricing(mapped);
+              pricingSet = true;
+            }
+          }
+        } catch (e) {
+          console.warn('useExpertPricing: Category pricing lookup failed, falling back to expert pricing/defaults');
+        }
+      }
+
+      if (pricingSet) return;
+
+      // Then try expert-specific pricing using the expert account ID
       const { data, error: pricingError } = await supabase
         .from('expert_pricing_tiers')
         .select('*')
         .eq('expert_id', expertAccount.id)
-        .single();
+        .maybeSingle();
 
-      if (pricingError) {
+      if (pricingError || !data) {
         console.log('useExpertPricing: No pricing found for expert, using defaults for account:', expertAccount.id);
         // Set default pricing if none exists - using user specified rates
         const defaultPricing = {
           id: 'default',
           expert_id: expertAccount.id,
-          category: 'standard',
+          category: expertAccount.category || 'standard',
           session_30_inr: 450,  // ₹450 for 30 min (user specified)
           session_30_eur: 25,   // €25 for 30 min (user specified)
           session_60_inr: 800,  // ₹800 for 60 min (user specified)
@@ -99,7 +135,7 @@ export const useExpertPricing = (expertId?: string) => {
       }
 
       console.log('useExpertPricing: Pricing loaded:', data);
-      setPricing(data);
+      setPricing(data as unknown as ExpertPricing);
     } catch (err: any) {
       console.error('useExpertPricing: Error fetching expert pricing:', err);
       setError(err.message);
@@ -204,8 +240,9 @@ export const useExpertPricing = (expertId?: string) => {
 
   // Format price with currency symbol
   const formatPrice = (price: number): string => {
+    const safe = Number.isFinite(price) ? price : 0;
     const symbol = userCurrency === 'INR' ? '₹' : '€';
-    return `${symbol}${price.toFixed(2)}`;
+    return `${symbol}${safe.toFixed(2)}`;
   };
 
   return {
