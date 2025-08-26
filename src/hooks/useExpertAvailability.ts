@@ -60,12 +60,14 @@ export function useExpertAvailability(expertId?: string) {
     }
   };
 
-  // Generate 30-minute slots from availability periods
+  // Get available time slots for a specific date
   const generate30MinuteSlots = (date: string) => {
     const targetDate = new Date(date);
-    const dayOfWeek = targetDate.getDay() === 0 ? 7 : targetDate.getDay();
+    const dayOfWeek = targetDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
     
-    const generatedSlots: Array<{
+    console.log('Generating slots for date:', date, 'dayOfWeek:', dayOfWeek, 'availabilities:', availabilities);
+
+    const availableSlots: Array<{
       id: string;
       start_time: string;
       end_time: string;
@@ -77,57 +79,44 @@ export function useExpertAvailability(expertId?: string) {
       const startDate = new Date(availability.start_date);
       const endDate = new Date(availability.end_date);
       
+      console.log('Checking availability:', availability.id, 'type:', availability.availability_type, 'date range:', startDate, 'to', endDate);
+      
       // Check if the target date is within the availability range
       if (targetDate >= startDate && targetDate <= endDate) {
-        availability.time_slots.forEach(slot => {
+        console.log('Date is within range, checking time slots:', availability.time_slots?.length);
+        
+        availability.time_slots?.forEach(slot => {
           let shouldInclude = false;
+          
+          console.log('Checking slot:', slot.id, 'day_of_week:', slot.day_of_week, 'specific_date:', slot.specific_date, 'is_booked:', slot.is_booked);
           
           // For recurring availability, match day of week
           if (availability.availability_type === 'recurring' && slot.day_of_week === dayOfWeek && !slot.is_booked) {
             shouldInclude = true;
+            console.log('Slot included (recurring match)');
           }
           // For date range availability with specific dates
           else if (availability.availability_type === 'date_range' && slot.specific_date === date && !slot.is_booked) {
             shouldInclude = true;
+            console.log('Slot included (date range match)');
           }
 
           if (shouldInclude) {
-            // Generate 30-minute slots between start_time and end_time
-            const startTime = new Date(`2000-01-01T${slot.start_time}`);
-            const endTime = new Date(`2000-01-01T${slot.end_time}`);
-            
-            let currentSlot = new Date(startTime);
-            let slotIndex = 0;
-            
-            while (currentSlot < endTime) {
-              const slotStart = new Date(currentSlot);
-              const slotEnd = new Date(currentSlot.getTime() + 30 * 60 * 1000); // Add 30 minutes
-              
-              // Don't create slot if it would extend beyond the availability end time
-              if (slotEnd <= endTime) {
-                const uniqueId = `${slot.id}-${slotIndex}`;
-                
-                // Prevent duplicate slots
-                if (!generatedSlots.find(s => s.id === uniqueId)) {
-                  generatedSlots.push({
-                    id: uniqueId,
-                    start_time: slotStart.toTimeString().slice(0, 8),
-                    end_time: slotEnd.toTimeString().slice(0, 8),
-                    expert_id: availability.expert_id,
-                    availability_id: availability.id
-                  });
-                }
-              }
-              
-              currentSlot = slotEnd;
-              slotIndex++;
-            }
+            // Use the existing slot directly (they're already 30-minute slots)
+            availableSlots.push({
+              id: slot.id,
+              start_time: slot.start_time,
+              end_time: slot.end_time,
+              expert_id: availability.expert_id,
+              availability_id: availability.id
+            });
           }
         });
       }
     });
 
-    return generatedSlots.sort((a, b) => a.start_time.localeCompare(b.start_time));
+    console.log('Generated slots:', availableSlots.length, availableSlots);
+    return availableSlots.sort((a, b) => a.start_time.localeCompare(b.start_time));
   };
 
   // Get available time slots for a specific date (original function for compatibility)

@@ -106,6 +106,13 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
       const expertSlots = getAvailableSlots(dateStr);
       console.log('BookingTab: Expert availability slots:', expertSlots);
       
+      if (expertSlots.length === 0) {
+        console.log('BookingTab: No slots found for date:', dateStr);
+        setAvailableSlots([]);
+        setLoadingSlots(false);
+        return;
+      }
+      
       // Convert expert availability to our TimeSlot format
       const timeSlots: TimeSlot[] = expertSlots.map(slot => {
         // Extract just time part (HH:MM) from time string
