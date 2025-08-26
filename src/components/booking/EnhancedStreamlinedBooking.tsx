@@ -205,7 +205,10 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
   };
 
   const calculateTotalCost = (): number => {
-    if (!pricing || selectedSlots.length === 0) return 0;
+    if (!pricing || selectedSlots.length === 0) {
+      console.log('No pricing or selected slots:', { pricing, selectedSlots: selectedSlots.length });
+      return 0;
+    }
 
     const session60Price = userCurrency === 'INR' ? pricing.session_60_inr : pricing.session_60_eur;
     const session30Price = userCurrency === 'INR' ? pricing.session_30_inr : pricing.session_30_eur;
@@ -215,7 +218,12 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
       session30Price,
       session60Price,
       userCurrency,
-      pricing
+      pricing: {
+        session_30_inr: pricing.session_30_inr,
+        session_30_eur: pricing.session_30_eur,
+        session_60_inr: pricing.session_60_inr, 
+        session_60_eur: pricing.session_60_eur
+      }
     });
     
     // If slots are continuous, calculate as blocks of 60-min sessions + remaining 30-min
@@ -226,7 +234,7 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
       
       let totalCost = 0;
       
-      // Add full hour sessions at 60-min rate
+      // Add full hour sessions at 60-min rate (every 2 slots = 60 minutes)
       totalCost += fullHours * session60Price;
       
       // Add remaining 30-minute session at 30-min rate
@@ -234,10 +242,13 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
         totalCost += session30Price;
       }
       
+      console.log('Continuous slots calculation:', { fullHours, remainingMinutes, totalCost });
       return totalCost;
     } else {
       // If slots are not continuous, charge each 30-min slot at 30-min rate
-      return selectedSlots.length * session30Price;
+      const totalCost = selectedSlots.length * session30Price;
+      console.log('Non-continuous slots calculation:', { slotsCount: selectedSlots.length, session30Price, totalCost });
+      return totalCost;
     }
   };
 

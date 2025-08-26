@@ -74,7 +74,10 @@ export const ExpertPresenceProvider: React.FC<{ children: React.ReactNode }> = (
   const getExpertPresence = useCallback((expertId: string): ExpertPresence | null => {
     const cached = presenceCache.get(expertId);
     if (cached && (Date.now() - cached.lastUpdate) < CACHE_DURATION) {
-      console.log(`📱 Using cached presence for ${expertId}: ${cached.status} (${cached.isAvailable ? 'available' : 'not available'})`);
+      // Only log occasionally to reduce console spam
+      if (Math.random() < 0.01) { // Log 1% of the time
+        console.log(`📱 Using cached presence for ${expertId}: ${cached.status} (${cached.isAvailable ? 'available' : 'not available'})`);
+      }
       return cached;
     }
     if (cached) {
