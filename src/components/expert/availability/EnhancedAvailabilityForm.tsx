@@ -8,6 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { useAvailabilityManagement } from '@/hooks/useAvailabilityManagement';
 import { toast } from 'sonner';
 import { Calendar, Clock, Globe, Plus, X } from 'lucide-react';
+import { validateTimeSlots, validateDateRange, normalizeExpertId } from '@/utils/availabilityValidation';
+import AvailabilityErrorBoundary from './AvailabilityErrorBoundary';
 
 interface EnhancedAvailabilityFormProps {
   user: any;
@@ -167,7 +169,8 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
     
     let current = new Date(start);
     while (current < end) {
-      slots.push(current.toTimeString().slice(0, 5));
+      const currentTimeString = current.toTimeString().slice(0, 5);
+      slots.push(currentTimeString);
       current.setMinutes(current.getMinutes() + 30);
     }
     
@@ -177,16 +180,22 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation
+    // Validate date range
     if (!startDate || !endDate) {
       toast.error('Please select start and end dates');
       return;
     }
 
-    if (new Date(startDate) >= new Date(endDate)) {
-      toast.error('End date must be after start date');
+    const dateValidation = validateDateRange(startDate, endDate);
+    if (!dateValidation.isValid) {
+      toast.error(`Date validation failed: ${dateValidation.errors.join(', ')}`);
       return;
     }
+
+    // Show warnings if any
+    dateValidation.warnings.forEach(warning => {
+      toast.warning(warning);
+    });
 
     const enabledDays = Object.entries(weeklySchedule).filter(([_, schedule]) => schedule.enabled);
     if (enabledDays.length === 0) {
@@ -202,23 +211,43 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
         return schedule.slots.flatMap(slot => {
           // Generate 30-minute slots for each time range
           const thirtyMinSlots = generate30MinuteSlots(slot.start, slot.end);
-          return thirtyMinSlots.map((slotStart, index) => {
-            const nextSlot = thirtyMinSlots[index + 1];
-            if (!nextSlot) return null; // Skip last slot as it doesn't have an end
-            
-            return {
-              start_time: slotStart,
-              end_time: nextSlot,
+          
+          // Create 30-minute time slots from the generated time points
+          const slots = [];
+          for (let i = 0; i < thirtyMinSlots.length - 1; i++) {
+            slots.push({
+              start_time: thirtyMinSlots[i],
+              end_time: thirtyMinSlots[i + 1],
               day_of_week: dayIndex,
               specific_date: null,
               timezone: selectedTimezone
-            };
-          }).filter(Boolean);
+            });
+          }
+          
+          return slots;
         });
       }).filter(Boolean);
 
+      // Validate time slots before submission
+      const slotsValidation = validateTimeSlots(timeSlots as any);
+      if (!slotsValidation.isValid) {
+        toast.error(`Time slot validation failed: ${slotsValidation.errors.join(', ')}`);
+        return;
+      }
+
+      // Show warnings if any
+      slotsValidation.warnings.forEach(warning => {
+        toast.warning(warning);
+      });
+
+      const expertId = normalizeExpertId(user);
+      if (!expertId) {
+        toast.error('Expert authentication failed. Please log in again.');
+        return;
+      }
+
       const result = await createAvailability(
-        user.auth_id || user.id,
+        expertId,
         startDate,
         endDate,
         'recurring',
@@ -460,4 +489,10 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
   );
 };
 
-export default EnhancedAvailabilityForm;
+const WrappedEnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = (props) => (
+  <AvailabilityErrorBoundary>
+    <EnhancedAvailabilityForm {...props} />
+  </AvailabilityErrorBoundary>
+);
+
+export default WrappedEnhancedAvailabilityForm;

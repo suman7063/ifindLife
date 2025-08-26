@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { normalizeExpertId } from '@/utils/availabilityValidation';
 import { toast } from 'sonner';
 
 export interface ExpertAvailability {
@@ -104,13 +105,18 @@ export function useExpertAvailability(expertId?: string) {
               
               // Don't create slot if it would extend beyond the availability end time
               if (slotEnd <= endTime) {
-                generatedSlots.push({
-                  id: `${slot.id}-${slotIndex}`,
-                  start_time: slotStart.toTimeString().slice(0, 8),
-                  end_time: slotEnd.toTimeString().slice(0, 8),
-                  expert_id: availability.expert_id,
-                  availability_id: availability.id
-                });
+                const uniqueId = `${slot.id}-${slotIndex}`;
+                
+                // Prevent duplicate slots
+                if (!generatedSlots.find(s => s.id === uniqueId)) {
+                  generatedSlots.push({
+                    id: uniqueId,
+                    start_time: slotStart.toTimeString().slice(0, 8),
+                    end_time: slotEnd.toTimeString().slice(0, 8),
+                    expert_id: availability.expert_id,
+                    availability_id: availability.id
+                  });
+                }
               }
               
               currentSlot = slotEnd;
