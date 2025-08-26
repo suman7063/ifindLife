@@ -8,6 +8,7 @@ import AgoraCallModal from '@/components/AgoraCallModal';
 import { toast } from 'sonner';
 import { useAuthRedirectSystem } from '@/hooks/useAuthRedirectSystem';
 import { useFetchExpertProfile } from '@/contexts/auth/hooks/useFetchExpertProfile';
+import { useExpertPresence } from '@/contexts/ExpertPresenceContext';
 import ExpertProfile from '@/components/expert/ExpertProfile';
 import ExpertDetailTabs from '@/components/expert/ExpertDetailTabs';
 
@@ -64,8 +65,10 @@ const ExpertDetail = () => {
   
   // Fetch real expert data using the useFetchExpertProfile hook
   const { fetchExpertProfile } = useFetchExpertProfile();
+  const { checkExpertPresence, getExpertPresence } = useExpertPresence();
   const [expert, setExpert] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [expertAuthId, setExpertAuthId] = useState(null);
 
   useEffect(() => {
     const loadExpert = async () => {
@@ -75,18 +78,29 @@ const ExpertDetail = () => {
       try {
         const expertData = await fetchExpertProfile(id);
         if (expertData) {
-          // Transform database expert to component format
+          console.log('Fetching expert profile for user ID:', expertData.auth_id);
+          setExpertAuthId(expertData.auth_id);
+          
+          // Check presence status for this expert
+          const presenceData = await checkExpertPresence(expertData.auth_id);
+          console.log('Expert presence data:', presenceData);
+          
+          const isAvailable = presenceData.status === 'available' && presenceData.acceptingCalls;
+          
+          // Transform database expert to component format with real presence data
           const transformedExpert = {
             id: expertData.id || id,
+            auth_id: expertData.auth_id,
             name: expertData.name || "Expert",
             experience: parseInt(expertData.experience || "0"),
             specialties: expertData.specialization ? [expertData.specialization] : ["General Counseling"],
             rating: expertData.average_rating || 4.5,
             consultations: 100, // TODO: Get from actual sessions count
             price: 30, // TODO: Get from service pricing
-            waitTime: "Available",
+            waitTime: isAvailable ? 'Available Now' : 
+                     presenceData.status === 'away' ? 'Away' : 'Not Available',
             imageUrl: expertData.profile_picture ? `https://nmcqyudqvbldxwzhyzma.supabase.co/storage/v1/object/public/avatars/${expertData.profile_picture}` : "",
-            online: expertData.status === 'approved',
+            online: expertData.status === 'approved' && isAvailable,
             languages: expertData.languages || ["English"],
             description: expertData.bio || "This expert is available for consultation.",
             education: "Professional Qualifications", // TODO: Get from expert profile
@@ -103,7 +117,23 @@ const ExpertDetail = () => {
     };
 
     loadExpert();
-  }, [id, fetchExpertProfile]);
+  }, [id, fetchExpertProfile, checkExpertPresence]);
+  
+  // Update expert status when presence changes
+  useEffect(() => {
+    if (expert && expertAuthId) {
+      const presenceData = getExpertPresence(expertAuthId);
+      if (presenceData) {
+        const isAvailable = presenceData.status === 'available' && presenceData.acceptingCalls;
+        setExpert(prev => ({
+          ...prev,
+          online: prev.online && isAvailable,
+          waitTime: isAvailable ? 'Available Now' : 
+                   presenceData.status === 'away' ? 'Away' : 'Not Available'
+        }));
+      }
+    }
+  }, [expert, expertAuthId, getExpertPresence]);
 
   if (loading) {
     return (
@@ -159,7 +189,7 @@ const ExpertDetail = () => {
   
   // Update the handler functions with expert data once loaded
   const handleCallClickWithExpert = () => {
-    if (expert?.online && expert?.waitTime === "Available") {
+    if (expert?.online && expert?.waitTime === "Available Now") {
       setIsCallModalOpen(true);
     } else {
       toast.error("Expert Unavailable", {
