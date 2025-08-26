@@ -56,7 +56,7 @@ export function useOptimizedExpertData({
       const isApproved = dbExpert.status === 'approved';
       const presence = getExpertPresence(expertAuthId);
       const expertStatus = presence?.status || 'offline';
-      const availability = presence?.isAvailable ? 'available' : 'unavailable';
+      const isAvailable = presence?.status === 'available' && presence?.acceptingCalls === true;
       
       return {
         id: expertId,
@@ -69,10 +69,9 @@ export function useOptimizedExpertData({
         reviewsCount: Number(dbExpert.reviews_count) || 0,
         price: 30,
         verified: Boolean(dbExpert.verified),
-        status: isApproved && expertStatus === 'available' ? 'online' : 'offline',
-        waitTime: isApproved && presence?.isAvailable ? 
-                    expertStatus === 'available' ? 'Available Now' : 
-                    expertStatus === 'away' ? 'Away' : 'Available' : 'Not Available',
+        status: isApproved && isAvailable ? 'online' : 'offline',
+        waitTime: isApproved && isAvailable ? 'Available Now' : 
+                  isApproved && expertStatus === 'away' ? 'Away' : 'Not Available',
         category: dbExpert.category || 'listening-volunteer',
         dbStatus: dbExpert.status
       };
