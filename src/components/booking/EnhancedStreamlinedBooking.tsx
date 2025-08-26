@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { useExpertPricing } from '@/hooks/useExpertPricing';
+import { useExpertAvailability } from '@/hooks/useExpertAvailability';
 
 interface TimeSlot {
   id: string;
@@ -46,6 +47,13 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
     formatPrice, 
     getSlotPrice 
   } = useExpertPricing(expertId);
+
+  // Use the expert availability hook
+  const {
+    getAvailableSlots,
+    loading: availabilityLoading,
+    error: availabilityError
+  } = useExpertAvailability(expertId);
 
   // Fetch expert data
   useEffect(() => {
@@ -87,25 +95,31 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
       setLoadingSlots(true);
       const dateStr = selectedDate.toISOString().split('T')[0];
       
-      // Generate 30-minute slots from 9 AM to 9 PM
-      const timeSlots: TimeSlot[] = [];
-      for (let hour = 9; hour < 21; hour++) {
-        for (let minute = 0; minute < 60; minute += 30) {
-          const startTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-          const endTime = minute === 30 
-            ? `${(hour + 1).toString().padStart(2, '0')}:00`
-            : `${hour.toString().padStart(2, '0')}:30`;
+      console.log('BookingTab: Fetching availability for date:', dateStr, 'expert:', expert.auth_id);
+      
+      // Get expert's actual availability slots using the hook
+      const expertSlots = getAvailableSlots(dateStr);
+      console.log('BookingTab: Expert availability slots:', expertSlots);
+      
+      // Convert expert availability to our TimeSlot format
+      const timeSlots: TimeSlot[] = expertSlots.map(slot => {
+        // Extract just time part (HH:MM) from time string
+        const startTime = slot.start_time.includes('T') 
+          ? slot.start_time.split('T')[1].substring(0, 5)
+          : slot.start_time.substring(0, 5);
+        const endTime = slot.end_time.includes('T')
+          ? slot.end_time.split('T')[1].substring(0, 5) 
+          : slot.end_time.substring(0, 5);
           
-          timeSlots.push({
-            id: `${dateStr}-${startTime}`,
-            start_time: startTime,
-            end_time: endTime,
-            is_booked: false,
-            date: dateStr,
-            duration: 30
-          });
-        }
-      }
+        return {
+          id: `${dateStr}-${startTime}`,
+          start_time: startTime,
+          end_time: endTime,
+          is_booked: false,
+          date: dateStr,
+          duration: 30
+        };
+      });
 
       // Check which slots are already booked
       const { data: bookedSlots, error } = await supabase
@@ -127,6 +141,7 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
         });
       }
 
+      console.log('BookingTab: Final time slots:', timeSlots);
       setAvailableSlots(timeSlots);
     } catch (error) {
       console.error('Error fetching time slots:', error);
@@ -357,7 +372,11 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
                   <div className="flex justify-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-ifind-aqua"></div>
                   </div>
-                ) : availableSlots.length > 0 ? (
+                 ) : availabilityError ? (
+                   <div className="text-center py-8 text-red-500">
+                     Failed to load expert availability. Please try again.
+                   </div>
+                 ) : availableSlots.length > 0 ? (
                   <div className="grid grid-cols-2 gap-2 max-h-96 overflow-y-auto">
                     {availableSlots.map((slot) => {
                       const isSelected = selectedSlots.includes(slot.id);
