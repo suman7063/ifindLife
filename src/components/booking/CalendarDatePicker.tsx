@@ -44,9 +44,16 @@ const CalendarDatePicker: React.FC<CalendarDatePickerProps> = ({
             if (hasDaySlots) {
               return false; // Date is available
             }
-          } else {
-            // For date range availability
-            return false; // Date is available
+          } else if (availability.availability_type === 'date_range') {
+            // For date range availability, check if there are slots for this specific date
+            const dateStr = date.toISOString().split('T')[0];
+            const hasDaySlots = availability.time_slots?.some(
+              (slot: any) => slot.specific_date === dateStr
+            );
+            
+            if (hasDaySlots) {
+              return false; // Date is available
+            }
           }
         }
       }

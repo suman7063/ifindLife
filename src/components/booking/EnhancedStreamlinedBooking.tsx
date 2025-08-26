@@ -82,7 +82,7 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
       }
       
       console.log('BookingTab: Expert data loaded:', data);
-      setExpert(data);
+      setExpert(data?.[0] || null);
     } catch (error) {
       console.error('BookingTab: Error fetching expert:', error);
       toast.error('Failed to load expert information');
@@ -108,25 +108,18 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
       
       if (expertSlots.length === 0) {
         console.log('BookingTab: No slots found for date:', dateStr);
+        console.log('BookingTab: Availability loading:', availabilityLoading, 'Has availability:', hasAvailability);
         setAvailableSlots([]);
         setLoadingSlots(false);
         return;
       }
       
       // Convert expert availability to our TimeSlot format
-      const timeSlots: TimeSlot[] = expertSlots.map(slot => {
-        // Extract just time part (HH:MM) from time string
-        const startTime = slot.start_time.includes('T') 
-          ? slot.start_time.split('T')[1].substring(0, 5)
-          : slot.start_time.substring(0, 5);
-        const endTime = slot.end_time.includes('T')
-          ? slot.end_time.split('T')[1].substring(0, 5) 
-          : slot.end_time.substring(0, 5);
-          
+      const timeSlots: TimeSlot[] = expertSlots.map(slot => {       
         return {
-          id: `${dateStr}-${startTime}`,
-          start_time: startTime,
-          end_time: endTime,
+          id: slot.id, // Use the actual database slot ID
+          start_time: slot.start_time,
+          end_time: slot.end_time,
           is_booked: false,
           date: dateStr,
           duration: 30

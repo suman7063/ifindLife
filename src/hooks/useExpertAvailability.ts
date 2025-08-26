@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import { normalizeExpertId } from '@/utils/availabilityValidation';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export interface ExpertAvailability {
@@ -88,17 +87,19 @@ export function useExpertAvailability(expertId?: string) {
         availability.time_slots?.forEach(slot => {
           let shouldInclude = false;
           
-          console.log('Checking slot:', slot.id, 'day_of_week:', slot.day_of_week, 'specific_date:', slot.specific_date, 'is_booked:', slot.is_booked);
+          console.log('Checking slot:', slot.id, 'day_of_week:', slot.day_of_week, 'specific_date:', slot.specific_date, 'is_booked:', slot.is_booked, 'target dayOfWeek:', dayOfWeek);
           
           // For recurring availability, match day of week
           if (availability.availability_type === 'recurring' && slot.day_of_week === dayOfWeek && !slot.is_booked) {
             shouldInclude = true;
-            console.log('Slot included (recurring match)');
+            console.log('✅ Slot included (recurring match)');
           }
           // For date range availability with specific dates
           else if (availability.availability_type === 'date_range' && slot.specific_date === date && !slot.is_booked) {
             shouldInclude = true;
-            console.log('Slot included (date range match)');
+            console.log('✅ Slot included (date range match)');
+          } else {
+            console.log('❌ Slot excluded - no match');
           }
 
           if (shouldInclude) {
@@ -112,6 +113,8 @@ export function useExpertAvailability(expertId?: string) {
             });
           }
         });
+      } else {
+        console.log('Date NOT within range');
       }
     });
 
