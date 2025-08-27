@@ -276,19 +276,31 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
   };
 
   const handleBookAppointments = async () => {
+    console.log('🔧 Payment: Starting booking process');
+    console.log('🔧 Payment: selectedDate:', selectedDate);
+    console.log('🔧 Payment: selectedSlots:', selectedSlots);
+    console.log('🔧 Payment: user:', user);
+    console.log('🔧 Payment: expert:', expert);
+
     if (!selectedDate || selectedSlots.length === 0 || !user || !expert) {
+      console.log('🔧 Payment: Missing required data');
       toast.error('Please select at least one time slot');
       return;
     }
 
     const totalCost = calculateTotalCost();
+    console.log('🔧 Payment: totalCost calculated:', totalCost);
+    console.log('🔧 Payment: userCurrency:', userCurrency);
+    
     if (totalCost <= 0) {
+      console.log('🔧 Payment: Invalid total cost, aborting');
       toast.error('Unable to calculate session cost. Please try again.');
       return;
     }
 
     try {
       setLoading(true);
+      console.log('🔧 Payment: Initiating payment process');
       
       // Process payment first using Razorpay
       await processPayment(
@@ -296,6 +308,7 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
         userCurrency,
         `Booking ${selectedSlots.length} session(s) with ${expertName}`,
         async (paymentId: string, orderId: string) => {
+          console.log('🔧 Payment: Payment successful:', paymentId, orderId);
           // Payment successful, create appointments
           const appointments = selectedSlots.map(slotId => {
             const slot = availableSlots.find(s => s.id === slotId);
