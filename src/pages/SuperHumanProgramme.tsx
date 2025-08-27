@@ -23,22 +23,24 @@ const SuperHumanProgramme = () => {
               Super Human Programme
             </h1>
             <p className="text-xl md:text-2xl text-muted-foreground mb-8 leading-relaxed">
-              Online Meditation Retreat for Inner Transformation
+              Online Comprehensive Mindfulness Meditation Transformation Retreat
             </p>
             
             <div className="relative max-w-5xl mx-auto mb-8">
               <img 
                 src={meditationHero} 
-                alt="Serene meditation space with soft lighting, cushions, and peaceful atmosphere"
+                alt="Online meditation retreat comprehensive mindfulness transformation"
                 className="w-full rounded-2xl shadow-2xl"
               />
             </div>
             
             <div className="max-w-4xl mx-auto">
               <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
-                Join our transformative online meditation retreat and discover the extraordinary power within you. 
-                Through ancient wisdom combined with modern techniques, embark on a journey of profound inner 
-                transformation that will awaken your superhuman potential and bring lasting peace to your life.
+                Namaste🙏 Welcome to our Online comprehensive mindfulness meditation transformation retreat! 
+                Embark on a virtual journey of self-discovery and inner peace like never before. Our transformative 
+                program brings the serenity of a retreat to your doorstep, guiding you towards personal growth and 
+                holistic well-being. Join our community of like-minded souls and unlock your true potential from 
+                the comfort of your own space. Begin your transformative adventure today!
               </p>
             </div>
           </div>
@@ -49,22 +51,26 @@ const SuperHumanProgramme = () => {
       <section className="py-16 bg-gradient-to-b from-background to-secondary/5">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-4 text-primary">
-            Transform Your Mind, Body & Soul
+            Enhance Your Spiritual Being & Change Lives
           </h2>
           <p className="text-center text-lg text-muted-foreground mb-12">
-            Ancient Meditation Practices | Modern Mindfulness Techniques | Inner Peace Mastery
+            Learn Meditations From Different Traditions | Discover, Transform And Elevate
           </p>
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
             {[
-              { icon: Flower, title: "Deep Meditation", color: "text-primary" },
-              { icon: Waves, title: "Breathwork Mastery", color: "text-accent" },
-              { icon: Moon, title: "Mindful Awareness", color: "text-secondary" },
-              { icon: Brain, title: "Mental Clarity", color: "text-primary" },
-              { icon: Heart, title: "Emotional Balance", color: "text-accent" },
-              { icon: Shield, title: "Stress Relief", color: "text-secondary" },
-              { icon: Star, title: "Spiritual Growth", color: "text-primary" },
-              { icon: Globe, title: "Universal Connection", color: "text-accent" }
+              { icon: Flower, title: "Mindfulness", color: "text-primary" },
+              { icon: Waves, title: "Breathwork", color: "text-accent" },
+              { icon: Heart, title: "7 Chakra Healing Therapy", color: "text-secondary" },
+              { icon: Moon, title: "Yoga Nidra Master Training", color: "text-primary" },
+              { icon: Star, title: "Sufi", color: "text-accent" },
+              { icon: Brain, title: "Meditation from Lord Shiva", color: "text-secondary" },
+              { icon: Headphones, title: "Sound / Nada", color: "text-primary" },
+              { icon: Globe, title: "Nature 5 Elements", color: "text-accent" },
+              { icon: Heart, title: "Happiness Module", color: "text-secondary" },
+              { icon: BookOpen, title: "Buddhist", color: "text-primary" },
+              { icon: Users, title: "Yogic", color: "text-accent" },
+              { icon: Award, title: "Mantra", color: "text-secondary" }
             ].map((feature, index) => (
               <div key={index} className="text-center p-4 rounded-lg bg-card hover:shadow-lg transition-shadow">
                 <feature.icon className={`h-8 w-8 mx-auto mb-3 ${feature.color}`} />
@@ -75,24 +81,24 @@ const SuperHumanProgramme = () => {
         </div>
       </section>
 
-      {/* What's Included */}
+      {/* Unique Points */}
       <section className="py-16 bg-gradient-to-b from-secondary/5 to-background">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-foreground">
-            What's Included in Your Retreat
+            Unique Points About Our Super Human Programme
           </h2>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {[
-              { icon: Video, title: "Live Meditation Sessions", desc: "Daily guided meditation practices with expert instructors" },
-              { icon: BookOpen, title: "Sacred Teachings", desc: "Ancient wisdom texts and modern mindfulness principles" },
-              { icon: Users, title: "Community Support", desc: "Connect with fellow seekers on the spiritual journey" },
-              { icon: Headphones, title: "Audio Meditations", desc: "High-quality guided meditations for daily practice" },
-              { icon: Calendar, title: "Flexible Schedule", desc: "Self-paced learning with live session options" },
-              { icon: Award, title: "Completion Certificate", desc: "Recognized certification upon successful completion" },
-              { icon: Clock, title: "Lifetime Access", desc: "Permanent access to all retreat materials and recordings" },
-              { icon: Heart, title: "Personal Transformation", desc: "Deep healing and profound spiritual awakening" },
-              { icon: Globe, title: "Global Community", desc: "Join practitioners from around the world" }
+              { icon: Star, title: "Google 5-star rated program", desc: "Highly rated by thousands of satisfied students worldwide" },
+              { icon: Shield, title: "100% money back guarantee", desc: "Complete confidence in our transformational program" },
+              { icon: Users, title: "Direct call support from master", desc: "Personal guidance directly from Master Dev OM" },
+              { icon: Brain, title: "Experience Deeper State of Meditation", desc: "Achieve profound meditative states with proven techniques" },
+              { icon: Calendar, title: "Flexible: Self paced retreat", desc: "Learn at your own pace with lifetime access" },
+              { icon: Heart, title: "Inbuilt free personal guidance", desc: "24x7 personal student coordinator support" },
+              { icon: BookOpen, title: "Non religious & practical learning", desc: "Modern approach suitable for all backgrounds" },
+              { icon: Globe, title: "Experience real group energy in online retreat", desc: "Connect with global community of practitioners" },
+              { icon: Award, title: "Worldwide Retreat Certification", desc: "Internationally recognized certification upon completion" }
             ].map((item, index) => (
               <div key={index} className="bg-card p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
                 <item.icon className="h-8 w-8 text-primary mb-4" />
@@ -108,45 +114,77 @@ const SuperHumanProgramme = () => {
       <section className="py-16 bg-gradient-to-b from-background to-primary/5">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-8 text-foreground">
-            7-Day Meditation Retreat Journey
+            Mindfulness Meditation Retreat Structure
           </h2>
           
           <div className="max-w-4xl mx-auto">
             <p className="text-lg text-muted-foreground text-center mb-12 leading-relaxed">
-              Experience a carefully crafted journey of self-discovery through progressive meditation 
-              practices, mindfulness techniques, and spiritual awakening exercises designed to unlock 
-              your superhuman potential.
+              The retreat follows a structured path through four levels of mindfulness and awareness essential 
+              for a fulfilling life and spiritual growth. These levels encompass Physical, Mental, Emotional, 
+              and Spiritual aspects. At each level, we delve into science and philosophy, engage in various 
+              activities and exercises, and practice active, passive, and guided meditations before progressing 
+              to the next stage.
             </p>
             
             <div className="grid md:grid-cols-2 gap-8">
               {[
                 {
-                  title: "Foundation: Establishing Inner Peace",
-                  desc: "Learn fundamental meditation postures, breathing techniques, and basic mindfulness practices",
-                  days: "Days 1-2"
+                  title: "Physical Level",
+                  desc: "Mastery of mindfulness techniques across physical awareness with breathing and body-based practices",
+                  level: "Level 1"
                 },
                 {
-                  title: "Deepening: Advanced Techniques",
-                  desc: "Explore deeper states of consciousness through advanced meditation and concentration practices",
-                  days: "Days 3-4"
+                  title: "Mental Level",
+                  desc: "Enhanced self-awareness and mental clarity through structured activities and concentration meditations",
+                  level: "Level 2"
                 },
                 {
-                  title: "Integration: Wisdom Application",
-                  desc: "Apply mindfulness to daily life situations and develop sustainable spiritual practices",
-                  days: "Days 5-6"
+                  title: "Emotional Level",
+                  desc: "Development of emotional intelligence and healing through heart-centered practices and chakra work",
+                  level: "Level 3"
                 },
                 {
-                  title: "Transformation: Superhuman Awakening", 
-                  desc: "Experience profound states of awareness and establish your ongoing spiritual practice",
-                  days: "Day 7"
+                  title: "Spiritual Level", 
+                  desc: "Understanding profound science and philosophy behind mindfulness for spiritual enlightenment",
+                  level: "Level 4"
                 }
               ].map((phase, index) => (
                 <div key={index} className="bg-card p-6 rounded-lg shadow-md">
-                  <Badge variant="secondary" className="mb-3">{phase.days}</Badge>
+                  <Badge variant="secondary" className="mb-3">{phase.level}</Badge>
                   <h3 className="font-bold text-lg mb-3 text-card-foreground">{phase.title}</h3>
                   <p className="text-muted-foreground">{phase.desc}</p>
                 </div>
               ))}
+            </div>
+            
+            <div className="mt-12 bg-card p-8 rounded-lg shadow-md">
+              <h3 className="text-xl font-bold mb-4 text-card-foreground">What You'll Receive:</h3>
+              <ul className="grid md:grid-cols-2 gap-3 text-muted-foreground">
+                <li className="flex items-start">
+                  <CheckCircle className="h-5 w-5 text-primary mr-3 mt-0.5 flex-shrink-0" />
+                  Meditation Scripts with music
+                </li>
+                <li className="flex items-start">
+                  <CheckCircle className="h-5 w-5 text-primary mr-3 mt-0.5 flex-shrink-0" />
+                  Three books by Master Dev OM
+                </li>
+                <li className="flex items-start">
+                  <CheckCircle className="h-5 w-5 text-primary mr-3 mt-0.5 flex-shrink-0" />
+                  Master's Music Library
+                </li>
+                <li className="flex items-start">
+                  <CheckCircle className="h-5 w-5 text-primary mr-3 mt-0.5 flex-shrink-0" />
+                  Authentic heartful teachings
+                </li>
+                <li className="flex items-start">
+                  <CheckCircle className="h-5 w-5 text-primary mr-3 mt-0.5 flex-shrink-0" />
+                  Lifelong group support
+                </li>
+                <li className="flex items-start">
+                  <CheckCircle className="h-5 w-5 text-primary mr-3 mt-0.5 flex-shrink-0" />
+                  Complete practice process
+                </li>
+              </ul>
             </div>
           </div>
         </div>
@@ -156,39 +194,68 @@ const SuperHumanProgramme = () => {
       <section className="py-16 bg-gradient-to-b from-primary/5 to-background">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-foreground">
-            Meet Your Meditation Guide
+            Know Your Mentor - Master Dev OM
           </h2>
           
           <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
             <div className="text-center lg:text-left">
               <img 
                 src={meditationInstructor} 
-                alt="Master meditation instructor in peaceful pose"
+                alt="Master Dev OM - Himalayan yogi and spiritual guide"
                 className="w-80 h-80 mx-auto lg:mx-0 rounded-2xl shadow-2xl object-cover"
               />
             </div>
             
             <div>
               <h3 className="text-2xl md:text-3xl font-bold mb-6 text-foreground">
-                Master Serenity Chen
+                Master Dev OM
               </h3>
               
               <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
-                Master Serenity Chen is a renowned meditation teacher and spiritual guide with over 20 years 
-                of experience in various contemplative traditions. Trained in Tibetan Buddhism, Zen meditation, 
-                and modern mindfulness practices, she has guided thousands of practitioners toward inner peace 
-                and spiritual awakening.
+                Dev OM, a Himalayan yogi and spiritual guide from India is trained directly from Thich-Nhat-Hanh, 
+                Dalai Lama, and Mother Teresa in mindfulness and spirituality. He has learned various therapies 
+                and has also received spiritual development in the ashrams of Maharshi Ramana and Osho.
+              </p>
+              
+              <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
+                Dev OM has identified and structured self-discovery tools to address all aspects of human 
+                consciousness: spiritual, emotional & mental. He is an internationally acclaimed best-seller 
+                author of 12 spiritual and self-help books.
               </p>
               
               <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-                Her compassionate and accessible teaching style combines ancient wisdom with practical 
-                techniques suitable for modern life. Master Chen's retreats are known for creating profound 
-                transformational experiences that awaken the superhuman potential within each participant.
+                Since two decades, Dev OM's path as a Spiritual Guide & Mentor and as an Enhanced Life Coach 
+                has assisted thousands of people all over the world to discover their spiritual & life path. 
+                His modern and practical techniques involve recognizing one's full and true potential of creative 
+                powers for personal growth and self-evolution.
               </p>
               
               <Button size="lg" className="bg-accent hover:bg-accent/90">
-                Meet Your Guide
+                Book a Free Discovery Call
               </Button>
+            </div>
+          </div>
+          
+          {/* Master's Credentials */}
+          <div className="mt-16 max-w-6xl mx-auto">
+            <h3 className="text-2xl font-bold text-center mb-8 text-foreground">Why Learn from Master Dev OM?</h3>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[
+                "Trained directly with Dalai Lama, Thich-Nhat-Hanh & Mother Teresa",
+                "Lived in Himalayan isolation for 6 years in deep meditation",
+                "Author of 12 spiritual books (4 Amazon bestsellers)",
+                "Given mindfulness talks in 36+ countries",
+                "Creator of 50+ guided meditations",
+                "Lived in ashrams of Maharshi Ramana and Osho",
+                "Non-traditional modern meditation master",
+                "Rich experience in different cultures worldwide",
+                "Dedicated life to spreading meditation globally"
+              ].map((credential, index) => (
+                <div key={index} className="flex items-start bg-card p-4 rounded-lg">
+                  <Star className="h-5 w-5 text-primary mr-3 mt-0.5 flex-shrink-0" />
+                  <span className="text-card-foreground">{credential}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -198,27 +265,27 @@ const SuperHumanProgramme = () => {
       <section className="py-16 bg-gradient-to-b from-background to-secondary/5">
         <div className="container mx-auto px-4">
           <div className="max-w-2xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-8 text-foreground">Retreat Investment</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-8 text-foreground">Fee Details</h2>
             
             <div className="bg-card p-8 rounded-2xl shadow-lg border-2 border-primary/20">
               <h3 className="text-2xl font-bold mb-4 text-card-foreground">
-                Super Human Programme - Online Meditation Retreat
+                Online Comprehensive Mindfulness Meditation Transformation Retreat
               </h3>
               
-              <div className="text-5xl font-bold text-primary mb-4">$297</div>
-              <Badge variant="secondary" className="mb-6">7-Day Transformation Journey</Badge>
+              <div className="text-5xl font-bold text-primary mb-4">€499</div>
+              <Badge variant="secondary" className="mb-6">100% Money Back Guarantee, Part Payment Option Available</Badge>
               
               <ul className="text-left space-y-3 mb-8">
                 {[
-                  "7 days of guided meditation sessions",
-                  "Daily live teachings with Master Chen",
-                  "Sacred texts and spiritual resources",
-                  "Audio meditation library access",
-                  "Global community of practitioners",
-                  "Personal transformation workbook",
-                  "Lifetime access to all materials",
-                  "Certificate of completion",
-                  "Continued practice support"
+                  "Self-Paced - Start & Do it in your own time",
+                  "Bimonthly students group Zoom Call with Master",
+                  "Learn through Rishikesh training real classes videos",
+                  "Advance Learning Management System",
+                  "Lifetime Access to study Material",
+                  "Personal Student Coordinator for 24x7 support",
+                  "Direct Call Support with Master Dev OM (A unique point)",
+                  "Participation in Global Conscious Community",
+                  "Real connections even in online training"
                 ].map((feature, index) => (
                   <li key={index} className="flex items-start">
                     <CheckCircle className="h-5 w-5 text-primary mr-3 mt-0.5 flex-shrink-0" />
@@ -228,11 +295,11 @@ const SuperHumanProgramme = () => {
               </ul>
               
               <Button size="lg" className="w-full mb-4 bg-primary hover:bg-primary/90">
-                Begin Your Transformation
+                Book Your Spot Now
               </Button>
               
               <Button variant="outline" size="lg" className="w-full">
-                Learn More About the Journey
+                Book a Free Discovery Call with Master Dev OM
               </Button>
             </div>
           </div>
@@ -242,25 +309,28 @@ const SuperHumanProgramme = () => {
       {/* Global Community Stats */}
       <section className="py-16 bg-gradient-to-b from-secondary/5 to-background">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-foreground">
-            Join Our Global Meditation Community
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-8 text-foreground">
+            Soulversity Global Footprint
           </h2>
+          <p className="text-center text-lg text-muted-foreground mb-12">
+            Transformed and Happy Students turned Self Sufficient Meditators from around the World
+          </p>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto text-center">
             <div className="bg-card p-8 rounded-lg shadow-md">
-              <div className="text-4xl font-bold text-primary mb-2">25+</div>
+              <div className="text-4xl font-bold text-primary mb-2">100+</div>
               <div className="text-lg text-card-foreground font-semibold mb-1">Countries</div>
               <div className="text-muted-foreground">Global Reach</div>
             </div>
             <div className="bg-card p-8 rounded-lg shadow-md">
-              <div className="text-4xl font-bold text-accent mb-2">2000+</div>
-              <div className="text-lg text-card-foreground font-semibold mb-1">Transformed Lives</div>
-              <div className="text-muted-foreground">Inner Peace Achieved</div>
+              <div className="text-4xl font-bold text-accent mb-2">1200+</div>
+              <div className="text-lg text-card-foreground font-semibold mb-1">Certified Meditation Trainers</div>
+              <div className="text-muted-foreground">Expert Practitioners</div>
             </div>
             <div className="bg-card p-8 rounded-lg shadow-md">
-              <div className="text-4xl font-bold text-secondary mb-2">98%</div>
-              <div className="text-lg text-card-foreground font-semibold mb-1">Success Rate</div>
-              <div className="text-muted-foreground">Lasting Transformation</div>
+              <div className="text-4xl font-bold text-secondary mb-2">800+</div>
+              <div className="text-lg text-card-foreground font-semibold mb-1">Mindfulness Coaches</div>
+              <div className="text-muted-foreground">Trained Professionals</div>
             </div>
           </div>
         </div>
