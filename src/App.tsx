@@ -32,6 +32,7 @@ import ProgramsForWellnessSeekers from './pages/ProgramsForWellnessSeekers';
 import ProgramsForAcademicInstitutes from './pages/ProgramsForAcademicInstitutes';
 import ProgramsForBusiness from './pages/ProgramsForBusiness';
 import SuperHumanLifeProgram from './pages/SuperHumanLifeProgram';
+import SuperHumanProgramme from './pages/SuperHumanProgramme';
 import FAQs from './pages/FAQs';
 import Blog from './pages/Blog';
 import BlogPost from './pages/BlogPost';
@@ -120,6 +121,7 @@ const UserRoutes: React.FC = () => {
         <Route path="/programs-for-business" element={<ProgramsForBusiness />} />
         <Route path="/program/:programId" element={<ProgramDetailPage />} />
         <Route path="/super-human-life-program" element={<SuperHumanLifeProgram />} />
+        <Route path="/super-human-programme" element={<SuperHumanProgramme />} />
         
         {/* Assessment Routes */}
         <Route path="/mental-health-assessment" element={<UnifiedAssessment />} />
