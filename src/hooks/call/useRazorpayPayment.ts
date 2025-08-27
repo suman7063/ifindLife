@@ -50,12 +50,10 @@ export const useRazorpayPayment = () => {
       // Create order on backend
       const { data: orderData, error } = await supabase.functions.invoke('create-razorpay-order', {
         body: {
-          amount: amountInSmallestUnit,
+          amount: amount, // Pass the original amount, backend will convert to smallest unit
           currency: currency,
-          receipt: `call_${Date.now()}`,
-          notes: {
-            description: description
-          }
+          description: description,
+          itemType: 'consultation'
         }
       });
 
@@ -71,10 +69,32 @@ export const useRazorpayPayment = () => {
         name: 'iFindLife',
         description: description,
         order_id: orderData.id,
-        handler: function (response: any) {
-          console.log('Payment successful:', response);
-          onSuccess(response.razorpay_payment_id, response.razorpay_order_id);
-          toast.success('Payment successful!');
+        handler: async (response: any) => {
+          try {
+            console.log('🔧 Payment: Payment completed, verifying:', response);
+            
+            // Verify payment via Supabase function
+            const { data: verificationData, error: verificationError } = await supabase.functions.invoke('verify-razorpay-payment', {
+              body: {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature
+              }
+            });
+
+            if (verificationError) {
+              console.log('🔧 Payment: Verification failed:', verificationError);
+              throw new Error(verificationError.message);
+            }
+
+            console.log('🔧 Payment: Verification successful:', verificationData);
+            onSuccess(response.razorpay_payment_id, response.razorpay_order_id);
+            toast.success('Payment successful!');
+          } catch (error: any) {
+            console.error('🔧 Payment: Verification error:', error);
+            toast.error('Payment verification failed');
+            onFailure(error);
+          }
         },
         prefill: {
           name: 'User',
