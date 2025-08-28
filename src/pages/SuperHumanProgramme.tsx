@@ -190,8 +190,48 @@ const SuperHumanProgramme = () => {
         </div>
       </section>
 
+      {/* Testimonials Section */}
+      <section className="py-16 bg-gradient-to-b from-background to-secondary/5">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-8 text-foreground">
+            Students Speak
+          </h2>
+          <p className="text-center text-lg text-muted-foreground mb-12">
+            Google Reviews from Our Transformation Retreat Alumni
+          </p>
+          
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-card p-8 rounded-lg shadow-md border-l-4 border-primary">
+              <div className="flex items-center mb-6">
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mr-4">
+                  <span className="text-2xl font-bold text-primary">E</span>
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg text-card-foreground">Eric, Germany</h3>
+                  <div className="flex text-primary">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="h-4 w-4 fill-current" />
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <blockquote className="text-lg text-muted-foreground italic leading-relaxed">
+                "Namaste beautiful soul! I've been developing the need to change in basically all areas of my life 
+                feeling that the way we're being raised in Europe can't be everything. So, I participated at the 
+                200 hours Meditation course and as far as words can describe it, this transformation was the first 
+                one I've gone through so far that has a deep and long-lasting effect. Life won't be the same again. 
+                For each and every person, the transformation will be obviously different and I highly encourage you 
+                to do the course. Better even in India. Go with an open attitude, and let Master Dev OM do his Job. 
+                He's unique in a sense of unconditional love, joy and rebelliousness, and in my opinion exactly the 
+                Master our younger generation needs to finally carry that love and light to the world! Namaste 🙏🏼"
+              </blockquote>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Instructor Section */}
-      <section className="py-16 bg-gradient-to-b from-primary/5 to-background">
+      <section className="py-16 bg-gradient-to-b from-secondary/5 to-background">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-foreground">
             Know Your Mentor - Master Dev OM
@@ -332,6 +372,101 @@ const SuperHumanProgramme = () => {
               <div className="text-lg text-card-foreground font-semibold mb-1">Mindfulness Coaches</div>
               <div className="text-muted-foreground">Trained Professionals</div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Training Methodology Section */}
+      <section className="py-16 bg-gradient-to-b from-background to-secondary/5">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-8 text-foreground">
+            Training Methodology
+          </h2>
+          
+          <div className="max-w-5xl mx-auto">
+            <img 
+              src={meditationCollage} 
+              alt="Training methodology showing interactive meditation sessions"
+              className="w-full rounded-2xl shadow-2xl mb-12"
+            />
+          </div>
+          
+          <div className="max-w-4xl mx-auto">
+            <ul className="space-y-4 text-lg text-muted-foreground">
+              <li className="flex items-start">
+                <CheckCircle className="h-6 w-6 text-primary mr-3 mt-0.5 flex-shrink-0" />
+                The training is completely interactive and practice-based.
+              </li>
+              <li className="flex items-start">
+                <CheckCircle className="h-6 w-6 text-primary mr-3 mt-0.5 flex-shrink-0" />
+                The training happens in a completely non-judgmental and supportive manner.
+              </li>
+              <li className="flex items-start">
+                <CheckCircle className="h-6 w-6 text-primary mr-3 mt-0.5 flex-shrink-0" />
+                All the meditations and techniques are practically experienced by students as Seeker.
+              </li>
+              <li className="flex items-start">
+                <CheckCircle className="h-6 w-6 text-primary mr-3 mt-0.5 flex-shrink-0" />
+                Each meditation is described for why to do this meditation, what will be the effect and what are the variations.
+              </li>
+              <li className="flex items-start">
+                <CheckCircle className="h-6 w-6 text-primary mr-3 mt-0.5 flex-shrink-0" />
+                Each session is followed by the student's questions and feedback.
+              </li>
+              <li className="flex items-start">
+                <CheckCircle className="h-6 w-6 text-primary mr-3 mt-0.5 flex-shrink-0" />
+                The training space is created based on awareness and presence where students can ask, recognize, share and question their feelings and purpose together in a playful and lighthearted way.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="py-16 bg-gradient-to-b from-secondary/5 to-background">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-8 text-foreground">
+            6 Things a Seeker Should Find Before Registering for a Meditation Retreat
+          </h2>
+          
+          <div className="max-w-4xl mx-auto space-y-6">
+            {[
+              {
+                question: "Who is the teacher?",
+                answer: "What is his profile? Is he a dedicated meditator? Are there many teachers coming to teach different classes? What is their profile and meditation experience? (If the teacher is not a dedicated meditator then the energy is not usually profound)"
+              },
+              {
+                question: "Is the teacher accessible?",
+                answer: "Is the teacher available and directly accessible to you during and after the retreat for all your queries and support?"
+              },
+              {
+                question: "What type of school is it?",
+                answer: "Is it a dedicated meditation school or is it a Yoga school also offering meditation retreats? (They usually only focus on yogic meditations)"
+              },
+              {
+                question: "Teacher's experience?",
+                answer: "How many years the teacher has dedicated to his meditation journey and what experience he has had?"
+              },
+              {
+                question: "Following any tradition?",
+                answer: "Is he promoting or following any particular tradition or school of thought? Is he going to push you into that? i.e. Kriya Yoga, Osho, Ashtanga Yoga, Himalaya Yoga tradition etc"
+              },
+              {
+                question: "Connect with the teacher",
+                answer: "Talk to teacher. Ask your questions. Have a video call. See if you connect with his energy and resonate with his answers. Is he answering with his wisdom and experience or giving you bookish knowledge? Never book a course because it is cheap. This retreat is about your life energy and transformation."
+              }
+            ].map((item, index) => (
+              <div key={index} className="bg-card p-6 rounded-lg shadow-md">
+                <h3 className="font-bold text-lg mb-3 text-card-foreground">{item.question}</h3>
+                <p className="text-muted-foreground">{item.answer}</p>
+              </div>
+            ))}
+          </div>
+          
+          <div className="text-center mt-12">
+            <Button size="lg" className="bg-accent hover:bg-accent/90">
+              Book a Free Discovery Call with Master Dev OM
+            </Button>
           </div>
         </div>
       </section>
