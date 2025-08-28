@@ -67,6 +67,34 @@ const WellnessSeekerProgrammes = () => {
       icon: <Zap className="w-8 h-8" />,
       color: "#A88BEB", // Muted Purple
       features: ["Chakra balancing", "Energy healing techniques", "Meditation practices", "Spiritual awakening guidance"]
+    },
+    {
+      id: 5,
+      title: "Managing Depression: Finding Your Light",
+      subtitle: "A Mindful Path to Renewed Well-being",
+      description: "Empower yourself with practical strategies and mindful practices to understand and navigate persistent low mood.",
+      duration: "6 weeks",
+      sessions: 12,
+      price: 197,
+      participants: 420,
+      rating: 4.8,
+      icon: <Brain className="w-8 h-8" />,
+      color: "#5AC8FA", // Aqua Blue
+      features: ["Mindfulness practices", "Emotional balance techniques", "Self-improvement strategies", "Resilience building"]
+    },
+    {
+      id: 6,
+      title: "Awareness Walk Meditation Course",
+      subtitle: "Move, Awaken, and Pass Through",
+      description: "Discover dynamic meditation through conscious movement, bringing body-mind alignment and fearless connection to life.",
+      duration: "4 weeks",
+      sessions: 8,
+      price: 147,
+      participants: 315,
+      rating: 4.9,
+      icon: <Heart className="w-8 h-8" />,
+      color: "#7DD8C9", // Soft Teal
+      features: ["Meditative walking", "Body-mind alignment", "Consciousness expansion", "Fear release techniques"]
     }
   ];
 
@@ -102,7 +130,7 @@ const WellnessSeekerProgrammes = () => {
               <div className="flex items-center gap-4 text-sm" style={{ color: '#2E2E2E', opacity: 0.7 }}>
                 <div className="flex items-center gap-1">
                   <Users className="w-4 h-4" />
-                  <span>3,450+ Students</span>
+                  <span>4,185+ Students</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Star className="w-4 h-4" style={{ fill: '#5AC8FA', color: '#5AC8FA' }} />

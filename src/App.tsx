@@ -38,6 +38,8 @@ import FearGuiltLiberation from './pages/FearGuiltLiberation';
 import FreedomInnerClarity from './pages/FreedomInnerClarity';
 import ChildhoodTraumaHealing from './pages/ChildhoodTraumaHealing';
 import EnergyAlchemy from './pages/EnergyAlchemy';
+import ManagingDepression from './pages/ManagingDepression';
+import AwarenessWalkMeditation from './pages/AwarenessWalkMeditation';
 import FAQs from './pages/FAQs';
 import Blog from './pages/Blog';
 import BlogPost from './pages/BlogPost';
@@ -128,10 +130,12 @@ const UserRoutes: React.FC = () => {
         <Route path="/super-human-life-program" element={<SuperHumanLifeProgram />} />
         <Route path="/super-human-programme" element={<SuperHumanProgramme />} />
         <Route path="/wellness-seeker-programmes" element={<WellnessSeekerProgrammes />} />
-        <Route path="/wellness-seeker-programmes/1" element={<FearGuiltLiberation />} />
-        <Route path="/wellness-seeker-programmes/2" element={<FreedomInnerClarity />} />
-        <Route path="/wellness-seeker-programmes/3" element={<ChildhoodTraumaHealing />} />
-        <Route path="/wellness-seeker-programmes/4" element={<EnergyAlchemy />} />
+          <Route path="/wellness-seeker-programmes/1" element={<FearGuiltLiberation />} />
+          <Route path="/wellness-seeker-programmes/2" element={<FreedomInnerClarity />} />
+          <Route path="/wellness-seeker-programmes/3" element={<ChildhoodTraumaHealing />} />
+          <Route path="/wellness-seeker-programmes/4" element={<EnergyAlchemy />} />
+          <Route path="/wellness-seeker-programmes/5" element={<ManagingDepression />} />
+          <Route path="/wellness-seeker-programmes/6" element={<AwarenessWalkMeditation />} />
         
         {/* Assessment Routes */}
         <Route path="/mental-health-assessment" element={<UnifiedAssessment />} />
