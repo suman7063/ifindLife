@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useRazorpayIntegration } from '@/hooks/useRazorpayIntegration';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ProgrammeData {
   id: number;
@@ -20,6 +21,15 @@ export const useRazorpayProgrammePayment = () => {
     setProcessingStates(prev => ({ ...prev, [programme.id]: true }));
     
     try {
+      // Check if user is authenticated first
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        toast.error("Please login to enroll in programmes");
+        setProcessingStates(prev => ({ ...prev, [programme.id]: false }));
+        navigate('/user-login');
+        return;
+      }
       await processPayment(
         {
           // Fix: Don't multiply by 100 here as it's likely done in useRazorpayIntegration
