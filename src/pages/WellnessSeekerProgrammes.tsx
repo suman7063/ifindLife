@@ -1,5 +1,4 @@
 import React from 'react';
-import { Helmet } from 'react-helmet-async';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -67,10 +66,6 @@ const WellnessSeekerProgrammes = () => {
 
   return (
     <>
-      <Helmet>
-        <title>Wellness Seeker Programmes - iFindLife</title>
-        <meta name="description" content="Transformative wellness programmes for personal growth, healing, and spiritual awakening. Join thousands on their journey to inner freedom." />
-      </Helmet>
 
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-primary/10 via-secondary/5 to-accent/10">
