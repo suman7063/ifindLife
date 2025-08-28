@@ -4,11 +4,13 @@ import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Clock, Users, Star, Heart, CheckCircle, Play, Shield } from 'lucide-react';
+import { ArrowLeft, Clock, Users, Star, Heart, CheckCircle, Play, Shield, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useRazorpayProgrammePayment } from '@/hooks/useRazorpayProgrammePayment';
 
 const ChildhoodTraumaHealing = () => {
   const navigate = useNavigate();
+  const { isProcessing, initiateProgrammePayment } = useRazorpayProgrammePayment();
 
   const otherCourses = [
     {
@@ -118,8 +120,26 @@ const ChildhoodTraumaHealing = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="text-white px-8 py-3 rounded-full hover:opacity-90" style={{ backgroundColor: '#7DD8C9' }}>
-                Enroll Now - €697
+              <Button 
+                size="lg" 
+                className="text-white px-8 py-3 rounded-full hover:opacity-90" 
+                style={{ backgroundColor: '#7DD8C9' }}
+                onClick={() => initiateProgrammePayment({
+                  id: 3,
+                  title: "Childhood Trauma Healing",
+                  price: 697,
+                  currency: '€'
+                })}
+                disabled={isProcessing}
+              >
+                {isProcessing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  'Enroll Now - €697'
+                )}
               </Button>
               <Button size="lg" variant="outline" className="px-8 py-3 rounded-full" style={{ borderColor: '#7DD8C9', color: '#7DD8C9' }}>
                 Preview Course
@@ -292,8 +312,25 @@ const ChildhoodTraumaHealing = () => {
                   <div className="text-center">
                     <div className="text-3xl font-bold mb-2" style={{ color: '#7DD8C9' }}>€697</div>
                     <p className="text-sm mb-4" style={{ color: '#2E2E2E', opacity: 0.6 }}>One-time payment</p>
-                    <Button className="w-full text-white" style={{ backgroundColor: '#7DD8C9' }}>
-                      Enroll Now
+                    <Button 
+                      className="w-full text-white" 
+                      style={{ backgroundColor: '#7DD8C9' }}
+                      onClick={() => initiateProgrammePayment({
+                        id: 3,
+                        title: "Childhood Trauma Healing",
+                        price: 697,
+                        currency: '€'
+                      })}
+                      disabled={isProcessing}
+                    >
+                      {isProcessing ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        'Enroll Now'
+                      )}
                     </Button>
                   </div>
                 </div>

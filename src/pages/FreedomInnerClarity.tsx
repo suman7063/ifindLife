@@ -4,11 +4,13 @@ import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Clock, Users, Star, Sparkles, CheckCircle, Play } from 'lucide-react';
+import { ArrowLeft, Clock, Users, Star, Sparkles, CheckCircle, Play, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useRazorpayProgrammePayment } from '@/hooks/useRazorpayProgrammePayment';
 
 const FreedomInnerClarity = () => {
   const navigate = useNavigate();
+  const { isProcessing, initiateProgrammePayment } = useRazorpayProgrammePayment();
 
   const otherCourses = [
     {
@@ -108,8 +110,26 @@ const FreedomInnerClarity = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="text-white px-8 py-3 rounded-full hover:opacity-90" style={{ backgroundColor: '#5AC8FA' }}>
-                Enroll Now - €497
+              <Button 
+                size="lg" 
+                className="text-white px-8 py-3 rounded-full hover:opacity-90" 
+                style={{ backgroundColor: '#5AC8FA' }}
+                onClick={() => initiateProgrammePayment({
+                  id: 2,
+                  title: "Freedom: Inner Clarity",
+                  price: 497,
+                  currency: '€'
+                })}
+                disabled={isProcessing}
+              >
+                {isProcessing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  'Enroll Now - €497'
+                )}
               </Button>
               <Button size="lg" variant="outline" className="px-8 py-3 rounded-full" style={{ borderColor: '#5AC8FA', color: '#5AC8FA' }}>
                 Preview Course
@@ -247,8 +267,25 @@ const FreedomInnerClarity = () => {
                   <div className="text-center">
                     <div className="text-3xl font-bold mb-2" style={{ color: '#5AC8FA' }}>€497</div>
                     <p className="text-sm mb-4" style={{ color: '#2E2E2E', opacity: 0.6 }}>One-time payment</p>
-                    <Button className="w-full text-white" style={{ backgroundColor: '#5AC8FA' }}>
-                      Enroll Now
+                    <Button 
+                      className="w-full text-white" 
+                      style={{ backgroundColor: '#5AC8FA' }}
+                      onClick={() => initiateProgrammePayment({
+                        id: 2,
+                        title: "Freedom: Inner Clarity",
+                        price: 497,
+                        currency: '€'
+                      })}
+                      disabled={isProcessing}
+                    >
+                      {isProcessing ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        'Enroll Now'
+                      )}
                     </Button>
                   </div>
                 </div>

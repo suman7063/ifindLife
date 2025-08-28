@@ -3,12 +3,14 @@ import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Heart, Shield, Sparkles, Brain, Zap, ArrowRight, Clock, Users, Star } from 'lucide-react';
+import { Heart, Shield, Sparkles, Brain, Zap, ArrowRight, Clock, Users, Star, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Footer from '@/components/Footer';
+import { useRazorpayProgrammePayment } from '@/hooks/useRazorpayProgrammePayment';
 
 const WellnessSeekerProgrammes = () => {
   const navigate = useNavigate();
+  const { isProcessing, initiateProgrammePayment } = useRazorpayProgrammePayment();
   const programmes = [
     {
       id: 1,
@@ -199,15 +201,36 @@ const WellnessSeekerProgrammes = () => {
                   </div>
 
                   {/* CTA */}
-                  <Button 
-                    className="w-full text-white shadow-sm hover:shadow-md transition-all duration-300 hover:opacity-90"
-                    style={{ backgroundColor: programme.color }}
-                    size="lg"
-                    onClick={() => navigate(`/wellness-seeker-programmes/${programme.id}`)}
-                  >
-                    Know More
-                    <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                  </Button>
+                  <div className="flex gap-3">
+                    <Button 
+                      variant="outline"
+                      className="flex-1"
+                      style={{ borderColor: programme.color, color: programme.color }}
+                      onClick={() => navigate(`/wellness-seeker-programmes/${programme.id}`)}
+                    >
+                      Know More
+                    </Button>
+                    <Button 
+                      className="flex-1 text-white"
+                      style={{ backgroundColor: programme.color }}
+                      onClick={() => initiateProgrammePayment({
+                        id: programme.id,
+                        title: programme.title,
+                        price: programme.price,
+                        currency: '€'
+                      })}
+                      disabled={isProcessing}
+                    >
+                      {isProcessing ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        `Enroll Now - €${programme.price}`
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </Card>
             ))}
