@@ -4,8 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Heart, Shield, Sparkles, Brain, Zap, ArrowRight, Clock, Users, Star } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import Footer from '@/components/Footer';
 
 const WellnessSeekerProgrammes = () => {
+  const navigate = useNavigate();
   const programmes = [
     {
       id: 1,
@@ -200,8 +203,9 @@ const WellnessSeekerProgrammes = () => {
                     className="w-full text-white shadow-sm hover:shadow-md transition-all duration-300 hover:opacity-90"
                     style={{ backgroundColor: programme.color }}
                     size="lg"
+                    onClick={() => navigate(`/wellness-seeker-programmes/${programme.id}`)}
                   >
-                    Start Your Journey
+                    Know More
                     <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </div>
@@ -276,6 +280,7 @@ const WellnessSeekerProgrammes = () => {
           </div>
         </div>
       </section>
+      <Footer />
     </>
   );
 };
