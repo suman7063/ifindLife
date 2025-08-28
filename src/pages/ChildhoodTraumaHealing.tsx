@@ -130,9 +130,9 @@ const ChildhoodTraumaHealing = () => {
                   price: 697,
                   currency: '€'
                 })}
-                disabled={isProcessing}
+                disabled={isProcessing(3)}
               >
-                {isProcessing ? (
+                {isProcessing(3) ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Processing...
@@ -321,9 +321,9 @@ const ChildhoodTraumaHealing = () => {
                         price: 697,
                         currency: '€'
                       })}
-                      disabled={isProcessing}
+                      disabled={isProcessing(3)}
                     >
-                      {isProcessing ? (
+                      {isProcessing(3) ? (
                         <>
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                           Processing...

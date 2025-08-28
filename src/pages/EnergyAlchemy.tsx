@@ -120,9 +120,9 @@ const EnergyAlchemy = () => {
                   price: 280,
                   currency: '€'
                 })}
-                disabled={isProcessing}
+                disabled={isProcessing(4)}
               >
-                {isProcessing ? (
+                {isProcessing(4) ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Processing...
@@ -297,9 +297,9 @@ const EnergyAlchemy = () => {
                         price: 280,
                         currency: '€'
                       })}
-                      disabled={isProcessing}
+                      disabled={isProcessing(4)}
                     >
-                      {isProcessing ? (
+                      {isProcessing(4) ? (
                         <>
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                           Processing...

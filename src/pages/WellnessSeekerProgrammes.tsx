@@ -219,9 +219,9 @@ const WellnessSeekerProgrammes = () => {
                         price: programme.price,
                         currency: '€'
                       })}
-                      disabled={isProcessing}
+                      disabled={isProcessing(programme.id)}
                     >
-                      {isProcessing ? (
+                      {isProcessing(programme.id) ? (
                         <>
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                           Processing...

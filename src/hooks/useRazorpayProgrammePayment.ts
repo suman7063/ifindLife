@@ -11,18 +11,21 @@ interface ProgrammeData {
 }
 
 export const useRazorpayProgrammePayment = () => {
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingStates, setProcessingStates] = useState<{[key: number]: boolean}>({});
   const { processPayment } = useRazorpayIntegration();
   const navigate = useNavigate();
 
   const initiateProgrammePayment = async (programme: ProgrammeData) => {
-    setIsProcessing(true);
+    // Set processing state for this specific programme
+    setProcessingStates(prev => ({ ...prev, [programme.id]: true }));
     
     try {
       await processPayment(
         {
-          amount: programme.price * 100, // Convert to cents/paise
-          currency: programme.currency === '€' ? 'EUR' : 'INR',
+          // Fix: Don't multiply by 100 here as it's likely done in useRazorpayIntegration
+          // Convert EUR to INR for Razorpay (approximately 1 EUR = 89 INR)
+          amount: programme.currency === '€' ? Math.round(programme.price * 89) : programme.price,
+          currency: 'INR', // Always use INR for Razorpay
           description: `Enrollment in ${programme.title}`,
           itemId: programme.id.toString(),
           itemType: 'program'
@@ -37,21 +40,23 @@ export const useRazorpayProgrammePayment = () => {
             console.error('Error completing enrollment:', error);
             toast.error("Payment successful but enrollment failed. Please contact support.");
           } finally {
-            setIsProcessing(false);
+            setProcessingStates(prev => ({ ...prev, [programme.id]: false }));
           }
         },
         (error: any) => {
           console.error('Payment failed:', error);
           toast.error("Payment failed. Please try again.");
-          setIsProcessing(false);
+          setProcessingStates(prev => ({ ...prev, [programme.id]: false }));
         }
       );
     } catch (error) {
       console.error('Error initiating payment:', error);
       toast.error("Failed to initiate payment");
-      setIsProcessing(false);
+      setProcessingStates(prev => ({ ...prev, [programme.id]: false }));
     }
   };
+
+  const isProcessing = (programmeId: number) => processingStates[programmeId] || false;
 
   return {
     isProcessing,

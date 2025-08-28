@@ -120,9 +120,9 @@ const FreedomInnerClarity = () => {
                   price: 497,
                   currency: '€'
                 })}
-                disabled={isProcessing}
+                disabled={isProcessing(2)}
               >
-                {isProcessing ? (
+                {isProcessing(2) ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Processing...
@@ -276,9 +276,9 @@ const FreedomInnerClarity = () => {
                         price: 497,
                         currency: '€'
                       })}
-                      disabled={isProcessing}
+                      disabled={isProcessing(2)}
                     >
-                      {isProcessing ? (
+                      {isProcessing(2) ? (
                         <>
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                           Processing...

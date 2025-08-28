@@ -111,18 +111,18 @@ const FearGuiltLiberation = () => {
                 onClick={() => initiateProgrammePayment({
                   id: 1,
                   title: "Fear & Guilt Liberation",
-                  price: 280,
+                  price: 297,
                   currency: '€'
                 })}
-                disabled={isProcessing}
+                disabled={isProcessing(1)}
               >
-                {isProcessing ? (
+                {isProcessing(1) ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Processing...
                   </>
                 ) : (
-                  'Enroll Now - €280'
+                  'Enroll Now - €297'
                 )}
               </Button>
               <Button size="lg" variant="outline" className="px-8 py-3 rounded-full" style={{ borderColor: '#A88BEB', color: '#A88BEB' }}>
@@ -228,7 +228,7 @@ const FearGuiltLiberation = () => {
                 
                 <div className="border-t pt-4 mt-4" style={{ borderColor: '#E5E5E5' }}>
                   <div className="text-center">
-                    <div className="text-3xl font-bold mb-2" style={{ color: '#A88BEB' }}>€280</div>
+                    <div className="text-3xl font-bold mb-2" style={{ color: '#A88BEB' }}>€297</div>
                     <p className="text-sm mb-4" style={{ color: '#2E2E2E', opacity: 0.6 }}>One-time payment</p>
                     <Button 
                       className="w-full text-white" 
@@ -236,12 +236,12 @@ const FearGuiltLiberation = () => {
                       onClick={() => initiateProgrammePayment({
                         id: 1,
                         title: "Fear & Guilt Liberation",
-                        price: 280,
+                        price: 297,
                         currency: '€'
                       })}
-                      disabled={isProcessing}
+                      disabled={isProcessing(1)}
                     >
-                      {isProcessing ? (
+                      {isProcessing(1) ? (
                         <>
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                           Processing...
