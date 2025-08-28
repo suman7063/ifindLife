@@ -1,4 +1,5 @@
 import React from 'react';
+import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,7 +10,7 @@ const WellnessSeekerProgrammes = () => {
     {
       id: 1,
       title: "Fear & Guilt Liberation",
-      subtitle: "Break Free from Limiting Emotions",
+      subtitle: "Break Free from Limiting Emotions", 
       description: "Transform your relationship with fear and guilt through proven therapeutic techniques and mindfulness practices.",
       duration: "8 weeks",
       sessions: 16,
@@ -17,7 +18,7 @@ const WellnessSeekerProgrammes = () => {
       participants: 850,
       rating: 4.9,
       icon: <Shield className="w-8 h-8" />,
-      color: "from-red-500 to-pink-600",
+      color: "#A88BEB", // Muted Purple
       features: ["Daily guided meditations", "Fear release techniques", "Guilt transformation exercises", "Personal breakthrough sessions"]
     },
     {
@@ -31,7 +32,7 @@ const WellnessSeekerProgrammes = () => {
       participants: 1200,
       rating: 4.8,
       icon: <Sparkles className="w-8 h-8" />,
-      color: "from-blue-500 to-purple-600",
+      color: "#5AC8FA", // Aqua Blue
       features: ["Self-discovery workshops", "Clarity meditation practices", "Freedom visualization", "Life purpose exploration"]
     },
     {
@@ -45,7 +46,7 @@ const WellnessSeekerProgrammes = () => {
       participants: 650,
       rating: 4.9,
       icon: <Heart className="w-8 h-8" />,
-      color: "from-green-500 to-teal-600",
+      color: "#7DD8C9", // Soft Teal
       features: ["Trauma-informed therapy", "Inner child healing", "Safe space creation", "Resilience building"]
     },
     {
@@ -59,46 +60,47 @@ const WellnessSeekerProgrammes = () => {
       participants: 750,
       rating: 4.7,
       icon: <Zap className="w-8 h-8" />,
-      color: "from-yellow-500 to-orange-600",
+      color: "#A88BEB", // Muted Purple
       features: ["Chakra balancing", "Energy healing techniques", "Meditation practices", "Spiritual awakening guidance"]
     }
   ];
 
   return (
     <>
-
+      <Navbar />
+      
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-primary/10 via-secondary/5 to-accent/10">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-secondary/20" />
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden" style={{ backgroundColor: '#F8F8F8' }}>
+        <div className="absolute inset-0" style={{ backgroundColor: '#5AC8FA', opacity: 0.05 }} />
         
         <div className="relative z-10 container mx-auto px-4 sm:px-6 text-center">
           <div className="max-w-4xl mx-auto">
-            <Badge className="mb-6 px-4 py-2 bg-primary/10 text-primary border-primary/20">
+            <Badge className="mb-6 px-4 py-2 border" style={{ backgroundColor: '#7DD8C9', color: '#2E2E2E', borderColor: '#7DD8C9' }}>
               Transformative Wellness Journey
             </Badge>
             
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+            <h1 className="text-5xl md:text-7xl font-bold mb-6" style={{ color: '#2E2E2E' }}>
               Wellness Seeker
               <span className="block">Programmes</span>
             </h1>
             
-            <p className="text-xl md:text-2xl text-muted-foreground mb-8 leading-relaxed max-w-3xl mx-auto">
+            <p className="text-xl md:text-2xl mb-8 leading-relaxed max-w-3xl mx-auto" style={{ color: '#2E2E2E', opacity: 0.8 }}>
               Discover profound healing and transformation through our specialized programmes designed for deep personal growth and spiritual awakening.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-              <Button size="lg" className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 text-white px-8 py-3 rounded-full">
+              <Button size="lg" className="text-white px-8 py-3 rounded-full hover:opacity-90" style={{ backgroundColor: '#A88BEB' }}>
                 Explore Programmes
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
               
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <div className="flex items-center gap-4 text-sm" style={{ color: '#2E2E2E', opacity: 0.7 }}>
                 <div className="flex items-center gap-1">
                   <Users className="w-4 h-4" />
                   <span>3,450+ Students</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  <Star className="w-4 h-4" style={{ fill: '#5AC8FA', color: '#5AC8FA' }} />
                   <span>4.8/5 Rating</span>
                 </div>
               </div>
@@ -108,14 +110,14 @@ const WellnessSeekerProgrammes = () => {
       </section>
 
       {/* Programmes Grid */}
-      <section className="py-20 bg-background">
+      <section className="py-20" style={{ backgroundColor: '#F8F8F8' }}>
         <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6" style={{ color: '#2E2E2E' }}>
               Choose Your
-              <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent"> Transformation</span>
+              <span className="ml-2" style={{ color: '#A88BEB' }}>Transformation</span>
             </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+            <p className="text-xl max-w-3xl mx-auto" style={{ color: '#2E2E2E', opacity: 0.7 }}>
               Each programme is carefully crafted to address specific aspects of your wellness journey, 
               providing you with the tools and support needed for lasting change.
             </p>
@@ -123,22 +125,22 @@ const WellnessSeekerProgrammes = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
             {programmes.map((programme) => (
-              <Card key={programme.id} className="group relative overflow-hidden border-0 bg-gradient-to-br from-card via-card/50 to-background/80 backdrop-blur-sm hover:shadow-2xl transition-all duration-500">
-                <div className={`absolute inset-0 bg-gradient-to-br ${programme.color} opacity-5 group-hover:opacity-10 transition-opacity duration-500`} />
+              <Card key={programme.id} className="group relative overflow-hidden border hover:shadow-lg transition-all duration-300" style={{ backgroundColor: 'white', borderColor: '#E5E5E5' }}>
+                <div className="absolute inset-0 opacity-5 transition-opacity duration-500 group-hover:opacity-10" style={{ backgroundColor: programme.color }} />
                 
                 <div className="relative p-8">
                   {/* Header */}
                   <div className="flex items-start justify-between mb-6">
-                    <div className={`p-3 rounded-2xl bg-gradient-to-br ${programme.color} text-white shadow-lg`}>
+                    <div className="p-3 rounded-2xl text-white shadow-sm" style={{ backgroundColor: programme.color }}>
                       {programme.icon}
                     </div>
                     
                     <div className="text-right">
                       <div className="flex items-center gap-1 mb-1">
-                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                        <span className="text-sm font-semibold">{programme.rating}</span>
+                        <Star className="w-4 h-4" style={{ fill: '#5AC8FA', color: '#5AC8FA' }} />
+                        <span className="text-sm font-semibold" style={{ color: '#2E2E2E' }}>{programme.rating}</span>
                       </div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-xs" style={{ color: '#2E2E2E', opacity: 0.6 }}>
                         {programme.participants}+ students
                       </div>
                     </div>
@@ -146,24 +148,24 @@ const WellnessSeekerProgrammes = () => {
 
                   {/* Content */}
                   <div className="mb-6">
-                    <h3 className="text-2xl font-bold mb-2 text-foreground group-hover:text-primary transition-colors">
+                    <h3 className="text-2xl font-bold mb-2 transition-colors" style={{ color: '#2E2E2E' }}>
                       {programme.title}
                     </h3>
-                    <p className="text-primary font-semibold mb-3">
+                    <p className="font-semibold mb-3" style={{ color: programme.color }}>
                       {programme.subtitle}
                     </p>
-                    <p className="text-muted-foreground leading-relaxed">
+                    <p className="leading-relaxed" style={{ color: '#2E2E2E', opacity: 0.7 }}>
                       {programme.description}
                     </p>
                   </div>
 
                   {/* Features */}
                   <div className="mb-6">
-                    <h4 className="font-semibold mb-3 text-foreground">What You'll Learn:</h4>
+                    <h4 className="font-semibold mb-3" style={{ color: '#2E2E2E' }}>What You'll Learn:</h4>
                     <div className="grid grid-cols-2 gap-2">
                       {programme.features.map((feature, index) => (
-                        <div key={index} className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                        <div key={index} className="flex items-center gap-2 text-sm" style={{ color: '#2E2E2E', opacity: 0.7 }}>
+                          <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: programme.color }} />
                           {feature}
                         </div>
                       ))}
@@ -171,8 +173,8 @@ const WellnessSeekerProgrammes = () => {
                   </div>
 
                   {/* Details */}
-                  <div className="flex items-center justify-between mb-6 pt-4 border-t border-border/50">
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <div className="flex items-center justify-between mb-6 pt-4 border-t" style={{ borderColor: '#E5E5E5' }}>
+                    <div className="flex items-center gap-4 text-sm" style={{ color: '#2E2E2E', opacity: 0.7 }}>
                       <div className="flex items-center gap-1">
                         <Clock className="w-4 h-4" />
                         <span>{programme.duration}</span>
@@ -184,10 +186,10 @@ const WellnessSeekerProgrammes = () => {
                     </div>
                     
                     <div className="text-right">
-                      <div className="text-2xl font-bold text-primary">
+                      <div className="text-2xl font-bold" style={{ color: programme.color }}>
                         €{programme.price}
                       </div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-xs" style={{ color: '#2E2E2E', opacity: 0.6 }}>
                         One-time payment
                       </div>
                     </div>
@@ -195,7 +197,8 @@ const WellnessSeekerProgrammes = () => {
 
                   {/* CTA */}
                   <Button 
-                    className={`w-full bg-gradient-to-r ${programme.color} hover:opacity-90 text-white shadow-lg group-hover:shadow-xl transition-all duration-300`}
+                    className="w-full text-white shadow-sm hover:shadow-md transition-all duration-300 hover:opacity-90"
+                    style={{ backgroundColor: programme.color }}
                     size="lg"
                   >
                     Start Your Journey
@@ -209,42 +212,42 @@ const WellnessSeekerProgrammes = () => {
       </section>
 
       {/* Why Choose Section */}
-      <section className="py-20 bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5">
+      <section className="py-20" style={{ backgroundColor: 'white' }}>
         <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-6">
               Why Choose Our
-              <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent"> Programmes?</span>
+              <span className="ml-2" style={{ color: '#A88BEB' }}>Programmes?</span>
             </h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-primary to-secondary rounded-2xl flex items-center justify-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{ backgroundColor: '#5AC8FA' }}>
                 <Brain className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-xl font-bold mb-3">Evidence-Based</h3>
-              <p className="text-muted-foreground">
+              <h3 className="text-xl font-bold mb-3" style={{ color: '#2E2E2E' }}>Evidence-Based</h3>
+              <p style={{ color: '#2E2E2E', opacity: 0.7 }}>
                 All our programmes are grounded in proven therapeutic methods and spiritual practices.
               </p>
             </div>
 
             <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-secondary to-accent rounded-2xl flex items-center justify-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{ backgroundColor: '#7DD8C9' }}>
                 <Heart className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-xl font-bold mb-3">Compassionate Support</h3>
-              <p className="text-muted-foreground">
+              <h3 className="text-xl font-bold mb-3" style={{ color: '#2E2E2E' }}>Compassionate Support</h3>
+              <p style={{ color: '#2E2E2E', opacity: 0.7 }}>
                 Experience healing in a safe, supportive environment with expert guidance.
               </p>
             </div>
 
             <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-accent to-primary rounded-2xl flex items-center justify-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{ backgroundColor: '#A88BEB' }}>
                 <Sparkles className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-xl font-bold mb-3">Lasting Transformation</h3>
-              <p className="text-muted-foreground">
+              <h3 className="text-xl font-bold mb-3" style={{ color: '#2E2E2E' }}>Lasting Transformation</h3>
+              <p style={{ color: '#2E2E2E', opacity: 0.7 }}>
                 Create sustainable change that extends beyond the programme duration.
               </p>
             </div>
@@ -253,21 +256,21 @@ const WellnessSeekerProgrammes = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-primary via-secondary to-accent">
+      <section className="py-20" style={{ backgroundColor: '#A88BEB' }}>
         <div className="container mx-auto px-4 sm:px-6 text-center">
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
             Ready to Begin Your
             <span className="block">Transformation?</span>
           </h2>
-          <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
+          <p className="text-xl text-white mb-8 max-w-2xl mx-auto" style={{ opacity: 0.9 }}>
             Take the first step towards healing, growth, and discovering your true potential.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" variant="secondary" className="bg-white text-primary hover:bg-white/90 px-8 py-3 rounded-full">
+            <Button size="lg" variant="secondary" className="px-8 py-3 rounded-full hover:opacity-90" style={{ backgroundColor: 'white', color: '#A88BEB' }}>
               Book Free Consultation
             </Button>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-primary px-8 py-3 rounded-full">
+            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white px-8 py-3 rounded-full" style={{ borderColor: 'white' }}>
               Download Programme Guide
             </Button>
           </div>
