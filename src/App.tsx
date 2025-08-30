@@ -58,6 +58,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import ReferralProgram from './pages/ReferralProgram';
 import AuthCallback from './pages/AuthCallback';
+import { CallInterfaceDemo } from '@/components/call-interface/CallInterfaceDemo';
 
 // Create QueryClient outside component to avoid hook issues
 const queryClient = new QueryClient({
@@ -155,6 +156,9 @@ const UserRoutes: React.FC = () => {
         
         {/* Authentication Test Suite */}
         <Route path="/auth-test" element={<AuthTestPage />} />
+        
+        {/* Call Interface Demo */}
+        <Route path="/call-interface-demo" element={<CallInterfaceDemo />} />
         
         {/* Legal Routes */}
         <Route path="/terms-of-service" element={<TermsOfService />} />
