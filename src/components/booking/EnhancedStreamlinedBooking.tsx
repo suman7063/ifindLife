@@ -9,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { useExpertPricing } from '@/hooks/useExpertPricing';
 import { useExpertAvailability } from '@/hooks/useExpertAvailability';
-import { useRazorpayPayment } from '@/hooks/call/useRazorpayPayment';
+import { useRazorpayPayment } from '@/hooks/useRazorpayPayment';
 
 interface TimeSlot {
   id: string;
@@ -304,9 +304,12 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
       
       // Process payment first using Razorpay
       await processPayment(
-        totalCost,
-        userCurrency,
-        `Booking ${selectedSlots.length} session(s) with ${expertName}`,
+        {
+          amount: totalCost, // Amount in INR/EUR, edge function will convert to smallest unit
+          currency: userCurrency as 'INR' | 'USD',
+          description: `Booking ${selectedSlots.length} session(s) with ${expertName}`,
+          expertId: expert.auth_id
+        },
         async (paymentId: string, orderId: string) => {
           console.log('🔧 Payment: Payment successful:', paymentId, orderId);
           // Payment successful, create appointments

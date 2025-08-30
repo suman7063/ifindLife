@@ -46,7 +46,8 @@ serve(async (req) => {
     }
 
     // Convert amount to smallest currency unit (paise for INR, cents for USD/EUR)
-    const amountInSmallestUnit = Math.round(amount * 100);
+    // Check if amount is already in smallest unit (amounts > 10000 are likely already in paise)
+    const amountInSmallestUnit = amount > 10000 ? Math.round(amount) : Math.round(amount * 100);
 
     // Create Razorpay order
     const orderData = {
