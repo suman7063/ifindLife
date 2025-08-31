@@ -5,6 +5,7 @@ import { CallInProgress } from './CallInProgress';
 import { CallEnded } from './CallEnded';
 import { CallError } from './CallError';
 import { useCallInterface } from './hooks/useCallInterface';
+import CallAuthMessage from '../call/modals/CallAuthMessage';
 
 export type CallState = 'selecting' | 'connecting' | 'connected' | 'ended' | 'error';
 export type CallType = 'video' | 'audio';
@@ -34,6 +35,7 @@ export const CallInterface: React.FC<CallInterfaceProps> = ({
     duration,
     sessionData,
     error,
+    isAuthenticated,
     handleStartCall,
     handleEndCall,
     retryCall
@@ -48,6 +50,16 @@ export const CallInterface: React.FC<CallInterfaceProps> = ({
   };
 
   const renderContent = () => {
+    // Show authentication message if not authenticated
+    if (!isAuthenticated) {
+      return (
+        <CallAuthMessage
+          expertName={expert.name}
+          onClose={onClose}
+        />
+      );
+    }
+
     switch (callState) {
       case 'selecting':
         return (

@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { CallState, CallType, CallDuration, Expert } from '../CallInterface';
 import { useRazorpayPayment } from '@/hooks/useRazorpayPayment';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 
 interface SessionData {
   startTime: Date;
@@ -17,12 +18,20 @@ export const useCallInterface = (expert: Expert) => {
   const [error, setError] = useState<string | null>(null);
 
   const { processPayment, isLoading: isPaymentLoading } = useRazorpayPayment();
+  const { user, isAuthenticated } = useSimpleAuth();
 
   const handleStartCall = useCallback(async (
     selectedType: CallType, 
     selectedDuration: CallDuration
   ) => {
     try {
+      // Check authentication first
+      if (!isAuthenticated || !user) {
+        setError('User not authenticated');
+        setCallState('error');
+        return;
+      }
+
       setCallType(selectedType);
       setDuration(selectedDuration);
       setCallState('connecting');
@@ -68,7 +77,7 @@ export const useCallInterface = (expert: Expert) => {
       setError(err.message || 'Failed to start call');
       setCallState('error');
     }
-  }, [expert, processPayment]);
+  }, [expert, processPayment, isAuthenticated, user]);
 
   const handleEndCall = useCallback(() => {
     if (sessionData) {
@@ -97,6 +106,7 @@ export const useCallInterface = (expert: Expert) => {
     sessionData,
     error,
     isPaymentLoading,
+    isAuthenticated,
     handleStartCall,
     handleEndCall,
     retryCall
