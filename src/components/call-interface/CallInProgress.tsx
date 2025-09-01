@@ -80,6 +80,7 @@ export const CallInProgress: React.FC<CallInProgressProps> = ({
                 callType={callType}
                 isVideoEnabled={isVideoEnabled}
                 isMuted={isMuted}
+                videoMode={isChatOpen ? 'picture-in-picture' : 'side-by-side'}
               />
             </div>
 

@@ -10,6 +10,7 @@ interface CallVideoContainerProps {
   callType: CallType;
   isVideoEnabled: boolean;
   isMuted: boolean;
+  videoMode?: 'side-by-side' | 'picture-in-picture';
 }
 
 export const CallVideoContainer: React.FC<CallVideoContainerProps> = ({
@@ -17,7 +18,8 @@ export const CallVideoContainer: React.FC<CallVideoContainerProps> = ({
   callState,
   callType,
   isVideoEnabled,
-  isMuted
+  isMuted,
+  videoMode = 'side-by-side'
 }) => {
   const renderConnectingState = () => (
     <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10">
@@ -75,8 +77,13 @@ export const CallVideoContainer: React.FC<CallVideoContainerProps> = ({
   const renderLocalVideo = () => {
     if (callType === 'audio') return null;
 
+    // Different positioning based on video mode
+    const localVideoClass = videoMode === 'side-by-side'
+      ? "absolute bottom-4 left-4 w-32 h-40 bg-gradient-to-br from-secondary/90 to-accent/90 rounded-lg overflow-hidden border-2 border-primary/40 shadow-lg"
+      : "absolute bottom-4 right-4 w-32 h-40 bg-gradient-to-br from-secondary/90 to-accent/90 rounded-lg overflow-hidden border-2 border-primary/40 shadow-lg";
+
     return (
-      <div className="absolute bottom-4 right-4 w-32 h-40 bg-gradient-to-br from-secondary/90 to-accent/90 rounded-lg overflow-hidden border-2 border-primary/40 shadow-lg">
+      <div className={localVideoClass}>
         {isVideoEnabled ? (
           <div className="w-full h-full flex items-center justify-center">
             <Camera className="h-8 w-8 text-primary-foreground" />
@@ -100,8 +107,41 @@ export const CallVideoContainer: React.FC<CallVideoContainerProps> = ({
 
   return (
     <div className="relative w-full h-full bg-background rounded-lg overflow-hidden">
-      {callState === 'connecting' ? renderConnectingState() : renderRemoteVideo()}
-      {renderLocalVideo()}
+      {videoMode === 'side-by-side' ? (
+        <div className="flex h-full gap-2 p-2">
+          {/* Remote video takes left side */}
+          <div className="flex-1 relative bg-gradient-to-br from-secondary/90 to-accent/90 rounded-lg overflow-hidden">
+            {callState === 'connecting' ? renderConnectingState() : renderRemoteVideo()}
+          </div>
+          {/* Local video takes right side */}
+          {callType === 'video' && (
+            <div className="w-1/3 relative bg-gradient-to-br from-secondary/90 to-accent/90 rounded-lg overflow-hidden border-2 border-primary/40">
+              {isVideoEnabled ? (
+                <div className="w-full h-full flex items-center justify-center">
+                  <Camera className="h-8 w-8 text-primary-foreground" />
+                </div>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-muted">
+                  <VideoOff className="h-8 w-8 text-muted-foreground" />
+                </div>
+              )}
+              <div className="absolute bottom-2 left-2 right-2 text-center">
+                <span className="text-xs text-primary-foreground font-medium">You</span>
+              </div>
+              {isMuted && (
+                <div className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-1">
+                  <MicOff className="h-3 w-3" />
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      ) : (
+        <>
+          {callState === 'connecting' ? renderConnectingState() : renderRemoteVideo()}
+          {renderLocalVideo()}
+        </>
+      )}
     </div>
   );
 };
