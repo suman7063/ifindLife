@@ -87,25 +87,19 @@ export const CallPreSelection: React.FC<CallPreSelectionProps> = ({
                 variant={selectedDuration === 30 ? 'default' : 'outline'}
                 onClick={() => setSelectedDuration(30)}
                 size="sm"
-                className="h-12 flex-col space-y-1"
+                className="h-10 justify-center"
               >
-                <Clock className="h-4 w-4" />
-                <div className="text-xs">
-                  <div>30 min</div>
-                  <div className="text-muted-foreground">₹{calculateCost(30)}</div>
-                </div>
+                <Clock className="h-4 w-4 mr-2" />
+                <span className="text-sm">30 min</span>
               </Button>
               <Button
                 variant={selectedDuration === 60 ? 'default' : 'outline'}
                 onClick={() => setSelectedDuration(60)}
                 size="sm"
-                className="h-12 flex-col space-y-1"
+                className="h-10 justify-center"
               >
-                <Clock className="h-4 w-4" />
-                <div className="text-xs">
-                  <div>60 min</div>
-                  <div className="text-muted-foreground">₹{calculateCost(60)}</div>
-                </div>
+                <Clock className="h-4 w-4 mr-2" />
+                <span className="text-sm">60 min</span>
               </Button>
             </div>
           </div>

@@ -76,19 +76,6 @@ export const CallTimer: React.FC<CallTimerProps> = ({
 
   return (
     <div className="space-y-3">
-      {/* Warning Alert */}
-      {showWarning && (
-        <Alert className="border-warning bg-warning/10">
-          <AlertTriangle className="h-4 w-4 text-warning" />
-          <AlertDescription className="text-warning">
-            {warningType === '30sec' 
-              ? 'Call will end in 30 seconds!' 
-              : 'Call will end in 3 minutes!'
-            }
-          </AlertDescription>
-        </Alert>
-      )}
-
       {/* Timer Display */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
@@ -125,16 +112,29 @@ export const CallTimer: React.FC<CallTimerProps> = ({
         )}
       </div>
 
-      {/* Progress Bar */}
-      <div className="space-y-1 mt-3">
-        <Progress 
-          value={progress} 
-          className="h-1" 
-        />
-        <div className="flex justify-between text-xs text-muted-foreground">
+      {/* Warning Alert */}
+      {showWarning && (
+        <Alert className="border-warning bg-warning/10">
+          <AlertTriangle className="h-4 w-4 text-warning" />
+          <AlertDescription className="text-warning">
+            {warningType === '30sec' 
+              ? 'Call will end in 30 seconds!' 
+              : 'Call will end in 3 minutes!'
+            }
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Progress Bar - Positioned at bottom */}
+      <div className="space-y-1">
+        <div className="flex justify-between text-xs text-muted-foreground mb-1">
           <span>0:00</span>
           <span>{formatTime(totalSeconds)}</span>
         </div>
+        <Progress 
+          value={progress} 
+          className="h-[3px]" 
+        />
       </div>
     </div>
   );

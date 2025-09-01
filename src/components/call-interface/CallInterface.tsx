@@ -107,10 +107,8 @@ export const CallInterface: React.FC<CallInterfaceProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-4xl p-0 overflow-hidden border-0 max-h-[90vh]">
-        <div className="overflow-y-auto max-h-[90vh]">
-          {renderContent()}
-        </div>
+      <DialogContent className="sm:max-w-5xl max-h-[95vh] p-0 overflow-hidden border-0">
+        {renderContent()}
       </DialogContent>
     </Dialog>
   );
