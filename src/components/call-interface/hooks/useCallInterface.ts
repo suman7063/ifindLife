@@ -38,46 +38,26 @@ export const useCallInterface = (expert: Expert) => {
 
       const cost = selectedDuration * expert.pricePerMinute;
 
-      // Process payment first
-      await new Promise<void>((resolve, reject) => {
-        processPayment(
-          {
-            amount: cost,
-            currency: 'INR',
-            description: `${selectedDuration} minute ${selectedType} call with ${expert.name}`,
-            expertId: expert.id
-          },
-          (paymentId: string, orderId: string) => {
-            console.log('Payment successful:', paymentId, orderId);
-            
-            // Create session data
-            const session: SessionData = {
-              startTime: new Date(),
-              duration: 0, // Will be updated during call
-              cost: cost
-            };
-            
-            setSessionData(session);
-            setCallState('connected');
-            
-            toast.success(`${selectedType} call started successfully!`);
-            resolve();
-          },
-          (error: any) => {
-            console.error('Payment failed:', error);
-            setError('Payment failed: ' + error.message);
-            setCallState('error');
-            reject(error);
-          }
-        );
-      });
+      // Simulate connection delay, then start call directly (payment removed)
+      setTimeout(() => {
+        const session: SessionData = {
+          startTime: new Date(),
+          duration: 0, // Will be updated during call
+          cost: cost
+        };
+        
+        setSessionData(session);
+        setCallState('connected');
+        
+        toast.success(`${selectedType} call started successfully!`);
+      }, 1500); // 1.5 second delay to simulate connection
 
     } catch (err: any) {
       console.error('Failed to start call:', err);
       setError(err.message || 'Failed to start call');
       setCallState('error');
     }
-  }, [expert, processPayment, isAuthenticated, user]);
+  }, [expert, isAuthenticated, user]);
 
   const handleEndCall = useCallback(() => {
     if (sessionData) {
