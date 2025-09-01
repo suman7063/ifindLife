@@ -35,108 +35,97 @@ export const CallPreSelection: React.FC<CallPreSelectionProps> = ({
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 space-y-4">
       {/* Expert Profile */}
-      <div className="flex items-center space-x-4">
-        <Avatar className="h-16 w-16">
+      <div className="flex items-center space-x-3">
+        <Avatar className="h-12 w-12">
           <AvatarImage src={expert.imageUrl} alt={expert.name} />
           <AvatarFallback>
             <User className="h-8 w-8" />
           </AvatarFallback>
         </Avatar>
         <div>
-          <h2 className="text-2xl font-bold">{expert.name}</h2>
-          <p className="text-muted-foreground">Expert Consultation</p>
-          <Badge variant="secondary" className="mt-1">
-            ₹{expert.pricePerMinute}/minute
-          </Badge>
+          <h2 className="text-xl font-bold">{expert.name}</h2>
+          <p className="text-sm text-muted-foreground">Expert Consultation</p>
         </div>
       </div>
 
-      {/* Call Type Selection */}
+      {/* Call Type & Duration Selection */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Video className="h-5 w-5" />
-            <span>Call Type</span>
-          </CardTitle>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Call Settings</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <Button
-              variant={selectedType === 'video' ? 'default' : 'outline'}
-              onClick={() => setSelectedType('video')}
-              className="h-16 flex-col space-y-2"
-            >
-              <Video className="h-6 w-6" />
-              <span>Video Call</span>
-            </Button>
-            <Button
-              variant={selectedType === 'audio' ? 'default' : 'outline'}
-              onClick={() => setSelectedType('audio')}
-              className="h-16 flex-col space-y-2"
-            >
-              <Phone className="h-6 w-6" />
-              <span>Audio Call</span>
-            </Button>
+          <div>
+            <p className="text-sm font-medium mb-2">Call Type</p>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant={selectedType === 'video' ? 'default' : 'outline'}
+                onClick={() => setSelectedType('video')}
+                size="sm"
+                className="h-10"
+              >
+                <Video className="h-4 w-4 mr-2" />
+                Video
+              </Button>
+              <Button
+                variant={selectedType === 'audio' ? 'default' : 'outline'}
+                onClick={() => setSelectedType('audio')}
+                size="sm"
+                className="h-10"
+              >
+                <Phone className="h-4 w-4 mr-2" />
+                Audio
+              </Button>
+            </div>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Duration Selection */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Clock className="h-5 w-5" />
-            <span>Session Duration</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <Button
-              variant={selectedDuration === 30 ? 'default' : 'outline'}
-              onClick={() => setSelectedDuration(30)}
-              className="h-20 flex-col space-y-2"
-            >
-              <Clock className="h-6 w-6" />
-              <div className="text-center">
-                <div className="font-semibold">30 minutes</div>
-                <div className="text-sm text-muted-foreground">
-                  ₹{calculateCost(30)}
+          <div>
+            <p className="text-sm font-medium mb-2">Duration</p>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant={selectedDuration === 30 ? 'default' : 'outline'}
+                onClick={() => setSelectedDuration(30)}
+                size="sm"
+                className="h-12 flex-col space-y-1"
+              >
+                <Clock className="h-4 w-4" />
+                <div className="text-xs">
+                  <div>30 min</div>
+                  <div className="text-muted-foreground">₹{calculateCost(30)}</div>
                 </div>
-              </div>
-            </Button>
-            <Button
-              variant={selectedDuration === 60 ? 'default' : 'outline'}
-              onClick={() => setSelectedDuration(60)}
-              className="h-20 flex-col space-y-2"
-            >
-              <Clock className="h-6 w-6" />
-              <div className="text-center">
-                <div className="font-semibold">60 minutes</div>
-                <div className="text-sm text-muted-foreground">
-                  ₹{calculateCost(60)}
+              </Button>
+              <Button
+                variant={selectedDuration === 60 ? 'default' : 'outline'}
+                onClick={() => setSelectedDuration(60)}
+                size="sm"
+                className="h-12 flex-col space-y-1"
+              >
+                <Clock className="h-4 w-4" />
+                <div className="text-xs">
+                  <div>60 min</div>
+                  <div className="text-muted-foreground">₹{calculateCost(60)}</div>
                 </div>
-              </div>
-            </Button>
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Cost Summary */}
       <Card className="border-primary">
-        <CardContent className="p-4">
+        <CardContent className="p-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <DollarSign className="h-5 w-5 text-primary" />
-              <span className="font-medium">Total Cost</span>
+              <DollarSign className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">Total Cost</span>
             </div>
-            <div className="text-2xl font-bold text-primary">
+            <div className="text-xl font-bold text-primary">
               ₹{calculateCost(selectedDuration)}
             </div>
           </div>
-          <div className="text-sm text-muted-foreground mt-2">
-            {selectedDuration} minute {selectedType} call with {expert.name}
+          <div className="text-xs text-muted-foreground mt-1">
+            {selectedDuration} min {selectedType} call
           </div>
         </CardContent>
       </Card>
@@ -145,8 +134,7 @@ export const CallPreSelection: React.FC<CallPreSelectionProps> = ({
       <Button
         onClick={handleStartCall}
         disabled={isProcessing}
-        size="lg"
-        className="w-full h-12"
+        className="w-full h-10"
       >
         {isProcessing ? (
           <>

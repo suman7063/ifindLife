@@ -113,18 +113,6 @@ export const CallTimer: React.FC<CallTimerProps> = ({
         </div>
       </div>
 
-      {/* Progress Bar */}
-      <div className="space-y-2">
-        <Progress 
-          value={progress} 
-          className="h-2" 
-        />
-        <div className="flex justify-between text-xs text-muted-foreground">
-          <span>0:00</span>
-          <span>{formatTime(totalSeconds)}</span>
-        </div>
-      </div>
-
       {/* Session Info */}
       <div className="flex items-center justify-between">
         <Badge variant="secondary">
@@ -135,6 +123,18 @@ export const CallTimer: React.FC<CallTimerProps> = ({
             Cost: ₹{sessionData.cost}
           </Badge>
         )}
+      </div>
+
+      {/* Progress Bar */}
+      <div className="space-y-1 mt-3">
+        <Progress 
+          value={progress} 
+          className="h-1" 
+        />
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span>0:00</span>
+          <span>{formatTime(totalSeconds)}</span>
+        </div>
       </div>
     </div>
   );
