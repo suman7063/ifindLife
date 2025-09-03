@@ -120,10 +120,10 @@ const Footer = () => {
         {/* Disclaimer Section */}
         <div className="border-t border-white/10 pt-8 pb-6">
           <div className="max-w-4xl mx-auto">
-            <h5 className="text-ifind-offwhite font-medium text-sm mb-3 text-center">Disclaimer</h5>
+            <h5 className="text-ifind-offwhite font-medium text-sm mb-3 text-center">Caution Statement</h5>
             <div className="text-ifind-offwhite/70 text-xs leading-relaxed space-y-2 text-justify">
               <p>
-                iFindLife is a global emotional wellness platform designed to offer supportive listening, expert guidance, and transformational programs for day-to-day life challenges, stress, and personal growth. While we provide access to trained experts and mental wellness professionals, iFindLife is not equipped to handle medical emergencies, psychiatric crises, or situations requiring immediate clinical intervention.
+                iFindLife is a global emotional wellness platform designed to offer supportive listening, expert guidance, and transformational programs for day-to-day life challenges, stress, and personal growth. While we provide access to trained experts and mental wellness professionals, iFindLife is not equipped to provide any medical treatment, handle medical emergencies, psychiatric crises, or situations requiring immediate clinical intervention.
               </p>
               <p>
                 If you or someone you know is experiencing thoughts of self-harm, suicide, or any mental health emergency, please contact a local helpline or visit the nearest hospital or emergency room. Being with a trusted family member or friend during this time can offer essential support.
