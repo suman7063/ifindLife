@@ -83,6 +83,11 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
+                <Link to="/disclaimer" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
+                  Disclaimer
+                </Link>
+              </li>
+              <li>
                 <Link to="/faqs" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
                   FAQ
                 </Link>

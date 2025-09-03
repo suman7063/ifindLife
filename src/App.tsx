@@ -22,6 +22,7 @@ import ContactUs from './pages/Contact';
 import AboutUs from './pages/AboutUs';
 import TermsOfService from './pages/TermsOfService';
 import PrivacyPolicy from './pages/PrivacyPolicy';
+import Disclaimer from './pages/Disclaimer';
 import NotFound from './pages/NotFound';
 import LogoutPage from './pages/LogoutPage';
 import Services from './pages/Services';
@@ -165,6 +166,7 @@ const UserRoutes: React.FC = () => {
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/disclaimer" element={<Disclaimer />} />
         
         {/* Auth Routes */}
         <Route path="/logout" element={<LogoutPage />} />
