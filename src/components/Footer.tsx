@@ -73,21 +73,6 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/privacy" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link to="/terms" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
-                  Terms of Service
-                </Link>
-              </li>
-              <li>
-                <Link to="/disclaimer" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
-                  Disclaimer
-                </Link>
-              </li>
-              <li>
                 <Link to="/faqs" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
                   FAQ
                 </Link>
@@ -100,6 +85,21 @@ const Footer = () => {
               <li>
                 <Link to="/referral-program" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
                   Referral Program
+                </Link>
+              </li>
+              <li>
+                <Link to="/privacy" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link to="/terms" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
+                  Terms of Service
+                </Link>
+              </li>
+              <li>
+                <Link to="/disclaimer" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
+                  Disclaimer
                 </Link>
               </li>
             </ul>
