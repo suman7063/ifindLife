@@ -57,22 +57,18 @@ export const CallInProgress: React.FC<CallInProgressProps> = ({
 
   return (
     <div className="bg-background">
-      <CallHeader expert={expert} callState={callState} />
+      <CallHeader 
+        expert={expert} 
+        callState={callState} 
+        duration={duration}
+        sessionData={sessionData}
+      />
       
       <div className={containerClass}>
         {/* Video/Audio Container */}
         <div className={videoContainerClass}>
           <div className="relative h-full flex flex-col">
-            {/* Timer */}
-            <div className="p-4 border-b">
-              <CallTimer
-                duration={duration}
-                sessionData={sessionData}
-                callState={callState}
-              />
-            </div>
-
-            {/* Video Container */}
+            {/* Video Container - Now takes full height */}
             <div className="flex-1 relative">
               <CallVideoContainer
                 expert={expert}
@@ -81,6 +77,7 @@ export const CallInProgress: React.FC<CallInProgressProps> = ({
                 isVideoEnabled={isVideoEnabled}
                 isMuted={isMuted}
                 videoMode={isChatOpen ? 'picture-in-picture' : 'side-by-side'}
+                isChatOpen={isChatOpen}
               />
             </div>
 
@@ -100,9 +97,9 @@ export const CallInProgress: React.FC<CallInProgressProps> = ({
           </div>
         </div>
 
-        {/* Chat Panel */}
+        {/* Chat Panel - Equal width when open */}
         {isChatOpen && (
-          <div className="w-80 border-l bg-muted/20">
+          <div className="flex-1 min-w-0 border-l bg-muted/20">
             <CallChat
               expert={expert}
               onClose={() => setIsChatOpen(false)}

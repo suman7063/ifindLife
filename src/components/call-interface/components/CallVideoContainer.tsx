@@ -11,6 +11,7 @@ interface CallVideoContainerProps {
   isVideoEnabled: boolean;
   isMuted: boolean;
   videoMode?: 'side-by-side' | 'picture-in-picture';
+  isChatOpen?: boolean;
 }
 
 export const CallVideoContainer: React.FC<CallVideoContainerProps> = ({
@@ -19,7 +20,8 @@ export const CallVideoContainer: React.FC<CallVideoContainerProps> = ({
   callType,
   isVideoEnabled,
   isMuted,
-  videoMode = 'side-by-side'
+  videoMode = 'side-by-side',
+  isChatOpen = false
 }) => {
   const renderConnectingState = () => (
     <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10">
@@ -109,13 +111,13 @@ export const CallVideoContainer: React.FC<CallVideoContainerProps> = ({
     <div className="relative w-full h-full bg-background rounded-lg overflow-hidden">
       {videoMode === 'side-by-side' ? (
         <div className="flex h-full gap-2 p-2">
-          {/* Remote video takes left side */}
+          {/* Remote video - 50% when no chat, equal third when chat open */}
           <div className="flex-1 relative bg-gradient-to-br from-secondary/90 to-accent/90 rounded-lg overflow-hidden">
             {callState === 'connecting' ? renderConnectingState() : renderRemoteVideo()}
           </div>
-          {/* Local video takes right side */}
+          {/* Local video - 50% when no chat, equal third when chat open */}
           {callType === 'video' && (
-            <div className="w-1/3 relative bg-gradient-to-br from-secondary/90 to-accent/90 rounded-lg overflow-hidden border-2 border-primary/40">
+            <div className="flex-1 relative bg-gradient-to-br from-secondary/90 to-accent/90 rounded-lg overflow-hidden border-2 border-primary/40">
               {isVideoEnabled ? (
                 <div className="w-full h-full flex items-center justify-center">
                   <Camera className="h-8 w-8 text-primary-foreground" />
