@@ -37,24 +37,24 @@ export const MobileAppDemo: React.FC = () => {
   return (
     <div className="mobile-app-demo max-w-sm mx-auto bg-background min-h-screen border-x border-border shadow-2xl">
       <Routes>
-        <Route path="/mobile-app" element={<SplashScreen />} />
-        <Route path="/mobile-app/onboarding/*" element={<OnboardingFlow />} />
-        <Route path="/mobile-app/auth/*" element={<AuthFlow />} />
-        <Route path="/mobile-app/app/*" element={
+        <Route index element={<SplashScreen />} />
+        <Route path="onboarding/*" element={<OnboardingFlow />} />
+        <Route path="auth/*" element={<AuthFlow />} />
+        <Route path="app/*" element={
           <MobileAppLayout>
             <Routes>
-              <Route path="/" element={<HomeScreen />} />
-              <Route path="/services" element={<ServicesScreen />} />
-              <Route path="/services/:serviceId" element={<ServiceDetailScreen />} />
-              <Route path="/experts" element={<ExpertsScreen />} />
-              <Route path="/experts/:expertId" element={<ExpertProfileScreen />} />
-              <Route path="/booking/*" element={<BookingFlow />} />
-              <Route path="/call/:sessionId" element={<LiveCallScreen />} />
-              <Route path="/chat/:sessionId" element={<ChatScreen />} />
-              <Route path="/profile" element={<ProfileScreen />} />
-              <Route path="/payment" element={<PaymentScreen />} />
-              <Route path="/settings" element={<SettingsScreen />} />
-              <Route path="/notifications" element={<NotificationsScreen />} />
+              <Route index element={<HomeScreen />} />
+              <Route path="services" element={<ServicesScreen />} />
+              <Route path="services/:serviceId" element={<ServiceDetailScreen />} />
+              <Route path="experts" element={<ExpertsScreen />} />
+              <Route path="experts/:expertId" element={<ExpertProfileScreen />} />
+              <Route path="booking/*" element={<BookingFlow />} />
+              <Route path="call/:sessionId" element={<LiveCallScreen />} />
+              <Route path="chat/:sessionId" element={<ChatScreen />} />
+              <Route path="profile" element={<ProfileScreen />} />
+              <Route path="payment" element={<PaymentScreen />} />
+              <Route path="settings" element={<SettingsScreen />} />
+              <Route path="notifications" element={<NotificationsScreen />} />
             </Routes>
           </MobileAppLayout>
         } />
