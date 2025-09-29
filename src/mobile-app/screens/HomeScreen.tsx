@@ -1,44 +1,76 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { servicesData } from '@/data/unifiedServicesData';
 import { 
   Video,
-  MessageSquare,
   Calendar,
   Star,
   ArrowRight,
   Heart,
   Users,
-  Clock
+  Clock,
+  Smile,
+  Frown,
+  Angry,
+  Compass,
+  Play
 } from 'lucide-react';
 
-const quickActions = [
+const moodOptions = [
   {
-    icon: Video,
-    label: 'Live Call',
-    description: 'Connect instantly',
-    color: 'bg-ifind-aqua text-white',
-    route: '/mobile-app/app/experts'
+    id: 'happy',
+    icon: Smile,
+    label: 'Happy',
+    description: 'Ready to learn',
+    color: 'bg-green-500',
+    content: 'recorded-sessions'
   },
   {
-    icon: MessageSquare,
-    label: 'Quick Chat',
-    description: 'Start messaging',
-    color: 'bg-ifind-teal text-white',
-    route: '/mobile-app/app/experts'
+    id: 'sad',
+    icon: Frown,
+    label: 'Sad',
+    description: 'Need help',
+    color: 'bg-blue-500',
+    content: 'live-experts'
   },
   {
-    icon: Calendar,
-    label: 'Book Session',
-    description: 'Schedule ahead',
-    color: 'bg-ifind-purple text-white',
-    route: '/mobile-app/app/booking'
+    id: 'angry',
+    icon: Angry,
+    label: 'Angry',
+    description: 'Want to vent',
+    color: 'bg-red-500',
+    content: 'listening-experts'
+  },
+  {
+    id: 'usual',
+    icon: Compass,
+    label: 'Usual',  
+    description: 'Will explore',
+    color: 'bg-ifind-aqua',
+    content: 'services'
   }
 ];
 
-const featuredExperts = [
+const recordedSessions = [
+  {
+    id: 1,
+    title: 'Morning Meditation',
+    expert: 'Dr. Sarah Johnson',
+    duration: '15 min',
+    thumbnail: '/lovable-uploads/session-1.jpg'
+  },
+  {
+    id: 2,
+    title: 'Stress Relief Techniques',
+    expert: 'Dr. Michael Chen',
+    duration: '20 min',
+    thumbnail: '/lovable-uploads/session-2.jpg'
+  }
+];
+
+const liveExperts = [
   {
     id: 1,
     name: 'Dr. Sarah Johnson',
@@ -46,7 +78,52 @@ const featuredExperts = [
     rating: 4.9,
     sessions: 1200,
     price: 50,
-    avatar: '/lovable-uploads/expert-1.jpg',
+    available: true,
+    type: 'therapist'
+  },
+  {
+    id: 2,
+    name: 'Dr. Michael Chen',
+    speciality: 'Depression & Therapy',
+    rating: 4.8,
+    sessions: 950,
+    price: 45,
+    available: true,
+    type: 'therapist'
+  }
+];
+
+const listeningExperts = [
+  {
+    id: 3,
+    name: 'Emma Wilson',
+    speciality: 'Active Listening',
+    rating: 4.7,
+    sessions: 800,
+    price: 25,
+    available: true,
+    type: 'listener'
+  },
+  {
+    id: 4,
+    name: 'James Brown',
+    speciality: 'Compassionate Listening',
+    rating: 4.6,
+    sessions: 650,
+    price: 20,
+    available: true,
+    type: 'listener'
+  }
+];
+
+const topExperts = [
+  {
+    id: 1,
+    name: 'Dr. Sarah Johnson',
+    speciality: 'Anxiety & Stress',
+    rating: 4.9,
+    sessions: 1200,
+    price: 50,
     available: true
   },
   {
@@ -56,13 +133,175 @@ const featuredExperts = [
     rating: 4.8,
     sessions: 950,
     price: 45,
-    avatar: '/lovable-uploads/expert-2.jpg',
     available: false
   }
 ];
 
 export const HomeScreen: React.FC = () => {
   const navigate = useNavigate();
+  const [selectedMood, setSelectedMood] = useState('happy');
+
+  const renderMoodContent = (moodId: string) => {
+    switch (moodId) {
+      case 'happy':
+        return (
+          <div className="space-y-3">
+            <h3 className="font-poppins font-semibold text-ifind-charcoal">Recorded Sessions</h3>
+            {recordedSessions.map((session) => (
+              <div
+                key={session.id}
+                className="bg-white rounded-xl p-4 border border-border/50 hover:border-ifind-aqua/30 transition-all duration-300 cursor-pointer"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-ifind-aqua/20 rounded-xl flex items-center justify-center">
+                    <Play className="h-6 w-6 text-ifind-aqua" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-poppins font-medium text-ifind-charcoal mb-1">
+                      {session.title}
+                    </h4>
+                    <p className="text-sm text-muted-foreground">
+                      {session.expert} • {session.duration}
+                    </p>
+                  </div>
+                  <ArrowRight className="h-5 w-5 text-muted-foreground" />
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      
+      case 'sad':
+        return (
+          <div className="space-y-3">
+            <h3 className="font-poppins font-semibold text-ifind-charcoal">Live Experts Available</h3>
+            {liveExperts.map((expert) => (
+              <div
+                key={expert.id}
+                onClick={() => navigate(`/mobile-app/app/experts/${expert.id}`)}
+                className="bg-white rounded-xl p-4 border border-border/50 hover:border-ifind-aqua/30 transition-all duration-300 cursor-pointer"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="relative">
+                    <div className="w-12 h-12 bg-gradient-to-br from-ifind-aqua to-ifind-teal rounded-full flex items-center justify-center">
+                      <span className="text-white font-semibold text-lg">
+                        {expert.name.charAt(0)}
+                      </span>
+                    </div>
+                    {expert.available && (
+                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <h4 className="font-poppins font-medium text-ifind-charcoal">
+                        {expert.name}
+                      </h4>
+                      <Badge variant="outline" className="text-xs">
+                        ${expert.price}/session
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-1">
+                      {expert.speciality}
+                    </p>
+                    <div className="flex items-center space-x-3 text-xs text-muted-foreground">
+                      <div className="flex items-center">
+                        <Star className="h-3 w-3 text-yellow-500 mr-1" />
+                        {expert.rating}
+                      </div>
+                      <span>•</span>
+                      <span>{expert.sessions} sessions</span>
+                    </div>
+                  </div>
+                  <ArrowRight className="h-5 w-5 text-muted-foreground" />
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      
+      case 'angry':
+        return (
+          <div className="space-y-3">
+            <h3 className="font-poppins font-semibold text-ifind-charcoal">Listening Experts</h3>
+            {listeningExperts.map((expert) => (
+              <div
+                key={expert.id}
+                onClick={() => navigate(`/mobile-app/app/experts/${expert.id}`)}
+                className="bg-white rounded-xl p-4 border border-border/50 hover:border-ifind-aqua/30 transition-all duration-300 cursor-pointer"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="relative">
+                    <div className="w-12 h-12 bg-gradient-to-br from-ifind-teal to-ifind-purple rounded-full flex items-center justify-center">
+                      <span className="text-white font-semibold text-lg">
+                        {expert.name.charAt(0)}
+                      </span>
+                    </div>
+                    {expert.available && (
+                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <h4 className="font-poppins font-medium text-ifind-charcoal">
+                        {expert.name}
+                      </h4>
+                      <Badge variant="outline" className="text-xs">
+                        ${expert.price}/session
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-1">
+                      {expert.speciality}
+                    </p>
+                    <div className="flex items-center space-x-3 text-xs text-muted-foreground">
+                      <div className="flex items-center">
+                        <Star className="h-3 w-3 text-yellow-500 mr-1" />
+                        {expert.rating}
+                      </div>
+                      <span>•</span>
+                      <span>{expert.sessions} sessions</span>
+                    </div>
+                  </div>
+                  <ArrowRight className="h-5 w-5 text-muted-foreground" />
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      
+      case 'usual':
+        return (
+          <div className="space-y-3">
+            <h3 className="font-poppins font-semibold text-ifind-charcoal">Explore Services</h3>
+            {servicesData.slice(0, 4).map((service) => (
+              <div
+                key={service.id}
+                onClick={() => navigate(`/mobile-app/app/services/${service.id}`)}
+                className="bg-white rounded-xl p-4 border border-border/50 hover:border-ifind-aqua/30 transition-all duration-300 cursor-pointer"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${service.color.replace('bg-', 'bg-') + '/20'}`}>
+                    <service.icon className={`h-6 w-6 ${service.textColor}`} />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-poppins font-medium text-ifind-charcoal mb-1">
+                      {service.title}
+                    </h4>
+                    <p className="text-sm text-muted-foreground line-clamp-2">
+                      {service.description}
+                    </p>
+                  </div>
+                  <ArrowRight className="h-5 w-5 text-muted-foreground" />
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="flex flex-col bg-background">
@@ -77,17 +316,21 @@ export const HomeScreen: React.FC = () => {
           </p>
         </div>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-3 gap-3 mb-6">
-          {quickActions.map((action, index) => (
+        {/* Mood Selection */}
+        <div className="grid grid-cols-4 gap-2 mb-6">
+          {moodOptions.map((mood) => (
             <Button
-              key={index}
-              onClick={() => navigate(action.route)}
-              className={`${action.color} hover:opacity-90 flex flex-col items-center justify-center h-20 rounded-xl`}
+              key={mood.id}
+              onClick={() => setSelectedMood(mood.id)}
+              className={`${
+                selectedMood === mood.id 
+                  ? `${mood.color} text-white` 
+                  : 'bg-white text-ifind-charcoal border border-border'
+              } hover:opacity-90 flex flex-col items-center justify-center h-20 rounded-xl transition-all duration-300`}
             >
-              <action.icon className="h-6 w-6 mb-1" />
-              <span className="text-sm font-medium">{action.label}</span>
-              <span className="text-xs opacity-80">{action.description}</span>
+              <mood.icon className="h-6 w-6 mb-1" />
+              <span className="text-sm font-medium">{mood.label}</span>
+              <span className="text-xs opacity-80">{mood.description}</span>
             </Button>
           ))}
         </div>
@@ -119,52 +362,16 @@ export const HomeScreen: React.FC = () => {
       </div>
 
       <div className="p-6 space-y-6">
-        {/* Featured Services */}
+        {/* Mood-based Content */}
         <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-poppins font-semibold text-ifind-charcoal">
-              Popular Services
-            </h2>
-            <Button
-              variant="ghost"
-              onClick={() => navigate('/mobile-app/app/services')}
-              className="text-ifind-aqua p-0 h-auto"
-            >
-              View All <ArrowRight className="ml-1 h-4 w-4" />
-            </Button>
-          </div>
-          
-          <div className="space-y-3">
-            {servicesData.slice(0, 3).map((service) => (
-              <div
-                key={service.id}
-                onClick={() => navigate(`/mobile-app/app/services/${service.id}`)}
-                className="bg-white rounded-xl p-4 border border-border/50 hover:border-ifind-aqua/30 transition-all duration-300 cursor-pointer"
-              >
-                <div className="flex items-center space-x-3">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${service.color.replace('bg-', 'bg-') + '/20'}`}>
-                    <service.icon className={`h-6 w-6 ${service.textColor}`} />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-poppins font-medium text-ifind-charcoal mb-1">
-                      {service.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {service.description}
-                    </p>
-                  </div>
-                  <ArrowRight className="h-5 w-5 text-muted-foreground" />
-                </div>
-              </div>
-            ))}
-          </div>
+          {renderMoodContent(selectedMood)}
         </div>
 
-        {/* Featured Experts */}
+        {/* Top Experts */}
         <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-poppins font-semibold text-ifind-charcoal">
-              Top Experts
+              Top Experts Online
             </h2>
             <Button
               variant="ghost"
@@ -176,7 +383,7 @@ export const HomeScreen: React.FC = () => {
           </div>
           
           <div className="space-y-3">
-            {featuredExperts.map((expert) => (
+            {topExperts.map((expert) => (
               <div
                 key={expert.id}
                 onClick={() => navigate(`/mobile-app/app/experts/${expert.id}`)}
@@ -213,6 +420,47 @@ export const HomeScreen: React.FC = () => {
                       <span>•</span>
                       <span>{expert.sessions} sessions</span>
                     </div>
+                  </div>
+                  <ArrowRight className="h-5 w-5 text-muted-foreground" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Popular Services */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-poppins font-semibold text-ifind-charcoal">
+              Popular Services
+            </h2>
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/mobile-app/app/services')}
+              className="text-ifind-aqua p-0 h-auto"
+            >
+              View All <ArrowRight className="ml-1 h-4 w-4" />
+            </Button>
+          </div>
+          
+          <div className="space-y-3">
+            {servicesData.slice(0, 3).map((service) => (
+              <div
+                key={service.id}
+                onClick={() => navigate(`/mobile-app/app/services/${service.id}`)}
+                className="bg-white rounded-xl p-4 border border-border/50 hover:border-ifind-aqua/30 transition-all duration-300 cursor-pointer"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${service.color.replace('bg-', 'bg-') + '/20'}`}>
+                    <service.icon className={`h-6 w-6 ${service.textColor}`} />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-poppins font-medium text-ifind-charcoal mb-1">
+                      {service.title}
+                    </h3>
+                    <p className="text-sm text-muted-foreground line-clamp-2">
+                      {service.description}
+                    </p>
                   </div>
                   <ArrowRight className="h-5 w-5 text-muted-foreground" />
                 </div>

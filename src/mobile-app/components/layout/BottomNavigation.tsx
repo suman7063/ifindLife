@@ -11,8 +11,8 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { icon: Home, label: 'Home', path: '/mobile-app/app/' },
-  { icon: Grid3X3, label: 'Services', path: '/mobile-app/app/services' },
   { icon: Users, label: 'Experts', path: '/mobile-app/app/experts' },
+  { icon: Grid3X3, label: 'Services', path: '/mobile-app/app/services' },
   { icon: User, label: 'Profile', path: '/mobile-app/app/profile' },
 ];
 

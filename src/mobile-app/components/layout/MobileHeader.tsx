@@ -45,9 +45,11 @@ export const MobileHeader: React.FC = () => {
           </Button>
         )}
         
-        <h1 className="text-lg font-poppins font-semibold text-ifind-charcoal">
-          {getTitle()}
-        </h1>
+        <img 
+          src="/lovable-uploads/ifindlife-logo.png" 
+          alt="iFindLife" 
+          className="h-8 w-auto"
+        />
       </div>
 
       <div className="flex items-center gap-2">

@@ -11,12 +11,6 @@ const features = [
     color: 'text-ifind-aqua bg-ifind-aqua/10'
   },
   {
-    icon: MessageCircle,
-    title: 'Secure Chat Support',
-    description: 'Get support through encrypted messaging anytime',
-    color: 'text-ifind-teal bg-ifind-teal/10'
-  },
-  {
     icon: Calendar,
     title: 'Flexible Scheduling',
     description: 'Book sessions that fit your schedule, 24/7 availability',
