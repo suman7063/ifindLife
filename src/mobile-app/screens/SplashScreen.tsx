@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles } from 'lucide-react';
 
 export const SplashScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -16,17 +15,17 @@ export const SplashScreen: React.FC = () => {
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-br from-ifind-aqua via-ifind-teal to-ifind-purple p-8 text-white">
-      <div className="animate-breathe mb-8">
-        <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-          <Sparkles className="h-12 w-12 text-white" />
+      <div className="animate-breathe mb-12">
+        <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 shadow-2xl border border-white/20">
+          <img 
+            src="/ifindlife-logo.png" 
+            alt="iFindLife" 
+            className="h-32 w-auto"
+          />
         </div>
       </div>
       
-      <h1 className="text-4xl font-poppins font-bold mb-4 text-center">
-        iFindLife
-      </h1>
-      
-      <p className="text-xl font-lato opacity-90 text-center mb-8">
+      <p className="text-2xl font-lato opacity-90 text-center mb-8 font-light">
         Your wellness journey starts here
       </p>
       
