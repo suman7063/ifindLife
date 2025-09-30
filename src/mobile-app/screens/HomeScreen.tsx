@@ -24,7 +24,9 @@ const moodOptions = [
     icon: Smile,
     label: 'Happy',
     description: 'Ready to learn',
-    color: 'bg-green-500',
+    gradient: 'from-ifind-teal to-ifind-aqua',
+    bgColor: 'bg-ifind-teal/10',
+    iconColor: 'text-ifind-teal',
     content: 'recorded-sessions'
   },
   {
@@ -32,7 +34,9 @@ const moodOptions = [
     icon: Frown,
     label: 'Sad',
     description: 'Need help',
-    color: 'bg-blue-500',
+    gradient: 'from-ifind-aqua to-ifind-teal',
+    bgColor: 'bg-ifind-aqua/10',
+    iconColor: 'text-ifind-aqua',
     content: 'live-experts'
   },
   {
@@ -40,7 +44,9 @@ const moodOptions = [
     icon: Angry,
     label: 'Angry',
     description: 'Want to vent',
-    color: 'bg-red-500',
+    gradient: 'from-ifind-purple to-ifind-aqua',
+    bgColor: 'bg-ifind-purple/10',
+    iconColor: 'text-ifind-purple',
     content: 'listening-experts'
   },
   {
@@ -48,7 +54,9 @@ const moodOptions = [
     icon: Compass,
     label: 'Usual',  
     description: 'Will explore',
-    color: 'bg-ifind-aqua',
+    gradient: 'from-ifind-aqua via-ifind-teal to-ifind-purple',
+    bgColor: 'bg-gradient-to-r from-ifind-aqua/10 to-ifind-teal/10',
+    iconColor: 'text-ifind-charcoal',
     content: 'services'
   }
 ];
@@ -317,21 +325,37 @@ export const HomeScreen: React.FC = () => {
         </div>
 
         {/* Mood Selection */}
-        <div className="grid grid-cols-4 gap-2 mb-6">
+        <div className="grid grid-cols-2 gap-3 mb-6">
           {moodOptions.map((mood) => (
-            <Button
+            <button
               key={mood.id}
               onClick={() => setSelectedMood(mood.id)}
               className={`${
                 selectedMood === mood.id 
-                  ? `${mood.color} text-white` 
-                  : 'bg-white text-ifind-charcoal border border-border'
-              } hover:opacity-90 flex flex-col items-center justify-center h-20 rounded-xl transition-all duration-300`}
+                  ? `bg-gradient-to-br ${mood.gradient} shadow-lg scale-105` 
+                  : `${mood.bgColor} border border-border/30`
+              } rounded-2xl p-4 transition-all duration-300 hover:scale-102 hover:shadow-md`}
             >
-              <mood.icon className="h-6 w-6 mb-1" />
-              <span className="text-sm font-medium">{mood.label}</span>
-              <span className="text-xs opacity-80">{mood.description}</span>
-            </Button>
+              <div className={`${
+                selectedMood === mood.id 
+                  ? 'bg-white/20 border-white/40' 
+                  : 'bg-white border-border/50'
+              } w-12 h-12 rounded-xl flex items-center justify-center mb-3 border transition-all duration-300`}>
+                <mood.icon className={`h-6 w-6 ${
+                  selectedMood === mood.id ? 'text-white' : mood.iconColor
+                }`} />
+              </div>
+              <h3 className={`text-base font-poppins font-semibold mb-1 ${
+                selectedMood === mood.id ? 'text-white' : 'text-ifind-charcoal'
+              }`}>
+                {mood.label}
+              </h3>
+              <p className={`text-xs ${
+                selectedMood === mood.id ? 'text-white/90' : 'text-muted-foreground'
+              }`}>
+                {mood.description}
+              </p>
+            </button>
           ))}
         </div>
 
