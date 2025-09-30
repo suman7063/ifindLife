@@ -46,7 +46,7 @@ export const MobileHeader: React.FC = () => {
         )}
         
         <img 
-          src="/lovable-uploads/ifindlife-logo.png" 
+          src="/ifindlife-logo.png" 
           alt="iFindLife" 
           className="h-8 w-auto"
         />
