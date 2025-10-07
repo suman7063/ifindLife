@@ -2414,6 +2414,30 @@ export type Database = {
         }
         Relationships: []
       }
+      waitlist: {
+        Row: {
+          created_at: string | null
+          email: string
+          honeypot: string | null
+          id: string
+          subscriber_number: number
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          honeypot?: string | null
+          id?: string
+          subscriber_number: number
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          honeypot?: string | null
+          id?: string
+          subscriber_number?: number
+        }
+        Relationships: []
+      }
       webhook_logs: {
         Row: {
           created_at: string
