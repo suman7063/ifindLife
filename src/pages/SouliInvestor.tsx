@@ -5,7 +5,6 @@ import { ArrowLeft, Mail, Phone, MapPin, Calendar } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import Footer from "@/components/Footer";
 
 const SouliInvestor = () => {
   const navigate = useNavigate();
@@ -192,8 +191,6 @@ const SouliInvestor = () => {
           </div>
         </div>
       </div>
-      
-      <Footer />
     </div>
   );
 };

@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import dushyantImage from "@/assets/dushyant-kohli.png";
 import devOmImage from "@/assets/dev-om.png";
 import bhavnaImage from "@/assets/bhavna-khurana.png";
-import Footer from "@/components/Footer";
 
 const SouliTeam = () => {
   const navigate = useNavigate();
@@ -138,8 +137,6 @@ const SouliTeam = () => {
           </div>
         </div>
       </div>
-      
-      <Footer />
     </div>
   );
 };
