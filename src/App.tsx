@@ -62,6 +62,8 @@ import AuthCallback from './pages/AuthCallback';
 import { CallInterfaceDemo } from '@/components/call-interface/CallInterfaceDemo';
 import { MobileAppDemo } from '@/mobile-app/index';
 import SouliLanding from './pages/SouliLanding';
+import SouliTeam from './pages/SouliTeam';
+import SouliInvestor from './pages/SouliInvestor';
 
 // Create QueryClient outside component to avoid hook issues
 const queryClient = new QueryClient({
@@ -168,6 +170,8 @@ const UserRoutes: React.FC = () => {
         
         {/* Souli Landing Page */}
         <Route path="/souli" element={<SouliLanding />} />
+        <Route path="/souli/team" element={<SouliTeam />} />
+        <Route path="/souli/investor" element={<SouliInvestor />} />
         
         {/* Legal Routes */}
         <Route path="/terms-of-service" element={<TermsOfService />} />
