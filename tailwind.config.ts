@@ -108,13 +108,16 @@ export default {
 				'50%': { transform: 'scale(1.05)' }
 			},
 			'bounce-smooth': {
-				'0%, 100%': { 
+				'0%': { 
 					transform: 'translateY(0)',
-					animationTimingFunction: 'cubic-bezier(0.8, 0, 1, 1)'
+					animationTimingFunction: 'cubic-bezier(0.33, 1, 0.68, 1)'
 				},
-				'50%': { 
-					transform: 'translateY(-25%)',
-					animationTimingFunction: 'cubic-bezier(0, 0, 0.2, 1)'
+				'40%': { 
+					transform: 'translateY(-30px)',
+					animationTimingFunction: 'cubic-bezier(0.33, 1, 0.68, 1)'
+				},
+				'100%': { 
+					transform: 'translateY(0)'
 				}
 			}
 			},
@@ -123,7 +126,7 @@ export default {
 				'accordion-up': 'accordion-up 0.2s ease-out',
 				'float': 'float 6s ease-in-out infinite',
 				'breathe': 'breathe 4s ease-in-out infinite',
-				'bounce-smooth': 'bounce-smooth 1s ease-in-out infinite'
+				'bounce-smooth': 'bounce-smooth 1.5s ease-out forwards'
 			},
 			backgroundImage: {
 				'soft-gradient': 'linear-gradient(to right, #5AC8FA, #7DD8C9)',
