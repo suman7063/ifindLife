@@ -21,14 +21,13 @@ const SouliPreloader = ({ onLoadingComplete, minDuration = 2000 }: SouliPreloade
   if (!isVisible) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-background via-accent/5 to-primary/10 animate-fade-in">
-      <div className="text-center space-y-6 animate-scale-in">
-        <div className="relative inline-block animate-pulse">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/40 to-secondary/40 rounded-full blur-3xl" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
+      <div className="text-center space-y-6">
+        <div className="relative inline-block animate-bounce-smooth">
           <img 
             src={souliLogo} 
             alt="Souli" 
-            className="relative w-48 h-48 md:w-64 md:h-64 object-contain drop-shadow-2xl"
+            className="w-48 h-48 md:w-64 md:h-64 object-contain"
           />
         </div>
       </div>
