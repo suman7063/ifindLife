@@ -74,6 +74,7 @@ const SidebarMenuItems: React.FC<SidebarMenuItemsProps> = ({
         onTabChange={onTabChange}
         hasReferralsPermission={checkPermission('referrals')}
         hasContactPermission={checkPermission('contact')}
+        hasWaitlistPermission={checkPermission('waitlist')}
       />
 
       <UserManagementSection

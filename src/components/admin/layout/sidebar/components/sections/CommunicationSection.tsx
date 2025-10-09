@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { AtSign, Mail } from 'lucide-react';
+import { AtSign, Mail, Users } from 'lucide-react';
 import MenuSection from '../MenuSection';
 
 interface CommunicationSectionProps {
@@ -8,15 +8,26 @@ interface CommunicationSectionProps {
   onTabChange: (tab: string) => void;
   hasReferralsPermission: boolean;
   hasContactPermission: boolean;
+  hasWaitlistPermission?: boolean;
 }
 
 const CommunicationSection: React.FC<CommunicationSectionProps> = ({
   activeTab,
   onTabChange,
   hasReferralsPermission,
-  hasContactPermission
+  hasContactPermission,
+  hasWaitlistPermission = true
 }) => {
   const items = [];
+  
+  if (hasWaitlistPermission) {
+    items.push({
+      icon: Users,
+      label: "Souli Waitlist",
+      isActive: activeTab === 'waitlist',
+      onClick: () => onTabChange('waitlist')
+    });
+  }
   
   if (hasReferralsPermission) {
     items.push({

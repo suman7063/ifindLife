@@ -6,12 +6,10 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import SouliFooter from "@/components/SouliFooter";
-import SouliPreloader from "@/components/SouliPreloader";
 
 const SouliInvestor = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -27,10 +25,6 @@ const SouliInvestor = () => {
     });
     setFormData({ name: "", email: "", organization: "", message: "" });
   };
-
-  if (isLoading) {
-    return <SouliPreloader onLoadingComplete={() => setIsLoading(false)} />;
-  }
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden bg-gradient-to-br from-background via-accent/5 to-primary/10">

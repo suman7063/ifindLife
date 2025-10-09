@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Linkedin, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -6,11 +5,9 @@ import dushyantImage from "@/assets/dushyant-kohli.png";
 import devOmImage from "@/assets/dev-om.png";
 import bhavnaImage from "@/assets/bhavna-khurana.png";
 import SouliFooter from "@/components/SouliFooter";
-import SouliPreloader from "@/components/SouliPreloader";
 
 const SouliTeam = () => {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(true);
 
   const team = [
     {
@@ -41,10 +38,6 @@ const SouliTeam = () => {
       email: "dk@ifindlife.com"
     }
   ];
-
-  if (isLoading) {
-    return <SouliPreloader onLoadingComplete={() => setIsLoading(false)} />;
-  }
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden bg-gradient-to-br from-background via-accent/5 to-primary/10">

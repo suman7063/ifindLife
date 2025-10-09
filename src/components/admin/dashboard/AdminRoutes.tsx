@@ -22,6 +22,7 @@ import AdminReports from '@/components/admin/reports/AdminReports';
 import AdminUsersList from '@/components/admin/users/AdminUsersList';
 import ContentSearchManager from '@/components/admin/content/ContentSearchManager';
 import { useAdminContentData } from '@/components/admin/hooks/useAdminContent';
+import WaitlistViewer from '@/components/admin/waitlist/WaitlistViewer';
 
 const AdminRoutes: React.FC = () => {
   const { 
@@ -68,6 +69,7 @@ const AdminRoutes: React.FC = () => {
       <Route path="/referrals" element={<ReferralManagement />} />
       <Route path="/adminUsers" element={<AdminUsersManagerPlaceholder />} />
       <Route path="/users" element={<AdminUsersList />} />
+      <Route path="/waitlist" element={<WaitlistViewer />} />
       <Route path="/settings" element={<AdminSettings />} />
       <Route path="*" element={<Navigate to="/admin/overview" replace />} />
     </Routes>
