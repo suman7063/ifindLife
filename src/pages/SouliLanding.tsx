@@ -7,6 +7,8 @@ import souliMascot from "@/assets/souli-mascot.png";
 import { z } from "zod";
 import { Sparkles, Heart, Brain, ArrowRight, CheckCircle2, Share2, Copy, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import SouliFooter from "@/components/SouliFooter";
+import SouliPreloader from "@/components/SouliPreloader";
 
 const emailSchema = z.object({
   email: z.string().trim().email({ message: "Please enter a valid email address" }).max(255),
@@ -20,6 +22,7 @@ const SouliLanding = () => {
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [subscriberNumber, setSubscriberNumber] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
   const handleCopyLink = async () => {
@@ -116,6 +119,10 @@ const SouliLanding = () => {
     }
   };
 
+  if (isLoading) {
+    return <SouliPreloader onLoadingComplete={() => setIsLoading(false)} />;
+  }
+
   if (isConfirmed) {
     return (
       <div className="min-h-screen flex flex-col relative overflow-hidden bg-gradient-to-br from-background via-accent/5 to-primary/10">
@@ -201,6 +208,8 @@ const SouliLanding = () => {
             </Button>
           </div>
         </div>
+        
+        <SouliFooter />
       </div>
     );
   }
@@ -492,6 +501,8 @@ const SouliLanding = () => {
 
         </div>
       </div>
+      
+      <SouliFooter />
     </div>
   );
 };
