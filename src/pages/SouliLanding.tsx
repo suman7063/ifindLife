@@ -173,7 +173,7 @@ const SouliLanding = () => {
                 </h2>
                 <div className="space-y-4 text-muted-foreground">
                   <p className="text-xl leading-relaxed">
-                    We'll send you an email with your <span className="font-bold text-primary">exclusive offer</span> when we launch in <span className="font-bold text-secondary">January 2025</span>.
+                    We'll send you an email with your <span className="font-bold text-primary">exclusive offer</span> when we launch in <span className="font-bold text-secondary">January 2026</span>.
                   </p>
                   <p className="text-lg">
                     Get ready to start your transformational journey from recovery to resilience.
@@ -323,8 +323,8 @@ const SouliLanding = () => {
                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent/20 to-accent/10 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <Sparkles className="w-8 h-8 text-accent" />
                 </div>
-                <h3 className="font-bold text-2xl text-foreground">Become Resilient</h3>
-                <p className="text-base text-muted-foreground text-center leading-relaxed">Build lasting strength for whatever life brings</p>
+                <h3 className="font-bold text-2xl text-foreground">Exclusive Sessions</h3>
+                <p className="text-base text-muted-foreground text-center leading-relaxed">Access personalized guidance from expert practitioners</p>
               </div>
             </div>
           </div>
