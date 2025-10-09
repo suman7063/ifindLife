@@ -64,6 +64,9 @@ import { MobileAppDemo } from '@/mobile-app/index';
 import SouliLanding from './pages/SouliLanding';
 import SouliTeam from './pages/SouliTeam';
 import SouliInvestor from './pages/SouliInvestor';
+import SouliAuth from './pages/SouliAuth';
+import SouliAdminWaitlist from './pages/SouliAdminWaitlist';
+import { SouliAuthProvider } from '@/contexts/SouliAuthContext';
 
 // Create QueryClient outside component to avoid hook issues
 const queryClient = new QueryClient({
@@ -213,6 +216,18 @@ function App(): JSX.Element {
             <SecureAdminAuthProvider>
               <AdminDashboard />
             </SecureAdminAuthProvider>
+          } />
+          
+          {/* Souli Admin routes with separate authentication */}
+          <Route path="/souli/auth" element={
+            <SouliAuthProvider>
+              <SouliAuth />
+            </SouliAuthProvider>
+          } />
+          <Route path="/souli/admin/waitlist" element={
+            <SouliAuthProvider>
+              <SouliAdminWaitlist />
+            </SouliAuthProvider>
           } />
           
           {/* All other routes with SimpleAuthProvider */}

@@ -8,7 +8,6 @@ interface CommunicationSectionProps {
   onTabChange: (tab: string) => void;
   hasReferralsPermission: boolean;
   hasContactPermission: boolean;
-  hasWaitlistPermission?: boolean;
 }
 
 const CommunicationSection: React.FC<CommunicationSectionProps> = ({
@@ -16,18 +15,8 @@ const CommunicationSection: React.FC<CommunicationSectionProps> = ({
   onTabChange,
   hasReferralsPermission,
   hasContactPermission,
-  hasWaitlistPermission = true
 }) => {
   const items = [];
-  
-  if (hasWaitlistPermission) {
-    items.push({
-      icon: Users,
-      label: "Souli Waitlist",
-      isActive: activeTab === 'waitlist',
-      onClick: () => onTabChange('waitlist')
-    });
-  }
   
   if (hasReferralsPermission) {
     items.push({
