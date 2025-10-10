@@ -150,11 +150,6 @@ const SouliLanding = () => {
               <h1 className="text-5xl md:text-6xl font-bold text-foreground leading-tight">
                 You're In! 🎉
               </h1>
-              <div className="inline-block">
-                <p className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent px-8 py-3 rounded-2xl bg-white/40 backdrop-blur-sm border-2 border-primary/20">
-                  You're #{subscriberNumber}
-                </p>
-              </div>
               {subscriberNumber <= 500 && (
                 <div className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-full backdrop-blur-sm border border-primary/30 animate-scale-in" style={{ animationDelay: "0.3s" }}>
                   <Sparkles className="w-5 h-5 text-primary" />
