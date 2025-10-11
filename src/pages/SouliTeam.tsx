@@ -23,8 +23,8 @@ const SouliTeam = () => {
       name: "Dev OM",
       role: "Co-founder and Chief Mentor",
       image: devOmImage,
-      bio: "With over 20 years of global experience in emotional and mental wellness coaching, Master Dev Om is a globally recognized mindfulness and meditation coach. He was directly trained by father of mindfulness - Thich Nhat Hanh and the Dalai Lama. He created 'Light Mindfulness Meditation,' authored 9 books, and has trained and certified hundreds of meditation & mindfulness coaches worldwide.",
-      highlights: ["Creator of 'Light Mindfulness Meditation'", "Author of 9 books on mindfulness", "Trained by Thich Nhat Hanh and the Dalai Lama"],
+      bio: "With over 20 years of global experience in emotional and mental wellness coaching, Master Dev Om is a globally recognized mindfulness and meditation coach. He was directly trained by father of mindfulness - Thich Nhat Hanh and the Dalai Lama. He created 'Light Mindfulness Energy Framework,' authored 9 books, and has trained and certified hundreds of meditation & mindfulness coaches worldwide.",
+      highlights: ["Creator of 'Light Mindfulness Energy Framework'", "Author of 9 books on mindfulness", "Trained by father of Mindfulness - Thich Nhat Hanh and the Dalai Lama"],
       linkedin: "#",
       email: "dk@ifindlife.com"
     },

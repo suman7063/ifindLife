@@ -8,12 +8,12 @@ const teamMembers: TeamMember[] = [
     id: 1,
     name: "Dev OM",
     title: "Cofounder and Chief Mentor",
-    bio: "With over 20 years of global experience in emotional and mental wellness coaching, Master Dev Om is a globally recognized mindfulness and meditation coach. He was directly trained by father of mindfulness - Thich Nhat Hanh and the Dalai Lama. He created 'Light Mindfulness Meditation,' authored 9 books, and has trained and certified hundreds of meditation & mindfulness coaches worldwide.",
+    bio: "With over 20 years of global experience in emotional and mental wellness coaching, Master Dev Om is a globally recognized mindfulness and meditation coach. He was directly trained by father of mindfulness - Thich Nhat Hanh and the Dalai Lama. He created 'Light Mindfulness Energy Framework,' authored 9 books, and has trained and certified hundreds of meditation & mindfulness coaches worldwide.",
     image: "/lovable-uploads/7069b4db-6802-4e03-b1f1-bf1f03d2c176.png",
     highlights: [
-      { icon: <BrainCircuit className="h-4 w-4" />, text: "Creator of 'Light Mindfulness Meditation'" },
+      { icon: <BrainCircuit className="h-4 w-4" />, text: "Creator of 'Light Mindfulness Energy Framework'" },
       { icon: <BookOpen className="h-4 w-4" />, text: "Author of 9 books on mindfulness" },
-      { icon: <Award className="h-4 w-4" />, text: "Trained by Thich Nhat Hanh and the Dalai Lama" }
+      { icon: <Award className="h-4 w-4" />, text: "Trained by father of Mindfulness - Thich Nhat Hanh and the Dalai Lama" }
     ]
   },
   {
