@@ -44,7 +44,7 @@ const moodOptions = [
   {
     id: 'angry',
     icon: Angry,
-    label: 'Angry',
+    label: 'Annoyed',
     description: 'Want to vent',
     gradient: 'from-ifind-purple to-ifind-aqua',
     bgColor: 'bg-ifind-purple/10',
@@ -54,7 +54,7 @@ const moodOptions = [
   {
     id: 'usual',
     icon: Compass,
-    label: 'Usual',  
+    label: 'Easy',  
     description: 'Will explore',
     gradient: 'from-ifind-aqua via-ifind-teal to-ifind-purple',
     bgColor: 'bg-gradient-to-r from-ifind-aqua/10 to-ifind-teal/10',
