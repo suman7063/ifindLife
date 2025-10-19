@@ -15,7 +15,9 @@ import {
   Frown,
   Angry,
   Compass,
-  Play
+  Play,
+  Wind,
+  Sparkles
 } from 'lucide-react';
 
 const moodOptions = [
@@ -386,6 +388,44 @@ export const HomeScreen: React.FC = () => {
       </div>
 
       <div className="p-6 space-y-6">
+        {/* Everyday Energy Activity */}
+        <div>
+          <h2 className="text-xl font-poppins font-semibold text-ifind-charcoal mb-4">
+            Everyday Energy Activity
+          </h2>
+          
+          <div className="bg-gradient-to-br from-ifind-teal/10 via-ifind-aqua/10 to-ifind-purple/5 rounded-2xl p-5 border border-ifind-teal/20">
+            <div className="flex items-start space-x-4">
+              <div className="w-14 h-14 bg-gradient-to-br from-ifind-teal to-ifind-aqua rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
+                <Wind className="h-7 w-7 text-white" />
+              </div>
+              
+              <div className="flex-1">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-poppins font-semibold text-ifind-charcoal text-lg">
+                    Mindful Breathing
+                  </h3>
+                  <Badge variant="outline" className="bg-white/50 text-xs">
+                    5 min
+                  </Badge>
+                </div>
+                
+                <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+                  Start your day with calming breathwork. This simple practice helps reduce stress and boost energy naturally.
+                </p>
+                
+                <Button 
+                  variant="ghost" 
+                  className="text-ifind-teal hover:text-ifind-teal hover:bg-ifind-teal/10 p-0 h-auto font-medium"
+                  onClick={() => navigate('/mobile-app/app/services/breathing-exercise')}
+                >
+                  Start Activity <ArrowRight className="ml-1 h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Mood-based Content */}
         <div>
           {renderMoodContent(selectedMood)}
