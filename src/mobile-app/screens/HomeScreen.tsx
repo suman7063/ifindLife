@@ -327,7 +327,7 @@ export const HomeScreen: React.FC = () => {
         </div>
 
         {/* Mood Selection */}
-        <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="flex gap-3 mb-6 overflow-x-auto pb-2">
           {moodOptions.map((mood) => (
             <button
               key={mood.id}
@@ -336,7 +336,7 @@ export const HomeScreen: React.FC = () => {
                 selectedMood === mood.id 
                   ? `bg-gradient-to-br ${mood.gradient} shadow-lg scale-105` 
                   : `${mood.bgColor} border border-border/30`
-              } rounded-2xl p-4 transition-all duration-300 hover:scale-102 hover:shadow-md`}
+              } rounded-2xl p-4 transition-all duration-300 hover:scale-102 hover:shadow-md flex-shrink-0 min-w-[140px]`}
             >
               <div className={`${
                 selectedMood === mood.id 
@@ -417,7 +417,7 @@ export const HomeScreen: React.FC = () => {
                 <Button 
                   variant="ghost" 
                   className="text-ifind-teal hover:text-ifind-teal hover:bg-ifind-teal/10 p-0 h-auto font-medium"
-                  onClick={() => navigate('/mobile-app/app/services/breathing-exercise')}
+                  onClick={() => navigate('/mobile-app/app/activity/breathing')}
                 >
                   Start Activity <ArrowRight className="ml-1 h-4 w-4" />
                 </Button>
