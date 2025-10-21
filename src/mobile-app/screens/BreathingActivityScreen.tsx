@@ -66,12 +66,17 @@ export const BreathingActivityScreen: React.FC = () => {
     setCyclesCompleted(0);
   };
 
-  const circleScale = {
-    inhale: 'scale-150',
-    hold: 'scale-150',
-    exhale: 'scale-75',
-    rest: 'scale-75'
+  // Calculate scale for smooth animation synced with timer
+  const getScale = () => {
+    if (phase === 'inhale' || phase === 'hold') return 1.5;
+    if (phase === 'exhale' || phase === 'rest') return 0.75;
+    return 1;
   };
+
+  const getCircleStyle = () => ({
+    transform: `scale(${getScale()})`,
+    transition: `transform ${phaseDurations[phase]}s ease-in-out, opacity 0.5s ease-in-out`,
+  });
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-ifind-aqua/5 via-ifind-teal/5 to-ifind-purple/5">
@@ -92,19 +97,22 @@ export const BreathingActivityScreen: React.FC = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col items-center justify-center p-6 space-y-8">
         {/* Breathing Circle Animation */}
-        <div className="relative w-64 h-64 flex items-center justify-center">
+        <div className="relative w-52 h-52 flex items-center justify-center">
           <div 
-            className={`absolute w-48 h-48 rounded-full bg-gradient-to-br ${phaseColors[phase]} opacity-30 transition-all duration-[${phaseDurations[phase]}000ms] ease-in-out ${circleScale[phase]}`}
+            className={`absolute w-38 h-38 rounded-full bg-gradient-to-br ${phaseColors[phase]} opacity-30`}
+            style={getCircleStyle()}
           />
           <div 
-            className={`absolute w-40 h-40 rounded-full bg-gradient-to-br ${phaseColors[phase]} opacity-50 transition-all duration-[${phaseDurations[phase]}000ms] ease-in-out ${circleScale[phase]}`}
+            className={`absolute w-32 h-32 rounded-full bg-gradient-to-br ${phaseColors[phase]} opacity-50`}
+            style={getCircleStyle()}
           />
           <div 
-            className={`absolute w-32 h-32 rounded-full bg-gradient-to-br ${phaseColors[phase]} transition-all duration-[${phaseDurations[phase]}000ms] ease-in-out ${circleScale[phase]} flex items-center justify-center`}
+            className={`absolute w-26 h-26 rounded-full bg-gradient-to-br ${phaseColors[phase]} flex items-center justify-center`}
+            style={getCircleStyle()}
           >
             <div className="text-center text-white">
-              <div className="text-5xl font-bold mb-1">{countdown}</div>
-              <div className="text-sm font-medium">{phaseInstructions[phase]}</div>
+              <div className="text-4xl font-bold mb-1">{countdown}</div>
+              <div className="text-xs font-medium">{phaseInstructions[phase]}</div>
             </div>
           </div>
         </div>

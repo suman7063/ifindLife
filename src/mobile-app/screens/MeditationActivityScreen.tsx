@@ -102,7 +102,6 @@ export const MeditationActivityScreen: React.FC = () => {
   };
 
   const progress = (currentTime / duration) * 100;
-  const pulseScale = isPlaying ? 'scale-110' : 'scale-100';
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-ifind-purple/5 via-ifind-aqua/5 to-ifind-teal/5">
@@ -123,17 +122,17 @@ export const MeditationActivityScreen: React.FC = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col items-center justify-center p-6 space-y-6">
         {/* Meditation Visual */}
-        <div className="relative w-64 h-64 flex items-center justify-center">
+        <div className="relative w-52 h-52 flex items-center justify-center">
           <div 
-            className={`absolute w-56 h-56 rounded-full bg-gradient-to-br from-ifind-purple/20 to-ifind-aqua/20 transition-all duration-[2000ms] ease-in-out ${pulseScale}`}
+            className={`absolute w-44 h-44 rounded-full bg-gradient-to-br from-ifind-purple/20 to-ifind-aqua/20 ${isPlaying ? 'animate-[ping_3s_ease-in-out_infinite]' : ''}`}
           />
           <div 
-            className={`absolute w-48 h-48 rounded-full bg-gradient-to-br from-ifind-purple/30 to-ifind-aqua/30 transition-all duration-[2000ms] ease-in-out ${pulseScale}`}
+            className={`absolute w-38 h-38 rounded-full bg-gradient-to-br from-ifind-purple/30 to-ifind-aqua/30 ${isPlaying ? 'animate-[ping_2.5s_ease-in-out_infinite]' : ''}`}
           />
           <div 
-            className={`absolute w-40 h-40 rounded-full bg-gradient-to-br from-ifind-purple to-ifind-aqua transition-all duration-[2000ms] ease-in-out ${pulseScale} flex items-center justify-center shadow-lg`}
+            className="absolute w-32 h-32 rounded-full bg-gradient-to-br from-ifind-purple to-ifind-aqua flex items-center justify-center shadow-lg"
           >
-            <Sparkles className="h-16 w-16 text-white" />
+            <Sparkles className="h-12 w-12 text-white" />
           </div>
         </div>
 
@@ -214,6 +213,24 @@ export const MeditationActivityScreen: React.FC = () => {
               <p className="text-sm text-muted-foreground">
                 {meditationAudio.description}
               </p>
+            </div>
+          </div>
+        </Card>
+
+        {/* What You'll Need */}
+        <Card className="w-full p-4 bg-white/80 backdrop-blur-sm">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 bg-ifind-aqua/10 rounded-full flex items-center justify-center flex-shrink-0">
+              <Info className="h-5 w-5 text-ifind-aqua" />
+            </div>
+            <div>
+              <h3 className="font-poppins font-semibold text-ifind-charcoal mb-2">What You'll Need</h3>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                <li>• A quiet, comfortable space</li>
+                <li>• Headphones or speakers (optional)</li>
+                <li>• 10 minutes of uninterrupted time</li>
+                <li>• An open mind and relaxed body</li>
+              </ul>
             </div>
           </div>
         </Card>
