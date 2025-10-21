@@ -66,35 +66,11 @@ export const BreathingActivityScreen: React.FC = () => {
     setCyclesCompleted(0);
   };
 
-  const getCircleStyle = (size: number) => {
-    let scale = 1;
-    let opacity = 0.3;
-    
-    switch (phase) {
-      case 'inhale':
-        scale = 1.6;
-        opacity = size === 38 ? 0.2 : size === 32 ? 0.4 : 0.7;
-        break;
-      case 'hold':
-        scale = 1.6;
-        opacity = size === 38 ? 0.3 : size === 32 ? 0.5 : 0.9;
-        break;
-      case 'exhale':
-        scale = 0.9;
-        opacity = size === 38 ? 0.15 : size === 32 ? 0.3 : 0.6;
-        break;
-      case 'rest':
-        scale = 0.9;
-        opacity = size === 38 ? 0.1 : size === 32 ? 0.2 : 0.5;
-        break;
-    }
-    
-    const duration = phaseDurations[phase];
-    return {
-      transform: `scale(${scale})`,
-      opacity,
-      transition: `all ${duration}s ease-in-out`
-    };
+  const circleScale = {
+    inhale: 'scale-150',
+    hold: 'scale-150',
+    exhale: 'scale-75',
+    rest: 'scale-75'
   };
 
   return (
@@ -116,22 +92,19 @@ export const BreathingActivityScreen: React.FC = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col items-center justify-center p-6 space-y-8">
         {/* Breathing Circle Animation */}
-        <div className="relative w-52 h-52 flex items-center justify-center">
+        <div className="relative w-64 h-64 flex items-center justify-center">
           <div 
-            className={`absolute w-38 h-38 rounded-full bg-gradient-to-br ${phaseColors[phase]}`}
-            style={getCircleStyle(38)}
+            className={`absolute w-48 h-48 rounded-full bg-gradient-to-br ${phaseColors[phase]} opacity-30 transition-all duration-[${phaseDurations[phase]}000ms] ease-in-out ${circleScale[phase]}`}
           />
           <div 
-            className={`absolute w-32 h-32 rounded-full bg-gradient-to-br ${phaseColors[phase]}`}
-            style={getCircleStyle(32)}
+            className={`absolute w-40 h-40 rounded-full bg-gradient-to-br ${phaseColors[phase]} opacity-50 transition-all duration-[${phaseDurations[phase]}000ms] ease-in-out ${circleScale[phase]}`}
           />
           <div 
-            className={`absolute w-26 h-26 rounded-full bg-gradient-to-br ${phaseColors[phase]} flex items-center justify-center shadow-lg`}
-            style={getCircleStyle(26)}
+            className={`absolute w-32 h-32 rounded-full bg-gradient-to-br ${phaseColors[phase]} transition-all duration-[${phaseDurations[phase]}000ms] ease-in-out ${circleScale[phase]} flex items-center justify-center`}
           >
             <div className="text-center text-white">
-              <div className="text-4xl font-bold mb-1">{countdown}</div>
-              <div className="text-xs font-medium">{phaseInstructions[phase]}</div>
+              <div className="text-5xl font-bold mb-1">{countdown}</div>
+              <div className="text-sm font-medium">{phaseInstructions[phase]}</div>
             </div>
           </div>
         </div>

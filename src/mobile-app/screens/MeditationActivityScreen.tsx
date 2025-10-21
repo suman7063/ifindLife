@@ -102,6 +102,7 @@ export const MeditationActivityScreen: React.FC = () => {
   };
 
   const progress = (currentTime / duration) * 100;
+  const pulseScale = isPlaying ? 'scale-110' : 'scale-100';
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-ifind-purple/5 via-ifind-aqua/5 to-ifind-teal/5">
@@ -121,69 +122,18 @@ export const MeditationActivityScreen: React.FC = () => {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col items-center justify-center p-6 space-y-6">
-        {/* Meditation Visual with Progress */}
-        <div className="relative w-52 h-52 flex items-center justify-center">
-          {/* Outer radiating ring */}
+        {/* Meditation Visual */}
+        <div className="relative w-64 h-64 flex items-center justify-center">
           <div 
-            className={`absolute w-48 h-48 rounded-full bg-gradient-to-br from-ifind-purple/20 to-ifind-aqua/20 ${
-              isPlaying ? 'animate-[ping_3s_ease-in-out_infinite]' : ''
-            }`}
-            style={{
-              opacity: isPlaying ? 0.4 : 0.2
-            }}
+            className={`absolute w-56 h-56 rounded-full bg-gradient-to-br from-ifind-purple/20 to-ifind-aqua/20 transition-all duration-[2000ms] ease-in-out ${pulseScale}`}
           />
-          
-          {/* Middle radiating ring */}
           <div 
-            className={`absolute w-40 h-40 rounded-full bg-gradient-to-br from-ifind-purple/30 to-ifind-aqua/30 ${
-              isPlaying ? 'animate-[ping_2.5s_ease-in-out_infinite]' : ''
-            }`}
-            style={{
-              opacity: isPlaying ? 0.6 : 0.3,
-              animationDelay: isPlaying ? '0.5s' : '0s'
-            }}
+            className={`absolute w-48 h-48 rounded-full bg-gradient-to-br from-ifind-purple/30 to-ifind-aqua/30 transition-all duration-[2000ms] ease-in-out ${pulseScale}`}
           />
-          
-          {/* Progress ring */}
-          <svg className="absolute w-36 h-36 -rotate-90">
-            <circle
-              cx="72"
-              cy="72"
-              r="68"
-              fill="none"
-              stroke="hsl(var(--ifind-purple) / 0.2)"
-              strokeWidth="3"
-            />
-            <circle
-              cx="72"
-              cy="72"
-              r="68"
-              fill="none"
-              stroke="url(#gradient)"
-              strokeWidth="3"
-              strokeDasharray={`${2 * Math.PI * 68}`}
-              strokeDashoffset={`${2 * Math.PI * 68 * (1 - progress / 100)}`}
-              strokeLinecap="round"
-              className="transition-all duration-500"
-            />
-            <defs>
-              <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="hsl(var(--ifind-purple))" />
-                <stop offset="100%" stopColor="hsl(var(--ifind-aqua))" />
-              </linearGradient>
-            </defs>
-          </svg>
-          
-          {/* Center circle with sparkles */}
-          <div className="absolute w-32 h-32 rounded-full bg-gradient-to-br from-ifind-purple to-ifind-aqua flex items-center justify-center shadow-lg">
-            <Sparkles 
-              className={`h-12 w-12 text-white transition-transform duration-1000 ${
-                isPlaying ? 'animate-spin' : ''
-              }`}
-              style={{
-                animationDuration: '8s'
-              }}
-            />
+          <div 
+            className={`absolute w-40 h-40 rounded-full bg-gradient-to-br from-ifind-purple to-ifind-aqua transition-all duration-[2000ms] ease-in-out ${pulseScale} flex items-center justify-center shadow-lg`}
+          >
+            <Sparkles className="h-16 w-16 text-white" />
           </div>
         </div>
 
@@ -264,24 +214,6 @@ export const MeditationActivityScreen: React.FC = () => {
               <p className="text-sm text-muted-foreground">
                 {meditationAudio.description}
               </p>
-            </div>
-          </div>
-        </Card>
-
-        {/* What You'll Need */}
-        <Card className="w-full p-4 bg-white/80 backdrop-blur-sm">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 bg-ifind-aqua/10 rounded-full flex items-center justify-center flex-shrink-0">
-              <Info className="h-5 w-5 text-ifind-aqua" />
-            </div>
-            <div>
-              <h3 className="font-poppins font-semibold text-ifind-charcoal mb-2">What You'll Need</h3>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• A quiet, comfortable space</li>
-                <li>• Headphones or earbuds (recommended)</li>
-                <li>• 10-15 minutes of uninterrupted time</li>
-                <li>• Comfortable sitting or lying position</li>
-              </ul>
             </div>
           </div>
         </Card>
