@@ -394,33 +394,66 @@ export const HomeScreen: React.FC = () => {
             Everyday Energy Activity
           </h2>
           
-          <div className="bg-gradient-to-br from-ifind-teal/10 via-ifind-aqua/10 to-ifind-purple/5 rounded-2xl p-5 border border-ifind-teal/20">
-            <div className="flex items-start space-x-4">
-              <div className="w-14 h-14 bg-gradient-to-br from-ifind-teal to-ifind-aqua rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
-                <Wind className="h-7 w-7 text-white" />
-              </div>
-              
-              <div className="flex-1">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-poppins font-semibold text-ifind-charcoal text-lg">
-                    Mindful Breathing
-                  </h3>
-                  <Badge variant="outline" className="bg-white/50 text-xs">
-                    5 min
-                  </Badge>
+          <div className="space-y-3">
+            <div className="bg-gradient-to-br from-ifind-teal/10 via-ifind-aqua/10 to-ifind-purple/5 rounded-2xl p-5 border border-ifind-teal/20">
+              <div className="flex items-start space-x-4">
+                <div className="w-14 h-14 bg-gradient-to-br from-ifind-teal to-ifind-aqua rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <Wind className="h-7 w-7 text-white" />
                 </div>
                 
-                <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
-                  Start your day with calming breathwork. This simple practice helps reduce stress and boost energy naturally.
-                </p>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-poppins font-semibold text-ifind-charcoal text-lg">
+                      Mindful Breathing
+                    </h3>
+                    <Badge variant="outline" className="bg-white/50 text-xs">
+                      5 min
+                    </Badge>
+                  </div>
+                  
+                  <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+                    Start your day with calming breathwork. This simple practice helps reduce stress and boost energy naturally.
+                  </p>
+                  
+                  <Button 
+                    variant="ghost" 
+                    className="text-ifind-teal hover:text-ifind-teal hover:bg-ifind-teal/10 p-0 h-auto font-medium"
+                    onClick={() => navigate('/mobile-app/app/activity/breathing')}
+                  >
+                    Start Activity <ArrowRight className="ml-1 h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-ifind-purple/10 via-ifind-aqua/10 to-ifind-teal/5 rounded-2xl p-5 border border-ifind-purple/20">
+              <div className="flex items-start space-x-4">
+                <div className="w-14 h-14 bg-gradient-to-br from-ifind-purple to-ifind-aqua rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <Sparkles className="h-7 w-7 text-white" />
+                </div>
                 
-                <Button 
-                  variant="ghost" 
-                  className="text-ifind-teal hover:text-ifind-teal hover:bg-ifind-teal/10 p-0 h-auto font-medium"
-                  onClick={() => navigate('/mobile-app/app/activity/breathing')}
-                >
-                  Start Activity <ArrowRight className="ml-1 h-4 w-4" />
-                </Button>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-poppins font-semibold text-ifind-charcoal text-lg">
+                      Guided Meditation
+                    </h3>
+                    <Badge variant="outline" className="bg-white/50 text-xs">
+                      10 min
+                    </Badge>
+                  </div>
+                  
+                  <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+                    Find inner peace with our guided meditation. Relax your mind and body with soothing music and gentle guidance.
+                  </p>
+                  
+                  <Button 
+                    variant="ghost" 
+                    className="text-ifind-purple hover:text-ifind-purple hover:bg-ifind-purple/10 p-0 h-auto font-medium"
+                    onClick={() => navigate('/mobile-app/app/activity/meditation')}
+                  >
+                    Start Activity <ArrowRight className="ml-1 h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
           </div>

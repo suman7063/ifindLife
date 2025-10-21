@@ -17,6 +17,7 @@ import { PaymentScreen } from './screens/PaymentScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 import { NotificationsScreen } from './screens/NotificationsScreen';
 import { BreathingActivityScreen } from './screens/BreathingActivityScreen';
+import { MeditationActivityScreen } from './screens/MeditationActivityScreen';
 
 /**
  * Mobile App UI Flow
@@ -57,6 +58,7 @@ export const MobileAppDemo: React.FC = () => {
               <Route path="settings" element={<SettingsScreen />} />
               <Route path="notifications" element={<NotificationsScreen />} />
               <Route path="activity/breathing" element={<BreathingActivityScreen />} />
+              <Route path="activity/meditation" element={<MeditationActivityScreen />} />
             </Routes>
           </MobileAppLayout>
         } />
