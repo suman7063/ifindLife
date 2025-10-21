@@ -102,17 +102,6 @@ export const MeditationActivityScreen: React.FC = () => {
   };
 
   const progress = (currentTime / duration) * 100;
-  
-  // Calculate fill angle for progress circles (0-360 degrees)
-  const fillAngle = (progress / 100) * 360;
-  
-  // Create a conic gradient that fills based on progress
-  const progressGradient = `conic-gradient(
-    from 0deg,
-    hsl(var(--ifind-purple)) 0deg,
-    hsl(var(--ifind-aqua)) ${fillAngle}deg,
-    transparent ${fillAngle}deg
-  )`;
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-ifind-purple/5 via-ifind-aqua/5 to-ifind-teal/5">
@@ -133,44 +122,66 @@ export const MeditationActivityScreen: React.FC = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col items-center justify-center p-6 space-y-6">
         {/* Meditation Visual with Progress */}
-        <div className="relative w-64 h-64 flex items-center justify-center">
-          {/* Outer progress ring */}
+        <div className="relative w-52 h-52 flex items-center justify-center">
+          {/* Outer radiating ring */}
           <div 
-            className="absolute w-60 h-60 rounded-full transition-all duration-1000 ease-in-out"
+            className={`absolute w-48 h-48 rounded-full bg-gradient-to-br from-ifind-purple/20 to-ifind-aqua/20 ${
+              isPlaying ? 'animate-[ping_3s_ease-in-out_infinite]' : ''
+            }`}
             style={{
-              background: progressGradient,
-              opacity: isPlaying ? 0.3 : 0.1
-            }}
-          />
-          
-          {/* Animated rings */}
-          <div 
-            className="absolute w-56 h-56 rounded-full bg-gradient-to-br from-ifind-purple/20 to-ifind-aqua/20 transition-all duration-[3000ms] ease-in-out"
-            style={{
-              transform: isPlaying ? 'scale(1.1)' : 'scale(1)',
               opacity: isPlaying ? 0.4 : 0.2
             }}
           />
+          
+          {/* Middle radiating ring */}
           <div 
-            className="absolute w-48 h-48 rounded-full bg-gradient-to-br from-ifind-purple/30 to-ifind-aqua/30 transition-all duration-[3000ms] ease-in-out"
+            className={`absolute w-40 h-40 rounded-full bg-gradient-to-br from-ifind-purple/30 to-ifind-aqua/30 ${
+              isPlaying ? 'animate-[ping_2.5s_ease-in-out_infinite]' : ''
+            }`}
             style={{
-              transform: isPlaying ? 'scale(1.08)' : 'scale(1)',
-              opacity: isPlaying ? 0.6 : 0.3
+              opacity: isPlaying ? 0.6 : 0.3,
+              animationDelay: isPlaying ? '0.5s' : '0s'
             }}
           />
           
+          {/* Progress ring */}
+          <svg className="absolute w-36 h-36 -rotate-90">
+            <circle
+              cx="72"
+              cy="72"
+              r="68"
+              fill="none"
+              stroke="hsl(var(--ifind-purple) / 0.2)"
+              strokeWidth="3"
+            />
+            <circle
+              cx="72"
+              cy="72"
+              r="68"
+              fill="none"
+              stroke="url(#gradient)"
+              strokeWidth="3"
+              strokeDasharray={`${2 * Math.PI * 68}`}
+              strokeDashoffset={`${2 * Math.PI * 68 * (1 - progress / 100)}`}
+              strokeLinecap="round"
+              className="transition-all duration-500"
+            />
+            <defs>
+              <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="hsl(var(--ifind-purple))" />
+                <stop offset="100%" stopColor="hsl(var(--ifind-aqua))" />
+              </linearGradient>
+            </defs>
+          </svg>
+          
           {/* Center circle with sparkles */}
-          <div 
-            className="absolute w-40 h-40 rounded-full bg-gradient-to-br from-ifind-purple to-ifind-aqua flex items-center justify-center shadow-lg transition-all duration-[3000ms] ease-in-out"
-            style={{
-              transform: isPlaying ? 'scale(1.05)' : 'scale(1)',
-              opacity: isPlaying ? 1 : 0.8
-            }}
-          >
+          <div className="absolute w-32 h-32 rounded-full bg-gradient-to-br from-ifind-purple to-ifind-aqua flex items-center justify-center shadow-lg">
             <Sparkles 
-              className="h-16 w-16 text-white transition-all duration-[3000ms] ease-in-out"
+              className={`h-12 w-12 text-white transition-transform duration-1000 ${
+                isPlaying ? 'animate-spin' : ''
+              }`}
               style={{
-                transform: isPlaying ? 'rotate(180deg)' : 'rotate(0deg)'
+                animationDuration: '8s'
               }}
             />
           </div>
