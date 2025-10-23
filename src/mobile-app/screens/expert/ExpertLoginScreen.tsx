@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Mail, Lock, Stethoscope } from 'lucide-react';
+import { ArrowLeft, Mail, Lock, Brain } from 'lucide-react';
 
 export const ExpertLoginScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -34,7 +34,7 @@ export const ExpertLoginScreen: React.FC = () => {
       <div className="flex-1 flex flex-col justify-center p-6">
         <div className="text-center mb-8">
           <div className="w-20 h-20 bg-gradient-to-br from-ifind-teal to-ifind-aqua rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <Stethoscope className="h-10 w-10 text-white" />
+            <Brain className="h-10 w-10 text-white" />
           </div>
           <h1 className="text-3xl font-poppins font-bold text-ifind-charcoal mb-2">
             Expert Login
