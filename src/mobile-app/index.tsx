@@ -18,12 +18,22 @@ import { SettingsScreen } from './screens/SettingsScreen';
 import { NotificationsScreen } from './screens/NotificationsScreen';
 import { BreathingActivityScreen } from './screens/BreathingActivityScreen';
 import { MeditationActivityScreen } from './screens/MeditationActivityScreen';
+import { ExpertAuthFlow } from './screens/expert/ExpertAuthFlow';
+import { ExpertDashboardScreen } from './screens/expert/ExpertDashboardScreen';
+import { ExpertAppointmentsScreen } from './screens/expert/ExpertAppointmentsScreen';
+import { ExpertAvailabilityScreen } from './screens/expert/ExpertAvailabilityScreen';
+import { ExpertEarningsScreen } from './screens/expert/ExpertEarningsScreen';
+import { ExpertProfileManageScreen } from './screens/expert/ExpertProfileManageScreen';
+import { ExpertNotificationsScreen } from './screens/expert/ExpertNotificationsScreen';
+import { ExpertBottomNavigation } from './components/layout/ExpertBottomNavigation';
 
 /**
  * Mobile App UI Flow
  * 
  * This is a complete mobile app interface demonstration based on the iFindLife PRD.
  * All screens follow the website's brand guidelines and design system.
+ * 
+ * Includes both User and Expert mobile interfaces.
  * 
  * Navigation Structure:
  * - Splash Screen (First load)
@@ -42,6 +52,8 @@ export const MobileAppDemo: React.FC = () => {
         <Route index element={<SplashScreen />} />
         <Route path="onboarding/*" element={<OnboardingFlow />} />
         <Route path="auth/*" element={<AuthFlow />} />
+        
+        {/* User App Routes */}
         <Route path="app/*" element={
           <MobileAppLayout>
             <Routes>
@@ -61,6 +73,26 @@ export const MobileAppDemo: React.FC = () => {
               <Route path="activity/meditation" element={<MeditationActivityScreen />} />
             </Routes>
           </MobileAppLayout>
+        } />
+
+        {/* Expert Auth Routes */}
+        <Route path="expert-auth/*" element={<ExpertAuthFlow />} />
+
+        {/* Expert App Routes */}
+        <Route path="expert-app/*" element={
+          <div className="flex flex-col h-screen bg-background">
+            <div className="flex-1 overflow-y-auto">
+              <Routes>
+                <Route index element={<ExpertDashboardScreen />} />
+                <Route path="appointments" element={<ExpertAppointmentsScreen />} />
+                <Route path="availability" element={<ExpertAvailabilityScreen />} />
+                <Route path="earnings" element={<ExpertEarningsScreen />} />
+                <Route path="profile" element={<ExpertProfileManageScreen />} />
+                <Route path="notifications" element={<ExpertNotificationsScreen />} />
+              </Routes>
+            </div>
+            <ExpertBottomNavigation />
+          </div>
         } />
       </Routes>
     </div>
