@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowLeft, Mail, Lock, User, Phone, MapPin, Briefcase, Languages } from 'lucide-react';
+import { ArrowLeft, Mail, Lock, User, Phone, MapPin, Briefcase, Languages, Upload } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 
@@ -36,14 +36,71 @@ export const ExpertSignupScreen: React.FC = () => {
     expertCategory: 'listening-volunteer',
     password: '',
     confirmPassword: '',
+    captchaAnswer: '',
     termsAccepted: false
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedProfilePicture, setSelectedProfilePicture] = useState<File | null>(null);
+  const [captchaQuestion, setCaptchaQuestion] = useState({ num1: 0, num2: 0, answer: 0 });
+
+  // Generate CAPTCHA on component mount
+  useEffect(() => {
+    generateCaptcha();
+  }, []);
+
+  const generateCaptcha = () => {
+    const num1 = Math.floor(Math.random() * 20) + 1;
+    const num2 = Math.floor(Math.random() * 20) + 1;
+    setCaptchaQuestion({ num1, num2, answer: num1 + num2 });
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error('Please upload a PDF, JPG, or PNG file.');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('File size must be less than 5MB.');
+        return;
+      }
+      setSelectedFile(file);
+    }
+  };
+
+  const handleProfilePictureChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error('Please upload a JPG or PNG image file.');
+        return;
+      }
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error('Image size must be less than 2MB.');
+        return;
+      }
+      setSelectedProfilePicture(file);
+    }
+  };
 
   const handleSignup = async () => {
     // Basic validation
     if (!formData.name || !formData.email || !formData.phone || !formData.password) {
       toast.error('Please fill in all required fields');
+      return;
+    }
+
+    if (!formData.address || !formData.city || !formData.state || !formData.country) {
+      toast.error('Please fill in all address fields');
+      return;
+    }
+
+    if (!formData.title || !formData.experience || !formData.languages) {
+      toast.error('Please fill in all professional fields');
       return;
     }
 
@@ -62,15 +119,28 @@ export const ExpertSignupScreen: React.FC = () => {
       return;
     }
 
+    if (!selectedFile) {
+      toast.error('Please upload your Soulversity certificate');
+      return;
+    }
+
+    // Validate CAPTCHA
+    if (parseInt(formData.captchaAnswer) !== captchaQuestion.answer) {
+      toast.error('CAPTCHA answer is incorrect. Please try again.');
+      generateCaptcha();
+      setFormData({...formData, captchaAnswer: ''});
+      return;
+    }
+
     setIsSubmitting(true);
     
     // Mock signup - simulate API call
     setTimeout(() => {
       setIsSubmitting(false);
-      toast.success('Registration successful! Your application is pending approval. Please wait for admin approval before logging in.');
+      toast.success('Registration successful! Your application has been submitted. Please verify your email, then wait for admin approval before logging in. This process typically takes 1-3 business days.');
       setTimeout(() => {
         navigate('/mobile-app/expert-auth/login');
-      }, 2000);
+      }, 3000);
     }, 1500);
   };
 
@@ -261,6 +331,79 @@ export const ExpertSignupScreen: React.FC = () => {
                     </div>
                   ))}
                 </RadioGroup>
+              </div>
+
+              {/* Certificate Upload */}
+              <div className="space-y-2">
+                <Label>Upload Proof (Soulversity Certificate) *</Label>
+                <div className="border-2 border-dashed border-border rounded-lg p-4 text-center">
+                  <Upload className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+                  <Label 
+                    htmlFor="certificate" 
+                    className="cursor-pointer text-sm font-medium text-ifind-teal"
+                  >
+                    Choose file to upload
+                  </Label>
+                  <Input
+                    id="certificate"
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    PDF, JPG, or PNG files up to 5MB
+                  </p>
+                  {selectedFile && (
+                    <div className="mt-2 p-2 bg-green-50 dark:bg-green-900/20 rounded text-sm text-green-700 dark:text-green-400">
+                      ✓ {selectedFile.name}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Profile Picture Upload */}
+              <div className="space-y-2">
+                <Label>Profile Picture (Optional)</Label>
+                <div className="border-2 border-dashed border-border rounded-lg p-4 text-center">
+                  <Upload className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+                  <Label 
+                    htmlFor="profilePicture" 
+                    className="cursor-pointer text-sm font-medium text-ifind-teal"
+                  >
+                    Choose profile picture
+                  </Label>
+                  <Input
+                    id="profilePicture"
+                    type="file"
+                    accept=".jpg,.jpeg,.png"
+                    onChange={handleProfilePictureChange}
+                    className="hidden"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    JPG or PNG files up to 2MB
+                  </p>
+                  {selectedProfilePicture && (
+                    <div className="mt-2 p-2 bg-green-50 dark:bg-green-900/20 rounded text-sm text-green-700 dark:text-green-400">
+                      ✓ {selectedProfilePicture.name}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* CAPTCHA */}
+              <div className="space-y-2">
+                <Label htmlFor="captcha">Security Check *</Label>
+                <p className="text-sm text-muted-foreground">
+                  What is {captchaQuestion.num1} + {captchaQuestion.num2}?
+                </p>
+                <Input
+                  id="captcha"
+                  type="number"
+                  placeholder="Enter the answer"
+                  value={formData.captchaAnswer}
+                  onChange={(e) => setFormData({...formData, captchaAnswer: e.target.value})}
+                />
               </div>
 
               {/* Password */}
