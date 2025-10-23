@@ -25,6 +25,7 @@ import { ExpertAvailabilityScreen } from './screens/expert/ExpertAvailabilityScr
 import { ExpertEarningsScreen } from './screens/expert/ExpertEarningsScreen';
 import { ExpertProfileManageScreen } from './screens/expert/ExpertProfileManageScreen';
 import { ExpertNotificationsScreen } from './screens/expert/ExpertNotificationsScreen';
+import { ExpertRatingsReviewsScreen } from './screens/expert/ExpertRatingsReviewsScreen';
 import { ExpertBottomNavigation } from './components/layout/ExpertBottomNavigation';
 
 /**
@@ -89,6 +90,7 @@ export const MobileAppDemo: React.FC = () => {
                 <Route path="earnings" element={<ExpertEarningsScreen />} />
                 <Route path="profile" element={<ExpertProfileManageScreen />} />
                 <Route path="notifications" element={<ExpertNotificationsScreen />} />
+                <Route path="ratings-reviews" element={<ExpertRatingsReviewsScreen />} />
               </Routes>
             </div>
             <ExpertBottomNavigation />

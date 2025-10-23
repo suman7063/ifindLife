@@ -201,10 +201,10 @@ export const ExpertDashboardScreen: React.FC = () => {
             <Button
               variant="outline"
               className="h-24 flex-col space-y-2"
-              onClick={() => navigate('/mobile-app/expert-app/profile')}
+              onClick={() => navigate('/mobile-app/expert-app/ratings-reviews')}
             >
-              <Users className="h-6 w-6 text-ifind-purple" />
-              <span className="text-sm">Edit Profile</span>
+              <Star className="h-6 w-6 text-ifind-purple" />
+              <span className="text-sm">Rating & Reviews</span>
             </Button>
             <Button
               variant="outline"
