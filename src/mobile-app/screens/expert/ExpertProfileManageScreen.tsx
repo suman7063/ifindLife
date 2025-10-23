@@ -5,27 +5,20 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { 
-  User, 
-  Mail, 
   Phone, 
-  Briefcase,
-  MapPin,
   FileText,
   Camera,
-  Save
+  Save,
+  Languages,
+  Calendar
 } from 'lucide-react';
 
 export const ExpertProfileManageScreen: React.FC = () => {
   const [profile, setProfile] = useState({
-    name: 'Dr. Sarah Johnson',
-    email: 'sarah.johnson@example.com',
     phone: '+1 (555) 123-4567',
-    specialization: 'Anxiety & Stress Management',
-    experience: '8 years',
-    location: 'New York, USA',
+    experience: '8',
     bio: 'Experienced therapist specializing in anxiety and stress management. Passionate about helping people find peace and balance in their lives.',
-    languages: 'English, Spanish',
-    hourlyRate: '50'
+    languages: 'English, Spanish'
   });
 
   const handleSave = () => {
@@ -69,39 +62,12 @@ export const ExpertProfileManageScreen: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Basic Information */}
+        {/* Editable Information */}
         <div className="space-y-4">
-          <h3 className="font-poppins font-semibold text-ifind-charcoal">Basic Information</h3>
+          <h3 className="font-poppins font-semibold text-ifind-charcoal">Contact Information</h3>
           
           <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
-            <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="name"
-                value={profile.name}
-                onChange={(e) => setProfile({...profile, name: e.target.value})}
-                className="pl-10"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="email"
-                type="email"
-                value={profile.email}
-                onChange={(e) => setProfile({...profile, email: e.target.value})}
-                className="pl-10"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone</Label>
+            <Label htmlFor="phone">Phone Number</Label>
             <div className="relative">
               <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -113,19 +79,6 @@ export const ExpertProfileManageScreen: React.FC = () => {
               />
             </div>
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="location">Location</Label>
-            <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="location"
-                value={profile.location}
-                onChange={(e) => setProfile({...profile, location: e.target.value})}
-                className="pl-10"
-              />
-            </div>
-          </div>
         </div>
 
         {/* Professional Information */}
@@ -133,45 +86,31 @@ export const ExpertProfileManageScreen: React.FC = () => {
           <h3 className="font-poppins font-semibold text-ifind-charcoal">Professional Details</h3>
           
           <div className="space-y-2">
-            <Label htmlFor="specialization">Specialization</Label>
+            <Label htmlFor="experience">Years of Experience</Label>
             <div className="relative">
-              <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                id="specialization"
-                value={profile.specialization}
-                onChange={(e) => setProfile({...profile, specialization: e.target.value})}
+                id="experience"
+                type="number"
+                value={profile.experience}
+                onChange={(e) => setProfile({...profile, experience: e.target.value})}
                 className="pl-10"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="experience">Years of Experience</Label>
-            <Input
-              id="experience"
-              value={profile.experience}
-              onChange={(e) => setProfile({...profile, experience: e.target.value})}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="languages">Languages</Label>
-            <Input
-              id="languages"
-              value={profile.languages}
-              onChange={(e) => setProfile({...profile, languages: e.target.value})}
-              placeholder="e.g., English, Spanish"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="hourlyRate">Hourly Rate ($)</Label>
-            <Input
-              id="hourlyRate"
-              type="number"
-              value={profile.hourlyRate}
-              onChange={(e) => setProfile({...profile, hourlyRate: e.target.value})}
-            />
+            <Label htmlFor="languages">Languages Spoken</Label>
+            <div className="relative">
+              <Languages className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="languages"
+                value={profile.languages}
+                onChange={(e) => setProfile({...profile, languages: e.target.value})}
+                placeholder="e.g., English, Spanish"
+                className="pl-10"
+              />
+            </div>
           </div>
 
           <div className="space-y-2">
