@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { ExpertLoginScreen } from './ExpertLoginScreen';
 import { ExpertSignupScreen } from './ExpertSignupScreen';
 import { ExpertServiceSelectionScreen } from './ExpertServiceSelectionScreen';
@@ -15,6 +15,7 @@ export const ExpertAuthFlow: React.FC = () => {
       <Route path="login" element={<ExpertLoginScreen />} />
       <Route path="signup" element={<ExpertSignupScreen />} />
       <Route path="select-services" element={<ExpertServiceSelectionScreen />} />
+      <Route path="*" element={<Navigate to="/mobile-app/expert-auth/login" replace />} />
     </Routes>
   );
 };
