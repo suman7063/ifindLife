@@ -21,8 +21,8 @@ export const BottomNavigation: React.FC = () => {
   const location = useLocation();
 
   return (
-    <nav className="fixed bottom-0 left-1/2 transform -translate-x-1/2 max-w-sm w-full bg-white border-t border-border px-4 py-2">
-      <div className="flex justify-around">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-border shadow-lg z-50 pb-safe">
+      <div className="max-w-sm mx-auto flex items-center justify-around px-4 py-2 h-16">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path || 
             (item.path !== '/mobile-app/app/' && location.pathname.startsWith(item.path));
@@ -32,14 +32,15 @@ export const BottomNavigation: React.FC = () => {
               key={item.path}
               variant="ghost"
               onClick={() => navigate(item.path)}
-              className={`flex flex-col items-center gap-1 p-2 h-auto ${
+              aria-label={`Navigate to ${item.label}`}
+              className={`flex flex-col items-center gap-1 p-2 h-auto focus-visible:ring-2 focus-visible:ring-ifind-teal rounded-lg transition-all duration-200 ${
                 isActive 
                   ? 'text-ifind-aqua' 
                   : 'text-muted-foreground hover:text-ifind-aqua'
               }`}
             >
-              <item.icon className="h-5 w-5" />
-              <span className="text-xs font-medium">{item.label}</span>
+              <item.icon className={`h-5 w-5 transition-all duration-200 ${isActive ? 'scale-110' : ''}`} />
+              <span className={`text-xs font-medium ${isActive ? 'font-semibold' : ''}`}>{item.label}</span>
             </Button>
           );
         })}

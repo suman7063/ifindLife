@@ -19,7 +19,7 @@ export const MobileAppLayout: React.FC<MobileAppLayoutProps> = ({ children }) =>
     <div className="flex flex-col h-screen bg-background">
       {!hideNavigation && <MobileHeader />}
       
-      <main className={`flex-1 overflow-y-auto ${hideNavigation ? '' : 'pb-16'}`}>
+      <main className={`flex-1 overflow-y-auto ${hideNavigation ? '' : 'pb-20'}`}>
         {children}
       </main>
       

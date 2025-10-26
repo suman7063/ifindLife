@@ -45,7 +45,7 @@ export const ExpertDashboardScreen: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="flex flex-col bg-background pb-20">
+    <div className="flex flex-col bg-background">
       {/* Header */}
       <div className="bg-gradient-to-br from-ifind-teal/10 via-ifind-aqua/10 to-ifind-purple/10 p-6 rounded-b-3xl">
         <div className="flex items-center justify-between mb-6">

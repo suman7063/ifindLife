@@ -89,7 +89,10 @@ export const MobileAppDemo: React.FC = () => {
           {/* Expert App Routes */}
           <Route path="expert-app/*" element={
             <div className="flex flex-col h-screen bg-background">
-              <div className="flex-1 overflow-y-auto">
+              <Suspense fallback={<Loader />}>
+                {React.createElement(lazy(() => import('./components/layout/ExpertMobileHeader').then(m => ({ default: m.ExpertMobileHeader }))))}
+              </Suspense>
+              <div className="flex-1 overflow-y-auto pb-20">
                 <Routes>
                   <Route index element={<ExpertDashboardScreen />} />
                   <Route path="appointments" element={<ExpertAppointmentsScreen />} />

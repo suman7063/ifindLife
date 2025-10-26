@@ -32,6 +32,7 @@ export const MobileHeader: React.FC = () => {
             size="sm"
             onClick={() => navigate(-1)}
             className="mr-2 p-1"
+            aria-label="Go back"
           >
             <ArrowLeft className="h-5 w-5 text-ifind-charcoal" />
           </Button>
@@ -40,13 +41,14 @@ export const MobileHeader: React.FC = () => {
             variant="ghost"
             size="sm"
             className="mr-2 p-1"
+            aria-label="Open menu"
           >
             <Menu className="h-5 w-5 text-ifind-charcoal" />
           </Button>
         )}
         
         <img 
-          src="/ifindlife-logo.png" 
+          src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" 
           alt="iFindLife" 
           className="h-8 w-auto"
         />
@@ -58,6 +60,7 @@ export const MobileHeader: React.FC = () => {
             variant="ghost"
             size="sm"
             className="p-1"
+            aria-label="Search"
           >
             <Search className="h-5 w-5 text-ifind-charcoal" />
           </Button>
@@ -68,6 +71,7 @@ export const MobileHeader: React.FC = () => {
           size="sm"
           onClick={() => navigate('/mobile-app/app/notifications')}
           className="p-1 relative"
+          aria-label="View notifications"
         >
           <Bell className="h-5 w-5 text-ifind-charcoal" />
           <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 bg-destructive text-destructive-foreground text-xs flex items-center justify-center">
