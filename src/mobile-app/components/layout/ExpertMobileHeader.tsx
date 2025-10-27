@@ -40,7 +40,7 @@ export const ExpertMobileHeader: React.FC = () => {
             <img 
               src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" 
               alt="iFindLife Expert" 
-              className="h-8"
+              className="h-10"
             />
           )}
         </div>

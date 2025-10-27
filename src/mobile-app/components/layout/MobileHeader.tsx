@@ -50,7 +50,7 @@ export const MobileHeader: React.FC = () => {
         <img 
           src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" 
           alt="iFindLife" 
-          className="h-8 w-auto"
+          className="h-10 w-auto"
         />
       </div>
 
