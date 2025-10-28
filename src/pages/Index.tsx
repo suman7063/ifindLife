@@ -52,7 +52,7 @@ const Index = () => {
       <Navbar />
       
       {/* Emergency Auth Debug - only in development */}
-      <EmergencyAuthFix />
+      {/* <EmergencyAuthFix /> */}
       
       
       <main className="flex-1">
@@ -102,7 +102,7 @@ const Index = () => {
       <Footer />
       
       {/* Debug Panel - Only in development */}
-      <AuthDebugPanel />
+      {/* <AuthDebugPanel /> */}
       
       {/* Performance monitoring for expert presence system */}
       <PresencePerformanceMonitor variant="compact" />
