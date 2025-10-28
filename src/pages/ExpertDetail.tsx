@@ -99,7 +99,7 @@ const ExpertDetail = () => {
             price: 30, // TODO: Get from service pricing
             waitTime: isAvailable ? 'Available Now' : 
                      presenceData.status === 'away' ? 'Away' : 'Not Available',
-            imageUrl: expertData.profile_picture ? `https://nmcqyudqvbldxwzhyzma.supabase.co/storage/v1/object/public/avatars/${expertData.profile_picture}` : "",
+            imageUrl: expertData.profile_picture ? `https://jrkjdiefnvgrfpjvnjng.supabase.co/storage/v1/object/public/avatars/${expertData.profile_picture}` : "",
             online: expertData.status === 'approved' && isAvailable,
             languages: expertData.languages || ["English"],
             description: expertData.bio || "This expert is available for consultation.",

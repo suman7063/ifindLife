@@ -12,14 +12,12 @@ interface AdminAuthRequest {
   sessionToken?: string;
 }
 
-interface AdminSession {
-  token: string;
-  adminId: string;
-  expiresAt: string;
+interface AdminSessionRow {
+  session_token: string;
+  admin_id: string;
+  expires_at: string;
+  revoked_at: string | null;
 }
-
-// In-memory session store (in production, use Redis or database)
-const adminSessions = new Map<string, AdminSession>();
 
 function generateSessionToken(): string {
   return crypto.randomUUID() + '-' + Date.now();
@@ -89,15 +87,33 @@ Deno.serve(async (req) => {
           );
         }
 
-        // Create session
+        // Create session persisted in DB
         const sessionToken = generateSessionToken();
         const expiresAt = generateSessionExpiry();
-        
-        adminSessions.set(sessionToken, {
-          token: sessionToken,
-          adminId: authResult.admin.id,
-          expiresAt
-        });
+
+        // Optional: revoke previous active sessions for this admin
+        await supabase
+          .from('admin_sessions')
+          .update({ revoked_at: new Date().toISOString() })
+          .is('revoked_at', null)
+          .eq('admin_id', authResult.admin.id);
+
+        const { error: insertError } = await supabase
+          .from('admin_sessions')
+          .insert({
+            session_token: sessionToken,
+            admin_id: authResult.admin.id,
+            expires_at: expiresAt,
+            revoked_at: null
+          });
+
+        if (insertError) {
+          console.error('Failed to create admin session:', insertError);
+          return new Response(
+            JSON.stringify({ success: false, error: 'Could not create session' }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
 
         console.log(`Admin login successful for user: ${username}`);
 
@@ -126,26 +142,33 @@ Deno.serve(async (req) => {
           );
         }
 
-        const session = adminSessions.get(sessionToken);
-        if (!session) {
+        // Load session from DB
+        const { data: session, error: sessionError } = await supabase
+          .from('admin_sessions')
+          .select('session_token, admin_id, expires_at, revoked_at')
+          .eq('session_token', sessionToken)
+          .maybeSingle<AdminSessionRow>();
+
+        if (sessionError || !session) {
           return new Response(
             JSON.stringify({ success: false, error: 'Invalid session' }),
-            { 
-              status: 401, 
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-            }
+            { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
 
-        // Check if session is expired
-        if (new Date(session.expiresAt) <= new Date()) {
-          adminSessions.delete(sessionToken);
+        // Check expiry or revocation
+        if (
+          session.revoked_at !== null ||
+          new Date(session.expires_at) <= new Date()
+        ) {
+          // Best-effort cleanup when expired
+          await supabase
+            .from('admin_sessions')
+            .delete()
+            .eq('session_token', sessionToken);
           return new Response(
             JSON.stringify({ success: false, error: 'Session expired' }),
-            { 
-              status: 401, 
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-            }
+            { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
 
@@ -153,17 +176,18 @@ Deno.serve(async (req) => {
         const { data: admin, error } = await supabase
           .from('admin_accounts')
           .select('id, username, email, role')
-          .eq('id', session.adminId)
+          .eq('id', session.admin_id)
           .single();
 
         if (error || !admin) {
-          adminSessions.delete(sessionToken);
+          // Revoke this session since account is invalid
+          await supabase
+            .from('admin_sessions')
+            .update({ revoked_at: new Date().toISOString() })
+            .eq('session_token', sessionToken);
           return new Response(
             JSON.stringify({ success: false, error: 'Invalid admin account' }),
-            { 
-              status: 401, 
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-            }
+            { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
 
@@ -181,7 +205,10 @@ Deno.serve(async (req) => {
 
       case 'logout': {
         if (sessionToken) {
-          adminSessions.delete(sessionToken);
+          await supabase
+            .from('admin_sessions')
+            .update({ revoked_at: new Date().toISOString() })
+            .eq('session_token', sessionToken);
         }
         
         return new Response(

@@ -53,7 +53,7 @@ const handler = async (req: Request): Promise<Response> => {
             </div>
             
             <div style="text-align: center; margin: 30px 0;">
-              <a href="${Deno.env.get('SUPABASE_URL')}/auth/v1/verify?token_hash=${encodeURIComponent('')}&type=magiclink&redirect_to=${encodeURIComponent('https://nmcqyudqvbldxwzhyzma.supabase.co/expert-dashboard')}" 
+              <a href="${Deno.env.get('SUPABASE_URL')}/auth/v1/verify?token_hash=${encodeURIComponent('')}&type=magiclink&redirect_to=${encodeURIComponent('https://jrkjdiefnvgrfpjvnjng.supabase.co/expert-dashboard')}" 
                  style="background: #10b981; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
                 Access Your Dashboard
               </a>

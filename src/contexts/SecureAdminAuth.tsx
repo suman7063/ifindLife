@@ -134,12 +134,15 @@ export const SecureAdminAuthProvider: React.FC<SecureAdminAuthProviderProps> = (
 
   const verifySession = async (): Promise<boolean> => {
     try {
+      console.log('🔍 Verifying admin session...');
       const sessionToken = getStoredSession();
       
       if (!sessionToken) {
+        console.log('❌ No session token found in localStorage');
         return false;
       }
 
+      console.log('✅ Session token found, verifying with backend...');
       const { data, error } = await supabase.functions.invoke('admin-auth', {
         body: {
           action: 'verify',
@@ -148,18 +151,20 @@ export const SecureAdminAuthProvider: React.FC<SecureAdminAuthProviderProps> = (
       });
 
       if (error || !data?.success) {
+        console.log('❌ Session verification failed:', error || data?.error);
         clearStoredSession();
         setAdmin(null);
         setIsAuthenticated(false);
         return false;
       }
 
+      console.log('✅ Session verified successfully, admin:', data.admin);
       setAdmin(data.admin);
       setIsAuthenticated(true);
       return true;
 
     } catch (error) {
-      console.error('Session verification error:', error);
+      console.error('❌ Session verification error:', error);
       clearStoredSession();
       setAdmin(null);
       setIsAuthenticated(false);

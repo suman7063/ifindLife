@@ -39,6 +39,7 @@ const AdminRoutes: React.FC = () => {
 
   return (
     <Routes>
+      <Route path="/" element={<Navigate to="/admin/overview" replace />} />
       <Route path="/overview" element={<AdminOverview />} />
       <Route path="/analytics" element={<AdminAnalytics />} />
       <Route path="/reports" element={<AdminReports />} />
