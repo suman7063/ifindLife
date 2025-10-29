@@ -389,7 +389,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         } else if (validation.actualRole === 'user' && intendedRole === 'expert') {
           errorMessage = 'These are user credentials. Please use the user login.';
         } else if (validation.actualRole === 'expert' && intendedRole === 'expert') {
-          errorMessage = 'Your expert account is not approved yet.';
+          errorMessage = 'Your expert account is pending admin approval.';
         }
         
         return { success: false, error: errorMessage };

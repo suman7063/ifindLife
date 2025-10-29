@@ -51,7 +51,13 @@ const AuthCallback: React.FC = () => {
           
           if (error) {
             setStatus('error');
-            setMessage(errorDescription || 'Email verification failed. Please try again.');
+            if (error === 'access_denied' && errorDescription?.includes('otp_expired')) {
+              setMessage('Email verification link has expired. Please request a new verification email.');
+            } else if (error === 'access_denied' && errorDescription?.includes('Email link is invalid')) {
+              setMessage('Email verification link is invalid. Please request a new verification email.');
+            } else {
+              setMessage(errorDescription || 'Email verification failed. Please try again.');
+            }
           } else {
             setStatus('error');
             setMessage('Invalid verification link. Please try signing up again.');
@@ -72,6 +78,29 @@ const AuthCallback: React.FC = () => {
       navigate('/expert-register');
     } else {
       navigate('/user-signup');
+    }
+  };
+
+  const handleResendVerification = async () => {
+    try {
+      const email = searchParams.get('email');
+      if (email) {
+        const { error } = await supabase.auth.resend({
+          type: 'signup',
+          email: email
+        });
+        
+        if (error) {
+          toast.error('Failed to resend verification email: ' + error.message);
+        } else {
+          toast.success('Verification email sent! Please check your inbox.');
+        }
+      } else {
+        toast.error('Email address not found. Please try signing up again.');
+      }
+    } catch (error) {
+      console.error('Error resending verification:', error);
+      toast.error('Failed to resend verification email.');
     }
   };
 
@@ -106,6 +135,24 @@ const AuthCallback: React.FC = () => {
               <Button onClick={handleRetry} className="w-full">
                 Try Again
               </Button>
+              {(message.includes('expired') || message.includes('invalid')) && (
+                <div className="space-y-2">
+                  <Button 
+                    onClick={handleResendVerification} 
+                    variant="outline" 
+                    className="w-full"
+                  >
+                    Resend Verification Email
+                  </Button>
+                  <Button 
+                    onClick={() => navigate('/resend-verification')} 
+                    variant="ghost" 
+                    className="w-full text-sm"
+                  >
+                    Or go to resend page
+                  </Button>
+                </div>
+              )}
               <p className="text-sm text-gray-500">
                 Need help? Contact our support team.
               </p>

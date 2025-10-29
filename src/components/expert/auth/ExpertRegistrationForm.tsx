@@ -115,27 +115,32 @@ const ExpertRegistrationForm: React.FC = () => {
         throw new Error('Failed to create user account');
       }
 
-      // Important: Sign out immediately after registration since experts need approval
-      await supabase.auth.signOut();
-
-      // Upload certificate to storage
+      // Upload certificate to storage BEFORE signing out (user must be authenticated)
       let certificateUrl = '';
       if (selectedFile) {
+        // Debug: Check if user is authenticated
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        console.log('🔍 User authenticated for upload:', !!currentUser, currentUser?.id);
+        
         const fileExt = selectedFile.name.split('.').pop();
         const fileName = `${authData.user.id}-certificate.${fileExt}`;
+        
+        console.log('📁 Uploading certificate:', fileName);
         
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('expert-certificates')
           .upload(fileName, selectedFile);
 
         if (uploadError) {
+          console.error('❌ Upload error:', uploadError);
           throw new Error('Failed to upload certificate: ' + uploadError.message);
         }
 
+        console.log('✅ Certificate uploaded successfully:', uploadData.path);
         certificateUrl = uploadData.path;
       }
 
-      // Upload profile picture to storage if provided
+      // Upload profile picture to storage if provided (BEFORE signing out)
       let profilePictureUrl = '';
       if (selectedProfilePicture) {
         const fileExt = selectedProfilePicture.name.split('.').pop();
@@ -152,7 +157,9 @@ const ExpertRegistrationForm: React.FC = () => {
         profilePictureUrl = uploadData.path;
       }
 
-      // Create expert account with category and profile picture
+      // Create expert account BEFORE signing out (while user is authenticated)
+      console.log('🔍 Creating expert account for user:', authData.user.id);
+      
       const { error: expertError } = await supabase
         .from('expert_accounts')
         .insert({
@@ -181,6 +188,10 @@ const ExpertRegistrationForm: React.FC = () => {
       if (expertError) {
         throw new Error(expertError.message);
       }
+
+      // Important: Sign out AFTER creating expert account since experts need approval
+      // This ensures the user is authenticated during file uploads and account creation
+      await supabase.auth.signOut();
 
       // Show success message and prevent auto-login
       toast.success('Expert account created successfully! Please verify your email, then wait for admin approval before logging in.');

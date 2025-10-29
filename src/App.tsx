@@ -59,6 +59,8 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import ReferralProgram from './pages/ReferralProgram';
 import AuthCallback from './pages/AuthCallback';
+import ResendVerification from './pages/ResendVerification';
+import EmailVerificationTest from './pages/EmailVerificationTest';
 import { CallInterfaceDemo } from '@/components/call-interface/CallInterfaceDemo';
 import { MobileAppDemo } from '@/mobile-app/index';
 import SouliLanding from './pages/SouliLanding';
@@ -188,6 +190,8 @@ const UserRoutes: React.FC = () => {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/auth-callback" element={<AuthCallback />} />
+        <Route path="/resend-verification" element={<ResendVerification />} />
+        <Route path="/email-test" element={<EmailVerificationTest />} />
 
         {/* Catch-all route */}
         <Route path="*" element={<NotFound />} />
