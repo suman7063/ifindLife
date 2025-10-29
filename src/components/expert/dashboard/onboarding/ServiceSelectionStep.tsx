@@ -36,12 +36,16 @@ const ServiceSelectionStep: React.FC<ServiceSelectionStepProps> = ({
 
   const fetchAvailableServices = async () => {
     try {
+      console.log('🔍 Fetching services for expert:', expertAccount);
+      
       // Check if services are already assigned by admin (Phase 2)
       const { data: adminAssignedServices, error: adminError } = await supabase
         .from('expert_services')
         .select('*')
-        .eq('expert_id', expertAccount.auth_id)
+        .eq('expert_id', expertAccount.id)
         .eq('is_active', true);
+
+      console.log('🔍 Admin assigned services:', adminAssignedServices, 'Error:', adminError);
 
       if (adminError) throw adminError;
 
@@ -72,14 +76,19 @@ const ServiceSelectionStep: React.FC<ServiceSelectionStepProps> = ({
         setSelectedServices(combinedServices.map(s => s.id));
       } else {
         // Fallback to old system if no admin assignment
+        console.log('🔍 Using fallback system for category:', expertAccount.category);
+        
         const categoryServices: Record<string, number[]> = {
-          'listening-volunteer': [1, 2],
-          'listening-expert': [1, 2, 3, 4],
-          'listening-coach': [1, 2, 3, 4, 5],
-          'mindfulness-expert': [6, 7, 8]
+          'listening-volunteer': [1, 2, 3, 4, 6, 7],  // Basic listening + mindfulness
+          'listening-expert': [1, 2, 3, 4, 5, 6, 7, 8],  // All listening + basic mindfulness
+          'listening-coach': [1, 2, 3, 4, 5, 6, 7, 8, 9],  // All listening + mindfulness
+          'mindfulness-expert': [6, 7, 8, 9, 1, 2],  // All mindfulness + basic listening
+          'anxiety-expert': [10, 6, 7, 8, 1, 2],  // Anxiety + mindfulness + basic listening
+          'default': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]  // All services as fallback
         };
 
-        const serviceIds = categoryServices[expertAccount.category] || [1, 2, 3];
+        const serviceIds = categoryServices[expertAccount.category] || categoryServices['default'] || [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+        console.log('🔍 Service IDs for category:', serviceIds);
 
         const { data, error } = await supabase
           .from('services')
@@ -87,20 +96,44 @@ const ServiceSelectionStep: React.FC<ServiceSelectionStepProps> = ({
           .in('id', serviceIds)
           .order('id');
 
+        console.log('🔍 Services data:', data, 'Error:', error);
+
         if (error) throw error;
 
         setAvailableServices(data || []);
 
         // Check existing specializations
+        console.log('🔍 Checking existing specializations for expert:', expertAccount.id);
         const { data: existingServices, error: existingError } = await supabase
           .from('expert_service_specializations')
           .select('service_id')
           .eq('expert_id', expertAccount.id);
 
-        if (existingError) throw existingError;
+        console.log('🔍 Existing specializations query result:', existingServices, 'Error:', existingError);
+
+        if (existingError) {
+          console.error('Error fetching existing specializations:', existingError);
+          throw existingError;
+        }
 
         const existing = existingServices?.map(s => s.service_id) || [];
+        console.log('🔍 Existing service IDs:', existing);
         setSelectedServices(existing);
+
+        // Check if services are already marked as assigned in onboarding status
+        const { data: onboardingStatus } = await supabase
+          .from('expert_onboarding_status')
+          .select('services_assigned')
+          .eq('expert_id', expertAccount.id)
+          .single();
+
+        console.log('🔍 Onboarding status for services:', onboardingStatus);
+        
+        // If services are already assigned and we have existing services, mark as complete
+        if (onboardingStatus?.services_assigned && existing.length > 0) {
+          console.log('✅ Services already assigned, marking as complete');
+          // The parent component should handle this completion state
+        }
       }
 
     } catch (error) {
@@ -127,11 +160,19 @@ const ServiceSelectionStep: React.FC<ServiceSelectionStepProps> = ({
 
     setSaving(true);
     try {
+      console.log('💾 Saving services for expert:', expertAccount.id, 'Selected services:', selectedServices);
+      
       // Delete existing specializations
-      await supabase
+      console.log('🗑️ Deleting existing specializations...');
+      const { error: deleteError } = await supabase
         .from('expert_service_specializations')
         .delete()
         .eq('expert_id', expertAccount.id);
+
+      if (deleteError) {
+        console.error('Error deleting existing specializations:', deleteError);
+        throw deleteError;
+      }
 
       // Insert new specializations
       const specializations = selectedServices.map((serviceId, index) => ({
@@ -143,18 +184,68 @@ const ServiceSelectionStep: React.FC<ServiceSelectionStepProps> = ({
                           expertAccount.category.includes('coach') ? 'advanced' : 'intermediate'
       }));
 
-      const { error } = await supabase
-        .from('expert_service_specializations')
-        .insert(specializations);
+      console.log('💾 Specializations to insert:', specializations);
 
-      if (error) throw error;
+      if (specializations.length > 0) {
+        const { error: insertError } = await supabase
+          .from('expert_service_specializations')
+          .insert(specializations);
+
+        if (insertError) {
+          console.error('Error inserting specializations:', insertError);
+          throw insertError;
+        }
+      }
 
       // Update expert account to reflect service selection completion
-      await supabase
+      console.log('💾 Updating expert account with selected services...');
+      const { error: updateError } = await supabase
         .from('expert_accounts')
         .update({ selected_services: selectedServices })
         .eq('id', expertAccount.id);
 
+      if (updateError) {
+        console.error('Error updating expert account:', updateError);
+        throw updateError;
+      }
+
+      // Update onboarding status to mark services as assigned
+      console.log('💾 Updating onboarding status...');
+      const { error: statusError } = await supabase
+        .from('expert_onboarding_status')
+        .upsert({
+          expert_id: expertAccount.id,
+          services_assigned: true
+        }, {
+          onConflict: 'expert_id'
+        });
+
+      if (statusError) {
+        console.error('Error updating onboarding status:', statusError);
+        // Don't throw error here as the main service save was successful
+      }
+
+      // Also set services flag consistency on expert_accounts (selected_services already updated)
+      // When services exist, we may also flip onboarding_completed if all flags are true
+      const { data: eaFlags } = await supabase
+        .from('expert_accounts')
+        .select('selected_services, pricing_set, availability_set, onboarding_completed')
+        .eq('id', expertAccount.id)
+        .single();
+
+      const hasServices = Array.isArray(eaFlags?.selected_services) && eaFlags!.selected_services.length > 0;
+      const hasPricing = !!eaFlags?.pricing_set;
+      const hasAvailability = !!eaFlags?.availability_set;
+
+      if (hasServices && hasPricing && hasAvailability && !eaFlags?.onboarding_completed) {
+        console.log('🎉 All steps complete, marking expert_accounts.onboarding_completed = true');
+        await supabase
+          .from('expert_accounts')
+          .update({ onboarding_completed: true })
+          .eq('id', expertAccount.id);
+      }
+
+      console.log('✅ Services saved successfully');
       toast.success('Services saved successfully!');
       onComplete();
 
@@ -179,12 +270,12 @@ const ServiceSelectionStep: React.FC<ServiceSelectionStepProps> = ({
       <div className="text-center">
         <Sparkles className="h-12 w-12 text-blue-600 mx-auto mb-4" />
         <h3 className="text-xl font-semibold mb-2">Select Your Services</h3>
-        <p className="text-muted-foreground">
+        <div className="text-muted-foreground">
           Choose the services you want to offer based on your expert category: 
           <Badge variant="outline" className="ml-2">
             {expertAccount.category?.split('-').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
           </Badge>
-        </p>
+        </div>
       </div>
 
       <div className="grid gap-4">

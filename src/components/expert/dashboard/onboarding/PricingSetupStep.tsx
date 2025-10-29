@@ -33,20 +33,52 @@ export const PricingSetupStep: React.FC<PricingSetupStepProps> = ({
     if (!expertAccount?.category) return;
 
     try {
+      console.log('🔍 Fetching base pricing for category:', expertAccount.category);
+      
+      // Try to query by id first (which should match the category format)
       const { data, error } = await supabase
         .from('expert_categories')
         .select('*')
-        .eq('name', expertAccount.category)
-        .single();
+        .eq('id', expertAccount.category);
 
-      if (error) throw error;
-      setBasePricing(data);
+      console.log('🔍 Query by id result:', data, 'Error:', error);
 
-      // Set pricing based on category configuration
-      const categoryPricing = getCategoryPricing(expertAccount.category);
-      setPricing(categoryPricing);
+      if (error) {
+        console.error('Database query error:', error);
+        throw error;
+      }
+
+      if (data && data.length > 0) {
+        console.log('✅ Found category data:', data[0]);
+        setBasePricing(data[0]);
+        
+        // Set pricing based on database data
+        const categoryData = data[0];
+        setPricing({
+          session_30_inr: parseFloat(categoryData.base_price_inr) || 0,
+          session_30_eur: parseFloat(categoryData.base_price_eur) || 0,
+          session_60_inr: parseFloat(categoryData.base_price_inr) * 1.5 || 0,
+          session_60_eur: parseFloat(categoryData.base_price_eur) * 1.5 || 0,
+        });
+      } else {
+        console.log('⚠️ No data found, using fallback pricing');
+        // Fallback to hardcoded pricing
+        const categoryName = expertAccount.category
+          .split('-')
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ');
+        const categoryPricing = getCategoryPricing(categoryName);
+        setPricing(categoryPricing);
+      }
     } catch (error) {
       console.error('Error fetching base pricing:', error);
+      // Fallback to hardcoded pricing if database lookup fails
+      const categoryName = expertAccount.category
+        .split('-')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+      const categoryPricing = getCategoryPricing(categoryName);
+      setPricing(categoryPricing);
     }
   };
 
@@ -69,20 +101,46 @@ export const PricingSetupStep: React.FC<PricingSetupStepProps> = ({
 
   const fetchExistingPricing = async () => {
     try {
+      console.log('🔍 Fetching existing pricing for expert:', expertAccount.id, 'category:', expertAccount.category);
+      
       const { data, error } = await supabase
         .from('expert_pricing_tiers')
         .select('*')
         .eq('expert_id', expertAccount.id)
-        .eq('category', expertAccount.category)
+        .eq('category', expertAccount.category);
+
+      console.log('🔍 Existing pricing query result:', data, 'Error:', error);
+
+      if (error) {
+        console.error('Error fetching existing pricing:', error);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        console.log('✅ Found existing pricing:', data[0]);
+        setPricing({
+          session_30_inr: data[0].session_30_inr || 0,
+          session_30_eur: data[0].session_30_eur || 0,
+          session_60_inr: data[0].session_60_inr || 0,
+          session_60_eur: data[0].session_60_eur || 0
+        });
+      } else {
+        console.log('ℹ️ No existing pricing found, using base pricing');
+      }
+
+      // Check if pricing is already marked as setup in onboarding status
+      const { data: onboardingStatus } = await supabase
+        .from('expert_onboarding_status')
+        .select('pricing_setup')
+        .eq('expert_id', expertAccount.id)
         .single();
 
-      if (!error && data) {
-        setPricing({
-          session_30_inr: data.session_30_inr || 0,
-          session_30_eur: data.session_30_eur || 0,
-          session_60_inr: data.session_60_inr || 0,
-          session_60_eur: data.session_60_eur || 0
-        });
+      console.log('🔍 Onboarding status for pricing:', onboardingStatus);
+      
+      // If pricing is already setup and we have existing pricing, mark as complete
+      if (onboardingStatus?.pricing_setup && data && data.length > 0) {
+        console.log('✅ Pricing already setup, marking as complete');
+        // The parent component should handle this completion state
       }
     } catch (error) {
       console.error('Error fetching existing pricing:', error);
@@ -93,19 +151,79 @@ export const PricingSetupStep: React.FC<PricingSetupStepProps> = ({
     setLoading(true);
     
     try {
+      console.log('💾 Saving pricing for expert:', expertAccount.id, 'category:', expertAccount.category);
+      console.log('💾 Pricing data to save:', pricing);
+      
       // Upsert pricing tiers
+      const pricingData = {
+        expert_id: expertAccount.id,
+        category: expertAccount.category,
+        session_30_inr: pricing.session_30_inr,
+        session_30_eur: pricing.session_30_eur,
+        session_60_inr: pricing.session_60_inr,
+        session_60_eur: pricing.session_60_eur
+      };
+      
+      console.log('💾 Final pricing data:', pricingData);
+      
       const { error } = await supabase
         .from('expert_pricing_tiers')
-        .upsert({
-          expert_id: expertAccount.id,
-          category: expertAccount.category,
-          ...pricing
-        }, {
+        .upsert(pricingData, {
           onConflict: 'expert_id,category'
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error saving pricing:', error);
+        throw error;
+      }
 
+      // Update onboarding status to mark pricing as setup
+      console.log('💾 Updating onboarding status for pricing...');
+      const { error: statusError } = await supabase
+        .from('expert_onboarding_status')
+        .upsert({
+          expert_id: expertAccount.id,
+          pricing_setup: true
+        }, {
+          onConflict: 'expert_id'
+        });
+
+      if (statusError) {
+        console.error('Error updating onboarding status:', statusError);
+        // Don't throw error here as the main pricing save was successful
+      }
+
+      // Also update flags on expert_accounts as the single source of truth
+      console.log('💾 Updating expert_accounts.pricing_set flag...');
+      const { error: eaUpdateError } = await supabase
+        .from('expert_accounts')
+        .update({ pricing_set: true })
+        .eq('id', expertAccount.id);
+
+      if (eaUpdateError) {
+        console.error('Error updating expert_accounts.pricing_set:', eaUpdateError);
+      }
+
+      // If all flags are true, set onboarding_completed on expert_accounts as well
+      const { data: eaFlags } = await supabase
+        .from('expert_accounts')
+        .select('selected_services, pricing_set, availability_set, onboarding_completed')
+        .eq('id', expertAccount.id)
+        .single();
+
+      const hasServices = Array.isArray(eaFlags?.selected_services) && eaFlags!.selected_services.length > 0;
+      const hasPricing = !!eaFlags?.pricing_set;
+      const hasAvailability = !!eaFlags?.availability_set;
+
+      if (hasServices && hasPricing && hasAvailability && !eaFlags?.onboarding_completed) {
+        console.log('🎉 All steps complete, marking expert_accounts.onboarding_completed = true');
+        await supabase
+          .from('expert_accounts')
+          .update({ onboarding_completed: true })
+          .eq('id', expertAccount.id);
+      }
+
+      console.log('✅ Pricing saved successfully');
       toast.success('Pricing saved successfully!');
       onComplete();
     } catch (error) {

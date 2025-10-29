@@ -17,8 +17,10 @@ const MasterStatusControl: React.FC = () => {
   const [acceptingCalls, setAcceptingCalls] = useState(false);
 
   useEffect(() => {
-    if (expert?.auth_id) {
-      const presenceData = getExpertPresence(expert.auth_id);
+    console.log('🔍 MasterStatusControl: Expert data:', expert);
+    if (expert?.id) {
+      console.log('🔍 Using expert.id:', expert.id);
+      const presenceData = getExpertPresence(expert.id);
       if (presenceData) {
         // Map presence status to our status
         const mappedStatus = presenceData.status === 'available' ? 'available' : 
@@ -27,17 +29,19 @@ const MasterStatusControl: React.FC = () => {
         setCurrentStatus(mappedStatus);
         setAcceptingCalls(presenceData.acceptingCalls && mappedStatus !== 'offline');
       }
+    } else {
+      console.log('❌ No expert.id found, expert:', expert);
     }
-  }, [expert?.auth_id, getExpertPresence]);
+  }, [expert?.id, getExpertPresence]);
 
   const handleStatusChange = async (newStatus: ExpertStatus) => {
-    if (!expert?.auth_id) return;
+    if (!expert?.id) return;
 
     try {
       // When changing status, preserve current call acceptance setting unless going offline
       const callAcceptance = newStatus === 'offline' ? false : acceptingCalls;
       
-      await updateExpertPresence(expert.auth_id, newStatus, callAcceptance);
+      await updateExpertPresence(expert.id, newStatus, callAcceptance);
       setCurrentStatus(newStatus);
       
       // Auto-disable call acceptance if going offline
@@ -53,7 +57,7 @@ const MasterStatusControl: React.FC = () => {
   };
 
   const handleCallAcceptanceToggle = async (accepting: boolean) => {
-    if (!expert?.auth_id) return;
+    if (!expert?.id) return;
 
     try {
       // If enabling call acceptance but currently offline, set to available
@@ -62,7 +66,7 @@ const MasterStatusControl: React.FC = () => {
       }
       
       // Update the presence system with call acceptance status
-      await updateExpertPresence(expert.auth_id, currentStatus, accepting);
+      await updateExpertPresence(expert.id, currentStatus, accepting);
       setAcceptingCalls(accepting);
       
       toast.success(accepting ? 'Now accepting calls' : 'No longer accepting calls');
@@ -106,7 +110,7 @@ const MasterStatusControl: React.FC = () => {
     }
   };
 
-  if (!expert?.auth_id) return null;
+  if (!expert?.id) return null;
 
   const statusConfig = getStatusConfig(currentStatus);
   const canAcceptCalls = currentStatus !== 'offline' && expert.status === 'approved';

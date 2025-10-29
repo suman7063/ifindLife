@@ -40,7 +40,7 @@ const NewExpertDashboard: React.FC = () => {
         const { data, error } = await supabase
           .from('expert_accounts')
           .select('onboarding_completed, status, selected_services, pricing_set, availability_set, profile_completed')
-          .eq('auth_id', expert.id)
+          .eq('auth_id', expert.auth_id)
           .single();
 
         if (error) {
@@ -53,7 +53,7 @@ const NewExpertDashboard: React.FC = () => {
         const hasServices = data.selected_services && data.selected_services.length > 0;
         const hasPricing = data.pricing_set;
         const hasAvailability = data.availability_set;
-        
+        console.log('hasServices', hasServices ,hasPricing ,hasAvailability,data.onboarding_completed);
         // Onboarding is needed if any core step is incomplete
         const needsOnboardingFlow = !hasServices || !hasPricing || !hasAvailability || !data.onboarding_completed;
         setNeedsOnboarding(needsOnboardingFlow);
@@ -98,22 +98,30 @@ const NewExpertDashboard: React.FC = () => {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
   
-  // Handle unauthorized access
-  if (!isAuthenticated || userType !== 'expert' || !expert) {
+  console.log('isAuthenticated', isAuthenticated,userType,expert,needsOnboarding);
+  console.log('userType', isAuthenticated && userType === 'expert' && expert && needsOnboarding);
+  console.log('expert', expert);
+  console.log('needsOnboarding', needsOnboarding);
+  // If expert is authenticated and needs onboarding, show onboarding flow first
+  if (isAuthenticated && userType === 'expert' && expert && needsOnboarding) {
+    
+    return <ExpertOnboardingFlow />;
+  }
+
+  // Handle unauthorized access (do NOT block onboarding path above)
+  if (!isAuthenticated || userType !== 'expert') {
     console.error('User not authenticated as expert, redirecting to expert login', {
       isAuthenticated,
       userType,
       hasExpertProfile: !!expert
     });
-    
-    // Show toast and redirect
     toast.error('You must be logged in as an expert to access this page');
     return <Navigate to="/expert-login" replace />;
   }
 
-  // If onboarding is needed, show onboarding flow
-  if (needsOnboarding) {
-    return <ExpertOnboardingFlow />;
+  // If we are authenticated as expert but expert object not yet loaded, show a lightweight loader
+  if (!expert) {
+    return <div className="flex items-center justify-center min-h-screen">Preparing your dashboard...</div>;
   }
 
   return (

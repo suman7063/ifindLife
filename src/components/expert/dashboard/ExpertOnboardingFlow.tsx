@@ -22,6 +22,7 @@ export const ExpertOnboardingFlow: React.FC = () => {
   const { expert } = useSimpleAuth();
   const [expertAccount, setExpertAccount] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeStep, setActiveStep] = useState<string>('services');
 
   const [steps, setSteps] = useState<OnboardingStep[]>([
@@ -56,88 +57,99 @@ export const ExpertOnboardingFlow: React.FC = () => {
     fetchExpertAccount();
   }, [expert]);
 
+  // Calculate all required steps completed
+  const allRequiredStepsCompleted = steps && steps.length > 0 ? steps.filter(s => !s.optional).every(s => s.completed) : false;
+
+  // Debug effect to monitor steps completion
+  useEffect(() => {
+    if (steps && steps.length > 0) {
+      console.log('🔍 Steps completion status:', steps.map(s => ({ id: s.id, completed: s.completed })));
+      console.log('🔍 All required steps completed:', allRequiredStepsCompleted);
+    }
+  }, [steps, allRequiredStepsCompleted]);
+
   const fetchExpertAccount = async () => {
-    if (!expert) return;
+    if (!expert) {
+      setError('No expert found. Please log in again.');
+      setLoading(false);
+      return;
+    }
 
     try {
+      setError(null);
       const { data, error } = await supabase
         .from('expert_accounts')
         .select('*')
-        .eq('auth_id', expert.id)
+        .eq('auth_id', expert.auth_id)
         .single();
 
       if (error) throw error;
 
+      if (!data) {
+        throw new Error('Expert account not found');
+      }
+
       setExpertAccount(data);
       
       // Update step completion status
-      setSteps(prev => prev.map(step => ({
-        ...step,
-        completed: getStepCompletion(step.id, data)
-      })));
+      const updatedSteps = await Promise.all(
+        steps.map(async (step) => ({
+          ...step,
+          completed: await getStepCompletion(step.id, data)
+        }))
+      );
+      setSteps(updatedSteps);
 
     } catch (error) {
       console.error('Error fetching expert account:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load expert account');
       toast.error('Failed to load expert account');
     } finally {
       setLoading(false);
     }
   };
 
-  const getStepCompletion = (stepId: string, account: any): boolean => {
-    switch (stepId) {
-      case 'services':
-        return account?.selected_services && account.selected_services.length > 0;
-      case 'pricing':
-        return account?.pricing_set || false;
-      case 'availability':
-        return account?.availability_set || false;
-      case 'profile':
-        return account?.profile_completed || false;
-      default:
+  const getStepCompletion = async (stepId: string, account: any): Promise<boolean> => {
+    try {
+      // Check the expert_onboarding_status table for completion status
+      const { data: onboardingStatus, error } = await supabase
+        .from('expert_onboarding_status')
+        .select('*')
+        .eq('expert_id', account.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching onboarding status:', error);
         return false;
+      }
+
+      if (!onboardingStatus) {
+        return false;
+      }
+
+      switch (stepId) {
+        case 'services':
+          return onboardingStatus.services_assigned || false;
+        case 'pricing':
+          return onboardingStatus.pricing_setup || false;
+        case 'availability':
+          return onboardingStatus.availability_setup || false;
+        case 'profile':
+          return onboardingStatus.profile_completed || false;
+        default:
+          return false;
+      }
+    } catch (error) {
+      console.error('Error checking step completion:', error);
+      return false;
     }
   };
 
   const handleStepComplete = async (stepId: string) => {
     try {
-      let updateField = `${stepId}_set`;
-      if (stepId === 'profile') {
-        updateField = 'profile_completed';
-      } else if (stepId === 'services') {
-        // Services completion is handled within the ServiceSelectionStep
-        // Just update the local state here
-        setSteps(prev => prev.map(step => 
-          step.id === stepId 
-            ? { ...step, completed: true }
-            : step
-        ));
-
-        toast.success(`${steps.find(s => s.id === stepId)?.title} completed!`);
-        
-        // Move to next incomplete step
-        const nextStep = steps.find(s => !s.completed && s.id !== stepId);
-        if (nextStep) {
-          setActiveStep(nextStep.id);
-        }
-        return;
-      }
-
-      // Check if all required steps will be completed after this update
-      const allRequired = steps.filter(s => !s.optional);
-      const willBeCompleted = allRequired.every(s => s.completed || s.id === stepId);
-
-      const { error } = await supabase
-        .from('expert_accounts')
-        .update({ 
-          [updateField]: true,
-          onboarding_completed: willBeCompleted
-        })
-        .eq('auth_id', expert?.id);
-
-      if (error) throw error;
-
-      // Update local state
+      console.log('🎯 Step completed:', stepId);
+      
+      // Update local state immediately for better UX
       setSteps(prev => prev.map(step => 
         step.id === stepId 
           ? { ...step, completed: true }
@@ -151,6 +163,9 @@ export const ExpertOnboardingFlow: React.FC = () => {
       if (nextStep) {
         setActiveStep(nextStep.id);
       }
+
+      // The actual database updates are handled within each step component
+      // This function just handles the UI flow
 
     } catch (error) {
       console.error('Error updating step completion:', error);
@@ -213,7 +228,35 @@ export const ExpertOnboardingFlow: React.FC = () => {
     );
   }
 
-  const allRequiredStepsCompleted = steps.filter(s => !s.optional).every(s => s.completed);
+  if (error) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-center">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-red-800 mb-2">Error Loading Onboarding</h3>
+          <p className="text-red-600 mb-4">{error}</p>
+          <Button onClick={() => window.location.reload()}>
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!expertAccount) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-center">
+          <AlertCircle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-yellow-800 mb-2">Expert Account Not Found</h3>
+          <p className="text-yellow-600 mb-4">Please complete your expert registration first.</p>
+          <Button onClick={() => window.location.href = '/expert-registration'}>
+            Go to Registration
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
@@ -296,13 +339,39 @@ export const ExpertOnboardingFlow: React.FC = () => {
                 onClick={async () => {
                   // Force mark onboarding as complete
                   try {
-                    await supabase
+                    console.log('🎉 Completing onboarding for expert:', expertAccount?.id);
+                    
+                    // Update expert_onboarding_status
+                    const { error: statusError } = await supabase
+                      .from('expert_onboarding_status')
+                      .upsert({
+                        expert_id: expertAccount?.id,
+                        onboarding_completed: true
+                      }, {
+                        onConflict: 'expert_id'
+                      });
+
+                    if (statusError) {
+                      console.error('Error updating onboarding status:', statusError);
+                    }
+
+                    // Update expert_accounts
+                    const { error: accountError } = await supabase
                       .from('expert_accounts')
                       .update({ onboarding_completed: true })
-                      .eq('auth_id', expert?.id);
+                      .eq('id', expertAccount?.id);
+
+                    if (accountError) {
+                      console.error('Error updating expert account:', accountError);
+                    }
+                    
+                    console.log('✅ Onboarding completed, redirecting to dashboard');
+                    toast.success('Onboarding completed! Redirecting to dashboard...');
                     
                     // Redirect to dashboard
-                    window.location.href = '/expert-dashboard';
+                    setTimeout(() => {
+                      window.location.href = '/expert-dashboard';
+                    }, 1000);
                   } catch (error) {
                     console.error('Error finalizing onboarding:', error);
                     toast.error('Failed to complete onboarding');

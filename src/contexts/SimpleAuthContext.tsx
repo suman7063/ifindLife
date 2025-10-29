@@ -130,40 +130,34 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
   // Improved profile loading function
   const loadUserProfile = async (userId: string): Promise<UserProfile | null> => {
     try {
-      // Loading user profile
+      console.log('👤 Loading user profile for:', userId);
       
-      // Try both tables to ensure compatibility
-      let profile = null;
-      let error = null;
-      
-      // First try the users table
-      const { data: usersData, error: usersError } = await supabase
-        .from('users')
+      // Only query the profiles table since users table might not have the user
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
         
-      if (usersData && !usersError) {
-        profile = usersData;
-      } else {
-        // Fallback to profiles table
-        const { data: profilesData, error: profilesError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', userId)
-          .single();
-          
-        if (profilesData && !profilesError) {
-          profile = profilesData;
-        } else {
-          error = profilesError || usersError;
-        }
-      }
+      console.log('👤 Profiles query result:', { 
+        hasData: !!profilesData, 
+        error: profilesError?.message || 'none' 
+      });
 
-      if (error && !profile) {
+      if (profilesError && profilesError.code !== 'PGRST116') {
+        // PGRST116 is "no rows returned" - this is expected if user doesn't have a profile yet
+        console.error('❌ Error fetching user profile:', profilesError);
         setUserProfile(null);
         return null;
       }
+
+      if (!profilesData) {
+        console.log('ℹ️ No user profile found for:', userId, '- this is normal for expert-only accounts');
+        setUserProfile(null);
+        return null;
+      }
+
+      const profile = profilesData;
 
       // User profile loaded successfully
       
@@ -177,10 +171,10 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         city: profile.city || '',
         currency: profile.currency || 'USD',
         profile_picture: profile.profile_picture || '',
-        referral_code: profile.referral_code || '',
-        referral_link: profile.referral_link || '',
-        referred_by: profile.referred_by || '',
-        wallet_balance: profile.wallet_balance || 0,
+        referral_code: (profile as any).referral_code || '',
+        referral_link: (profile as any).referral_link || '',
+        referred_by: (profile as any).referred_by || '',
+        wallet_balance: (profile as any).wallet_balance || 0,
         created_at: profile.created_at,
         updated_at: profile.updated_at || profile.created_at,
         favorite_experts: [],
@@ -207,14 +201,39 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
     try {
       console.log('🎯 Loading expert profile for:', userId);
       
+      // Check current auth state
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      console.log('🔍 Current authenticated user:', currentUser?.id);
+      console.log('🔍 User ID match:', currentUser?.id === userId);
+      
+      // Test basic query first
+      console.log('🔍 Testing basic expert_accounts query...');
+      const { data: testData, error: testError } = await supabase
+        .from('expert_accounts')
+        .select('id, name, status')
+        .limit(1);
+      
+      console.log('🔍 Basic query result:', { hasData: !!testData, error: testError?.message || 'none' });
+      
       const { data: expertData, error } = await supabase
         .from('expert_accounts')
         .select('*')
         .eq('auth_id', userId)
         .single();
 
+      console.log('🔍 Expert query result:', { 
+        hasData: !!expertData, 
+        error: error?.message || 'none',
+        errorCode: error?.code || 'none'
+      });
+
       if (error) {
-        console.log('ℹ️ No expert profile found:', error.message);
+        if (error.code === 'PGRST116') {
+          // No rows returned - this is expected if user doesn't have an expert account
+          console.log('ℹ️ No expert profile found for user:', userId);
+        } else {
+          console.error('❌ Error fetching expert profile:', error);
+        }
         setExpert(null);
         return null;
       }
@@ -266,13 +285,38 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
     }
 
     console.log('🔄 Refreshing profiles for user:', targetUserId);
+    console.log('🔄 Current user state:', { 
+      isAuthenticated: !!user, 
+      userId: user?.id, 
+      targetUserId 
+    });
     
     try {
-      // Load both profiles in parallel
-      const [userProfileData, expertData] = await Promise.all([
+      console.log('🔄 About to load profiles in parallel...');
+      // Load both profiles in parallel with error handling
+      const [userProfileData, expertData] = await Promise.allSettled([
         loadUserProfile(targetUserId),
         loadExpertProfile(targetUserId)
       ]);
+      
+      console.log('🔄 Profile loading results:', {
+        userProfileStatus: userProfileData.status,
+        expertDataStatus: expertData.status,
+        userProfileValue: userProfileData.status === 'fulfilled' ? !!userProfileData.value : null,
+        expertDataValue: expertData.status === 'fulfilled' ? !!expertData.value : null
+      });
+
+      // Extract successful results
+      const userProfile = userProfileData.status === 'fulfilled' ? userProfileData.value : null;
+      const expert = expertData.status === 'fulfilled' ? expertData.value : null;
+
+      // Log any errors
+      if (userProfileData.status === 'rejected') {
+        console.error('❌ Failed to load user profile:', userProfileData.reason);
+      }
+      if (expertData.status === 'rejected') {
+        console.error('❌ Failed to load expert profile:', expertData.reason);
+      }
 
       // Get login preferences with explicit priority
       const sessionType = localStorage.getItem('sessionType');
@@ -280,9 +324,9 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
       const loginPreference = sessionType || preferredRole;
       
       console.log('📋 Profile refresh results:', {
-        hasUserProfile: !!userProfileData,
-        hasExpertProfile: !!expertData,
-        expertStatus: expertData?.status,
+        hasUserProfile: !!userProfile,
+        hasExpertProfile: !!expert,
+        expertStatus: expert?.status,
         sessionType,
         preferredRole,
         loginPreference
@@ -291,15 +335,15 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
       // Determine user type based on loaded profiles and preferences
       let newUserType: SessionType = 'none';
       
-      if (userProfileData && expertData) {
+      if (userProfile && expert) {
         // User has both profiles - STRICTLY honor the login preference
-        if (loginPreference === 'expert' && expertData.status === 'approved') {
+        if (loginPreference === 'expert' && expert.status === 'approved') {
           console.log('✅ EXPERT LOGIN: User has both profiles but logged in as expert - honoring expert preference');
           newUserType = 'expert';
         } else if (loginPreference === 'user') {
           console.log('✅ USER LOGIN: User has both profiles and logged in as user - honoring user preference');
           newUserType = 'user';
-        } else if (expertData.status === 'approved') {
+        } else if (expert.status === 'approved') {
           // If no clear preference but expert is approved, default to expert
           console.log('ℹ️ No clear preference but expert approved - defaulting to expert');
           newUserType = 'expert';
@@ -308,11 +352,11 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
           console.log('ℹ️ Expert not approved - defaulting to user');
           newUserType = 'user';
         }
-      } else if (expertData && expertData.status === 'approved') {
+      } else if (expert && expert.status === 'approved') {
         // Only expert profile exists and is approved
         console.log('✅ EXPERT ONLY: Only expert profile exists and is approved');
         newUserType = 'expert';
-      } else if (userProfileData) {
+      } else if (userProfile) {
         // Only user profile exists
         console.log('✅ USER ONLY: Only user profile exists');
         newUserType = 'user';
@@ -454,13 +498,17 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
 
   // Auth initialization and state management
   useEffect(() => {
-    let mounted = true;
+    try {
+      console.log('🔥 SimpleAuthContext useEffect triggered');
+      let mounted = true;
     
     const initializeAuth = async () => {
       console.log('🚀 Auth: Starting initialization...');
       
       try {
+        console.log('🔍 Getting session from Supabase...');
         const { data: { session }, error } = await supabase.auth.getSession();
+        console.log('🔍 Session result:', { hasSession: !!session, error: error?.message || 'none' });
         
         if (!mounted) return;
         
@@ -470,7 +518,11 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
           console.log('✅ Auth: Initial session found:', { userId: session.user.id, email: session.user.email });
           setSession(session);
           setUser(session.user);
-          // Profiles will be loaded by the auth state change listener
+          // Load profiles immediately for initial session
+          console.log('👤 Loading profiles for initial session...');
+          console.log('👤 Calling refreshProfiles with userId:', session.user.id);
+          await refreshProfiles(session.user.id);
+          console.log('👤 refreshProfiles completed');
         } else {
           console.log('ℹ️ Auth: No initial session found');
           setUserProfile(null);
@@ -488,7 +540,9 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
       }
     };
     
+    console.log('🔥 About to call initializeAuth()');
     initializeAuth();
+    console.log('🔥 initializeAuth() called');
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -525,6 +579,9 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
       mounted = false;
       subscription.unsubscribe();
     };
+    } catch (error) {
+      console.error('❌ SimpleAuthContext useEffect error:', error);
+    }
   }, []);
 
   // CRITICAL: Make sure we return all required values consistently

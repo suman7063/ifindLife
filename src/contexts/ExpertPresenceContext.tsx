@@ -233,6 +233,12 @@ export const ExpertPresenceProvider: React.FC<{ children: React.ReactNode }> = (
   ) => {
     try {
       console.log('📝 Updating expert presence:', { expertId, status, acceptingCalls });
+      console.log('🔍 Expert ID type:', typeof expertId, 'Value:', expertId);
+      
+      // Validate expertId
+      if (!expertId || typeof expertId !== 'string') {
+        throw new Error('Invalid expert ID provided');
+      }
       
       // First, check if expert_presence record exists
       const { data: existingPresence, error: checkError } = await supabase
@@ -242,6 +248,7 @@ export const ExpertPresenceProvider: React.FC<{ children: React.ReactNode }> = (
         .single();
 
       if (checkError && checkError.code !== 'PGRST116') {
+        console.error('❌ Error checking existing presence:', checkError);
         throw checkError;
       }
 
@@ -299,7 +306,18 @@ export const ExpertPresenceProvider: React.FC<{ children: React.ReactNode }> = (
       
     } catch (error) {
       console.error('❌ Error updating expert presence:', error);
-      throw error;
+      
+      // Handle specific error types
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        console.error('🌐 Network error - check internet connection and Supabase status');
+        throw new Error('Network error: Unable to connect to server. Please check your internet connection.');
+      } else if (error instanceof Error) {
+        console.error('❌ Database error:', error.message);
+        throw new Error(`Failed to update presence: ${error.message}`);
+      } else {
+        console.error('❌ Unknown error:', error);
+        throw new Error('An unexpected error occurred while updating presence');
+      }
     }
   }, []);
 

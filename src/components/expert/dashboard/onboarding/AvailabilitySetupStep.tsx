@@ -52,18 +52,64 @@ export const AvailabilitySetupStep: React.FC<AvailabilitySetupStepProps> = ({
 
   const fetchExistingAvailability = async () => {
     try {
+      console.log('🔍 Fetching existing availability for expert:', expertAccount.id);
+      
       const { data, error } = await supabase
         .from('expert_availabilities')
         .select('*')
-        .eq('expert_id', expertAccount.auth_id);
+        .eq('expert_id', expertAccount.id);
+
+      console.log('🔍 Availability query result:', data, 'Error:', error);
 
       if (error) throw error;
 
       if (data && data.length > 0) {
+        console.log('✅ Found existing availability:', data);
         // Convert existing data to our format
-        // This is a simplified version - you might need more complex logic
-        // based on your actual availability data structure
-        console.log('Existing availability:', data);
+        // Group by day of week and convert to our interface
+        const dayMap: { [key: number]: DayAvailability } = {};
+        
+        data.forEach((record: any) => {
+          const dayIndex = record.day_of_week;
+          const dayName = DAYS[dayIndex];
+          
+          if (!dayMap[dayIndex]) {
+            dayMap[dayIndex] = {
+              day: dayName,
+              enabled: true,
+              timeSlots: []
+            };
+          }
+          
+          dayMap[dayIndex].timeSlots.push({
+            start_time: record.start_time,
+            end_time: record.end_time
+          });
+        });
+        
+        // Convert to array format
+        const convertedAvailability = DAYS.map((day, index) => 
+          dayMap[index] || { day, enabled: false, timeSlots: [{ start_time: '09:00', end_time: '17:00' }] }
+        );
+        
+        setAvailability(convertedAvailability);
+      } else {
+        console.log('ℹ️ No existing availability found');
+      }
+
+      // Check if availability is already marked as setup in onboarding status
+      const { data: onboardingStatus } = await supabase
+        .from('expert_onboarding_status')
+        .select('availability_setup')
+        .eq('expert_id', expertAccount.id)
+        .single();
+
+      console.log('🔍 Onboarding status for availability:', onboardingStatus);
+      
+      // If availability is already setup and we have existing availability, mark as complete
+      if (onboardingStatus?.availability_setup && data && data.length > 0) {
+        console.log('✅ Availability already setup, marking as complete');
+        // The parent component should handle this completion state
       }
     } catch (error) {
       console.error('Error fetching existing availability:', error);
@@ -122,30 +168,99 @@ export const AvailabilitySetupStep: React.FC<AvailabilitySetupStepProps> = ({
     setLoading(true);
     
     try {
+      console.log('💾 Saving availability for expert:', expertAccount.id);
+      
       // Delete existing availability
-      await supabase
+      const { error: deleteError } = await supabase
         .from('expert_availabilities')
         .delete()
-        .eq('expert_id', expertAccount.auth_id);
+        .eq('expert_id', expertAccount.id);
 
-      // Insert new availability records
-      const availabilityRecords = availability
+      if (deleteError) {
+        console.error('Error deleting existing availability:', deleteError);
+        throw deleteError;
+      }
+
+      // Prepare new availability records
+      const availabilityRecords: any[] = [];
+      
+      availability
         .filter(day => day.enabled)
-        .map(day => ({
-          expert_id: expertAccount.auth_id,
-          start_date: new Date().toISOString().split('T')[0], // Today
-          end_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // One year from now
-          availability_type: 'recurring'
-        }));
+        .forEach(day => {
+          const dayIndex = DAYS.indexOf(day.day);
+          
+          day.timeSlots.forEach(slot => {
+            availabilityRecords.push({
+              expert_id: expertAccount.id,
+              day_of_week: dayIndex,
+              start_time: slot.start_time,
+              end_time: slot.end_time,
+              is_available: true,
+              timezone: 'UTC'
+            });
+          });
+        });
+
+      console.log('💾 Records to insert:', availabilityRecords);
 
       if (availabilityRecords.length > 0) {
-        const { error } = await supabase
+        const { error: insertError } = await supabase
           .from('expert_availabilities')
           .insert(availabilityRecords);
 
-        if (error) throw error;
+        if (insertError) {
+          console.error('Error inserting availability:', insertError);
+          throw insertError;
+        }
       }
 
+      // Update onboarding status to mark availability as setup
+      console.log('💾 Updating onboarding status for availability...');
+      const { error: statusError } = await supabase
+        .from('expert_onboarding_status')
+        .upsert({
+          expert_id: expertAccount.id,
+          availability_setup: true
+        }, {
+          onConflict: 'expert_id'
+        });
+
+      if (statusError) {
+        console.error('Error updating onboarding status:', statusError);
+        // Don't throw error here as the main availability save was successful
+      }
+
+      // Also update flags on expert_accounts as the single source of truth
+      console.log('💾 Updating expert_accounts.availability_set flag...');
+      const { error: eaUpdateError } = await supabase
+        .from('expert_accounts')
+        .update({ availability_set: true })
+        .eq('id', expertAccount.id);
+
+      if (eaUpdateError) {
+        console.error('Error updating expert_accounts.availability_set:', eaUpdateError);
+      }
+
+      // If all flags are true, set onboarding_completed on expert_accounts as well
+      const { data: eaFlags } = await supabase
+        .from('expert_accounts')
+        .select('selected_services, pricing_set, availability_set, onboarding_completed')
+        .eq('id', expertAccount.id)
+        .single();
+
+      const hasServices = Array.isArray(eaFlags?.selected_services) && eaFlags!.selected_services.length > 0;
+      const hasPricing = !!eaFlags?.pricing_set;
+      const hasAvailability = !!eaFlags?.availability_set;
+
+      if (hasServices && hasPricing && hasAvailability && !eaFlags?.onboarding_completed) {
+        console.log('🎉 All steps complete, marking expert_accounts.onboarding_completed = true');
+        await supabase
+          .from('expert_accounts')
+          .update({ onboarding_completed: true })
+          .eq('id', expertAccount.id);
+      }
+
+      console.log('✅ Availability saved successfully');
       toast.success('Availability saved successfully!');
       onComplete();
     } catch (error) {

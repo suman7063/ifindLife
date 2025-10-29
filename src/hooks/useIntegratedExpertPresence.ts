@@ -18,8 +18,9 @@ export function useIntegratedExpertPresence() {
       // Expert logged out - set them as offline
       const expertAuthId = expert.auth_id || expert.id;
       if (expertAuthId) {
-        console.log('🔴 Expert logged out, setting presence to offline:', expertAuthId);
-        updateExpertPresence(expertAuthId, 'offline');
+        console.log('🔴 Expert logged out, would set offline:', expertAuthId);
+        // Temporarily disabled to prevent network errors during authentication
+        // updateExpertPresence(expertAuthId, 'offline');
       }
     }
   }, [expert, isAuthenticated, userType, updateExpertPresence]);
@@ -51,7 +52,8 @@ export function useIntegratedExpertPresence() {
       if (remainingTabs.length === 0) {
         // This was the last tab, set expert offline
         console.log('🔴 Last tab closing, setting expert offline:', expertAuthId);
-        updateExpertPresence(expertAuthId, 'offline');
+        // Temporarily disabled to prevent network errors during authentication
+        // updateExpertPresence(expertAuthId, 'offline');
         localStorage.removeItem(storageKey);
       } else {
         // Other tabs still open, just remove this tab
