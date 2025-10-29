@@ -12,27 +12,39 @@ type ExpertStatus = 'available' | 'busy' | 'away' | 'offline';
 
 const MasterStatusControl: React.FC = () => {
   const { expert } = useSimpleAuth();
-  const { updateExpertPresence, getExpertPresence } = useExpertPresence();
+  const { updateExpertPresence, getExpertPresence, checkExpertPresence } = useExpertPresence();
   const [currentStatus, setCurrentStatus] = useState<ExpertStatus>('offline');
   const [acceptingCalls, setAcceptingCalls] = useState(false);
 
   useEffect(() => {
     console.log('🔍 MasterStatusControl: Expert data:', expert);
-    if (expert?.id) {
-      console.log('🔍 Using expert.id:', expert.id);
-      const presenceData = getExpertPresence(expert.id);
-      if (presenceData) {
-        // Map presence status to our status
-        const mappedStatus = presenceData.status === 'available' ? 'available' : 
-                           presenceData.status === 'busy' ? 'busy' :
-                           presenceData.status === 'away' ? 'away' : 'offline';
-        setCurrentStatus(mappedStatus);
-        setAcceptingCalls(presenceData.acceptingCalls && mappedStatus !== 'offline');
-      }
-    } else {
+    if (!expert?.id) {
       console.log('❌ No expert.id found, expert:', expert);
+      return;
     }
-  }, [expert?.id, getExpertPresence]);
+
+    // Always verify presence from DB on mount/refresh to restore state
+    (async () => {
+      try {
+        const presence = await checkExpertPresence(expert.id);
+        const mappedStatus = presence.status === 'available' ? 'available' :
+                            presence.status === 'busy' ? 'busy' :
+                            presence.status === 'away' ? 'away' : 'offline';
+        setCurrentStatus(mappedStatus);
+        setAcceptingCalls(!!presence.acceptingCalls && mappedStatus !== 'offline');
+      } catch (e) {
+        // Fallback to any cached state if network fails
+        const cached = getExpertPresence(expert.id);
+        if (cached) {
+          const mappedStatus = cached.status === 'available' ? 'available' :
+                              cached.status === 'busy' ? 'busy' :
+                              cached.status === 'away' ? 'away' : 'offline';
+          setCurrentStatus(mappedStatus);
+          setAcceptingCalls(!!cached.acceptingCalls && mappedStatus !== 'offline');
+        }
+      }
+    })();
+  }, [expert?.id, getExpertPresence, checkExpertPresence]);
 
   const handleStatusChange = async (newStatus: ExpertStatus) => {
     if (!expert?.id) return;

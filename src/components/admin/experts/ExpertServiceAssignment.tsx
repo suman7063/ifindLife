@@ -156,14 +156,36 @@ const ExpertServiceAssignment: React.FC<ExpertServiceAssignmentProps> = ({
         if (error) throw error;
       }
 
-      // Update expert onboarding status
-      await supabase
-        .from('expert_onboarding_status')
+      // Update expert_accounts flags and selected services on the primary table
+      const selectedServiceIds = expertServices.map(es => es.service_id);
+
+      const { error: eaUpdateError } = await supabase
+        .from('expert_accounts')
         .update({ 
-          services_assigned: true,
-          pricing_setup: true
+          selected_services: selectedServiceIds,
+          pricing_set: true
         })
-        .eq('expert_id', expertId);
+        .eq('id', expertId);
+
+      if (eaUpdateError) throw eaUpdateError;
+
+      // If all flags satisfied, mark onboarding_completed on expert_accounts
+      const { data: eaFlags } = await supabase
+        .from('expert_accounts')
+        .select('selected_services, pricing_set, availability_set, onboarding_completed')
+        .eq('id', expertId)
+        .single();
+
+      const hasServices = Array.isArray(eaFlags?.selected_services) && eaFlags!.selected_services.length > 0;
+      const hasPricing = !!eaFlags?.pricing_set;
+      const hasAvailability = !!eaFlags?.availability_set;
+
+      if (hasServices && hasPricing && hasAvailability && !eaFlags?.onboarding_completed) {
+        await supabase
+          .from('expert_accounts')
+          .update({ onboarding_completed: true })
+          .eq('id', expertId);
+      }
 
       toast.success('Services and pricing assigned successfully!');
       onBack();
