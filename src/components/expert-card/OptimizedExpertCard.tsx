@@ -1,4 +1,4 @@
-import React, { memo, useMemo, useState } from 'react';
+import React, { memo, useMemo, useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -43,31 +43,31 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
   const { isExpertFavorite, toggleExpertFavorite } = useFavorites();
   const [showAwayDialog, setShowAwayDialog] = useState(false);
   
-  // Use simplified expert presence
-  const { getExpertPresence } = useExpertPresence();
+  // Use presence context to derive live status
+  const { getExpertPresence, version } = useExpertPresence();
   
   const getExpertStatus = (expertId: string) => {
     const presence = getExpertPresence(expertId);
     const isAvailable = presence?.status === 'available' && presence?.acceptingCalls === true;
     return {
-      status: presence?.status === 'available' ? 'online' : 
-              presence?.status === 'away' ? 'away' : 'offline',
+      status: (presence?.status ?? 'offline') as 'available' | 'busy' | 'away' | 'offline',
       isAvailable,
       lastActivity: presence?.lastActivity || ''
-    };
+    } as { status: 'available' | 'busy' | 'away' | 'offline'; isAvailable: boolean; lastActivity: string };
   };
+
+  // Debug: log when presence version changes
+  useEffect(() => {
+    const p = getExpertPresence(expert.id);
+    console.log('5555555 ExpertCard presence change', { expertId: expert.id, presence: p });
+  }, [version, expert.id, getExpertPresence]);
   
   const isExpertLoading = () => false; // Simplified - no lazy loading needed
 
   // Memoize expert data processing
   const expertData = useMemo(() => {
     const presenceStatus = getExpertStatus(expert.id);
-    
-    // Map presence status to ExpertStatusIndicator expected format
-    const mappedStatus: 'available' | 'busy' | 'away' | 'offline' = 
-      presenceStatus.status === 'online' ? 'available' :
-      presenceStatus.status === 'away' ? 'away' : 'offline';
-    
+    const mappedStatus: 'available' | 'busy' | 'away' | 'offline' = presenceStatus.status;
     return {
       id: expert.id,
       name: expert.name || 'Unnamed Expert',
@@ -84,14 +84,12 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
       initials: getInitials(expert.name || ''),
       languages: (expert as any).languages || ['English']
     };
-  }, [expert, getExpertStatus]);
+  }, [expert, version]);
 
   const handleInteraction = async (action: () => void) => {
-    // Simplified - just execute the action without additional presence checking
     action();
   };
 
-  // Category badge logic from ExpertApprovalWorkflow
   const getCategoryBadgeColor = (category: string) => {
     const colors = {
       'listening-volunteer': 'bg-blue-100 text-blue-800',
@@ -109,7 +107,6 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
       .join(' ');
   };
 
-  // Handle authentication flow after login
   React.useEffect(() => {
     if (isAuthenticated) {
       const pendingAction = executeIntendedAction();
@@ -130,7 +127,6 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
     }
   }, [isAuthenticated, executeIntendedAction, onConnectNow, onBookNow, onShowConnectOptions, expertData.id, expertData.name, handleInteraction]);
 
-  // Handle connect now with improved UX
   const handleConnectNow = React.useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation();
     
@@ -155,7 +151,6 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
     });
   }, [requireAuthForExpert, expertData.id, expertData.name, expertData.status, expertData.isAvailable, onShowConnectOptions, handleInteraction]);
 
-  // Handle book now with improved UX
   const handleBookNow = React.useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation();
     
@@ -170,7 +165,6 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
     });
   }, [requireAuthForExpert, expertData.id, expertData.name, onBookNow, handleInteraction]);
 
-  // Handle favorite click
   const handleFavoriteClick = React.useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -182,14 +176,12 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
     toggleExpertFavorite(expertData.id);
   }, [isAuthenticated, toggleExpertFavorite, expertData.id]);
 
-  // Handle specific connection type
   const handleConnectOption = React.useCallback(async (type: 'video' | 'voice') => {
     if (!requireAuthForCall(expertData.id, expertData.name, type)) {
       return;
     }
 
     await handleInteraction(() => {
-      // Double check availability before connecting
       if (!expertData.isAvailable) {
         toast.error(`${expertData.name} is no longer available for connection`);
         if (onShowConnectOptions) {
@@ -207,36 +199,17 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
     });
   }, [requireAuthForCall, expertData.id, expertData.name, expertData.isAvailable, onConnectNow, onShowConnectOptions, handleInteraction]);
 
-  // Render buttons based on variant and state
   const renderActionButtons = () => {
-    const isLoading = isExpertLoading();
+    const isLoading = false;
     
     if (showConnectOptions && expertData.isAvailable) {
       return (
         <div className="flex gap-2">
-          <Button
-            size="sm"
-            variant="default"
-            className="flex-1"
-            disabled={isLoading}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleConnectOption('video');
-            }}
-          >
+          <Button size="sm" variant="default" className="flex-1" disabled={isLoading} onClick={(e) => { e.stopPropagation(); handleConnectOption('video'); }}>
             <Video className="h-3 w-3 mr-1" />
             Video
           </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="flex-1"
-            disabled={isLoading}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleConnectOption('voice');
-            }}
-          >
+          <Button size="sm" variant="outline" className="flex-1" disabled={isLoading} onClick={(e) => { e.stopPropagation(); handleConnectOption('voice'); }}>
             <Phone className="h-3 w-3 mr-1" />
             Voice
           </Button>
@@ -244,45 +217,24 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
       );
     }
 
+    // Replace the left button with the status pill
+    const status = expertData.status; // 'available' | 'busy' | 'away' | 'offline'
+    const label = status === 'available' ? 'Connect Now' : status;
+    const style: React.CSSProperties =
+      status === 'available'
+        ? { backgroundColor: 'rgb(220 252 231)', color: '#065f46' }
+        : status === 'busy'
+        ? { backgroundColor: 'rgb(255 237 213)', color: '#92400e' }
+        : status === 'away'
+        ? { backgroundColor: 'rgb(254 249 195)', color: '#92400e' }
+        : { backgroundColor: 'rgb(243 244 246)', color: '#374151' };
+
     return (
       <div className="flex gap-2">
-        <Button
-          size="sm"
-          variant={expertData.isAvailable ? 'default' : 'outline'}
-          className={`flex-1 ${expertData.isAvailable ? 'bg-ifind-aqua hover:bg-ifind-aqua/90 text-white' : ''}`}
-          disabled={isLoading}
-          onClick={handleConnectNow}
-        >
-          {isLoading ? (
-            <>Loading...</>
-          ) : expertData.isAvailable ? (
-            <>
-              <Video className="h-3 w-3 mr-1" />
-              <span className="text-xs">
-                Connect Now
-                {expertData.status === 'available' && (
-                  <span className="ml-1 inline-flex h-2 w-2 rounded-full bg-green-400"></span>
-                )}
-              </span>
-            </>
-          ) : expertData.status === 'away' ? (
-            <>
-              Send Message
-            </>
-          ) : (
-            <>
-              <Clock className="h-3 w-3 mr-1" />
-              {expertData.status === 'offline' ? 'Offline' : 'Unavailable'}
-            </>
-          )}
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          className="flex-1"
-          disabled={isLoading}
-          onClick={handleBookNow}
-        >
+        <span className="flex-1 inline-flex items-center justify-center text-xs font-medium px-3 py-2 rounded-md border" style={style}>
+          {label}
+        </span>
+        <Button size="sm" variant="outline" className="flex-1" disabled={isLoading} onClick={handleBookNow}>
           <Calendar className="h-3 w-3 mr-1" />
           Book
         </Button>
@@ -296,16 +248,8 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
         <div className="flex items-start gap-4">
           <div className="relative">
             <Avatar className="h-16 w-16 border-2 border-white shadow">
-              <AvatarImage 
-                src={expertData.avatarUrl || ''} 
-                alt={expertData.name}
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-              <AvatarFallback className="bg-primary text-primary-foreground">
-                {expertData.initials}
-              </AvatarFallback>
+              <AvatarImage src={expertData.avatarUrl || ''} alt={expertData.name} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+              <AvatarFallback className="bg-primary text-primary-foreground">{expertData.initials}</AvatarFallback>
             </Avatar>
           </div>
           
@@ -314,10 +258,7 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
               <h3 className="font-semibold text-lg truncate">{expertData.name}</h3>
               <div className="flex items-center gap-2">
                 {showCategoryBadge && expertData.category && (
-                  <Badge 
-                    variant="secondary"
-                    className={getCategoryBadgeColor(expertData.category)}
-                  >
+                  <Badge variant="secondary" className={getCategoryBadgeColor(expertData.category)}>
                     {formatCategoryName(expertData.category)}
                   </Badge>
                 )}
@@ -357,7 +298,7 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
       </CardContent>
       
       <CardFooter className="bg-muted/50 px-4 py-3">
-        <div className="w-full space-y-2">
+        <div className="w-full space-y-2">         
           <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
             <Languages className="h-3 w-3" />
             <span>{expertData.languages.join(', ')}</span>
@@ -370,24 +311,13 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
 
   return (
     <>
-      <Card 
-        className={`overflow-hidden transition-all hover:shadow-lg cursor-pointer ${className}`}
-        onClick={onClick}
-      >
+      <Card className={`overflow-hidden transition-all hover:shadow-lg cursor-pointer ${className}`} onClick={onClick}>
         {cardContent}
       </Card>
-      
-      {/* Away Message Dialog */}
-      <AwayMessageDialog
-        isOpen={showAwayDialog}
-        onClose={() => setShowAwayDialog(false)}
-        expertId={expertData.id}
-        expertName={expertData.name}
-      />
+      <AwayMessageDialog isOpen={showAwayDialog} onClose={() => setShowAwayDialog(false)} expertId={expertData.id} expertName={expertData.name} />
     </>
   );
 });
 
 OptimizedExpertCard.displayName = 'OptimizedExpertCard';
-
 export default OptimizedExpertCard;

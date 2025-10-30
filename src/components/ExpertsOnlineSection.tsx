@@ -1,32 +1,78 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import ExpertCard from '@/components/expert-card';
 import UnifiedExpertConnection from '@/components/expert-connection/UnifiedExpertConnection';
 import { usePublicExpertsData } from '@/hooks/usePublicExpertsData';
+import { useExpertPresence } from '@/contexts/ExpertPresenceContext';
+import { supabase } from '@/integrations/supabase/client';
 
 const ExpertsOnlineSection: React.FC = () => {
   const navigate = useNavigate();
   const { experts: allExperts, loading } = usePublicExpertsData();
+  const { bulkCheckPresence, getExpertPresence, version } = useExpertPresence();
   
-  // Presence checking is now handled by useOptimizedExpertData
-
-  // Show online experts first, then last online experts, ensuring 3 experts total
   const approvedExperts = allExperts.filter(expert => expert.dbStatus === 'approved');
+
+  // Derive online/offline using live presence cache so UI reflects instant changes
+  const { onlineExperts, offlineExperts } = useMemo(() => {
+    const online: typeof approvedExperts = [];
+    const offline: typeof approvedExperts = [];
+    for (const e of approvedExperts) {
+      const presence = getExpertPresence(String(e.id));
+      const isOnline = presence?.status === 'available' && presence?.acceptingCalls === true;
+      if (isOnline) online.push(e); else offline.push(e);
+    }
+    return { onlineExperts: online, offlineExperts: offline };
+  }, [approvedExperts, version, getExpertPresence]);
   
-  // Separate online and offline experts based on waitTime (which reflects presence)
-  const onlineExperts = approvedExperts.filter(expert => 
-    expert.status === 'online' && expert.waitTime === 'Available Now'
-  );
-  
-  const offlineExperts = approvedExperts.filter(expert => 
-    expert.status !== 'online' || expert.waitTime !== 'Available Now'
-  );
-  
-  // Combine online first, then offline, and take first 3
   const displayExperts = [...onlineExperts, ...offlineExperts].slice(0, 3);
 
+  // Ensure presence is fetched at least once for the displayed experts
+  useEffect(() => {
+    if (displayExperts.length === 0) return;
+    const ids = displayExperts.map(e => String(e.id));
+    bulkCheckPresence(ids);
+  }, [displayExperts.map(e => e.id).join(','), bulkCheckPresence]);
+
+  // Re-fetch presence when DB table emits a realtime change
+  useEffect(() => {
+    const channel = supabase
+      .channel('home-presence-refresh')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'expert_presence' }, async () => {
+        if (displayExperts.length === 0) return;
+        const ids = displayExperts.map(e => String(e.id));
+        await bulkCheckPresence(ids);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [displayExperts.map(e => e.id).join(','), bulkCheckPresence]);
+
+  // Fallback: refresh on visibility/focus + short polling
+  useEffect(() => {
+    if (displayExperts.length === 0) return;
+    const ids = displayExperts.map(e => String(e.id));
+
+    const onFocus = () => bulkCheckPresence(ids);
+    const onVisibility = () => { if (!document.hidden) bulkCheckPresence(ids); };
+
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibility);
+
+    const intervalId = setInterval(() => bulkCheckPresence(ids), 5000);
+
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibility);
+      clearInterval(intervalId);
+    };
+  }, [displayExperts.map(e => e.id).join(','), bulkCheckPresence]);
+
+  console.log('4444444', displayExperts);
   return (
     <UnifiedExpertConnection serviceTitle="Expert Consultation" serviceId="consultation">
       {({ state, handleExpertCardClick, handleConnectNow, handleBookNow, handleShowConnectOptions }) => (

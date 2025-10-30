@@ -41,20 +41,22 @@ export function useOptimizedExpertData({
       return {
         getExpertPresence: () => null,
         bulkCheckPresence: () => Promise.resolve(),
-        isLoading: false
-      };
+        isLoading: false,
+        version: 0
+      } as any;
     }
   })();
   
-  const { getExpertPresence, bulkCheckPresence } = presenceContext;
+  const { getExpertPresence, bulkCheckPresence, version } = presenceContext;
 
   // Memoized expert mapping to prevent unnecessary recalculations
   const mapDbExpertToExpertCard = useMemo(() => {
     return (dbExpert: any): ExpertCardData => {
-      const expertId = String(dbExpert.id);
+      const expertId = String(dbExpert.id); // UUID from expert_accounts.id
       const expertAuthId = dbExpert.auth_id;
       const isApproved = dbExpert.status === 'approved';
-      const presence = getExpertPresence(expertAuthId);
+      // Use expert UUID for presence lookup (cache keyed by expert_id)
+      const presence = getExpertPresence(expertId);
       const expertStatus = presence?.status || 'offline';
       const isAvailable = presence?.status === 'available' && presence?.acceptingCalls === true;
       
@@ -76,7 +78,7 @@ export function useOptimizedExpertData({
         dbStatus: dbExpert.status
       };
     };
-  }, [getExpertPresence]);
+  }, [getExpertPresence, version]);
 
   // Optimized data fetching with caching
   const fetchExpertData = useMemo(() => {
@@ -140,59 +142,42 @@ export function useOptimizedExpertData({
             );
           }
         }
-        
-        // Update cache
-        expertDataCache = {
-          data: filteredData,
-          timestamp: now,
-          loading: false
-        };
-        
-        console.log(`✅ Loaded ${filteredData.length} experts`);
+
+        console.log(`Loaded ${filteredData.length} filtered experts`);
+        expertDataCache.data = filteredData;
+        expertDataCache.timestamp = Date.now();
+        expertDataCache.loading = false;
+
         setRawExperts(filteredData);
-        
       } catch (err) {
-        console.error('❌ Error loading experts:', err);
+        console.error('Error loading experts:', err);
         setError('Failed to load experts');
         setExperts([]);
-        expertDataCache.loading = false;
       } finally {
         setLoading(false);
       }
     };
   }, [serviceId, specialization]);
 
-  // Effect to fetch data
   useEffect(() => {
     fetchExpertData();
-  }, [fetchExpertData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serviceId, specialization]);
 
-  // Effect to update expert cards when presence changes (memoized)
-  const formattedExperts = useMemo(() => {
-    if (rawExperts.length === 0) return [];
-    return rawExperts.map(mapDbExpertToExpertCard);
+  // Update experts when raw data or presence changes
+  useEffect(() => {
+    if (rawExperts.length > 0) {
+      const formattedExperts = rawExperts.map(expert => mapDbExpertToExpertCard(expert));
+      setExperts(formattedExperts);
+    }
   }, [rawExperts, mapDbExpertToExpertCard]);
 
+  // Optionally fetch presence for listed experts
   useEffect(() => {
-    setExperts(formattedExperts);
-  }, [formattedExperts]);
+    if (!enablePresenceChecking || rawExperts.length === 0) return;
+    const ids = rawExperts.map((e) => String(e.id));
+    bulkCheckPresence(ids);
+  }, [enablePresenceChecking, rawExperts, bulkCheckPresence]);
 
-  // REMOVED: Bulk presence checking on every expert list load
-  // Presence is now only checked when:
-  // 1. Expert logs in/out (handled by useIntegratedExpertPresence)
-  // 2. User interacts with individual expert card (handled by ExpertDetail page)
-  // 3. Expert manually changes status (handled by MasterStatusControl)
-  
-  // No automatic bulk checking to reduce unnecessary API calls
-
-  return {
-    experts,
-    loading,
-    error,
-    refetch: () => {
-      // Clear cache and refetch
-      expertDataCache = { data: null, timestamp: 0, loading: false };
-      fetchExpertData();
-    }
-  };
+  return { experts, loading, error };
 }

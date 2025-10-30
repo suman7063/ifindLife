@@ -25,6 +25,7 @@ const CallStatusIndicator: React.FC<CallStatusIndicatorProps> = ({
   onToggleListening,
   onShowPendingCalls
 }) => {
+  console.log('3333333', isListening);
   return (
     <div className="flex items-center space-x-3">
       {/* Call Reception Status */}

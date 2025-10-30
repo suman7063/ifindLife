@@ -12,7 +12,7 @@ type ExpertStatus = 'available' | 'busy' | 'away' | 'offline';
 
 const MasterStatusControl: React.FC = () => {
   const { expert } = useSimpleAuth();
-  const { updateExpertPresence, getExpertPresence, checkExpertPresence } = useExpertPresence();
+  const { updateExpertPresence, getExpertPresence, checkExpertPresence, bulkCheckPresence } = useExpertPresence();
   const [currentStatus, setCurrentStatus] = useState<ExpertStatus>('offline');
   const [acceptingCalls, setAcceptingCalls] = useState(false);
 
@@ -46,20 +46,38 @@ const MasterStatusControl: React.FC = () => {
     })();
   }, [expert?.id, getExpertPresence, checkExpertPresence]);
 
+  const refreshSelfPresence = async () => {
+    if (!expert?.id) return;
+    try {
+      await bulkCheckPresence([String(expert.id)]);
+    } catch (e) {
+      console.warn('Presence refresh failed', e);
+    }
+  };
+
   const handleStatusChange = async (newStatus: ExpertStatus) => {
     if (!expert?.id) return;
 
     try {
-      // When changing status, preserve current call acceptance setting unless going offline
-      const callAcceptance = newStatus === 'offline' ? false : acceptingCalls;
+      // Robust transition rules
+      // - offline: force accepting calls to false
+      // - available: enable accepting calls
+      // - busy/away: preserve current switch
+      const callAcceptance = newStatus === 'offline' ? false : newStatus === 'available' ? true : acceptingCalls;
       
       await updateExpertPresence(expert.id, newStatus, callAcceptance);
-      setCurrentStatus(newStatus);
       
-      // Auto-disable call acceptance if going offline
-      if (newStatus === 'offline') {
-        setAcceptingCalls(false);
-      }
+      // Immediately reflect in local UI
+      setCurrentStatus(newStatus);
+      setAcceptingCalls(callAcceptance);
+
+      // Confirm from DB and sync state (handles any race conditions)
+      const confirmed = await checkExpertPresence(expert.id);
+      const mapped = confirmed.status === 'available' ? 'available' : confirmed.status === 'busy' ? 'busy' : confirmed.status === 'away' ? 'away' : 'offline';
+      setCurrentStatus(mapped);
+      setAcceptingCalls(!!confirmed.acceptingCalls && mapped !== 'offline');
+
+      await refreshSelfPresence();
       
       toast.success(`Status updated to ${newStatus}`);
     } catch (error) {
@@ -80,6 +98,8 @@ const MasterStatusControl: React.FC = () => {
       // Update the presence system with call acceptance status
       await updateExpertPresence(expert.id, currentStatus, accepting);
       setAcceptingCalls(accepting);
+
+      await refreshSelfPresence();
       
       toast.success(accepting ? 'Now accepting calls' : 'No longer accepting calls');
     } catch (error) {
