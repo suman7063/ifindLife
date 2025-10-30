@@ -78,14 +78,14 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         .from('profiles')
         .select('id')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       // Check if user has expert profile
       const { data: expertData, error: expertError } = await supabase
         .from('expert_accounts')
         .select('id, status')
         .eq('auth_id', userId)
-        .single();
+        .maybeSingle();
 
       const hasUserProfile = userProfileData && !userError;
       const hasExpertProfile = expertData && !expertError;
@@ -137,7 +137,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
         
       console.log('👤 Profiles query result:', { 
         hasData: !!profilesData, 
@@ -219,7 +219,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         .from('expert_accounts')
         .select('*')
         .eq('auth_id', userId)
-        .single();
+        .maybeSingle();
 
       console.log('🔍 Expert query result:', { 
         hasData: !!expertData, 

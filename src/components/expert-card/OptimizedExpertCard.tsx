@@ -231,9 +231,20 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
 
     return (
       <div className="flex gap-2">
-        <span className="flex-1 inline-flex items-center justify-center text-xs font-medium px-3 py-2 rounded-md border" style={style}>
-          {label}
-        </span>
+        {status === 'available' ? (
+          <Button
+            size="sm"
+            className="flex-1 border"
+            style={style}
+            onClick={handleConnectNow}
+          >
+            {label}
+          </Button>
+        ) : (
+          <span className="flex-1 inline-flex items-center justify-center text-xs font-medium px-3 py-2 rounded-md border" style={style}>
+            {label}
+          </span>
+        )}
         <Button size="sm" variant="outline" className="flex-1" disabled={isLoading} onClick={handleBookNow}>
           <Calendar className="h-3 w-3 mr-1" />
           Book

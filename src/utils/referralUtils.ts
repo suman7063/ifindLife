@@ -33,10 +33,10 @@ export const fetchReferralSettings = async (): Promise<ReferralSettings | null> 
       .from('referral_settings')
       .select('*')
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
-    return data as ReferralSettings;
+    return (data as ReferralSettings) ?? null;
   } catch (error) {
     console.error('Error fetching referral settings:', error);
     return null;
@@ -93,7 +93,7 @@ export const processReferralCode = async (referralCode: string, userId: string):
       .from('users')
       .select('id')
       .eq('referral_code', referralCode)
-      .single();
+      .maybeSingle();
 
     if (userError || !userData) {
       console.error('Invalid referral code or error:', userError);

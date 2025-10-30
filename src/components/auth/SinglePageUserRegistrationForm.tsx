@@ -77,11 +77,24 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
   const form = useForm<RegistrationFormData>({
     resolver: zodResolver(registrationSchema),
     defaultValues: {
+      // strings
+      name: '',
+      email: '',
+      phone: '',
+      password: '',
+      confirmPassword: '',
+      dateOfBirth: '',
+      gender: '',
+      occupation: '',
+      country: '',
+      city: '',
+      // booleans
       termsAccepted: false,
       privacyAccepted: false,
       marketingConsent: false,
       emailNotifications: true,
       smsNotifications: false,
+      // referral
       referralCode: initialReferralCode || '',
     },
   });
@@ -111,6 +124,7 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
         throw authError;
       }
 
+      console.log('authData', authData);
       if (authData.user) {
         // Create user record with extended profile data
         const { error: userError } = await supabase
@@ -223,7 +237,7 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
                     <FormItem>
                       <FormLabel>Full Name *</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter your full name" {...field} />
+                        <Input placeholder="Enter your full name" {...field} value={field.value ?? ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -237,7 +251,7 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
                     <FormItem>
                       <FormLabel>Email Address *</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="Enter your email" {...field} />
+                        <Input type="email" placeholder="Enter your email" {...field} value={field.value ?? ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -251,7 +265,7 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
                     <FormItem>
                       <FormLabel>Phone Number *</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter your phone number" {...field} />
+                        <Input placeholder="Enter your phone number" {...field} value={field.value ?? ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -265,7 +279,7 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
                     <FormItem>
                       <FormLabel>Date of Birth *</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} />
+                        <Input type="date" {...field} value={field.value ?? ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -279,7 +293,7 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
                     <FormItem>
                       <FormLabel>Password *</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder="Create password" {...field} />
+                        <Input type="password" placeholder="Create password" {...field} value={field.value ?? ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -293,7 +307,7 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
                     <FormItem>
                       <FormLabel>Confirm Password *</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder="Confirm password" {...field} />
+                        <Input type="password" placeholder="Confirm password" {...field} value={field.value ?? ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -316,7 +330,7 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Gender</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value ?? ''}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select gender" />
@@ -341,7 +355,7 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
                     <FormItem>
                       <FormLabel>Occupation</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter your occupation" {...field} />
+                        <Input placeholder="Enter your occupation" {...field} value={field.value ?? ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -365,7 +379,7 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
                     <FormItem>
                       <FormLabel>Country *</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter your country" {...field} />
+                        <Input placeholder="Enter your country" {...field} value={field.value ?? ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -379,7 +393,7 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
                     <FormItem>
                       <FormLabel>City *</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter your city" {...field} />
+                        <Input placeholder="Enter your city" {...field} value={field.value ?? ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -405,10 +419,7 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
                     render={({ field }) => (
                       <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                         <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
+                          <Checkbox checked={!!field.value} onCheckedChange={field.onChange} />
                         </FormControl>
                         <div className="space-y-1 leading-none">
                           <FormLabel>Email Notifications</FormLabel>
@@ -423,10 +434,7 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
                     render={({ field }) => (
                       <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                         <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
+                          <Checkbox checked={!!field.value} onCheckedChange={field.onChange} />
                         </FormControl>
                         <div className="space-y-1 leading-none">
                           <FormLabel>SMS Notifications</FormLabel>
@@ -457,12 +465,7 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
                           <Gift className="h-4 w-4 text-muted-foreground" />
                         </div>
                         <FormControl>
-                          <Input
-                            placeholder="Enter referral code"
-                            className="pl-10"
-                            {...field}
-                            value={field.value || initialReferralCode || ''}
-                          />
+                          <Input placeholder="Enter referral code" className="pl-10" {...field} value={field.value ?? ''} />
                         </FormControl>
                       </div>
                       
@@ -493,10 +496,7 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                       <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
+                        <Checkbox checked={!!field.value} onCheckedChange={field.onChange} />
                       </FormControl>
                       <div className="space-y-1 leading-none">
                         <FormLabel>
@@ -514,10 +514,7 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                       <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
+                        <Checkbox checked={!!field.value} onCheckedChange={field.onChange} />
                       </FormControl>
                       <div className="space-y-1 leading-none">
                         <FormLabel>
@@ -535,10 +532,7 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                       <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
+                        <Checkbox checked={!!field.value} onCheckedChange={field.onChange} />
                       </FormControl>
                       <div className="space-y-1 leading-none">
                         <FormLabel>

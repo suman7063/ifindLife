@@ -32,7 +32,7 @@ const UserRegister: React.FC = () => {
 
   const handleRegistrationSuccess = () => {
     toast.success('Registration successful! Please check your email to verify your account.');
-    navigate('/login');
+    navigate('/user-login');
   };
 
   const handleRegistrationError = (error: string) => {
@@ -50,7 +50,7 @@ const UserRegister: React.FC = () => {
               Connect with expert therapists and wellness professionals
             </p>
             <p className="mt-2">
-              Already have an account? <Link to="/login" className="text-primary hover:underline font-medium">Login here</Link>
+              Already have an account? <Link to="/user-login" className="text-primary hover:underline font-medium">Login here</Link>
             </p>
           </div>
           
