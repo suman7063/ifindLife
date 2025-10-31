@@ -55,10 +55,10 @@ export const PricingSetupStep: React.FC<PricingSetupStepProps> = ({
         // Set pricing based on database data
         const categoryData = data[0];
         setPricing({
-          session_30_inr: parseFloat(categoryData.base_price_inr) || 0,
-          session_30_eur: parseFloat(categoryData.base_price_eur) || 0,
-          session_60_inr: parseFloat(categoryData.base_price_inr) * 1.5 || 0,
-          session_60_eur: parseFloat(categoryData.base_price_eur) * 1.5 || 0,
+          session_30_inr: Number(categoryData.base_price_inr) || 0,
+          session_30_eur: Number(categoryData.base_price_eur) || 0,
+          session_60_inr: (Number(categoryData.base_price_inr) || 0) * 1.5,
+          session_60_eur: (Number(categoryData.base_price_eur) || 0) * 1.5,
         });
       } else {
         console.log('⚠️ No data found, using fallback pricing');
@@ -128,20 +128,8 @@ export const PricingSetupStep: React.FC<PricingSetupStepProps> = ({
         console.log('ℹ️ No existing pricing found, using base pricing');
       }
 
-      // Check if pricing is already marked as setup in onboarding status
-      const { data: onboardingStatus } = await supabase
-        .from('expert_onboarding_status')
-        .select('pricing_setup')
-        .eq('expert_id', expertAccount.id)
-        .single();
-
-      console.log('🔍 Onboarding status for pricing:', onboardingStatus);
       
-      // If pricing is already setup and we have existing pricing, mark as complete
-      if (onboardingStatus?.pricing_setup && data && data.length > 0) {
-        console.log('✅ Pricing already setup, marking as complete');
-        // The parent component should handle this completion state
-      }
+      // Presence of existing pricing will be treated by parent for completion UI
     } catch (error) {
       console.error('Error fetching existing pricing:', error);
     }
@@ -177,23 +165,7 @@ export const PricingSetupStep: React.FC<PricingSetupStepProps> = ({
         throw error;
       }
 
-      // Update onboarding status to mark pricing as setup
-      console.log('💾 Updating onboarding status for pricing...');
-      const { error: statusError } = await supabase
-        .from('expert_onboarding_status')
-        .upsert({
-          expert_id: expertAccount.id,
-          pricing_setup: true
-        }, {
-          onConflict: 'expert_id'
-        });
-
-      if (statusError) {
-        console.error('Error updating onboarding status:', statusError);
-        // Don't throw error here as the main pricing save was successful
-      }
-
-      // Also update flags on expert_accounts as the single source of truth
+      // Update flags on expert_accounts as the single source of truth
       console.log('💾 Updating expert_accounts.pricing_set flag...');
       const { error: eaUpdateError } = await supabase
         .from('expert_accounts')

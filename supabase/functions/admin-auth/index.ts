@@ -32,16 +32,65 @@ function generateSessionExpiry(): string {
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { 
+      status: 204,
+      headers: { ...corsHeaders, 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS' }
+    });
   }
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('Missing environment variables');
+      return new Response(
+        JSON.stringify({ success: false, error: 'Server configuration error' }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+    
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
-    const { action, username, password, sessionToken }: AdminAuthRequest = await req.json();
+    // Parse request body with error handling
+    let requestData: AdminAuthRequest;
+    try {
+      const body = await req.text();
+      if (!body) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Request body is required' }),
+          { 
+            status: 400, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+      requestData = JSON.parse(body);
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid request format' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+    
+    const { action, username, password, sessionToken } = requestData;
+
+    if (!action) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Action is required' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
 
     console.log(`Admin auth action: ${action}`);
 
@@ -59,14 +108,17 @@ Deno.serve(async (req) => {
 
         // Call the authenticate_admin function
         const { data: authResult, error } = await supabase.rpc('authenticate_admin', {
-          p_username: username,
+          p_username: username.trim(),
           p_password: password
         });
 
         if (error) {
-          console.error('Authentication error:', error);
+          console.error('Authentication RPC error:', JSON.stringify(error, null, 2));
           return new Response(
-            JSON.stringify({ success: false, error: 'Authentication failed' }),
+            JSON.stringify({ 
+              success: false, 
+              error: error.message || 'Authentication service error' 
+            }),
             { 
               status: 500, 
               headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -74,11 +126,25 @@ Deno.serve(async (req) => {
           );
         }
 
-        if (!authResult?.success) {
+        // Validate authResult structure
+        if (!authResult || typeof authResult !== 'object') {
+          console.error('Invalid authResult format:', authResult);
+          return new Response(
+            JSON.stringify({ success: false, error: 'Invalid authentication response' }),
+            { 
+              status: 500, 
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+            }
+          );
+        }
+
+        if (!authResult.success) {
+          const errorMsg = authResult.error || 'Invalid credentials';
+          console.log(`Authentication failed for user: ${username}, reason: ${errorMsg}`);
           return new Response(
             JSON.stringify({ 
               success: false, 
-              error: authResult?.error || 'Invalid credentials' 
+              error: errorMsg
             }),
             { 
               status: 401, 
@@ -87,8 +153,20 @@ Deno.serve(async (req) => {
           );
         }
 
+        // Validate admin data exists in response
+        if (!authResult.admin || !authResult.admin.id) {
+          console.error('Missing admin data in auth result:', authResult);
+          return new Response(
+            JSON.stringify({ success: false, error: 'Authentication succeeded but admin data is missing' }),
+            { 
+              status: 500, 
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+            }
+          );
+        }
+
         // Create session persisted in DB
-        const sessionToken = generateSessionToken();
+        const newSessionToken = generateSessionToken();
         const expiresAt = generateSessionExpiry();
 
         // Optional: revoke previous active sessions for this admin
@@ -101,26 +179,29 @@ Deno.serve(async (req) => {
         const { error: insertError } = await supabase
           .from('admin_sessions')
           .insert({
-            session_token: sessionToken,
+            session_token: newSessionToken,
             admin_id: authResult.admin.id,
             expires_at: expiresAt,
             revoked_at: null
           });
 
         if (insertError) {
-          console.error('Failed to create admin session:', insertError);
+          console.error('Failed to create admin session:', JSON.stringify(insertError, null, 2));
           return new Response(
-            JSON.stringify({ success: false, error: 'Could not create session' }),
+            JSON.stringify({ 
+              success: false, 
+              error: insertError.message || 'Could not create session' 
+            }),
             { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
 
-        console.log(`Admin login successful for user: ${username}`);
+        console.log(`Admin login successful for user: ${username} (ID: ${authResult.admin.id})`);
 
         return new Response(
           JSON.stringify({
             success: true,
-            sessionToken,
+            sessionToken: newSessionToken,
             expiresAt,
             admin: authResult.admin
           }),
@@ -230,9 +311,12 @@ Deno.serve(async (req) => {
         );
     }
   } catch (error) {
-    console.error('Admin auth error:', error);
+    console.error('Admin auth unhandled error:', error);
     return new Response(
-      JSON.stringify({ success: false, error: 'Internal server error' }),
+      JSON.stringify({ 
+        success: false, 
+        error: 'Internal server error'
+      }),
       { 
         status: 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 

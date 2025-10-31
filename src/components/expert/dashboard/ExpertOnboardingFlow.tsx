@@ -111,31 +111,29 @@ export const ExpertOnboardingFlow: React.FC = () => {
 
   const getStepCompletion = async (stepId: string, account: any): Promise<boolean> => {
     try {
-      // Check the expert_onboarding_status table for completion status
-      const { data: onboardingStatus, error } = await supabase
-        .from('expert_onboarding_status')
-        .select('*')
-        .eq('expert_id', account.id)
+      // Source of truth: expert_accounts flags
+      const { data, error } = await supabase
+        .from('expert_accounts')
+        .select('selected_services, pricing_set, availability_set, profile_completed')
+        .eq('id', account.id)
         .single();
 
       if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching onboarding status:', error);
+        console.error('Error fetching expert account flags:', error);
         return false;
       }
 
-      if (!onboardingStatus) {
-        return false;
-      }
+      const flags = data || { selected_services: [], pricing_set: false, availability_set: false, profile_completed: false };
 
       switch (stepId) {
         case 'services':
-          return onboardingStatus.services_assigned || false;
+          return Array.isArray(flags.selected_services) && flags.selected_services.length > 0;
         case 'pricing':
-          return onboardingStatus.pricing_setup || false;
+          return !!flags.pricing_set;
         case 'availability':
-          return onboardingStatus.availability_setup || false;
+          return !!flags.availability_set;
         case 'profile':
-          return onboardingStatus.profile_completed || false;
+          return !!flags.profile_completed;
         default:
           return false;
       }

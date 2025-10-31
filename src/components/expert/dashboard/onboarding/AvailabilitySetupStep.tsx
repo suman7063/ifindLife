@@ -97,20 +97,8 @@ export const AvailabilitySetupStep: React.FC<AvailabilitySetupStepProps> = ({
         console.log('ℹ️ No existing availability found');
       }
 
-      // Check if availability is already marked as setup in onboarding status
-      const { data: onboardingStatus } = await supabase
-        .from('expert_onboarding_status')
-        .select('availability_setup')
-        .eq('expert_id', expertAccount.id)
-        .single();
-
-      console.log('🔍 Onboarding status for availability:', onboardingStatus);
       
-      // If availability is already setup and we have existing availability, mark as complete
-      if (onboardingStatus?.availability_setup && data && data.length > 0) {
-        console.log('✅ Availability already setup, marking as complete');
-        // The parent component should handle this completion state
-      }
+      // Presence of existing availability will be treated by parent for completion UI
     } catch (error) {
       console.error('Error fetching existing availability:', error);
     }
@@ -214,23 +202,7 @@ export const AvailabilitySetupStep: React.FC<AvailabilitySetupStepProps> = ({
         }
       }
 
-      // Update onboarding status to mark availability as setup
-      console.log('💾 Updating onboarding status for availability...');
-      const { error: statusError } = await supabase
-        .from('expert_onboarding_status')
-        .upsert({
-          expert_id: expertAccount.id,
-          availability_setup: true
-        }, {
-          onConflict: 'expert_id'
-        });
-
-      if (statusError) {
-        console.error('Error updating onboarding status:', statusError);
-        // Don't throw error here as the main availability save was successful
-      }
-
-      // Also update flags on expert_accounts as the single source of truth
+      // Update flags on expert_accounts as the single source of truth
       console.log('💾 Updating expert_accounts.availability_set flag...');
       const { error: eaUpdateError } = await supabase
         .from('expert_accounts')

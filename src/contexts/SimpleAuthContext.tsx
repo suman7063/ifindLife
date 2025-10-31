@@ -116,9 +116,13 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
           return { isValid: false, actualRole: 'user' };
         }
       } else {
-        // No profiles exist - still allow login but will create profiles later
-        // No existing profiles found, allowing login to proceed
-        return { isValid: true, actualRole: intendedRole === 'expert' ? 'expert' : 'user' };
+        // No profiles exist
+        if (intendedRole === 'expert') {
+          // Do NOT allow expert login without an approved expert profile
+          return { isValid: false, actualRole: 'expert' };
+        }
+        // Allow user login; profile can be created later
+        return { isValid: true, actualRole: 'user' };
       }
     } catch (error) {
       console.error('❌ Error validating credentials:', error);

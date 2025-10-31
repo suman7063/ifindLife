@@ -20,7 +20,7 @@ export const expertFormSchema = z.object({
   languages: z.string().min(1, "Please specify languages you speak"),
   
   bio: z.string().min(50, "Bio should be at least 50 characters"),
-  expertCategory: z.enum(["listening-volunteer", "listening-expert", "mindfulness-coach", "mindfulness-expert", "spiritual-mentor"], {
+  expertCategory: z.enum(["listening-volunteer", "listening-expert", "listening-coach", "mindfulness-expert"], {
     required_error: "Please select an expert category",
   }),
   

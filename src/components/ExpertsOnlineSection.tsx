@@ -8,6 +8,8 @@ import { usePublicExpertsData } from '@/hooks/usePublicExpertsData';
 import { useExpertPresence } from '@/contexts/ExpertPresenceContext';
 import { supabase } from '@/integrations/supabase/client';
 
+const ENABLE_POLLING = (import.meta as any).env?.VITE_PRESENCE_POLLING === 'true';
+
 const ExpertsOnlineSection: React.FC = () => {
   const navigate = useNavigate();
   const { experts: allExperts, loading } = usePublicExpertsData();
@@ -15,7 +17,6 @@ const ExpertsOnlineSection: React.FC = () => {
   
   const approvedExperts = allExperts.filter(expert => expert.dbStatus === 'approved');
 
-  // Derive online/offline using live presence cache so UI reflects instant changes
   const { onlineExperts, offlineExperts } = useMemo(() => {
     const online: typeof approvedExperts = [];
     const offline: typeof approvedExperts = [];
@@ -29,14 +30,12 @@ const ExpertsOnlineSection: React.FC = () => {
   
   const displayExperts = [...onlineExperts, ...offlineExperts].slice(0, 3);
 
-  // Ensure presence is fetched at least once for the displayed experts
   useEffect(() => {
     if (displayExperts.length === 0) return;
     const ids = displayExperts.map(e => String(e.id));
     bulkCheckPresence(ids);
   }, [displayExperts.map(e => e.id).join(','), bulkCheckPresence]);
 
-  // Re-fetch presence when DB table emits a realtime change
   useEffect(() => {
     const channel = supabase
       .channel('home-presence-refresh')
@@ -52,8 +51,8 @@ const ExpertsOnlineSection: React.FC = () => {
     };
   }, [displayExperts.map(e => e.id).join(','), bulkCheckPresence]);
 
-  // Fallback: refresh on visibility/focus + short polling
   useEffect(() => {
+    if (!ENABLE_POLLING) return;
     if (displayExperts.length === 0) return;
     const ids = displayExperts.map(e => String(e.id));
 
@@ -72,7 +71,6 @@ const ExpertsOnlineSection: React.FC = () => {
     };
   }, [displayExperts.map(e => e.id).join(','), bulkCheckPresence]);
 
-  console.log('4444444', displayExperts);
   return (
     <UnifiedExpertConnection serviceTitle="Expert Consultation" serviceId="consultation">
       {({ state, handleExpertCardClick, handleConnectNow, handleBookNow, handleShowConnectOptions }) => (

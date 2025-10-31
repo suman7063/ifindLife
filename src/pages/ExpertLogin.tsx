@@ -31,6 +31,12 @@ const ExpertLogin: React.FC = () => {
       toast.error('Your expert account application has been disapproved.');
     }
 
+    // Show email verification notice if redirected from signup
+    const verify = searchParams.get('verify');
+    if (verify === 'email') {
+      toast.info('Please verify your email address. Check your inbox for the verification link.');
+    }
+
     // Wait for auth loading to complete
     if (isLoading) {
       return;

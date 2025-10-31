@@ -23,6 +23,7 @@ const ExpertRegistrationForm: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedProfilePicture, setSelectedProfilePicture] = useState<File | null>(null);
   const [categories, setCategories] = useState<any[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
 
   // Generate CAPTCHA and fetch categories on component mount
   useEffect(() => {
@@ -38,19 +39,25 @@ const ExpertRegistrationForm: React.FC = () => {
         .order('name');
       
       if (error) throw error;
-      setCategories(data || []);
+      console.log('data333333', data);
+      // Only use DB categories. If none exist, keep empty and let UI reflect that.
+      setCategories(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching categories:', error);
-      // Fallback to updated categories if fetch fails
+      // Fallback to DB-aligned categories if fetch fails
       setCategories([
         { id: 'listening-volunteer', name: 'Listening Volunteer' },
         { id: 'listening-expert', name: 'Listening Expert' },
-        { id: 'mindfulness-coach', name: 'Mindfulness Coach' },
+        { id: 'listening-coach', name: 'Listening Coach' },
         { id: 'mindfulness-expert', name: 'Mindfulness Expert' },
-        { id: 'spiritual-mentor', name: 'Spiritual Mentor' },
       ]);
     }
+    finally {
+      setCategoriesLoading(false);
+    }
   };
+
+  // (moved below useForm) Ensure selected category is valid when categories load/change
 
   const generateCaptcha = () => {
     const num1 = Math.floor(Math.random() * 20) + 1;
@@ -79,6 +86,16 @@ const ExpertRegistrationForm: React.FC = () => {
     },
   });
 
+  // Ensure selected category is valid when categories load/change
+  useEffect(() => {
+    if (categoriesLoading) return;
+    const current = form.getValues('expertCategory');
+    const exists = categories.some((c) => c.id === current);
+    if (!exists && categories.length > 0) {
+      form.setValue('expertCategory', categories[0].id as any);
+    }
+  }, [categoriesLoading, categories, form]);
+
   const onSubmit = async (data: ExpertFormValues) => {
     // Validate CAPTCHA
     if (data.captchaAnswer !== captchaQuestion.answer) {
@@ -103,16 +120,28 @@ const ExpertRegistrationForm: React.FC = () => {
         email: data.email,
         password: data.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth-callback?type=expert`,
+          emailRedirectTo: `${window.location.origin}/expert-login?verify=email`,
         },
       });
 
       if (authError) {
-        throw new Error(authError.message);
+        console.error('Auth signup error details:', {
+          message: authError.message,
+          status: authError.status,
+          error: authError
+        });
+        
+        // Handle specific Supabase Auth errors
+        if (authError.message?.includes('already registered') || authError.message?.includes('already exists')) {
+          throw new Error('This email is already registered. Please use a different email or try logging in instead.');
+        }
+        
+        throw new Error(authError.message || 'Failed to create account');
       }
 
       if (!authData.user) {
-        throw new Error('Failed to create user account');
+        console.error('No user returned from signup:', authData);
+        throw new Error('Failed to create user account. Please try again or contact support.');
       }
 
       // Upload certificate to storage BEFORE signing out (user must be authenticated)
@@ -406,18 +435,24 @@ const ExpertRegistrationForm: React.FC = () => {
           {/* Expert Category */}
           <div>
             <Label className="text-base font-medium">Expert Category *</Label>
-            <RadioGroup
-              value={form.watch('expertCategory')}
-              onValueChange={(value) => form.setValue('expertCategory', value as any)}
-              className="mt-2"
-            >
-              {categories.map((category) => (
-                <div key={category.id} className="flex items-center space-x-2">
-                  <RadioGroupItem value={category.id} id={category.id} />
-                  <Label htmlFor={category.id}>{category.name}</Label>
-                </div>
-              ))}
-            </RadioGroup>
+            {categoriesLoading ? (
+              <div className="mt-2 text-sm text-gray-500">Loading categories...</div>
+            ) : categories.length === 0 ? (
+              <div className="mt-2 text-sm text-red-600">No categories available. Please try again later.</div>
+            ) : (
+              <RadioGroup
+                value={form.watch('expertCategory')}
+                onValueChange={(value) => form.setValue('expertCategory', value as any, { shouldDirty: true })}
+                className="mt-2"
+              >
+                {categories.map((category) => (
+                  <div key={category.id} className="flex items-center space-x-2">
+                    <RadioGroupItem value={category.id} id={category.id} />
+                    <Label htmlFor={category.id}>{category.name}</Label>
+                  </div>
+                ))}
+              </RadioGroup>
+            )}
             {form.formState.errors.expertCategory && (
               <p className="text-sm text-red-500 mt-1">{form.formState.errors.expertCategory.message}</p>
             )}

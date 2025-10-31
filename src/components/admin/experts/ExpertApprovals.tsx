@@ -109,45 +109,38 @@ const ExpertApprovals = () => {
   // Update expert status with better error handling
   const updateExpertStatus = async () => {
     if (!selectedExpert) return;
-    
+    console.log('selectedExpert', selectedExpert, selectedStatus);
     try {
       console.log('ExpertApprovals: Updating expert status:', selectedExpert.id, 'to', selectedStatus);
-      
-      // Update expert status in expert_accounts table
-      const { error: updateError } = await supabase
-        .from('expert_accounts')
-        .update({ status: selectedStatus })
-        .eq('id', String(selectedExpert.id));
-        
-      if (updateError) {
-        console.error('ExpertApprovals: Error updating expert status:', updateError);
-        throw updateError;
+
+      // Call edge function (runs with service role) to update status
+      const { data: fnData, error: fnError } = await supabase.functions.invoke('admin-update-expert', {
+        body: { id: String(selectedExpert.id), status: selectedStatus }
+      });
+
+      if (fnError || !fnData?.success) {
+        console.error('ExpertApprovals: Edge function error:', fnError || fnData?.error);
+        throw new Error(fnError?.message || fnData?.error || 'Failed to update');
       }
-      
-      console.log('ExpertApprovals: Expert status updated successfully');
-      
-      // Update local state
-      setExperts(experts.map(expert => 
-        expert.id === selectedExpert.id 
-          ? { ...expert, status: selectedStatus } 
-          : expert
-      ));
-      
+
+      console.log('ExpertApprovals: Expert status updated successfully via edge function');
+
+      // Refresh from DB
+      await fetchExperts(false);
+
       toast.success(`Expert ${selectedStatus === 'approved' ? 'approved' : 'disapproved'} successfully`);
       setOpenDialog(false);
-      
+
       // Optionally send email notification (non-blocking)
       try {
         await sendStatusUpdateEmail(selectedExpert.email, selectedStatus, feedbackMessage);
       } catch (emailError) {
         console.error('ExpertApprovals: Error sending email notification:', emailError);
-        // Continue with the process even if email fails
         toast.warning('Status updated but email notification failed to send');
       }
-      
     } catch (error) {
       console.error('ExpertApprovals: Error updating expert status:', error);
-      toast.error('Failed to update expert status');
+      toast.error(`Failed to update expert status: ${(error as any)?.message || 'Unknown error'}`);
     }
   };
   

@@ -254,17 +254,14 @@ const ExpertRegister: React.FC = () => {
                         <Label htmlFor="listening-expert">Listening Expert</Label>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="mindfulness-coach" id="mindfulness-coach" />
-                        <Label htmlFor="mindfulness-coach">Mindfulness Coach</Label>
+                        <RadioGroupItem value="listening-coach" id="listening-coach" />
+                        <Label htmlFor="listening-coach">Listening Coach</Label>
                       </div>
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="mindfulness-expert" id="mindfulness-expert" />
                         <Label htmlFor="mindfulness-expert">Mindfulness Expert</Label>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="spiritual-mentor" id="spiritual-mentor" />
-                        <Label htmlFor="spiritual-mentor">Spiritual Mentor</Label>
-                      </div>
+                      {/* Removed unsupported category 'spiritual-mentor' to match DB constraint */}
                     </RadioGroup>
                     {form.formState.errors.expertCategory && (
                       <p className="text-sm text-red-500 mt-1">{form.formState.errors.expertCategory.message}</p>

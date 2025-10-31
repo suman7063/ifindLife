@@ -120,20 +120,8 @@ const ServiceSelectionStep: React.FC<ServiceSelectionStepProps> = ({
         console.log('🔍 Existing service IDs:', existing);
         setSelectedServices(existing);
 
-        // Check if services are already marked as assigned in onboarding status
-        const { data: onboardingStatus } = await supabase
-          .from('expert_onboarding_status')
-          .select('services_assigned')
-          .eq('expert_id', expertAccount.id)
-          .single();
-
-        console.log('🔍 Onboarding status for services:', onboardingStatus);
         
-        // If services are already assigned and we have existing services, mark as complete
-        if (onboardingStatus?.services_assigned && existing.length > 0) {
-          console.log('✅ Services already assigned, marking as complete');
-          // The parent component should handle this completion state
-        }
+        // Presence of existing services will be treated by parent for completion UI
       }
 
     } catch (error) {
@@ -209,23 +197,7 @@ const ServiceSelectionStep: React.FC<ServiceSelectionStepProps> = ({
         throw updateError;
       }
 
-      // Update onboarding status to mark services as assigned
-      console.log('💾 Updating onboarding status...');
-      const { error: statusError } = await supabase
-        .from('expert_onboarding_status')
-        .upsert({
-          expert_id: expertAccount.id,
-          services_assigned: true
-        }, {
-          onConflict: 'expert_id'
-        });
-
-      if (statusError) {
-        console.error('Error updating onboarding status:', statusError);
-        // Don't throw error here as the main service save was successful
-      }
-
-      // Also set services flag consistency on expert_accounts (selected_services already updated)
+      // Set services flag consistency on expert_accounts (selected_services already updated)
       // When services exist, we may also flip onboarding_completed if all flags are true
       const { data: eaFlags } = await supabase
         .from('expert_accounts')

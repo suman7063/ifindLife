@@ -27,74 +27,43 @@ const ExpertOnboardingWelcome: React.FC<ExpertOnboardingWelcomeProps> = ({
   onStepComplete,
   onComplete
 }) => {
-  const [onboardingStatus, setOnboardingStatus] = useState<any>(null);
+  const [accountFlags, setAccountFlags] = useState<any>(null);
   const [currentStep, setCurrentStep] = useState<string>('services');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchOnboardingStatus();
+    fetchAccountFlags();
   }, [expertId]);
 
-  const fetchOnboardingStatus = async () => {
+  const fetchAccountFlags = async () => {
     try {
       const { data, error } = await supabase
-        .from('expert_onboarding_status')
-        .select('*')
-        .eq('expert_id', expertId)
+        .from('expert_accounts')
+        .select('selected_services, pricing_set, availability_set, profile_completed, onboarding_completed')
+        .eq('auth_id', expertId)
         .single();
 
-      if (error && error.code !== 'PGRST116') {
-        throw error;
-      }
+      if (error && error.code !== 'PGRST116') throw error;
 
-      if (!data) {
-        // Create initial onboarding status
-        const { data: newStatus, error: createError } = await supabase
-          .from('expert_onboarding_status')
-          .insert({
-            expert_id: expertId,
-            services_assigned: false,
-            pricing_setup: false,
-            availability_setup: false,
-            profile_completed: false,
-            onboarding_completed: false,
-          })
-          .select()
-          .single();
-
-        if (createError) throw createError;
-        setOnboardingStatus(newStatus);
-      } else {
-        setOnboardingStatus(data);
-      }
+      setAccountFlags(data || {
+        selected_services: [],
+        pricing_set: false,
+        availability_set: false,
+        profile_completed: false,
+        onboarding_completed: false,
+      });
     } catch (error) {
-      console.error('Error fetching onboarding status:', error);
-      toast.error('Failed to load onboarding status');
+      console.error('Error fetching expert account flags:', error);
+      toast.error('Failed to load onboarding');
     } finally {
       setLoading(false);
     }
   };
 
-  const updateOnboardingStatus = async (updates: any) => {
-    try {
-      const { error } = await supabase
-        .from('expert_onboarding_status')
-        .update(updates)
-        .eq('expert_id', expertId);
-
-      if (error) throw error;
-      
-      setOnboardingStatus({ ...onboardingStatus, ...updates });
-    } catch (error) {
-      console.error('Error updating onboarding status:', error);
-      toast.error('Failed to update onboarding status');
-    }
-  };
+  // Deprecated updater removed; flags are updated within each step component
 
   const completeOnboarding = async () => {
     try {
-      await updateOnboardingStatus({ onboarding_completed: true });
-      
       // Update expert account
       const { error } = await supabase
         .from('expert_accounts')
@@ -125,7 +94,7 @@ const ExpertOnboardingWelcome: React.FC<ExpertOnboardingWelcomeProps> = ({
       title: 'Select Your Services',
       description: 'Choose the services you want to offer from your category',
       icon: <Settings className="h-5 w-5" />,
-      completed: onboardingStatus?.services_assigned || false,
+      completed: (Array.isArray(accountFlags?.selected_services) && accountFlags.selected_services.length > 0) || false,
       required: true,
     },
     {
@@ -133,7 +102,7 @@ const ExpertOnboardingWelcome: React.FC<ExpertOnboardingWelcomeProps> = ({
       title: 'Set Your Pricing',
       description: 'Configure your pricing for different session durations',
       icon: <DollarSign className="h-5 w-5" />,
-      completed: onboardingStatus?.pricing_setup || false,
+      completed: accountFlags?.pricing_set || false,
       required: true,
     },
     {
@@ -141,7 +110,7 @@ const ExpertOnboardingWelcome: React.FC<ExpertOnboardingWelcomeProps> = ({
       title: 'Setup Availability',
       description: 'Set your available time slots for bookings',
       icon: <Calendar className="h-5 w-5" />,
-      completed: onboardingStatus?.availability_setup || false,
+      completed: accountFlags?.availability_set || false,
       required: true,
     },
     {
@@ -149,7 +118,7 @@ const ExpertOnboardingWelcome: React.FC<ExpertOnboardingWelcomeProps> = ({
       title: 'Complete Profile',
       description: 'Add additional information to your profile',
       icon: <User className="h-5 w-5" />,
-      completed: onboardingStatus?.profile_completed || false,
+      completed: accountFlags?.profile_completed || false,
       required: false,
     },
   ];
@@ -247,7 +216,7 @@ const ExpertOnboardingWelcome: React.FC<ExpertOnboardingWelcomeProps> = ({
       </div>
 
       {/* Complete Onboarding */}
-      {canComplete && !onboardingStatus?.onboarding_completed && (
+      {canComplete && !accountFlags?.onboarding_completed && (
         <Card className="border-green-200 bg-green-50">
           <CardContent className="pt-6">
             <div className="text-center space-y-4">

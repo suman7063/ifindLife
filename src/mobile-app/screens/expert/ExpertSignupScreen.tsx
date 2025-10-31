@@ -14,9 +14,8 @@ import { toast } from 'sonner';
 const expertCategories = [
   { id: 'listening-volunteer', name: 'Listening Volunteer' },
   { id: 'listening-expert', name: 'Listening Expert' },
-  { id: 'mindfulness-coach', name: 'Mindfulness Coach' },
-  { id: 'mindfulness-expert', name: 'Mindfulness Expert' },
-  { id: 'spiritual-mentor', name: 'Spiritual Mentor' }
+  { id: 'listening-coach', name: 'Listening Coach' },
+  { id: 'mindfulness-expert', name: 'Mindfulness Expert' }
 ];
 
 export const ExpertSignupScreen: React.FC = () => {

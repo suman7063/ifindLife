@@ -56,12 +56,6 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
     } as { status: 'available' | 'busy' | 'away' | 'offline'; isAvailable: boolean; lastActivity: string };
   };
 
-  // Debug: log when presence version changes
-  useEffect(() => {
-    const p = getExpertPresence(expert.id);
-    console.log('5555555 ExpertCard presence change', { expertId: expert.id, presence: p });
-  }, [version, expert.id, getExpertPresence]);
-  
   const isExpertLoading = () => false; // Simplified - no lazy loading needed
 
   // Memoize expert data processing
