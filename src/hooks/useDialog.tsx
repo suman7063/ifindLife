@@ -1,6 +1,6 @@
 
 import React, { useState, ReactNode } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 export function useDialog() {
   const [isOpen, setIsOpen] = useState(false);
@@ -19,6 +19,10 @@ export function useDialog() {
   const DialogComponent = () => (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="sr-only">
+          <DialogTitle>Dialog</DialogTitle>
+          <DialogDescription>Dialog content</DialogDescription>
+        </DialogHeader>
         {content}
       </DialogContent>
     </Dialog>

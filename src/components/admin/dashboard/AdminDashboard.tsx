@@ -12,14 +12,9 @@ const AdminDashboard = () => {
 
   // Auth check with clean admin system
   useEffect(() => {
-    console.log('🔍 AdminDashboard auth check:', {
-      isLoading: adminAuth?.isLoading,
-      isAuthenticated: adminAuth?.isAuthenticated,
-      admin: adminAuth?.admin
-    });
+    
     
     if (!adminAuth?.isLoading && !adminAuth?.isAuthenticated) {
-      console.log('❌ Not authenticated, redirecting to admin-login');
       navigate('/admin-login', { replace: true });
     }
   }, [adminAuth?.isAuthenticated, adminAuth?.isLoading, navigate]);

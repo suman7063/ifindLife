@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import ExpertCard from '../expert-card';
+import ExpertCardSimplified from '../expert-card/ExpertCardSimplified';
 import { ExpertCardData } from '../expert-card/types';
 import { toast } from 'sonner';
 
@@ -106,7 +106,7 @@ const ExpertsGrid: React.FC<ExpertsGridProps> = ({
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {displayExperts.map((expert) => (
-          <ExpertCard
+          <ExpertCardSimplified
             key={expert.id.toString()}
             expert={expert}
             onClick={() => handleExpertCardClick(expert)}

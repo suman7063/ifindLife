@@ -1,3 +1,3 @@
 
-import ExpertCard from '../../../components/expert-card';
-export default ExpertCard;
+import ExpertCardSimplified from '../../../components/expert-card/ExpertCardSimplified';
+export default ExpertCardSimplified;

@@ -126,7 +126,7 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Razorpay webhook received:', req.method)
+   
 
     // Verify webhook signature for security
     const signature = req.headers.get('x-razorpay-signature')
@@ -173,9 +173,7 @@ serve(async (req) => {
 
     // Parse webhook payload
     const payload: RazorpayWebhookPayload = JSON.parse(body)
-    console.log('Webhook event:', payload.event)
-    console.log('Payment ID:', payload.payload.payment?.entity?.id)
-    console.log('Order ID:', payload.payload.payment?.entity?.order_id)
+
 
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -258,7 +256,6 @@ serve(async (req) => {
         break
       
       default:
-        console.log(`Unhandled webhook event: ${payload.event}`)
         await sendEmailNotification('unhandled_event', payload)
         break
     }
@@ -323,7 +320,7 @@ async function handlePaymentCaptured(supabase: any, payload: RazorpayWebhookPayl
   const payment = payload.payload.payment.entity
   const orderId = payment.order_id
   
-  console.log(`Processing payment.captured for order: ${orderId}`)
+
   
   try {
     // Update call sessions if this is a call payment
@@ -340,7 +337,6 @@ async function handlePaymentCaptured(supabase: any, payload: RazorpayWebhookPayl
       .single()
 
     if (callSession) {
-      console.log('Updated call session:', callSession.id)
       return
     }
 
@@ -357,12 +353,12 @@ async function handlePaymentCaptured(supabase: any, payload: RazorpayWebhookPayl
       .single()
 
     if (appointment) {
-      console.log('Updated appointment:', appointment.id)
+      
       return
     }
 
     // Log if no matching record found
-    console.log(`No matching record found for order: ${orderId}`)
+    
     
   } catch (error) {
     console.error('Error handling payment.captured:', error)
@@ -400,7 +396,6 @@ async function handlePaymentFailed(supabase: any, payload: RazorpayWebhookPayloa
       })
       .eq('id', orderId)
 
-    console.log('Updated records for failed payment')
     
   } catch (error) {
     console.error('Error handling payment.failed:', error)
@@ -412,7 +407,6 @@ async function handlePaymentAuthorized(supabase: any, payload: RazorpayWebhookPa
   const payment = payload.payload.payment.entity
   const orderId = payment.order_id
   
-  console.log(`Processing payment.authorized for order: ${orderId}`)
   
   try {
     // Update records to show payment is authorized but not captured yet
@@ -433,7 +427,6 @@ async function handlePaymentAuthorized(supabase: any, payload: RazorpayWebhookPa
       })
       .eq('id', orderId)
 
-    console.log('Updated records for authorized payment')
     
   } catch (error) {
     console.error('Error handling payment.authorized:', error)
@@ -455,7 +448,6 @@ async function sendEmailNotification(event: string, payload: RazorpayWebhookPayl
       html: emailContent
     })
     
-    console.log(`Email notification sent for event: ${event}`)
   } catch (error) {
     console.error('Failed to send email notification:', error)
   }
@@ -543,34 +535,29 @@ async function handlePaymentLinkPaid(supabase: any, payload: RazorpayWebhookPayl
   const paymentLink = payload.payload.payment_link?.entity
   if (!paymentLink) return
   
-  console.log(`Processing payment_link.paid for: ${paymentLink.id}`)
   
   // Log the event and update any relevant records
-  console.log('Payment link fully paid:', paymentLink.id, 'Amount:', paymentLink.amount_paid)
 }
 
 async function handlePaymentLinkPartiallyPaid(supabase: any, payload: RazorpayWebhookPayload) {
   const paymentLink = payload.payload.payment_link?.entity
   if (!paymentLink) return
   
-  console.log(`Processing payment_link.partially_paid for: ${paymentLink.id}`)
-  console.log('Partial payment received:', paymentLink.amount_paid, 'of', paymentLink.amount)
 }
 
 async function handlePaymentLinkExpired(supabase: any, payload: RazorpayWebhookPayload) {
   const paymentLink = payload.payload.payment_link?.entity
   if (!paymentLink) return
   
-  console.log(`Processing payment_link.expired for: ${paymentLink.id}`)
-  console.log('Payment link expired at:', paymentLink.expired_at)
+
+  
 }
 
 async function handlePaymentLinkCancelled(supabase: any, payload: RazorpayWebhookPayload) {
   const paymentLink = payload.payload.payment_link?.entity
   if (!paymentLink) return
   
-  console.log(`Processing payment_link.cancelled for: ${paymentLink.id}`)
-  console.log('Payment link cancelled at:', paymentLink.cancelled_at)
+
 }
 
 // Payment Dispute Event Handlers
@@ -578,48 +565,42 @@ async function handlePaymentDisputeCreated(supabase: any, payload: RazorpayWebho
   const dispute = payload.payload.dispute?.entity
   if (!dispute) return
   
-  console.log(`Processing payment.dispute.created for payment: ${dispute.payment_id}`)
-  console.log('Dispute amount:', dispute.amount, 'Reason:', dispute.reason_description)
+
 }
 
 async function handlePaymentDisputeWon(supabase: any, payload: RazorpayWebhookPayload) {
   const dispute = payload.payload.dispute?.entity
   if (!dispute) return
   
-  console.log(`Processing payment.dispute.won for payment: ${dispute.payment_id}`)
-  console.log('Dispute won for amount:', dispute.amount)
+
 }
 
 async function handlePaymentDisputeLost(supabase: any, payload: RazorpayWebhookPayload) {
   const dispute = payload.payload.dispute?.entity
   if (!dispute) return
   
-  console.log(`Processing payment.dispute.lost for payment: ${dispute.payment_id}`)
-  console.log('Dispute lost for amount:', dispute.amount)
+
 }
 
 async function handlePaymentDisputeClosed(supabase: any, payload: RazorpayWebhookPayload) {
   const dispute = payload.payload.dispute?.entity
   if (!dispute) return
   
-  console.log(`Processing payment.dispute.closed for payment: ${dispute.payment_id}`)
-  console.log('Dispute closed with status:', dispute.status)
+
 }
 
 async function handlePaymentDisputeUnderReview(supabase: any, payload: RazorpayWebhookPayload) {
   const dispute = payload.payload.dispute?.entity
   if (!dispute) return
   
-  console.log(`Processing payment.dispute.under_review for payment: ${dispute.payment_id}`)
-  console.log('Dispute under review, respond by:', new Date(dispute.respond_by * 1000).toISOString())
+
 }
 
 async function handlePaymentDisputeActionRequired(supabase: any, payload: RazorpayWebhookPayload) {
   const dispute = payload.payload.dispute?.entity
   if (!dispute) return
   
-  console.log(`Processing payment.dispute.action_required for payment: ${dispute.payment_id}`)
-  console.log('Action required for dispute, respond by:', new Date(dispute.respond_by * 1000).toISOString())
+
 }
 
 // Payment Downtime Event Handlers
@@ -627,36 +608,33 @@ async function handlePaymentDowntimeStarted(supabase: any, payload: RazorpayWebh
   const downtime = payload.payload.downtime?.entity
   if (!downtime) return
   
-  console.log(`Processing payment.downtime.started for: ${downtime.id}`)
-  console.log('Downtime started for source:', downtime.source, 'at:', new Date(downtime.begin * 1000).toISOString())
+
 }
 
 async function handlePaymentDowntimeUpdated(supabase: any, payload: RazorpayWebhookPayload) {
   const downtime = payload.payload.downtime?.entity
   if (!downtime) return
   
-  console.log(`Processing payment.downtime.updated for: ${downtime.id}`)
-  console.log('Downtime updated for source:', downtime.source, 'status:', downtime.status)
+
 }
 
 async function handlePaymentDowntimeResolved(supabase: any, payload: RazorpayWebhookPayload) {
   const downtime = payload.payload.downtime?.entity
   if (!downtime) return
   
-  console.log(`Processing payment.downtime.resolved for: ${downtime.id}`)
-  console.log('Downtime resolved for source:', downtime.source, 'ended at:', downtime.end ? new Date(downtime.end * 1000).toISOString() : 'N/A')
+
 }
 
 async function handleOrderPaid(supabase: any, payload: RazorpayWebhookPayload) {
   const order = payload.payload.order?.entity
   if (!order) return
   
-  console.log(`Processing order.paid for order: ${order.id}`)
+
   
   try {
     // This event is triggered when an order is completely paid
     // You can add additional business logic here if needed
-    console.log('Order fully paid:', order.id)
+
     
   } catch (error) {
     console.error('Error handling order.paid:', error)

@@ -156,7 +156,73 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
       }
 
       if (!profilesData) {
-        console.log('ℹ️ No user profile found for:', userId, '- this is normal for expert-only accounts');
+        console.log('ℹ️ No user profile found for:', userId, '- attempting to create one');
+        
+        // Try to get user metadata from auth
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        
+        if (authUser) {
+          try {
+            // Create a basic profile for the user
+            // Insert only columns that are guaranteed to exist in profiles schema
+            const newProfileData: Record<string, any> = {
+              id: userId,
+              name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'User',
+              email: authUser.email || '',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            };
+            
+            const { data: createdProfile, error: createError } = await supabase
+              .from('profiles')
+              .insert([newProfileData as any])
+              .select()
+              .single();
+            
+            if (createError) {
+              console.error('❌ Error creating profile:', createError);
+              setUserProfile(null);
+              return null;
+            }
+            
+            if (createdProfile) {
+              console.log('✅ Successfully created user profile');
+              // Transform and return the newly created profile
+              const transformedProfile: UserProfile = {
+                id: createdProfile.id,
+                name: createdProfile.name || '',
+                email: createdProfile.email || '',
+                phone: createdProfile.phone || '',
+                country: createdProfile.country || '',
+                city: createdProfile.city || '',
+                currency: createdProfile.currency || 'USD',
+                profile_picture: createdProfile.profile_picture || '',
+                referral_code: (createdProfile as any).referral_code || '',
+                referral_link: (createdProfile as any).referral_link || '',
+                referred_by: (createdProfile as any).referred_by || '',
+                wallet_balance: (createdProfile as any).wallet_balance || 0,
+                created_at: createdProfile.created_at,
+                updated_at: createdProfile.updated_at || createdProfile.created_at,
+                favorite_experts: [],
+                favorite_programs: [],
+                enrolled_courses: [],
+                reviews: [],
+                recent_activities: [],
+                upcoming_appointments: [],
+                transactions: [],
+                reports: [],
+                referrals: []
+              };
+              
+              setUserProfile(transformedProfile);
+              return transformedProfile;
+            }
+          } catch (createError) {
+            console.error('❌ Exception creating profile:', createError);
+          }
+        }
+        
+        console.log('⚠️ Could not create profile - user may be expert-only');
         setUserProfile(null);
         return null;
       }
@@ -238,6 +304,13 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         } else {
           console.error('❌ Error fetching expert profile:', error);
         }
+        setExpert(null);
+        return null;
+      }
+
+      // Check if expertData is null (no expert account found)
+      if (!expertData) {
+        console.log('ℹ️ No expert profile found for user (null data):', userId);
         setExpert(null);
         return null;
       }
@@ -365,9 +438,15 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         console.log('✅ USER ONLY: Only user profile exists');
         newUserType = 'user';
       } else {
-        // No profiles found - this is an error state
-        console.warn('⚠️ PROFILE ERROR: No valid profiles found for authenticated user');
-        newUserType = 'none';
+        // No profiles found - fall back gracefully to a safe default
+        console.warn('⚠️ PROFILE WARNING: No valid profiles found for authenticated user - defaulting to user session');
+        // Prefer user's last choice if explicitly set to expert, otherwise use user
+        if (loginPreference === 'expert') {
+          // Let navigation guard and onboarding flows handle missing expert profile
+          newUserType = 'expert';
+        } else {
+          newUserType = 'user';
+        }
       }
       
       console.log('✅ Profiles refreshed. Final user type:', newUserType);

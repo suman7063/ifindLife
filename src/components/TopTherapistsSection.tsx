@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import ExpertCard from './expert-card';
+import ExpertCardSimplified from './expert-card/ExpertCardSimplified';
 import { ExpertCardData } from './expert-card/types';
 import { Button } from './ui/button';
 import { toast } from 'sonner';
@@ -58,12 +58,10 @@ const TopTherapistsSection: React.FC<TopTherapistsSectionProps> = ({ experts = [
   ];
 
   const handleExpertCardClick = (expert: ExpertCardData) => {
-    console.log('Expert card clicked:', expert);
-    console.log('Expert ID:', expert.id);
-    console.log('Expert auth_id:', expert.auth_id);
+
     
     const expertId = expert.auth_id || expert.id;
-    console.log('Using expertId for navigation:', expertId);
+
     
     if (!expertId) {
       console.error('No valid expert ID found:', expert);
@@ -72,21 +70,17 @@ const TopTherapistsSection: React.FC<TopTherapistsSectionProps> = ({ experts = [
     }
     
     const targetUrl = `/experts/${expertId}`;
-    console.log('Navigating to:', targetUrl);
     
     // Navigate to dedicated expert page
     navigate(targetUrl);
   };
 
   const handleConnectNow = (expert: ExpertCardData, type: 'video' | 'voice') => {
-    console.log(`Connecting to ${expert.name} via ${type}`);
     toast.success(`Initiating ${type} call with ${expert.name}...`);
     // Here you would integrate with Agora SDK for video/voice calls
   };
 
-  const handleBookNow = (expert: ExpertCardData) => {
-    console.log(`Booking session with ${expert.name}`);
-    
+  const handleBookNow = (expert: ExpertCardData) => { 
     // Navigate to expert's booking page with booking tab active
     const expertUrl = `/experts/${expert.auth_id || expert.id}?book=true`;
     window.location.href = expertUrl;
@@ -120,7 +114,7 @@ const TopTherapistsSection: React.FC<TopTherapistsSectionProps> = ({ experts = [
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {defaultExperts.map((expert) => (
-              <ExpertCard
+              <ExpertCardSimplified
                 key={expert.id.toString()}
                 expert={expert}
                 onClick={() => handleExpertCardClick(expert)}

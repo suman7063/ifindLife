@@ -15,6 +15,8 @@ import ExpertReviewsPage from '@/components/expert-dashboard/pages/ExpertReviews
 import CallManagementPage from '@/components/expert-dashboard/pages/CallManagementPage';
 import ExpertOnboardingFlow from '@/components/expert/dashboard/ExpertOnboardingFlow';
 import CallReceptionWidget from '@/components/expert-dashboard/call/CallReceptionWidget';
+import { useIncomingCalls } from '@/hooks/call/useIncomingCalls';
+import IncomingCallDialog from '@/components/expert-dashboard/call/IncomingCallDialog';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { useIntegratedExpertPresence } from '@/hooks/useIntegratedExpertPresence';
 import { supabase } from '@/lib/supabase';
@@ -27,6 +29,9 @@ const NewExpertDashboard: React.FC = () => {
   
   // Sync expert presence automatically
   const { isExpertOnline } = useIntegratedExpertPresence();
+  
+  // Realtime incoming call notifications for experts - MUST be called before any early returns
+  const { incoming, setIncoming, acceptCall, declineCall } = useIncomingCalls(expert?.auth_id);
   
   // Check onboarding completion status
   useEffect(() => {
@@ -104,7 +109,6 @@ const NewExpertDashboard: React.FC = () => {
   console.log('needsOnboarding', needsOnboarding);
   // If expert is authenticated and needs onboarding, show onboarding flow first
   if (isAuthenticated && userType === 'expert' && expert && needsOnboarding) {
-    
     return <ExpertOnboardingFlow />;
   }
 
@@ -124,10 +128,26 @@ const NewExpertDashboard: React.FC = () => {
     return <div className="flex items-center justify-center min-h-screen">Preparing your dashboard...</div>;
   }
 
+  const handleAccept = async (req: any) => {
+    const ok = await acceptCall(req);
+    if (ok) {
+      // On accept, navigate to Calls page or open your call modal if desired
+      setIncoming(null);
+      navigate('/expert-dashboard/calls');
+    }
+  };
+
+  const handleDecline = async (req: any) => {
+    const ok = await declineCall(req);
+    if (ok) setIncoming(null);
+  };
+
   return (
     <ExpertDashboardLayout>
       {/* Call Reception Widget - Always available */}
       <CallReceptionWidget />
+      {/* Incoming Call Dialog */}
+      <IncomingCallDialog request={incoming} onAccept={handleAccept} onDecline={handleDecline} />
       
       <Routes>
         {/* Dashboard Home */}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -66,6 +66,9 @@ const IncomingCallModal: React.FC<IncomingCallModalProps> = ({
           <DialogTitle className="text-center text-xl font-semibold">
             Incoming {call.call_type === 'video' ? 'Video' : 'Audio'} Call
           </DialogTitle>
+          <DialogDescription className="text-center">
+            You have an incoming call request. Accept to start the call or decline to reject it.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col items-center space-y-6 py-4">

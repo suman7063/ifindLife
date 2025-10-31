@@ -17,7 +17,7 @@ export interface ExpertConnectionState {
 
 export function useExpertConnection() {
   const navigate = useNavigate();
-  const { isAuthenticated } = useSimpleAuth();
+  const { isAuthenticated, user } = useSimpleAuth();
   const { createCallSession, currentSession } = useCallSession();
   const { processPayment } = useRazorpayPayment();
 
@@ -67,21 +67,50 @@ export function useExpertConnection() {
   };
 
   const handleConnectNow = async (expert: ExpertCardData, type: 'video' | 'voice') => {
+    console.log('🚀 handleConnectNow called', { expert: expert.name, type, isAuthenticated });
+    
     if (!isAuthenticated) {
+      console.log('❌ Not authenticated');
       toast.error('Please log in to start a call');
       return;
     }
 
-    if (expert.status !== 'online') {
-      toast.error('Expert is not available for immediate connection');
-      return;
-    }
-
+    // Note: The card component already validates expert availability before calling this handler
+    // So we can proceed directly to creating the session
+    
     try {
-      console.log(`Initiating ${type} call with ${expert.name}`);
+      console.log(`📞 Initiating ${type} call with ${expert.name}`);
       
-      // Skip payment and directly start the call for now
-      console.log('Starting call directly (payment bypassed)...');
+      if (!user?.id) {
+        console.log('❌ No user ID');
+        toast.error('Unable to get user information');
+        return;
+      }
+
+      console.log('📝 Creating call session...', { expertInternalId: expert.id, expertAuthId: expert.auth_id });
+      
+      // IMPORTANT: call_sessions.expert_id references expert_accounts.id (internal UUID)
+      // Always use expert.id here (we already map this to expert_accounts.id in our cards)
+      const expertIdentifier = expert.id;
+      console.log('📝 Using expert_accounts.id for call session:', expertIdentifier);
+      
+      // Create a basic session for the call (required for modal to open)
+      const session = await createCallSession(
+        expertIdentifier,
+        type,
+        15, // Default duration: 15 minutes
+        0,  // Cost: 0 (free for now)
+        'INR' // Currency
+      );
+
+      if (!session) {
+        console.log('❌ Session creation failed');
+        toast.error('Failed to create call session');
+        return;
+      }
+
+      console.log('✅ Session created:', session.id);
+      console.log('🎬 Opening call modal...');
       updateState({
         selectedExpert: expert,
         isCallModalOpen: true
@@ -89,13 +118,16 @@ export function useExpertConnection() {
       toast.success(`Starting ${type} call with ${expert.name}...`);
       
     } catch (error) {
-      console.error('Error starting call:', error);
+      console.error('❌ Error starting call:', error);
       toast.error('Failed to start call');
     }
   };
 
   const handleBookNow = (expert: ExpertCardData) => {
+    console.log('📅 handleBookNow called', { expert: expert.name, isAuthenticated });
+    
     if (!isAuthenticated) {
+      console.log('❌ Not authenticated');
       toast.error('Please log in to book a session');
       return;
     }
@@ -104,6 +136,7 @@ export function useExpertConnection() {
     
     // Navigate to expert's booking page with booking tab active
     const expertUrl = `/experts/${expert.auth_id || expert.id}?book=true`;
+    console.log('🌐 Navigating to:', expertUrl);
     window.location.href = expertUrl;
 
     toast.success(`Redirecting to ${expert.name}'s booking page`, {

@@ -7,6 +7,7 @@ import AgoraRTC, {
   ICameraVideoTrack, 
   IMicrophoneAudioTrack 
 } from 'agora-rtc-sdk-ng';
+import { AGORA_CONFIG } from '@/utils/agoraConfig';
 
 export type CallType = 'audio' | 'video';
 
@@ -53,19 +54,20 @@ export const joinCall = async (
     uid
   } = settings;
   
-  if (!appId) {
+  const resolvedAppId = appId || AGORA_CONFIG.APP_ID;
+  if (!resolvedAppId) {
     throw new Error('App ID is required to join call');
   }
   
   // Use provided UID or generate one
   const userId = uid || Math.floor(Math.random() * 1000000);
   
-  console.log('🎯 Joining Agora channel with:', { appId, channelName, token, userId });
+  console.log('🎯 Joining Agora channel with:', { appId: resolvedAppId, channelName, token, userId });
   
   try {
     // Join the channel with consistent App ID
-    await client.join(appId, channelName, token, userId);
-    console.log('✅ Agora: Joined channel:', channelName, 'with App ID:', appId, 'User ID:', userId);
+    await client.join(resolvedAppId, channelName, token, userId);
+    console.log('✅ Agora: Joined channel:', channelName, 'with App ID:', resolvedAppId, 'User ID:', userId);
     
     // Create local audio track with quality settings
     const localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack({

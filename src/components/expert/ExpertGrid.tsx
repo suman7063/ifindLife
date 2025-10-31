@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Lock } from 'lucide-react';
-import ExpertCard from '@/components/expert-card/ExpertCard';
+import ExpertCardSimplified from '@/components/expert-card/ExpertCardSimplified';
 import { Expert } from './types';
 
 interface ExpertGridProps {
@@ -32,7 +32,7 @@ const ExpertGrid: React.FC<ExpertGridProps> = ({
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {experts.map((expert) => (
         <div key={expert.id} className="relative">
-          <ExpertCard
+          <ExpertCardSimplified
             expert={{
               id: expert.id.toString(),
               name: expert.name,

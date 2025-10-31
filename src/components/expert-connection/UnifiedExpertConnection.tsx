@@ -50,8 +50,8 @@ const UnifiedExpertConnection: React.FC<UnifiedExpertConnectionProps> = ({
 
       {/* Expert Detail Modal removed - now using dedicated pages */}
 
-      {/* Call Modal */}
-      {state.isCallModalOpen && state.selectedExpert && currentSession && (
+      {/* Call Modal - Open if session exists or if modal is requested (session will be created by modal if needed) */}
+      {state.isCallModalOpen && state.selectedExpert && (
         <LazyAgoraCallModal
           isOpen={state.isCallModalOpen}
           onClose={closeCallModal}

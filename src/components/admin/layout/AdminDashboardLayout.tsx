@@ -34,15 +34,14 @@ const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
   const currentUser = adminAuth?.admin;
   
   const handleTabChange = (tab: string) => {
-    console.log('AdminDashboardLayout: Changing tab to', tab);
-    
+        
     if (setActiveTab) {
       setActiveTab(tab);
     }
     
     // Navigate to the appropriate route based on tab
     const newPath = `/admin/${tab}`;
-    console.log('AdminDashboardLayout: Navigating to', newPath);
+
     navigate(newPath);
   };
   

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { CallPreSelection } from './CallPreSelection';
 import { CallInProgress } from './CallInProgress';
 import { CallEnded } from './CallEnded';
@@ -108,6 +108,10 @@ export const CallInterface: React.FC<CallInterfaceProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-5xl max-h-[95vh] p-0 overflow-hidden border-0">
+        <DialogHeader className="sr-only">
+          <DialogTitle>Call with {expert.name}</DialogTitle>
+          <DialogDescription>Video or audio call interface</DialogDescription>
+        </DialogHeader>
         {renderContent()}
       </DialogContent>
     </Dialog>

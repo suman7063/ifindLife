@@ -1,6 +1,6 @@
 
 import React, { lazy, Suspense } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Loader2 } from 'lucide-react';
 
 // Lazy load the actual Agora chat component
@@ -26,6 +26,10 @@ const LazyAgoraChatModal: React.FC<LazyAgoraChatModalProps> = (props) => {
   return (
     <Dialog open={props.isOpen} onOpenChange={(open) => !open && props.onClose()}>
       <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden">
+        <DialogHeader className="sr-only">
+          <DialogTitle>Chat with {props.expert.name}</DialogTitle>
+          <DialogDescription>Chat interface with expert</DialogDescription>
+        </DialogHeader>
         <Suspense fallback={
           <div className="flex items-center justify-center p-8">
             <Loader2 className="h-8 w-8 animate-spin text-primary mr-3" />

@@ -61,8 +61,7 @@ const ExpertApprovals = () => {
         setRefreshing(true);
       }
       setError(null);
-      
-      console.log('ExpertApprovals: Fetching expert applications...');
+
       
       // Use RPC function that has SECURITY DEFINER for admin access
       const { data, error } = await supabase
@@ -73,10 +72,7 @@ const ExpertApprovals = () => {
         throw new Error(`Failed to load expert applications: ${error.message}`);
       }
       
-      console.log('ExpertApprovals: Found expert applications:', data?.length || 0);
-      if (data && data.length > 0) {
-        console.log('ExpertApprovals: Expert data sample:', data[0]);
-      }
+      
       
       setExperts(data as ExpertProfileWithStatus[] || []);
       
@@ -96,7 +92,6 @@ const ExpertApprovals = () => {
   
   // Manual refresh function
   const handleRefresh = () => {
-    console.log('ExpertApprovals: Manual refresh requested');
     fetchExperts(false);
     toast.info('Refreshing expert applications...');
   };
@@ -109,9 +104,7 @@ const ExpertApprovals = () => {
   // Update expert status with better error handling
   const updateExpertStatus = async () => {
     if (!selectedExpert) return;
-    console.log('selectedExpert', selectedExpert, selectedStatus);
     try {
-      console.log('ExpertApprovals: Updating expert status:', selectedExpert.id, 'to', selectedStatus);
 
       // Call edge function (runs with service role) to update status
       const { data: fnData, error: fnError } = await supabase.functions.invoke('admin-update-expert', {
@@ -123,7 +116,6 @@ const ExpertApprovals = () => {
         throw new Error(fnError?.message || fnData?.error || 'Failed to update');
       }
 
-      console.log('ExpertApprovals: Expert status updated successfully via edge function');
 
       // Refresh from DB
       await fetchExperts(false);
@@ -147,7 +139,6 @@ const ExpertApprovals = () => {
   // Helper function to send email notification (placeholder - implement as needed)
   const sendStatusUpdateEmail = async (email: string, status: string, message: string) => {
     // This would typically call an edge function or email service
-    console.log('Sending email notification to:', email, 'Status:', status, 'Message:', message);
     // For now, we'll skip the actual email sending to avoid errors
     return Promise.resolve();
   };

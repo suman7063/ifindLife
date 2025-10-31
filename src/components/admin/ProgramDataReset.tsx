@@ -13,7 +13,6 @@ const ProgramDataReset = () => {
   
   // Function to reset database program data
   const resetProgramData = async () => {
-    console.log("Program data reset initiated");
     setIsResetting(true);
     
     try {
@@ -28,30 +27,30 @@ const ProgramDataReset = () => {
           .neq('id', 0); // Delete all rows
           
         if (!error) {
-          console.log("Successfully deleted programs from Supabase");
+          
           deleted = true;
         } else {
           console.error("Error deleting from Supabase:", error);
         }
       } catch (e) {
-        console.log("Supabase deletion not available, using localStorage fallback");
+
       }
       
       // If Supabase deletion failed or isn't available, clear localStorage
       if (!deleted) {
         localStorage.removeItem('ifindlife-programs');
-        console.log("Cleared programs from localStorage");
+
       }
       
       // Add sample data for each program type
       const wellnessAdded = await addSamplePrograms('wellness');
-      console.log("Wellness programs added:", wellnessAdded);
+
       
       const academicAdded = await addSamplePrograms('academic' as ProgramType);
-      console.log("Academic programs added:", academicAdded);
+
       
       const businessAdded = await addSamplePrograms('business' as ProgramType);
-      console.log("Business programs added:", businessAdded);
+
       
       // Show success message
       toast.success("Program data has been reset successfully!");

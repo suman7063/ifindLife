@@ -4,6 +4,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -61,6 +62,9 @@ const PendingCallsList: React.FC<PendingCallsListProps> = ({
           <DialogTitle>
             Pending Calls ({calls.length})
           </DialogTitle>
+          <DialogDescription>
+            Review and manage incoming call requests from users.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">

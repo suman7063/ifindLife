@@ -19,7 +19,7 @@ import {
   Phone
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import ExpertCard from '@/components/expert-card/ExpertCard';
+import ExpertCardSimplified from '@/components/expert-card/ExpertCardSimplified';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
@@ -441,7 +441,7 @@ export const EnhancedExpertSearch: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredExperts.map(expert => (
               <div key={expert.id} className="relative">
-                <ExpertCard
+                <ExpertCardSimplified
                   expert={{
                     id: expert.id,
                     name: expert.name,

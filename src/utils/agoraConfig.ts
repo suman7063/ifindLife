@@ -1,8 +1,15 @@
 // Agora configuration constants
 export const AGORA_CONFIG = {
-  // Use a consistent App ID across the application
-  APP_ID: '9b3ad657507642f98a52d47893780e8e',
-  
+  // Use Vite env vars with safe fallbacks for local/dev
+  APP_ID: (import.meta as any).env?.VITE_AGORA_APP_ID || '9b3ad657507642f98a52d47893780e8e',
+
+  // Optional Agora Chat configuration (if/when using Agora Chat SDK)
+  CHAT: {
+    HOST: (import.meta as any).env?.VITE_AGORA_CHAT_HOST || '',
+    ORG_NAME: (import.meta as any).env?.VITE_AGORA_CHAT_ORG_NAME || '',
+    APP_NAME: (import.meta as any).env?.VITE_AGORA_CHAT_APP_NAME || ''
+  },
+
   // Channel naming convention
   CHANNEL_PREFIX: 'expert_call_',
   
@@ -79,6 +86,11 @@ export const validateAgoraConfig = (): boolean => {
   if (AGORA_CONFIG.APP_ID.length !== 32) {
     console.error('❌ Agora App ID format is invalid');
     return false;
+  }
+  
+  // Optional: log chat config presence without leaking secrets
+  if (AGORA_CONFIG.CHAT?.HOST) {
+    console.log('ℹ️ Agora Chat host configured');
   }
   
   console.log('✅ Agora configuration is valid');

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { X } from 'lucide-react';
-import ExpertCard from '@/components/expert-card';
+import ExpertCardSimplified from '@/components/expert-card/ExpertCardSimplified';
 import { ExpertCardData } from '@/components/expert-card/types';
 import ExpertDetailModal from '@/components/expert-card/ExpertDetailModal';
 import AppointmentBookingModal from '@/components/booking/AppointmentBookingModal';
@@ -198,7 +198,7 @@ const ExpertSelectionModal: React.FC<ExpertSelectionModalProps> = ({
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {onlineExperts.map((expert) => (
-                        <ExpertCard
+                        <ExpertCardSimplified
                           key={expert.id}
                           expert={expert}
                           onClick={() => handleExpertCardClick(expert)}
@@ -224,7 +224,7 @@ const ExpertSelectionModal: React.FC<ExpertSelectionModalProps> = ({
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {offlineExperts.map((expert) => (
-                        <ExpertCard
+                        <ExpertCardSimplified
                           key={expert.id}
                           expert={expert}
                           onClick={() => handleExpertCardClick(expert)}

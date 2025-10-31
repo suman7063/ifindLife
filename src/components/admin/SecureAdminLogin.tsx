@@ -24,9 +24,7 @@ const SecureAdminLogin: React.FC = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      console.log('✅ Admin authenticated, redirecting...');
       const from = location.state?.from?.pathname || '/admin';
-      console.log('🔍 Redirecting to:', from);
       navigate(from, { replace: true });
     }
   }, [isAuthenticated, navigate, location]);
@@ -38,7 +36,6 @@ const SecureAdminLogin: React.FC = () => {
     localStorage.removeItem('clean_admin_session');
     setIsBlocked(false);
     setLoginAttempts(0);
-    console.log('🧹 Cleared admin login blocks for fresh authentication');
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -65,9 +62,7 @@ const SecureAdminLogin: React.FC = () => {
       return;
     }
 
-    console.log('🔐 Attempting admin login...');
     const success = await login(username.trim(), password);
-    console.log('🔐 Login result:', success);
 
     if (!success) {
       const newAttempts = loginAttempts + 1;

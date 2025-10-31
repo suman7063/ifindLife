@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import ExpertCard from '@/components/expert-card';
+import ExpertCardSimplified from '@/components/expert-card/ExpertCardSimplified';
 import UnifiedExpertConnection from '@/components/expert-connection/UnifiedExpertConnection';
 import { usePublicExpertsData } from '@/hooks/usePublicExpertsData';
 import { useExpertPresence } from '@/contexts/ExpertPresenceContext';
@@ -77,7 +77,7 @@ const ExpertsOnlineSection: React.FC = () => {
         <section className="py-16 bg-gray-50">
           <div className="container mx-auto px-6 sm:px-12">
             <div className="text-center mb-10">
-              <h2 className="text-3xl font-bold mb-3 text-center">Experts Currently Online</h2>
+              <h2 className="text-3xl font-bold mb-3 text-center">Our Experts</h2>
               <p className="text-gray-600 max-w-2xl mx-auto text-center">
                 Connect instantly with our available experts for immediate guidance and support
               </p>
@@ -110,7 +110,7 @@ const ExpertsOnlineSection: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {displayExperts.map(expert => (
                   <div key={expert.id} className="flex">
-                    <ExpertCard
+                    <ExpertCardSimplified
                       expert={expert}
                       onClick={() => handleExpertCardClick(expert)}
                       onConnectNow={(type) => handleConnectNow(expert, type)}
