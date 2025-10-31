@@ -11,6 +11,7 @@ export interface ExpertConnectionState {
   isExpertModalOpen: boolean;
   isBookingModalOpen: boolean;
   isCallModalOpen: boolean;
+  isChatModalOpen: boolean;
   expertConnectOptions: {[key: string]: boolean};
 }
 
@@ -25,6 +26,7 @@ export function useExpertConnection() {
     isExpertModalOpen: false,
     isBookingModalOpen: false,
     isCallModalOpen: false,
+    isChatModalOpen: false,
     expertConnectOptions: {}
   });
 
@@ -38,6 +40,7 @@ export function useExpertConnection() {
       isExpertModalOpen: false,
       isBookingModalOpen: false,
       isCallModalOpen: false,
+      isChatModalOpen: false,
       expertConnectOptions: {}
     });
   };
@@ -108,6 +111,19 @@ export function useExpertConnection() {
     });
   };
 
+  const handleChat = (expert: ExpertCardData) => {
+    if (!isAuthenticated) {
+      toast.error('Please log in to start a chat');
+      return;
+    }
+
+    console.log(`Opening chat with ${expert.name}`);
+    updateState({
+      selectedExpert: expert,
+      isChatModalOpen: true
+    });
+  };
+
   const handleShowConnectOptions = (expertId: string, show: boolean) => {
     updateState({
       expertConnectOptions: {
@@ -158,18 +174,27 @@ export function useExpertConnection() {
     });
   };
 
+  const closeChatModal = () => {
+    updateState({
+      isChatModalOpen: false,
+      selectedExpert: null
+    });
+  };
+
   return {
     state,
     currentSession,
     handleExpertCardClick,
     handleConnectNow,
     handleBookNow,
+    handleChat,
     handleShowConnectOptions,
     handleModalConnectNow,
     handleModalBookNow,
     closeExpertModal,
     closeBookingModal,
     closeCallModal,
+    closeChatModal,
     resetState
   };
 }

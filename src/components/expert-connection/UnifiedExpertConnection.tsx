@@ -1,6 +1,7 @@
 import React from 'react';
 import ExpertDetailModal from '@/components/expert-card/ExpertDetailModal';
 import LazyAgoraCallModal from '@/components/call/LazyAgoraCallModal';
+import ChatOnlyModal from '@/components/chat/modals/ChatOnlyModal';
 import { useExpertConnection } from '@/hooks/useExpertConnection';
 
 interface UnifiedExpertConnectionProps {
@@ -9,6 +10,7 @@ interface UnifiedExpertConnectionProps {
     handleExpertCardClick: ReturnType<typeof useExpertConnection>['handleExpertCardClick'];
     handleConnectNow: ReturnType<typeof useExpertConnection>['handleConnectNow'];
     handleBookNow: ReturnType<typeof useExpertConnection>['handleBookNow'];
+    handleChat: ReturnType<typeof useExpertConnection>['handleChat'];
     handleShowConnectOptions: ReturnType<typeof useExpertConnection>['handleShowConnectOptions'];
   }) => React.ReactNode;
   serviceTitle?: string;
@@ -26,11 +28,13 @@ const UnifiedExpertConnection: React.FC<UnifiedExpertConnectionProps> = ({
     handleExpertCardClick,
     handleConnectNow,
     handleBookNow,
+    handleChat,
     handleShowConnectOptions,
     handleModalConnectNow,
     handleModalBookNow,
     closeExpertModal,
-    closeCallModal
+    closeCallModal,
+    closeChatModal
   } = useExpertConnection();
 
   return (
@@ -40,6 +44,7 @@ const UnifiedExpertConnection: React.FC<UnifiedExpertConnectionProps> = ({
         handleExpertCardClick,
         handleConnectNow,
         handleBookNow,
+        handleChat,
         handleShowConnectOptions
       })}
 
@@ -55,6 +60,20 @@ const UnifiedExpertConnection: React.FC<UnifiedExpertConnectionProps> = ({
             name: state.selectedExpert.name,
             imageUrl: state.selectedExpert.profilePicture || '',
             price: state.selectedExpert.price || 30
+          }}
+        />
+      )}
+
+      {/* Chat Modal */}
+      {state.isChatModalOpen && state.selectedExpert && (
+        <ChatOnlyModal
+          isOpen={state.isChatModalOpen}
+          onClose={closeChatModal}
+          expert={{
+            id: state.selectedExpert.id,
+            name: state.selectedExpert.name,
+            profilePicture: state.selectedExpert.profilePicture,
+            auth_id: state.selectedExpert.auth_id
           }}
         />
       )}

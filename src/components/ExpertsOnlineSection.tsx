@@ -73,7 +73,7 @@ const ExpertsOnlineSection: React.FC = () => {
 
   return (
     <UnifiedExpertConnection serviceTitle="Expert Consultation" serviceId="consultation">
-      {({ state, handleExpertCardClick, handleConnectNow, handleBookNow, handleShowConnectOptions }) => (
+      {({ state, handleExpertCardClick, handleConnectNow, handleBookNow, handleChat, handleShowConnectOptions }) => (
         <section className="py-16 bg-gray-50">
           <div className="container mx-auto px-6 sm:px-12">
             <div className="text-center mb-10">
@@ -115,6 +115,7 @@ const ExpertsOnlineSection: React.FC = () => {
                       onClick={() => handleExpertCardClick(expert)}
                       onConnectNow={(type) => handleConnectNow(expert, type)}
                       onBookNow={() => handleBookNow(expert)}
+                      onChat={() => handleChat(expert)}
                       showConnectOptions={state.expertConnectOptions[expert.id.toString()] || false}
                       onShowConnectOptions={(show) => handleShowConnectOptions(expert.id.toString(), show)}
                       className="w-full"

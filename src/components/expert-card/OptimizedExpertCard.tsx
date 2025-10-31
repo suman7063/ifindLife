@@ -3,7 +3,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Star, Video, Phone, Clock, Calendar, Languages } from 'lucide-react';
+import { Star, Video, Phone, Clock, Calendar, Languages, MessageSquare } from 'lucide-react';
 import { ExpertCardData } from './types';
 import { useAuth } from '@/contexts/auth';
 import { useAuthRedirectSystem } from '@/hooks/useAuthRedirectSystem';
@@ -21,6 +21,7 @@ export interface OptimizedExpertCardProps {
   className?: string;
   onConnectNow?: (type: 'video' | 'voice') => void;
   onBookNow?: () => void;
+  onChat?: () => void;
   showConnectOptions?: boolean;
   onShowConnectOptions?: (show: boolean) => void;
   variant?: 'default' | 'compact' | 'detailed';
@@ -33,6 +34,7 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
   className = '',
   onConnectNow,
   onBookNow,
+  onChat,
   showConnectOptions = false,
   onShowConnectOptions,
   variant = 'default',
@@ -129,8 +131,19 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
     }
 
     await handleInteraction(() => {
+      // If expert is available, directly start a call (bypass connect options)
+      if (expertData.isAvailable && onConnectNow) {
+        onConnectNow('video'); // Default to video call for direct connection
+        return;
+      }
+
       if (expertData.status === 'away') {
-        setShowAwayDialog(true);
+        // Show chat option instead of away dialog
+        if (onChat) {
+          onChat();
+        } else {
+          setShowAwayDialog(true);
+        }
         return;
       }
 
@@ -143,7 +156,7 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
         onShowConnectOptions(true);
       }
     });
-  }, [requireAuthForExpert, expertData.id, expertData.name, expertData.status, expertData.isAvailable, onShowConnectOptions, handleInteraction]);
+  }, [requireAuthForExpert, expertData.id, expertData.name, expertData.status, expertData.isAvailable, onConnectNow, onChat, onShowConnectOptions, handleInteraction]);
 
   const handleBookNow = React.useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -195,6 +208,7 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
 
   const renderActionButtons = () => {
     const isLoading = false;
+    const status = expertData.status; // 'available' | 'busy' | 'away' | 'offline'
     
     if (showConnectOptions && expertData.isAvailable) {
       return (
@@ -211,37 +225,72 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
       );
     }
 
-    // Replace the left button with the status pill
-    const status = expertData.status; // 'available' | 'busy' | 'away' | 'offline'
-    const label = status === 'available' ? 'Connect Now' : status;
-    const style: React.CSSProperties =
-      status === 'available'
-        ? { backgroundColor: 'rgb(220 252 231)', color: '#065f46' }
-        : status === 'busy'
-        ? { backgroundColor: 'rgb(255 237 213)', color: '#92400e' }
-        : status === 'away'
-        ? { backgroundColor: 'rgb(254 249 195)', color: '#92400e' }
-        : { backgroundColor: 'rgb(243 244 246)', color: '#374151' };
+    // Status-based button rendering
+    if (status === 'away') {
+      // Show Chat button when expert is away
+      return (
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="default"
+            className="flex-1 bg-yellow-100 hover:bg-yellow-200 text-yellow-900 border-yellow-300"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onChat) {
+                if (!requireAuthForExpert(expertData.id, expertData.name, 'connect')) {
+                  return;
+                }
+                onChat();
+              }
+            }}
+          >
+            <MessageSquare className="h-3 w-3 mr-1" />
+            Chat
+          </Button>
+          <Button size="sm" variant="outline" className="flex-1" disabled={isLoading} onClick={handleBookNow}>
+            <Calendar className="h-3 w-3 mr-1" />
+            Book Session
+          </Button>
+        </div>
+      );
+    }
 
-    return (
-      <div className="flex gap-2">
-        {status === 'available' ? (
+    if (status === 'available' && expertData.isAvailable) {
+      // Show Connect Now button (direct call) when expert is available
+      const style: React.CSSProperties = { backgroundColor: 'rgb(220 252 231)', color: '#065f46' };
+      return (
+        <div className="flex gap-2">
           <Button
             size="sm"
             className="flex-1 border"
             style={style}
             onClick={handleConnectNow}
           >
-            {label}
+            Connect Now
           </Button>
-        ) : (
-          <span className="flex-1 inline-flex items-center justify-center text-xs font-medium px-3 py-2 rounded-md border" style={style}>
-            {label}
-          </span>
-        )}
+          <Button size="sm" variant="outline" className="flex-1" disabled={isLoading} onClick={handleBookNow}>
+            <Calendar className="h-3 w-3 mr-1" />
+            Book Session
+          </Button>
+        </div>
+      );
+    }
+
+    // For busy or offline status, show status indicator and Book Session button
+    const label = status === 'busy' ? 'Busy' : 'Offline';
+    const style: React.CSSProperties =
+      status === 'busy'
+        ? { backgroundColor: 'rgb(255 237 213)', color: '#92400e' }
+        : { backgroundColor: 'rgb(243 244 246)', color: '#374151' };
+
+    return (
+      <div className="flex gap-2">
+        <span className="flex-1 inline-flex items-center justify-center text-xs font-medium px-3 py-2 rounded-md border" style={style}>
+          {label}
+        </span>
         <Button size="sm" variant="outline" className="flex-1" disabled={isLoading} onClick={handleBookNow}>
           <Calendar className="h-3 w-3 mr-1" />
-          Book
+          Book Session
         </Button>
       </div>
     );
