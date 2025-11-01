@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -65,6 +65,9 @@ const CallManagementPage: React.FC = () => {
     earnings: 0,
     missedCallsCount: 0
   });
+  
+  // Cache to remember if away_messages table exists (to avoid repeated 404s)
+  const awayMessagesTableExistsRef = useRef<boolean | null>(null);
 
   useEffect(() => {
     if (expert?.id) {
@@ -100,16 +103,35 @@ const CallManagementPage: React.FC = () => {
       if (missedError) throw missedError;
       setMissedCalls(missed || []);
 
-      // Load offline messages
-      const { data: messages, error: messagesError } = await supabase
-        .from('expert_away_messages')
-        .select('*')
-        .eq('expert_id', expert.id)
-        .eq('is_read', false)
-        .order('sent_at', { ascending: false });
+      // Load offline messages (gracefully handle missing table)
+      // Skip query if we already know table doesn't exist (to avoid repeated 404s)
+      if (awayMessagesTableExistsRef.current === false) {
+        // Table doesn't exist, skip query
+        setOfflineMessages([]);
+      } else {
+        try {
+          const { data: messages, error: messagesError } = await supabase
+            .from('expert_away_messages')
+            .select('*')
+            .eq('expert_id', expert.id)
+            .eq('is_read', false)
+            .order('sent_at', { ascending: false });
 
-      if (messagesError) throw messagesError;
-      setOfflineMessages(messages || []);
+          if (messagesError) {
+            // Table doesn't exist - mark it and skip future queries
+            awayMessagesTableExistsRef.current = false;
+            setOfflineMessages([]);
+          } else {
+            // Table exists - mark it and set messages
+            awayMessagesTableExistsRef.current = true;
+            setOfflineMessages(messages || []);
+          }
+        } catch (error) {
+          // Table doesn't exist - mark it to skip future queries
+          awayMessagesTableExistsRef.current = false;
+          setOfflineMessages([]);
+        }
+      }
 
       // Load call stats (mock data for now)
       setCallStats({
@@ -154,29 +176,41 @@ const CallManagementPage: React.FC = () => {
       )
       .subscribe();
 
-    // Subscribe to offline messages
-    const messagesSubscription = supabase
-      .channel('away_messages')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'expert_away_messages',
-          filter: `expert_id=eq.${expert.id}`
-        },
-        (payload) => {
-          const newMessage = payload.new as OfflineMessage;
-          setOfflineMessages(prev => [newMessage, ...prev]);
-          
-          toast.info('New offline message received');
-        }
-      )
-      .subscribe();
+    // Subscribe to offline messages (gracefully handle if table doesn't exist)
+    let messagesSubscription: any = null;
+    try {
+      messagesSubscription = supabase
+        .channel('away_messages')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'expert_away_messages',
+            filter: `expert_id=eq.${expert.id}`
+          },
+          (payload) => {
+            const newMessage = payload.new as OfflineMessage;
+            setOfflineMessages(prev => [newMessage, ...prev]);
+            
+            toast.info('New offline message received');
+          }
+        )
+        .subscribe((status, err) => {
+          if (err) {
+            // Table might not exist - silently ignore
+            console.log('ℹ️ Could not subscribe to away messages (table may not exist)');
+          }
+        });
+    } catch (error) {
+      console.log('ℹ️ Could not subscribe to away messages (table may not exist):', error);
+    }
 
     return () => {
       callsSubscription.unsubscribe();
-      messagesSubscription.unsubscribe();
+      if (messagesSubscription) {
+        messagesSubscription.unsubscribe();
+      }
     };
   };
 

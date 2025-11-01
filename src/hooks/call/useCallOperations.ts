@@ -35,7 +35,10 @@ export const useCallOperations = (
       }
 
       // Generate channel name
-      const channelName = `call_${expertId}_${Date.now()}`;
+      // Generate unique channel name (must be <= 64 bytes for Agora)
+      const timestamp = Date.now();
+      const shortExpertId = String(expertId).replace(/-/g, '').substring(0, 8);
+      const channelName = `call_${shortExpertId}_${timestamp}`;
 
       // Join the call using the configured App ID
       const { localAudioTrack, localVideoTrack } = await joinCall({

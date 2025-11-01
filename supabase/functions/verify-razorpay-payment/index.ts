@@ -108,7 +108,14 @@ serve(async (req) => {
           channelName: channelName,
           uid: uid,
           token: agoraToken,
-          appId: '9b3ad657507642f98a52d47893780e8e'
+          appId: (() => {
+            const appId = Deno.env.get('AGORA_APP_ID');
+            if (!appId) {
+              console.error('❌ AGORA_APP_ID is not set in Supabase Edge Function secrets');
+              throw new Error('AGORA_APP_ID is required - set it in Supabase Dashboard > Edge Functions > Secrets');
+            }
+            return appId;
+          })()
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },

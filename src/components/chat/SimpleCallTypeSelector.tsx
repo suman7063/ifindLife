@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Video, Phone, Clock } from 'lucide-react';
 
 interface Expert {
-  id: number;
+  id: number | string; // Can be UUID string or number
   name: string;
   imageUrl: string;
   price: number;

@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.schedule-appointment-reminders]
 verify_jwt = false
+
+[functions.generate-agora-token]
+verify_jwt = true

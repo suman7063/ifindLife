@@ -95,12 +95,14 @@ export function useExpertConnection() {
       console.log('📝 Using expert_accounts.id for call session:', expertIdentifier);
       
       // Create a basic session for the call (required for modal to open)
+      // Pass expert.auth_id if available to avoid lookup
       const session = await createCallSession(
         expertIdentifier,
         type,
         15, // Default duration: 15 minutes
         0,  // Cost: 0 (free for now)
-        'INR' // Currency
+        'INR', // Currency
+        expert.auth_id // Pass auth_id directly if available
       );
 
       if (!session) {

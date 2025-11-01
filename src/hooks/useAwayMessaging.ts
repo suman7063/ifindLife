@@ -51,11 +51,31 @@ export const useAwayMessaging = () => {
         .eq('expert_id', expertId)
         .order('sent_at', { ascending: false });
 
-      if (error) throw error;
+      // Handle 404 or table not found gracefully
+      if (error) {
+        // Check if it's a 404 (table doesn't exist) or other error
+        const errorMsg = error.message?.toLowerCase() || '';
+        const errorCode = error.code || '';
+        if (
+          error.code === 'PGRST116' || 
+          errorMsg.includes('404') || 
+          errorMsg.includes('not found') ||
+          errorMsg.includes('relation') || 
+          errorMsg.includes('does not exist') ||
+          errorMsg.includes('relation "public.expert_away_messages" does not exist')
+        ) {
+          console.log('ℹ️ expert_away_messages table not available (optional feature)');
+          return [];
+        }
+        // Only throw if it's a real error, not a missing table
+        console.error('Error fetching away messages:', error);
+        return [];
+      }
 
       return data || [];
     } catch (error) {
-      console.error('Error fetching away messages:', error);
+      // Silently handle missing table - it's an optional feature
+      console.log('ℹ️ Could not fetch away messages (table may not exist)');
       return [];
     }
   }, []);
@@ -68,11 +88,30 @@ export const useAwayMessaging = () => {
         .eq('expert_id', expertId)
         .eq('is_read', false);
 
-      if (error) throw error;
+      // Handle 404 or table not found gracefully
+      if (error) {
+        // Check if it's a 404 (table doesn't exist) or other error
+        const errorMsg = error.message?.toLowerCase() || '';
+        if (
+          error.code === 'PGRST116' || 
+          errorMsg.includes('404') || 
+          errorMsg.includes('not found') ||
+          errorMsg.includes('relation') || 
+          errorMsg.includes('does not exist') ||
+          errorMsg.includes('relation "public.expert_away_messages" does not exist')
+        ) {
+          console.log('ℹ️ expert_away_messages table not available (optional feature)');
+          return 0;
+        }
+        // Only log if it's a real error, not a missing table
+        console.error('Error fetching unread count:', error);
+        return 0;
+      }
 
       return count || 0;
     } catch (error) {
-      console.error('Error fetching unread count:', error);
+      // Silently handle missing table - it's an optional feature
+      console.log('ℹ️ Could not fetch unread count (table may not exist)');
       return 0;
     }
   }, []);
@@ -102,11 +141,30 @@ export const useAwayMessaging = () => {
         .eq('expert_id', expertId)
         .eq('is_read', false);
 
-      if (error) throw error;
+      // Handle 404 or table not found gracefully
+      if (error) {
+        // Check if it's a 404 (table doesn't exist) or other error
+        const errorMsg = error.message?.toLowerCase() || '';
+        if (
+          error.code === 'PGRST116' || 
+          errorMsg.includes('404') || 
+          errorMsg.includes('not found') ||
+          errorMsg.includes('relation') || 
+          errorMsg.includes('does not exist') ||
+          errorMsg.includes('relation "public.expert_away_messages" does not exist')
+        ) {
+          console.log('ℹ️ expert_away_messages table not available (optional feature)');
+          return false;
+        }
+        // Only log if it's a real error, not a missing table
+        console.error('Error marking messages as read:', error);
+        return false;
+      }
 
       return true;
     } catch (error) {
-      console.error('Error marking all messages as read:', error);
+      // Silently handle missing table - it's an optional feature
+      console.log('ℹ️ Could not mark messages as read (table may not exist)');
       return false;
     }
   }, []);

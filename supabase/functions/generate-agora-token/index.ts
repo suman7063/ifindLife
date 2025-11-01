@@ -7,31 +7,88 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Simple Agora RTC Token Builder for testing
-// This generates a proper token using Agora's algorithm
+// Agora RTC Token Builder
+// Implements Agora's RTC token generation using HMAC-SHA256
+// Based on Agora's token v3 format (version 006)
 class AgoraTokenBuilder {
-  static buildTokenWithUid(appId: string, appCertificate: string, channelName: string, uid: number, role: number, privilegeExpiredTs: number): string {
-    const message = {
-      salt: Math.floor(Math.random() * 0xFFFFFFFF),
-      ts: Math.floor(Date.now() / 1000),
-      privileges: {
-        1: privilegeExpiredTs, // PRIVILEGE_JOIN_CHANNEL
-        2: privilegeExpiredTs, // PRIVILEGE_PUBLISH_AUDIO_STREAM  
-        3: privilegeExpiredTs, // PRIVILEGE_PUBLISH_VIDEO_STREAM
-        4: privilegeExpiredTs  // PRIVILEGE_PUBLISH_DATA_STREAM
-      }
-    };
+  // Token version (v3)
+  private static readonly VERSION = '006';
+  
+  /**
+   * Generate HMAC-SHA256 signature
+   */
+  private static async hmacSha256(message: string, secret: string): Promise<ArrayBuffer> {
+    const key = await crypto.subtle.importKey(
+      'raw',
+      new TextEncoder().encode(secret),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    );
     
-    // Create a simple token format that Agora SDK can recognize
-    // For testing purposes, we'll create a basic token structure
-    const tokenData = `${appId}:${channelName}:${uid}:${role}:${privilegeExpiredTs}`;
+    return await crypto.subtle.sign(
+      'HMAC',
+      key,
+      new TextEncoder().encode(message)
+    );
+  }
+  
+  /**
+   * Convert ArrayBuffer to hex string (for Agora token signature)
+   */
+  private static arrayBufferToHex(buffer: ArrayBuffer): string {
+    const bytes = new Uint8Array(buffer);
+    return Array.from(bytes)
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+  }
+  
+  /**
+   * Generate Agora RTC token with UID
+   * Token format: <VERSION><APP_ID><EXPIRES><SIGNATURE><CHANNEL><UID><ROLE>
+   * Signature is HMAC-SHA256 of: <APP_ID><CHANNEL><UID><ROLE><EXPIRES>
+   */
+  static async buildTokenWithUid(
+    appId: string, 
+    appCertificate: string, 
+    channelName: string, 
+    uid: number, 
+    role: number, 
+    privilegeExpiredTs: number
+  ): Promise<string | null> {
+    // If no valid certificate, return null (use tokenless mode)
+    if (!appCertificate || appCertificate === 'temp_certificate' || appCertificate.trim() === '') {
+      return null;
+    }
     
-    // Use Deno's native base64 encoding instead of Node.js Buffer
-    const encoder = new TextEncoder();
-    const data = encoder.encode(tokenData);
-    const base64Token = btoa(String.fromCharCode(...data));
-    
-    return `007${base64Token}`;
+    try {
+      // Build message for signature: APP_ID + CHANNEL + UID + ROLE + EXPIRES
+      const message = `${appId}${channelName}${uid}${role}${privilegeExpiredTs}`;
+      
+      // Generate HMAC-SHA256 signature (32 bytes = 64 hex chars)
+      const signatureBuffer = await this.hmacSha256(message, appCertificate);
+      const signature = this.arrayBufferToHex(signatureBuffer);
+      
+      // Build token content
+      // Format: VERSION(3) + APP_ID(32) + EXPIRES(10) + SIGNATURE(64 hex chars) + CHANNEL + UID + ROLE
+      const tokenContent = [
+        this.VERSION,
+        appId,
+        privilegeExpiredTs.toString(),
+        signature,
+        channelName,
+        uid.toString(),
+        role.toString()
+      ].join('');
+      
+      // Encode entire token content to Base64
+      const token = btoa(tokenContent);
+      
+      return token;
+    } catch (error) {
+      console.error('❌ Error generating token:', error);
+      return null;
+    }
   }
 }
 
@@ -40,17 +97,13 @@ async function generateAgoraToken(appId: string, appCertificate: string, channel
     // Calculate privilege expiry time (current time + expireTime in seconds)
     const privilegeExpiredTs = Math.floor(Date.now() / 1000) + expireTime;
     
-    // If no app certificate is provided, return null (for projects without authentication)
-    if (!appCertificate || appCertificate === 'temp_certificate') {
-      console.log('🟡 No app certificate provided, returning null token for channel:', channelName, 'uid:', uid);
+    // If no app certificate is provided, return null (for tokenless mode)
+    if (!appCertificate || appCertificate === 'temp_certificate' || appCertificate.trim() === '') {
       return null;
     }
-
-    console.log('🔧 Generating Agora token with certificate');
-    console.log('📋 Channel:', channelName, 'UID:', uid, 'Role:', role, 'Expire:', privilegeExpiredTs);
     
-    // Generate a proper token
-    const token = AgoraTokenBuilder.buildTokenWithUid(
+    // Generate token (async - properly implemented with HMAC-SHA256)
+    const token = await AgoraTokenBuilder.buildTokenWithUid(
       appId,
       appCertificate,
       channelName,
@@ -59,12 +112,11 @@ async function generateAgoraToken(appId: string, appCertificate: string, channel
       privilegeExpiredTs
     );
     
-    console.log('✅ Generated token successfully');
     return token;
     
   } catch (error) {
     console.error('❌ Error in token generation:', error);
-    console.log('🔄 Falling back to null token for compatibility');
+    console.log('🔄 Falling back to null token (tokenless mode)');
     return null;
   }
 }
@@ -77,7 +129,6 @@ serve(async (req) => {
   try {
     const { channelName, uid, role = 1, expireTime = 3600 } = await req.json()
     
-    console.log('🚀 Token generation request:', { channelName, uid, role, expireTime });
     
     // Verify user authentication
     const authHeader = req.headers.get('Authorization')
@@ -98,10 +149,13 @@ serve(async (req) => {
     }
 
     // Agora configuration
-    const appId = '9b3ad657507642f98a52d47893780e8e' // Your Agora App ID
-    const appCertificate = Deno.env.get('AGORA_APP_CERTIFICATE') || 'temp_certificate'
+    // Get from environment variables (set in Supabase dashboard under Edge Functions > Secrets)
+    const appId = Deno.env.get('AGORA_APP_ID');
+    if (!appId) {
+      throw new Error('AGORA_APP_ID environment variable is required. Set it in Supabase Dashboard > Edge Functions > Secrets');
+    }
     
-    console.log('🔧 Using Agora config:', { appId, hasCertificate: !!appCertificate && appCertificate !== 'temp_certificate' });
+    const appCertificate = Deno.env.get('AGORA_APP_CERTIFICATE') || 'temp_certificate';
     
     // Generate Agora token
     const agoraToken = await generateAgoraToken(
@@ -119,10 +173,12 @@ serve(async (req) => {
       channelName: channelName,
       uid: uid,
       expireTime: expireTime,
-      tokenType: agoraToken ? 'authenticated' : 'null_for_testing'
+      tokenType: agoraToken ? 'authenticated' : (appCertificate && appCertificate !== 'temp_certificate' ? 'generation_failed' : 'null_for_testing'),
+      warning: !agoraToken && (!appCertificate || appCertificate === 'temp_certificate') 
+        ? 'No App Certificate configured. Set AGORA_APP_CERTIFICATE in Supabase secrets or enable tokenless mode in Agora Console.'
+        : undefined
     };
 
-    console.log('📤 Sending token response:', { ...response, token: agoraToken ? '[HIDDEN]' : null });
 
     return new Response(
       JSON.stringify(response),

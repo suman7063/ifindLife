@@ -21,8 +21,17 @@ export interface AgoraConfiguration {
   };
 }
 
+const getAppIdFromEnv = (): string => {
+  const appId = import.meta.env.VITE_AGORA_APP_ID;
+  if (!appId) {
+    console.error('❌ VITE_AGORA_APP_ID is not set in .env file');
+    throw new Error('VITE_AGORA_APP_ID environment variable is required');
+  }
+  return appId;
+};
+
 const defaultConfig: AgoraConfiguration = {
-  appId: '9b3ad657507642f98a52d47893780e8e', // Match backend App ID
+  appId: getAppIdFromEnv(),
   enableDualStream: true,
   enableCloudRecording: true,
   enableNetworkQualityReport: true,
@@ -64,13 +73,22 @@ interface AgoraConfigProviderProps {
 
 export const AgoraConfigProvider: React.FC<AgoraConfigProviderProps> = ({
   children,
-  appId = '9b3ad657507642f98a52d47893780e8e', // Match backend App ID
+  appId,
   initialConfig = {}
 }) => {
+  const envAppId = import.meta.env.VITE_AGORA_APP_ID;
+  const resolvedAppId = appId || initialConfig.appId || envAppId;
+  
+  if (!resolvedAppId) {
+    console.error('❌ Agora App ID is required but not provided');
+    console.error('❌ Set VITE_AGORA_APP_ID in .env file or pass appId prop to AgoraConfigProvider');
+    throw new Error('Agora App ID is required - set VITE_AGORA_APP_ID in .env file');
+  }
+  
   const [config, setConfig] = React.useState<AgoraConfiguration>({
     ...defaultConfig,
     ...initialConfig,
-    appId: appId || initialConfig.appId || '9b3ad657507642f98a52d47893780e8e'
+    appId: resolvedAppId
   });
 
   const updateConfig = React.useCallback((updates: Partial<AgoraConfiguration>) => {

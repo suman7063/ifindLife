@@ -29,7 +29,8 @@ export function useCallSession() {
     callType: 'video' | 'voice',
     selectedDuration: number,
     cost: number,
-    currency: string = 'INR'
+    currency: string = 'INR',
+    expertAuthId?: string // Optional: If provided, use directly instead of looking up
   ): Promise<CallSession | null> => {
     if (!user) {
       setError('User not authenticated');
@@ -43,7 +44,15 @@ export function useCallSession() {
       // expertId should be a UUID (either expert_accounts.id or auth_id)
       // If it's not a UUID format, we need to look up the expert_accounts record
       let expertAccountId: string | number;
-      let expertAuthId: string | null = null;
+      let resolvedExpertAuthId: string | null = null;
+      
+      // If expertAuthId is provided directly, use it (preferred - avoids lookup)
+      if (expertAuthId) {
+        resolvedExpertAuthId = expertAuthId;
+        console.log('✅ Using provided expert_auth_id:', resolvedExpertAuthId);
+        // Still need to resolve expert_accounts.id from the expertId
+        expertAccountId = expertId; // Assume expertId is expert_accounts.id when auth_id is provided
+      }
       
       // Check if expertId looks like a UUID (contains hyphens and is 36 chars)
       const isUUIDFormat = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(expertId);
@@ -74,60 +83,103 @@ export function useCallSession() {
         } else {
           // Use the expert_accounts.id (UUID)
           expertAccountId = expertAccount.id;
-          expertAuthId = expertAccount.auth_id as string;
+          // Only set if not already provided
+          if (!resolvedExpertAuthId) {
+            resolvedExpertAuthId = expertAccount.auth_id as string;
+          }
           console.log('✅ Found expert_accounts.id:', expertAccountId);
         }
       } else {
-        // Already a UUID - could be expert_accounts.id or auth_id
-        // First try as auth_id
-        const { data: expertByAuthId } = await supabase
-          .from('expert_accounts')
-          .select('id, auth_id')
-          .eq('auth_id', expertId)
-          .maybeSingle();
-        
-        if (expertByAuthId?.id) {
-          expertAccountId = expertByAuthId.id;
-          expertAuthId = expertByAuthId.auth_id as string;
-          console.log('✅ Resolved auth_id to expert_accounts.id:', expertAccountId);
-        } else {
-          // Try as expert_accounts.id
-          const { data: expertById } = await supabase
+        // Only do lookup if auth_id wasn't provided directly
+        if (!resolvedExpertAuthId) {
+          // Already a UUID - could be expert_accounts.id or auth_id
+          // First try as expert_accounts.id (most common case)
+          console.log('🔍 Looking up expert auth_id...');
+          const { data: expertById, error: lookupByIdError } = await supabase
             .from('expert_accounts')
-            .select('id, auth_id')
+            .select('id, auth_id, name')
             .eq('id', expertId)
             .maybeSingle();
           
+          if (lookupByIdError) {
+            console.error('❌ Error looking up expert by id:', lookupByIdError);
+          }
+          
           if (expertById?.id) {
             expertAccountId = expertById.id;
-            expertAuthId = expertById.auth_id as string;
-            console.log('✅ Found expert_accounts.id, got auth_id:', expertAuthId);
+            // Ensure auth_id is properly extracted (handle both string and null cases)
+            resolvedExpertAuthId = expertById.auth_id ? String(expertById.auth_id) : null;
+            console.log('✅ Found expert_accounts.id:', expertAccountId);
+            console.log('✅ Expert name:', expertById.name);
+            console.log('✅ Expert auth_id:', resolvedExpertAuthId || 'NULL');
+            
+            if (!resolvedExpertAuthId) {
+              console.warn('⚠️ Expert account found but auth_id is null. Cannot create incoming call request.');
+              console.warn('⚠️ Expert ID:', expertId, 'Expert Account ID:', expertAccountId);
+              toast.warning('Expert account is missing authentication ID. Call session created but expert may not receive notification.');
+            }
           } else {
-            // Fallback: assume it's expert_accounts.id but we don't have auth_id
-            expertAccountId = expertId;
-            console.log('⚠️ Using UUID as expert_accounts.id, but auth_id lookup failed');
+            // Try as auth_id (less common, but possible)
+            const { data: expertByAuthId, error: lookupByAuthError } = await supabase
+              .from('expert_accounts')
+              .select('id, auth_id, name')
+              .eq('auth_id', expertId)
+              .maybeSingle();
+            
+            if (lookupByAuthError) {
+              console.error('❌ Error looking up expert by auth_id:', lookupByAuthError);
+            }
+            
+            if (expertByAuthId?.id) {
+              expertAccountId = expertByAuthId.id;
+              resolvedExpertAuthId = expertByAuthId.auth_id ? String(expertByAuthId.auth_id) : null;
+              console.log('✅ Resolved auth_id to expert_accounts.id:', expertAccountId);
+            } else {
+              // Fallback: assume it's expert_accounts.id but lookup failed
+              expertAccountId = expertId;
+              console.warn('⚠️ Could not find expert with ID:', expertId);
+              console.warn('⚠️ Attempted lookup as both expert_accounts.id and auth_id');
+              console.warn('⚠️ This might be a RLS policy issue or expert doesn\'t exist');
+              toast.error('Could not find expert account. Please try again.');
+            }
           }
+        } else {
+          // auth_id was provided, just use expertId as expert_accounts.id
+          expertAccountId = expertId;
         }
       }
 
-      // Generate unique channel name
-      const channelName = `call_${user.id}_${expertAccountId}_${Date.now()}`;
+      // Generate unique channel name (must be <= 64 bytes for Agora)
+      const timestamp = Date.now();
+      const shortUserId = String(user.id).replace(/-/g, '').substring(0, 8);
+      const shortExpertId = String(expertAccountId).replace(/-/g, '').substring(0, 8);
+      const channelName = `call_${shortUserId}_${shortExpertId}_${timestamp}`;
       
       // Create call session in database
       // Note: expert_id in call_sessions might be number or UUID depending on schema
+      const sessionData: any = {
+        id: channelName,
+        user_id: user.id,
+        expert_id: expertAccountId,
+        channel_name: channelName,
+        call_type: callType,
+        status: 'pending',
+        selected_duration: selectedDuration,
+        cost,
+        currency,
+      };
+      
+      // Include expert_auth_id if available (for notifications and tracking)
+      if (resolvedExpertAuthId) {
+        sessionData.expert_auth_id = resolvedExpertAuthId;
+        console.log('✅ Including expert_auth_id in session:', resolvedExpertAuthId);
+      } else {
+        console.warn('⚠️ expert_auth_id not available, session created without it');
+      }
+      
       const { data, error: insertError } = await supabase
         .from('call_sessions')
-        .insert({
-          id: channelName,
-          user_id: user.id,
-          expert_id: expertAccountId,
-          channel_name: channelName,
-          call_type: callType,
-          status: 'pending',
-          selected_duration: selectedDuration,
-          cost,
-          currency,
-        })
+        .insert(sessionData)
         .select()
         .single();
 
@@ -146,12 +198,12 @@ export function useCallSession() {
         channelName
       });
       
-      if (expertAuthId) {
+      if (resolvedExpertAuthId) {
         try {
           const requestExpiresAt = new Date(Date.now() + 2 * 60 * 1000).toISOString(); // 2 minutes expiry
           const notificationData = {
             user_id: user.id,
-            expert_id: expertAuthId, // MUST be auth_id (references expert_accounts(auth_id))
+            expert_id: resolvedExpertAuthId, // MUST be auth_id (references expert_accounts(auth_id))
             call_type: callType === 'video' ? 'video' : 'audio',
             status: 'pending' as const,
             channel_name: channelName,
@@ -165,6 +217,12 @@ export function useCallSession() {
           
           console.log('📨 Inserting incoming call request:', notificationData);
           
+          // Get current authenticated user to verify auth context
+          const { data: { user: authUser } } = await supabase.auth.getUser();
+          console.log('🔐 Current authenticated user:', authUser?.id);
+          console.log('🔐 Request user_id:', user.id);
+          console.log('🔐 Match:', authUser?.id === user.id);
+          
           const { data: insertedRequest, error: requestError } = await supabase
             .from('incoming_call_requests')
             .insert(notificationData)
@@ -173,10 +231,39 @@ export function useCallSession() {
 
           if (requestError) {
             console.error('❌ Failed to create incoming call request:', requestError);
+            console.error('❌ Error details:', {
+              code: requestError.code,
+              message: requestError.message,
+              details: requestError.details,
+              hint: requestError.hint
+            });
             console.error('❌ Request data was:', notificationData);
+            console.error('❌ Auth context - Current user:', authUser?.id, 'Expected:', user.id);
+            
+            // If RLS fails, try using edge function as fallback
+            if (requestError.code === '42501') {
+              console.log('⚠️ RLS policy blocked insert, trying edge function fallback...');
+              try {
+                const { data: edgeResult, error: edgeError } = await supabase.functions.invoke('create-call-request', {
+                  body: notificationData
+                });
+                
+                if (edgeError || !edgeResult?.success) {
+                  console.error('❌ Edge function also failed:', edgeError || edgeResult);
+                  toast.warning('Call session created, but notification may not have been sent.');
+                } else {
+                  console.log('✅ Call request created via edge function:', edgeResult.callRequest);
+                  toast.success('Call request sent successfully');
+                }
+              } catch (edgeErr) {
+                console.error('❌ Edge function error:', edgeErr);
+                toast.warning('Call session created, but notification may not have been sent.');
+              }
+            }
           } else {
             console.log('✅ Incoming call request created successfully:', insertedRequest);
-            console.log('📨 Expert with auth_id', expertAuthId, 'should receive notification');
+            console.log('📨 Expert with auth_id', resolvedExpertAuthId, 'will receive notification via real-time subscription');
+            // Note: No need to send separate notification - real-time subscription will handle it automatically
           }
         } catch (notifyErr) {
           console.error('❌ Exception while notifying expert about incoming call:', notifyErr);
@@ -184,6 +271,7 @@ export function useCallSession() {
       } else {
         console.warn('⚠️ Cannot create incoming call request: expert auth_id not resolved');
         console.warn('⚠️ expertId was:', expertId);
+        console.warn('⚠️ Was auth_id provided?', !!expertAuthId);
       }
 
       console.log('Call session created:', data);

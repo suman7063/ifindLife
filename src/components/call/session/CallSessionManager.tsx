@@ -50,7 +50,11 @@ export const CallSessionProvider: React.FC<CallSessionProviderProps> = ({ childr
     userId: string
   ): Promise<CallSession | null> => {
     try {
-      const channelName = `call_${expertId}_${userId}_${Date.now()}`;
+      // Generate unique channel name (must be <= 64 bytes for Agora)
+      const timestamp = Date.now();
+      const shortExpertId = String(expertId).replace(/-/g, '').substring(0, 8);
+      const shortUserId = String(userId).replace(/-/g, '').substring(0, 8);
+      const channelName = `call_${shortExpertId}_${shortUserId}_${timestamp}`;
       
       const session: CallSession = {
         id: `session_${Date.now()}`,

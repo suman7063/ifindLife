@@ -30,8 +30,13 @@ const AwayMessagesPanel: React.FC = () => {
 
   useEffect(() => {
     if (expert?.auth_id) {
-      loadMessages();
-      loadUnreadCount();
+      // Load messages and unread count, but handle errors gracefully
+      loadMessages().catch(() => {
+        // Error already handled in loadMessages
+      });
+      loadUnreadCount().catch(() => {
+        // Error already handled in loadUnreadCount
+      });
     }
   }, [expert?.auth_id]);
 

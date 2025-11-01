@@ -1,17 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useIncomingCallManager } from '@/hooks/useIncomingCallManager';
 import IncomingCallModal from './IncomingCallModal';
-import PendingCallsList from './PendingCallsList';
 import AgoraCallInterface from './AgoraCallInterface';
-import { Button } from '@/components/ui/button';
-import { Phone } from 'lucide-react';
 import { useExpertPresence } from '@/contexts/ExpertPresenceContext';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 
 const CallReceptionWidget: React.FC = () => {
   const {
     currentCall,
-    pendingCalls,
     isListening,
     acceptCall,
     declineCall,
@@ -22,20 +18,62 @@ const CallReceptionWidget: React.FC = () => {
   const { expert } = useSimpleAuth();
   const { getExpertPresence } = useExpertPresence();
 
-  const [showPendingCalls, setShowPendingCalls] = useState(false);
   const [activeCall, setActiveCall] = useState<any>(null);
+
+  // Log immediately when component renders
+  console.log('📱 CallReceptionWidget rendering', {
+    hasExpert: !!expert,
+    expertAuthId: expert?.auth_id,
+    expertId: expert?.id,
+    isListening,
+    currentCall: !!currentCall
+  });
+
+  // Log when component mounts and expert is available
+  useEffect(() => {
+    console.log('📱 CallReceptionWidget mounted', {
+      hasExpert: !!expert,
+      expertAuthId: expert?.auth_id,
+      expertId: expert?.id,
+      isListening
+    });
+  }, []);
+
+  // Auto-start listening when expert becomes available
+  useEffect(() => {
+    if (!expert?.auth_id) {
+      console.warn('📱 CallReceptionWidget: No expert auth_id yet, waiting...', {
+        hasExpert: !!expert,
+        expertId: expert?.id
+      });
+      return;
+    }
+
+    // Start listening if not already listening
+    if (!isListening) {
+      console.log('📱 CallReceptionWidget: Expert available, auto-starting call listening', {
+        expertAuthId: expert.auth_id,
+        expertId: expert.id
+      });
+      startListening();
+    } else {
+      console.log('📱 CallReceptionWidget: Already listening, skipping');
+    }
+  }, [expert?.auth_id, isListening, startListening]); // Run when expert auth_id becomes available
 
   // Auto-sync listening with expert availability status
   useEffect(() => {
     if (!expert?.auth_id) return;
     
     const presence = getExpertPresence(expert.auth_id);
-    const shouldListen = presence?.isAvailable || false;
+    const shouldListen = presence?.isAvailable !== false; // Default to true if not explicitly false
     
     console.log('CallReceptionWidget: Syncing with master status', {
       expertAuthId: expert.auth_id,
       shouldListen,
-      currentlyListening: isListening
+      currentlyListening: isListening,
+      presenceStatus: presence?.status,
+      isAvailable: presence?.isAvailable
     });
     
     if (shouldListen && !isListening) {
@@ -46,6 +84,13 @@ const CallReceptionWidget: React.FC = () => {
       stopListening();
     }
   }, [expert?.auth_id, getExpertPresence, isListening, startListening, stopListening]);
+
+  // Debug: Log when currentCall changes (triggers modal)
+  useEffect(() => {
+    if (currentCall) {
+      console.log('📞 CallReceptionWidget: NEW incoming call - showing modal:', currentCall.id);
+    }
+  }, [currentCall]);
 
   const handleAcceptCall = async () => {
     if (!currentCall) return;
@@ -68,18 +113,6 @@ const CallReceptionWidget: React.FC = () => {
     }
   };
 
-  const handleAcceptPendingCall = async (callId: string) => {
-    try {
-      await acceptCall(callId);
-      const call = pendingCalls.find(c => c.id === callId);
-      if (call) {
-        setActiveCall(call);
-      }
-      setShowPendingCalls(false);
-    } catch (error) {
-      console.error('Error accepting pending call:', error);
-    }
-  };
 
   // Removed manual toggle - call listening is now controlled by MasterStatusControl
 
@@ -101,38 +134,15 @@ const CallReceptionWidget: React.FC = () => {
 
   return (
     <>
-
-      {/* Show pending calls button */}
-      {pendingCalls.length > 0 && (
-        <div className="fixed top-4 right-4 z-40">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowPendingCalls(true)}
-            className="relative bg-white shadow-lg"
-          >
-            <Phone className="w-4 h-4 mr-1" />
-            <span>{pendingCalls.length} pending call{pendingCalls.length > 1 ? 's' : ''}</span>
-          </Button>
-        </div>
+      {/* Incoming Call Modal - Show when currentCall exists (only for NEW calls via real-time) */}
+      {currentCall && (
+        <IncomingCallModal
+          call={currentCall}
+          isOpen={true}
+          onAccept={handleAcceptCall}
+          onDecline={handleDeclineCall}
+        />
       )}
-
-      {/* Incoming Call Modal */}
-      <IncomingCallModal
-        call={currentCall}
-        isOpen={!!currentCall}
-        onAccept={handleAcceptCall}
-        onDecline={handleDeclineCall}
-      />
-
-      {/* Pending Calls List */}
-      <PendingCallsList
-        calls={pendingCalls}
-        isOpen={showPendingCalls}
-        onClose={() => setShowPendingCalls(false)}
-        onAcceptCall={handleAcceptPendingCall}
-        onDeclineCall={declineCall}
-      />
     </>
   );
 };

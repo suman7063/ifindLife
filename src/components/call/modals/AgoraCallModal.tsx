@@ -1,6 +1,6 @@
 
 import React, { lazy, Suspense } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Loader2 } from 'lucide-react';
 
 // Use lazy loading for Agora components
@@ -30,6 +30,10 @@ const AgoraCallModal: React.FC<AgoraCallModalProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-[600px]">
+        <DialogHeader>
+          <DialogTitle>Connecting to {expert.name}</DialogTitle>
+          <DialogDescription>Preparing the call interface</DialogDescription>
+        </DialogHeader>
         <Suspense fallback={
           <div className="flex items-center justify-center p-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />

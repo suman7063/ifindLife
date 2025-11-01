@@ -1,13 +1,16 @@
 // Agora configuration constants
+// Note: This will be empty string if VITE_AGORA_APP_ID is not set
+// Validation should be done before using this value
 export const AGORA_CONFIG = {
-  // Use Vite env vars with safe fallbacks for local/dev
-  APP_ID: (import.meta as any).env?.VITE_AGORA_APP_ID || '9b3ad657507642f98a52d47893780e8e',
+  // Use Vite env vars - REQUIRED, no fallback
+  // Will be empty string if not set, which will cause errors (as intended)
+  APP_ID: import.meta.env.VITE_AGORA_APP_ID || '',
 
   // Optional Agora Chat configuration (if/when using Agora Chat SDK)
   CHAT: {
-    HOST: (import.meta as any).env?.VITE_AGORA_CHAT_HOST || '',
-    ORG_NAME: (import.meta as any).env?.VITE_AGORA_CHAT_ORG_NAME || '',
-    APP_NAME: (import.meta as any).env?.VITE_AGORA_CHAT_APP_NAME || ''
+    HOST: import.meta.env.VITE_AGORA_CHAT_HOST || '',
+    ORG_NAME: import.meta.env.VITE_AGORA_CHAT_ORG_NAME || '',
+    APP_NAME: import.meta.env.VITE_AGORA_CHAT_APP_NAME || ''
   },
 
   // Channel naming convention
@@ -40,10 +43,29 @@ export const AGORA_CONFIG = {
   }
 } as const;
 
-// Generate unique channel name for expert-user call
+/**
+ * Generate a short, unique ID from a UUID or string
+ * Takes first 8 chars of UUID (removes hyphens) for uniqueness
+ */
+const shortId = (uuid: string): string => {
+  // Remove hyphens and take first 8 characters
+  return uuid.replace(/-/g, '').substring(0, 8);
+};
+
+/**
+ * Generate unique channel name for expert-user call
+ * Must be <= 64 bytes for Agora compatibility
+ * Format: call_<8-char-expert-id>_<8-char-user-id>_<timestamp>
+ * Example: call_a1b2c3d4_e5f6g7h8_1234567890 (36 chars, well under 64 limit)
+ */
 export const generateChannelName = (expertId: string, userId: string): string => {
   const timestamp = Date.now();
-  return `${AGORA_CONFIG.CHANNEL_PREFIX}${expertId}_${userId}_${timestamp}`;
+  const shortExpertId = shortId(expertId);
+  const shortUserId = shortId(userId);
+  // Format: call_XXXXXXXX_YYYYYYYY_TIMESTAMP
+  // call_ = 5, short IDs = 8+8 = 16, separators = 2, timestamp = 13, total = 36 chars (well under 64)
+  // Use 'call_' instead of CHANNEL_PREFIX to keep it shorter
+  return `call_${shortExpertId}_${shortUserId}_${timestamp}`;
 };
 
 // Generate unique user ID for Agora
@@ -76,21 +98,39 @@ export const calculateCallCost = (durationInSeconds: number): {
   };
 };
 
-// Validate Agora configuration
+  // Validate Agora configuration
 export const validateAgoraConfig = (): boolean => {
-  if (!AGORA_CONFIG.APP_ID) {
-    console.error('❌ Agora App ID is missing');
+  const appId = import.meta.env.VITE_AGORA_APP_ID;
+  
+  if (!appId) {
+    console.error('❌ VITE_AGORA_APP_ID is not set in .env file');
+    console.error('❌ Agora calls will not work without this configuration');
+    console.error('❌ Please add VITE_AGORA_APP_ID to your .env file');
     return false;
   }
   
-  if (AGORA_CONFIG.APP_ID.length !== 32) {
-    console.error('❌ Agora App ID format is invalid');
+  if (appId.length !== 32) {
+    console.error('❌ Agora App ID format is invalid (should be 32 characters)');
+    console.error(`❌ Current length: ${appId.length} characters`);
     return false;
+  }
+  
+  if (AGORA_CONFIG.APP_ID !== appId) {
+    console.warn('⚠️ AGORA_CONFIG.APP_ID does not match env var - this should not happen');
   }
   
   // Optional: log chat config presence without leaking secrets
   if (AGORA_CONFIG.CHAT?.HOST) {
     console.log('ℹ️ Agora Chat host configured');
+  }
+  
+  // Log environment variable status
+  const envAppId = import.meta.env.VITE_AGORA_APP_ID;
+  if (envAppId) {
+    console.log('✅ Agora App ID loaded from environment variable');
+  } else {
+    console.error('❌ VITE_AGORA_APP_ID is not set in .env file - Agora calls will not work!');
+    console.error('❌ Please set VITE_AGORA_APP_ID in your .env file');
   }
   
   console.log('✅ Agora configuration is valid');
