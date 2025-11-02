@@ -1,4 +1,4 @@
-project_id = "nmcqyudqvbldxwzhyzma"
+project_id = "cqasmezxfzzwvoswngeu"
 
 [functions.admin-auth]
 verify_jwt = false
@@ -19,4 +19,4 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.generate-agora-token]
-verify_jwt = true
+verify_jwt = false

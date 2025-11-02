@@ -9,11 +9,13 @@ import ExpertDetailModal from '@/components/expert-card/ExpertDetailModal';
 import AppointmentBookingModal from '@/components/booking/AppointmentBookingModal';
 import { toast } from 'sonner';
 import { useExpertData } from '@/hooks/useExpertData';
-import { useCallSession } from '@/hooks/useCallSession';
+// TODO: Re-implement call session hook
+// import { useCallSession } from '@/hooks/useCallSession';
 import { useRazorpayPayment } from '@/hooks/useRazorpayPayment';
 import { checkAndCompleteReferral } from '@/utils/referralCompletion';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
-import EnhancedAgoraCallModal from '@/components/call/modals/EnhancedAgoraCallModal';
+// TODO: Re-implement call modal
+// import EnhancedAgoraCallModal from '@/components/call/modals/EnhancedAgoraCallModal';
 
 interface ExpertSelectionModalProps {
   isOpen: boolean;
@@ -32,7 +34,10 @@ const ExpertSelectionModal: React.FC<ExpertSelectionModalProps> = ({
 }) => {
   const { isAuthenticated, userProfile } = useSimpleAuth();
   const { experts: realExperts, loading, error } = useExpertData({ serviceId });
-  const { createCallSession, currentSession } = useCallSession();
+  // TODO: Re-implement call session functionality
+  // const { createCallSession, currentSession } = useCallSession();
+  const createCallSession = async () => ({ id: null });
+  const currentSession = null;
   const { processPayment } = useRazorpayPayment();
   
   const [selectedExpert, setSelectedExpert] = useState<ExpertCardData | null>(null);
@@ -275,8 +280,8 @@ const ExpertSelectionModal: React.FC<ExpertSelectionModalProps> = ({
         />
       )}
 
-      {/* Enhanced Call Modal - handles call type selection, duration, and payment */}
-      {isCallModalOpen && selectedExpert && (
+      {/* TODO: Re-implement call modal */}
+      {/* {isCallModalOpen && selectedExpert && (
         <EnhancedAgoraCallModal
           isOpen={isCallModalOpen}
           onClose={() => {
@@ -290,7 +295,7 @@ const ExpertSelectionModal: React.FC<ExpertSelectionModalProps> = ({
             price: selectedExpert.price || 30
           }}
         />
-      )}
+      )} */}
     </>
   );
 };

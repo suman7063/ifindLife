@@ -7,7 +7,8 @@ import { useAuth } from '@/contexts/auth';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import ModernBookingInterface from './ModernBookingInterface';
-import EnhancedAgoraCallModal from '../call/modals/EnhancedAgoraCallModal';
+// TODO: Re-implement call modal
+// import EnhancedAgoraCallModal from '../call/modals/EnhancedAgoraCallModal';
 import { useExpertPresence } from '@/contexts/ExpertPresenceContext';
 import { useRazorpayPayment } from '@/hooks/useRazorpayPayment';
 import { Calendar, Phone, Video, Clock, Users } from 'lucide-react';
@@ -96,7 +97,7 @@ const IntegratedBookingSystem: React.FC<IntegratedBookingSystemProps> = ({
             const channelName = `appointment_${Date.now()}_${user.id}`;
             
             // Generate Agora token for the appointment
-            const { data: tokenData, error: tokenError } = await supabase.functions.invoke('generate-agora-token', {
+            const { data: tokenData, error: tokenError } = await supabase.functions.invoke('smooth-action', {
               body: {
                 channelName,
                 uid: Math.floor(Math.random() * 1000000),
@@ -303,8 +304,8 @@ const IntegratedBookingSystem: React.FC<IntegratedBookingSystemProps> = ({
         </CardContent>
       </Card>
 
-      {/* Call Modal */}
-      <EnhancedAgoraCallModal
+      {/* TODO: Re-implement call modal */}
+      {/* <EnhancedAgoraCallModal
         isOpen={isCallModalOpen}
         onClose={() => setIsCallModalOpen(false)}
         expert={{
@@ -313,7 +314,7 @@ const IntegratedBookingSystem: React.FC<IntegratedBookingSystemProps> = ({
           imageUrl: expert.profile_picture || '',
           price: expert.price || 30
         }}
-      />
+      /> */}
     </>
   );
 };

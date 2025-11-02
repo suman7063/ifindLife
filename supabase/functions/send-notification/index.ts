@@ -18,7 +18,17 @@ serve(async (req) => {
     
     const { userId, type, title, content, data, referenceId, senderId } = await req.json();
     
+    console.log('📨 send-notification called with:', {
+      userId,
+      type,
+      title,
+      hasContent: !!content,
+      hasReferenceId: !!referenceId,
+      hasSenderId: !!senderId
+    });
+    
     if (!userId || !type || !title) {
+      console.error('❌ Missing required fields:', { userId: !!userId, type: !!type, title: !!title });
       return new Response(
         JSON.stringify({ success: false, error: 'Missing required fields: userId, type, title' }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
@@ -36,8 +46,7 @@ serve(async (req) => {
       reference_id: referenceId || null
     };
 
-    // Store additional data in a JSONB column if needed (we'll use a custom field via data parameter)
-    // For now, we'll encode it in content or create it separately
+    console.log('📝 Inserting notification:', notificationData);
     
     const { data: notification, error } = await supabase
       .from('notifications')
@@ -46,14 +55,15 @@ serve(async (req) => {
       .single();
       
     if (error) {
-      console.error('Error creating notification:', error);
+      console.error('❌ Error creating notification:', error);
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
+      console.error('Error details:', error.details);
+      console.error('Error hint:', error.hint);
       throw error;
     }
     
-    // If data object is provided, we can store it separately or extend notification
-    // For now, we'll log it - you can extend the notifications table schema if needed
-    
-    console.log('✅ Notification created:', {
+    console.log('✅ Notification created successfully:', {
       id: notification.id,
       userId,
       type,
@@ -74,7 +84,7 @@ serve(async (req) => {
     );
     
   } catch (error) {
-    console.error('Error in send-notification:', error);
+    console.error('❌ Error in send-notification:', error);
     return new Response(
       JSON.stringify({ 
         success: false, 

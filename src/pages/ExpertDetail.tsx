@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import AgoraCallModal from '@/components/AgoraCallModal';
+import UserCallInterface from '@/components/call/UserCallInterface';
 
 import { toast } from 'sonner';
 import { useAuthRedirectSystem } from '@/hooks/useAuthRedirectSystem';
@@ -225,15 +225,14 @@ const ExpertDetail = () => {
       
       <Footer />
       
-      <AgoraCallModal 
+      <UserCallInterface 
         isOpen={isCallModalOpen}
         onClose={() => setIsCallModalOpen(false)}
-        expert={{
-          id: expert.id,
-          name: expert.name,
-          imageUrl: expert.imageUrl,
-          price: expert.price
-        }}
+        expertId={expert.id}
+        expertAuthId={expert.auth_id || expert.id}
+        expertName={expert.name}
+        expertAvatar={expert.imageUrl}
+        expertPrice={expert.price}
       />
       
     </div>

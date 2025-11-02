@@ -1,6 +1,6 @@
 import React from 'react';
 import ExpertDetailModal from '@/components/expert-card/ExpertDetailModal';
-import EnhancedAgoraCallModal from '@/components/call/modals/EnhancedAgoraCallModal';
+import UserCallInterface from '@/components/call/UserCallInterface';
 import ChatOnlyModal from '@/components/chat/modals/ChatOnlyModal';
 import { useExpertConnection } from '@/hooks/useExpertConnection';
 
@@ -50,17 +50,16 @@ const UnifiedExpertConnection: React.FC<UnifiedExpertConnectionProps> = ({
 
       {/* Expert Detail Modal removed - now using dedicated pages */}
 
-      {/* Call Modal - Use EnhancedAgoraCallModal which has full call integration */}
+      {/* Call Modal */}
       {state.isCallModalOpen && state.selectedExpert && (
-        <EnhancedAgoraCallModal
+        <UserCallInterface
           isOpen={state.isCallModalOpen}
           onClose={closeCallModal}
-          expert={{
-            id: state.selectedExpert.id, // Keep as UUID string, don't parse to int
-            name: state.selectedExpert.name,
-            imageUrl: state.selectedExpert.profilePicture || '',
-            price: state.selectedExpert.price || 30
-          }}
+          expertId={state.selectedExpert.id}
+          expertAuthId={state.selectedExpert.auth_id || state.selectedExpert.id}
+          expertName={state.selectedExpert.name}
+          expertAvatar={state.selectedExpert.profilePicture}
+          expertPrice={state.selectedExpert.price || 30}
         />
       )}
 

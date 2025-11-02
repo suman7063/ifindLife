@@ -1,10 +1,14 @@
+/**
+ * Call Service
+ * Handles all call-related database operations
+ */
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { AGORA_CONFIG } from '@/utils/agoraConfig';
 
 export interface InitiateCallParams {
-  expertId: string; // expert_accounts.id
-  expertAuthId: string; // expert_accounts.auth_id (for notifications)
+  expertId: string;
+  expertAuthId: string;
   callType: 'audio' | 'video';
   duration: number; // in minutes
   userId: string;
@@ -24,7 +28,6 @@ export interface CallRequestResponse {
 
 /**
  * Initiate a call from user to expert
- * Creates call session, generates Agora token, creates incoming call request, and sends notifications
  */
 export async function initiateCall(params: InitiateCallParams): Promise<CallRequestResponse | null> {
   try {
@@ -42,8 +45,7 @@ export async function initiateCall(params: InitiateCallParams): Promise<CallRequ
 
     console.log('📞 Initiating call:', { expertId, expertAuthId, callType, duration, userId });
 
-    // Step 1: Generate unique channel name and UIDs
-    // Use short IDs to ensure channel name is <= 64 bytes (Agora requirement)
+    // Generate unique channel name and UIDs
     const timestamp = Date.now();
     const shortExpertId = expertId.replace(/-/g, '').substring(0, 8);
     const shortUserId = userId.replace(/-/g, '').substring(0, 8);
@@ -51,11 +53,10 @@ export async function initiateCall(params: InitiateCallParams): Promise<CallRequ
     const userUid = Math.floor(Math.random() * 1000000);
     const expertUid = Math.floor(Math.random() * 1000000);
 
-    // Step 2: Generate Agora tokens for both user and expert
+    // Generate Agora tokens for both user and expert
     console.log('🔑 Generating Agora tokens...');
     
-    // Generate token for user
-    const { data: userTokenData, error: userTokenError } = await supabase.functions.invoke('generate-agora-token', {
+    const { data: userTokenData, error: userTokenError } = await supabase.functions.invoke('smooth-action', {
       body: {
         channelName,
         uid: userUid,
@@ -73,13 +74,12 @@ export async function initiateCall(params: InitiateCallParams): Promise<CallRequ
     const userAgoraToken = userTokenData?.token || null;
     console.log('✅ Agora token generated for user (UID:', userUid, ')');
 
-    // Generate token for expert
-    const { data: expertTokenData, error: expertTokenError } = await supabase.functions.invoke('generate-agora-token', {
+    const { data: expertTokenData, error: expertTokenError } = await supabase.functions.invoke('smooth-action', {
       body: {
         channelName,
         uid: expertUid,
         role: 1, // Publisher role
-        expireTime: (duration + 5) * 60 // Token expires after call duration + 5 min buffer
+        expireTime: (duration + 5) * 60
       }
     });
 
@@ -92,35 +92,18 @@ export async function initiateCall(params: InitiateCallParams): Promise<CallRequ
     const expertAgoraToken = expertTokenData?.token || null;
     console.log('✅ Agora token generated for expert (UID:', expertUid, ')');
 
-    // Step 3: Create call session
-    console.log('📝 Creating call session...');
+    // Create call session
     const callSessionId = `session_${expertId}_${userId}_${timestamp}`;
     
-    // Verify expert exists
-    const { data: expertData } = await supabase
-      .from('expert_accounts')
-      .select('id')
-      .eq('id', expertId)
-      .single();
-    
-    if (!expertData) {
-      throw new Error('Expert not found');
-    }
-    
-    // expert_id in call_sessions is UUID (references expert_accounts.id)
-    // Note: TypeScript types may show expert_id as number, but DB schema has it as UUID
-    // We'll use channel_name as the id for easy lookup, or let DB auto-generate
     const { data: sessionData, error: sessionError } = await supabase
       .from('call_sessions')
       .insert({
         id: callSessionId,
-        // Type assertion needed: TS types say number but DB is UUID
-        expert_id: expertId as unknown as number,
+        expert_id: expertId,
         user_id: userId,
         channel_name: channelName,
         agora_channel_name: channelName,
-        agora_token: userAgoraToken, // User's token (for user's UID)
-        agora_uid: userUid, // Store user's UID
+        agora_token: userAgoraToken,
         call_type: callType,
         status: 'pending',
         selected_duration: duration,
@@ -133,8 +116,9 @@ export async function initiateCall(params: InitiateCallParams): Promise<CallRequ
           initiated_at: new Date().toISOString(),
           user_name: userName,
           user_avatar: userAvatar,
-          expert_uid: expertUid, // Store expert UID in metadata
-          expert_token: expertAgoraToken // Store expert token in metadata for reference
+          user_uid: userUid,
+          expert_uid: expertUid,
+          expert_token: expertAgoraToken
         }
       } as never)
       .select()
@@ -148,23 +132,21 @@ export async function initiateCall(params: InitiateCallParams): Promise<CallRequ
 
     console.log('✅ Call session created:', callSessionId);
 
-    // Step 4: Create incoming call request for expert
-    console.log('📨 Creating incoming call request...');
+    // Create incoming call request for expert
     const expiresAt = new Date(Date.now() + 2 * 60 * 1000); // 2 minutes to accept
     
     const { data: callRequestData, error: requestError } = await supabase
       .from('incoming_call_requests')
       .insert({
         user_id: userId,
-        expert_id: expertAuthId, // Must be auth_id
+        expert_id: expertAuthId,
         call_type: callType,
         status: 'pending',
         channel_name: channelName,
-        agora_token: expertAgoraToken, // Expert's token (for expert's UID)
-        agora_uid: expertUid, // Expert's UID
+        agora_token: expertAgoraToken,
+        agora_uid: expertUid,
         estimated_cost_inr: currency === 'INR' ? estimatedCost : null,
         estimated_cost_eur: currency === 'EUR' ? estimatedCost : null,
-        estimated_cost_usd: currency === 'USD' ? estimatedCost : null,
         expires_at: expiresAt.toISOString(),
         call_session_id: callSessionId,
         user_metadata: {
@@ -178,60 +160,60 @@ export async function initiateCall(params: InitiateCallParams): Promise<CallRequ
 
     if (requestError) {
       console.error('❌ Failed to create incoming call request:', requestError);
-      // Continue anyway - the call session is created
-      toast.warning('Call initiated but notification may not have been sent');
-    } else {
-      console.log('✅ Incoming call request created:', callRequestData.id);
+      toast.error('Failed to create call request. Please try again.');
+      return null;
     }
+    
+    console.log('✅ Incoming call request created:', callRequestData.id);
 
-    // Step 5: Send notification to expert
+    // Send notification to expert
     try {
-      await supabase.functions.invoke('send-notification', {
+      console.log('📨 Sending notification to expert:', expertAuthId);
+      
+      // Send notification via Edge Function
+      const { error: notificationError } = await supabase.functions.invoke('send-notification', {
         body: {
-          userId: expertAuthId,
-          type: 'incoming_call',
-          title: `Incoming ${callType === 'video' ? 'Video' : 'Audio'} Call`,
-          content: `${userName || 'A user'} wants to connect with you`,
+          userId: expertAuthId, // Use auth_id as user_id for notifications
+          type: 'incoming_call_request',
+          title: `New ${callType === 'video' ? 'Video' : 'Audio'} Call Request`,
+          content: `${userName || 'A user'} wants to have a ${callType} call with you`,
+          referenceId: callRequestData.id,
+          senderId: userId,
           data: {
-            callRequestId: callRequestData?.id || null,
-            callSessionId,
-            channelName,
-            callType,
-            agoraToken: expertAgoraToken,
-            agoraUid: expertUid
+            callRequestId: callRequestData.id,
+            callSessionId: callSessionId,
+            callType: callType,
+            duration: duration,
+            estimatedCost: estimatedCost,
+            currency: currency,
+            userName: userName,
+            userAvatar: userAvatar
           }
         }
       });
-      console.log('✅ Notification sent to expert');
-    } catch (notifError) {
-      console.error('⚠️ Failed to send notification:', notifError);
-      // Don't fail the call if notification fails
-    }
 
-    // Step 6: Send notification to user (confirmation)
-    try {
-      await supabase.functions.invoke('send-notification', {
-        body: {
-          userId,
-          type: 'call_initiated',
-          title: 'Call Initiated',
-          content: `Waiting for ${callType === 'video' ? 'video' : 'audio'} call to be accepted`,
-          data: {
-            callSessionId,
-            channelName,
-            callType
-          }
-        }
-      });
-    } catch (notifError) {
-      console.error('⚠️ Failed to send user notification:', notifError);
+      if (notificationError) {
+        console.error('❌ Failed to send notification:', notificationError);
+        console.error('Notification error details:', {
+          message: notificationError.message,
+          name: notificationError.name,
+          status: notificationError.status,
+          cause: notificationError.cause
+        });
+        // Don't fail the call initiation if notification fails
+      } else {
+        console.log('✅ Notification sent to expert successfully');
+      }
+    } catch (notificationErr) {
+      console.warn('⚠️ Error sending notification (non-critical):', notificationErr);
+      // Don't fail the call initiation if notification fails
     }
 
     return {
       callRequestId: callRequestData?.id || '',
       channelName,
-      agoraToken: userAgoraToken, // Return user's token
-      agoraUid: userUid, // Return user's UID
+      agoraToken: userAgoraToken,
+      agoraUid: userUid,
       callSessionId
     };
 
@@ -268,29 +250,13 @@ export async function acceptCall(callRequestId: string): Promise<boolean> {
       .single();
 
     if (callRequest) {
-      // Update call session status
       await supabase
         .from('call_sessions')
         .update({ 
-          status: 'active',
-          start_time: new Date().toISOString(),
+          status: 'pending',
           answered_at: new Date().toISOString()
         })
         .eq('id', callRequest.call_session_id);
-
-      // Send notification to user
-      await supabase.functions.invoke('send-notification', {
-        body: {
-          userId: callRequest.user_id,
-          type: 'call_accepted',
-          title: 'Call Accepted',
-          content: 'The expert has accepted your call. Connecting now...',
-          data: {
-            callRequestId,
-            callSessionId: callRequest.call_session_id
-          }
-        }
-      });
     }
 
     return true;
@@ -318,7 +284,6 @@ export async function declineCall(callRequestId: string): Promise<boolean> {
       return false;
     }
 
-    // Get call request and send notification to user
     const { data: callRequest } = await supabase
       .from('incoming_call_requests')
       .select('user_id, call_session_id')
@@ -326,7 +291,6 @@ export async function declineCall(callRequestId: string): Promise<boolean> {
       .single();
 
     if (callRequest) {
-      // Update call session
       await supabase
         .from('call_sessions')
         .update({ 
@@ -334,20 +298,6 @@ export async function declineCall(callRequestId: string): Promise<boolean> {
           end_time: new Date().toISOString()
         })
         .eq('id', callRequest.call_session_id);
-
-      // Send notification to user
-      await supabase.functions.invoke('send-notification', {
-        body: {
-          userId: callRequest.user_id,
-          type: 'call_declined',
-          title: 'Call Declined',
-          content: 'The expert declined your call request',
-          data: {
-            callRequestId,
-            callSessionId: callRequest.call_session_id
-          }
-        }
-      });
     }
 
     return true;
@@ -360,7 +310,7 @@ export async function declineCall(callRequestId: string): Promise<boolean> {
 /**
  * End a call and update session
  */
-export async function endCall(callSessionId: string, duration?: number): Promise<boolean> {
+export async function endCall(callSessionId: string, duration?: number, endedBy?: 'user' | 'expert'): Promise<boolean> {
   try {
     const endTime = new Date().toISOString();
     
@@ -389,59 +339,16 @@ export async function endCall(callSessionId: string, duration?: number): Promise
       return false;
     }
 
-    // Update related call requests to cancelled
     await supabase
       .from('incoming_call_requests')
       .update({ status: 'cancelled' })
       .eq('call_session_id', callSessionId)
-      .eq('status', 'pending');
+      .in('status', ['pending', 'accepted']);
 
     return true;
   } catch (error) {
     console.error('❌ Error ending call:', error);
     return false;
-  }
-}
-
-/**
- * Get call session details
- */
-export async function getCallSession(callSessionId: string) {
-  try {
-    const { data, error } = await supabase
-      .from('call_sessions')
-      .select('*')
-      .eq('id', callSessionId)
-      .single();
-
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error('❌ Error fetching call session:', error);
-    return null;
-  }
-}
-
-/**
- * Get active call request for user
- */
-export async function getUserActiveCallRequest(userId: string) {
-  try {
-    const { data, error } = await supabase
-      .from('incoming_call_requests')
-      .select('*')
-      .eq('user_id', userId)
-      .in('status', ['pending', 'accepted'])
-      .gt('expires_at', new Date().toISOString())
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error('❌ Error fetching user call request:', error);
-    return null;
   }
 }
 

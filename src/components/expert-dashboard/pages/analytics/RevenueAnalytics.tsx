@@ -2,7 +2,8 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
-import { useUserCurrency } from '@/hooks/call/useUserCurrency';
+// TODO: Re-implement currency hook
+// import { useUserCurrency } from '@/hooks/call/useUserCurrency';
 
 interface RevenueAnalyticsProps {
   timeRange: string;
@@ -10,8 +11,9 @@ interface RevenueAnalyticsProps {
 }
 
 const RevenueAnalytics: React.FC<RevenueAnalyticsProps> = ({ timeRange, detailed = false }) => {
-  const { currency } = useUserCurrency();
-  const currencySymbol = currency === 'INR' ? '₹' : '€';
+  // TODO: Re-implement currency logic
+  const currency = 'INR'; // Default currency
+  const currencySymbol = '₹';
 
   return (
     <Card>

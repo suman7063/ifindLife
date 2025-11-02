@@ -14,7 +14,8 @@ import {
   User
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useAppointmentToCall } from '@/hooks/useAppointmentToCall';
+// TODO: Re-implement appointment to call hook
+// import { useAppointmentToCall } from '@/hooks/useAppointmentToCall';
 
 interface AppointmentCardProps {
   appointment: {
@@ -45,7 +46,12 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
   showCallActions = true
 }) => {
   const [isLoading, setIsLoading] = useState(false);
-  const { initiateCallFromAppointment, getAppointmentStatus } = useAppointmentToCall();
+  // TODO: Re-implement appointment to call functionality
+  // const { initiateCallFromAppointment, getAppointmentStatus } = useAppointmentToCall();
+  const initiateCallFromAppointment = async () => {
+    toast.error('Call functionality not available yet');
+  };
+  const getAppointmentStatus = async () => ({ canJoin: false, isExpired: false, timeUntilJoin: 0 });
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-US', {

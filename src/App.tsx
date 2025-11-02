@@ -52,7 +52,6 @@ import { UserDashboard } from '@/components/user/UserDashboard';
 import { EnhancedExpertSearch } from '@/components/expert/EnhancedExpertSearch';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 import { FavoritesManager } from '@/components/favorites/FavoritesManager';
-import CallPage from './pages/CallPage';
 import MessagingPage from './pages/MessagingPage';
 import UnifiedExpertsPage from './pages/UnifiedExpertsPage';
 import ForgotPassword from './pages/ForgotPassword';
@@ -61,7 +60,8 @@ import ReferralProgram from './pages/ReferralProgram';
 import AuthCallback from './pages/AuthCallback';
 import ResendVerification from './pages/ResendVerification';
 import EmailVerificationTest from './pages/EmailVerificationTest';
-import { CallInterfaceDemo } from '@/components/call-interface/CallInterfaceDemo';
+// TODO: Re-implement call interface demo
+// import { CallInterfaceDemo } from '@/components/call-interface/CallInterfaceDemo';
 import { MobileAppDemo } from '@/mobile-app/index';
 import SouliLanding from './pages/SouliLanding';
 import SouliTeam from './pages/SouliTeam';
@@ -127,7 +127,8 @@ const UserRoutes: React.FC = () => {
         <Route path="/user-dashboard/*" element={<UserDashboardWrapper />} />
         <Route path="/dashboard" element={<UserDashboard />} />
         <Route path="/appointments" element={<AppointmentsPage />} />
-        <Route path="/call/:appointmentId" element={<CallPage />} />
+        {/* TODO: Re-implement call page if needed */}
+        {/* <Route path="/call/:appointmentId" element={<CallPage />} /> */}
         <Route path="/messaging" element={<MessagingPage />} />
         <Route path="/notifications" element={<NotificationCenter />} />
         <Route path="/favorites" element={<FavoritesManager />} />
@@ -168,7 +169,8 @@ const UserRoutes: React.FC = () => {
         <Route path="/auth-test" element={<AuthTestPage />} />
         
         {/* Call Interface Demo */}
-        <Route path="/call-interface-demo" element={<CallInterfaceDemo />} />
+        {/* TODO: Re-implement call interface demo */}
+        {/* <Route path="/call-interface-demo" element={<CallInterfaceDemo />} /> */}
         
         {/* Mobile App Demo */}
         <Route path="/mobile-app/*" element={<MobileAppDemo />} />

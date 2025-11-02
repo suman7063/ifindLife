@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
-import { useCallSession } from '@/hooks/useCallSession';
+// TODO: Re-implement call session hook
+// import { useCallSession } from '@/hooks/useCallSession';
 import { useRazorpayPayment } from '@/hooks/useRazorpayPayment';
 import { ExpertCardData } from '@/components/expert-card/types';
 
@@ -18,7 +19,10 @@ export interface ExpertConnectionState {
 export function useExpertConnection() {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useSimpleAuth();
-  const { createCallSession, currentSession } = useCallSession();
+  // TODO: Re-implement call session functionality
+  // const { createCallSession, currentSession } = useCallSession();
+  const createCallSession = async () => ({ id: null });
+  const currentSession = null;
   const { processPayment } = useRazorpayPayment();
 
   const [state, setState] = useState<ExpertConnectionState>({
@@ -75,54 +79,19 @@ export function useExpertConnection() {
       return;
     }
 
-    // Note: The card component already validates expert availability before calling this handler
-    // So we can proceed directly to creating the session
-    
-    try {
-      console.log(`📞 Initiating ${type} call with ${expert.name}`);
-      
-      if (!user?.id) {
-        console.log('❌ No user ID');
-        toast.error('Unable to get user information');
-        return;
-      }
-
-      console.log('📝 Creating call session...', { expertInternalId: expert.id, expertAuthId: expert.auth_id });
-      
-      // IMPORTANT: call_sessions.expert_id references expert_accounts.id (internal UUID)
-      // Always use expert.id here (we already map this to expert_accounts.id in our cards)
-      const expertIdentifier = expert.id;
-      console.log('📝 Using expert_accounts.id for call session:', expertIdentifier);
-      
-      // Create a basic session for the call (required for modal to open)
-      // Pass expert.auth_id if available to avoid lookup
-      const session = await createCallSession(
-        expertIdentifier,
-        type,
-        15, // Default duration: 15 minutes
-        0,  // Cost: 0 (free for now)
-        'INR', // Currency
-        expert.auth_id // Pass auth_id directly if available
-      );
-
-      if (!session) {
-        console.log('❌ Session creation failed');
-        toast.error('Failed to create call session');
-        return;
-      }
-
-      console.log('✅ Session created:', session.id);
-      console.log('🎬 Opening call modal...');
-      updateState({
-        selectedExpert: expert,
-        isCallModalOpen: true
-      });
-      toast.success(`Starting ${type} call with ${expert.name}...`);
-      
-    } catch (error) {
-      console.error('❌ Error starting call:', error);
-      toast.error('Failed to start call');
+    if (!user?.id) {
+      console.log('❌ No user ID');
+      toast.error('Unable to get user information');
+      return;
     }
+
+    // Don't create session yet - let UserCallInterface handle it after user selects type and duration
+    // Just open the modal which will show the call type selection first
+    console.log('🎬 Opening call modal for user to select call type and duration...');
+    updateState({
+      selectedExpert: expert,
+      isCallModalOpen: true
+    });
   };
 
   const handleBookNow = (expert: ExpertCardData) => {

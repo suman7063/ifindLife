@@ -1,12 +1,14 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useUserCurrency } from '@/hooks/call/useUserCurrency';
+// TODO: Re-implement currency hook
+// import { useUserCurrency } from '@/hooks/call/useUserCurrency';
 import { TrendingUp, Wallet } from 'lucide-react';
 
 const EarningsTab: React.FC = () => {
-  const { currency } = useUserCurrency();
-  const currencySymbol = currency === 'INR' ? '₹' : '€';
+  // TODO: Re-implement currency logic
+  const currency = 'INR'; // Default currency
+  const currencySymbol = '₹';
 
   return (
     <Card className="p-6">

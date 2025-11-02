@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -22,13 +23,19 @@ import {
  } from 'lucide-react';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { useExpertPresence } from '@/contexts/ExpertPresenceContext';
-import { useUserCurrency } from '@/hooks/call/useUserCurrency';
+// TODO: Re-implement currency hook or remove dependency
+// import { useUserCurrency } from '@/hooks/call/useUserCurrency';
 import { supabase } from '@/lib/supabase';
+import AgoraCallInterface from '@/components/expert-dashboard/call/AgoraCallInterface';
+import { acceptCall } from '@/services/callService';
+import IncomingCallDialog from '@/components/expert-dashboard/call/IncomingCallDialog';
+import ExpertInCallModal from '@/components/expert-dashboard/call/ExpertInCallModal';
 import { toast } from 'sonner';
 
 interface CallRequest {
   id: string;
   user_id: string;
+  expert_id?: string;
   call_type: string;
   estimated_cost_eur?: number;
   estimated_cost_inr?: number;
@@ -37,6 +44,10 @@ interface CallRequest {
   created_at: string;
   expires_at: string;
   user_metadata?: any;
+  channel_name?: string;
+  agora_token?: string | null;
+  agora_uid?: number | null;
+  call_session_id?: string | null;
 }
 
 interface OfflineMessage {
@@ -51,14 +62,17 @@ interface OfflineMessage {
 const CallManagementPage: React.FC = () => {
   const { expert } = useSimpleAuth();
   const { getExpertPresence } = useExpertPresence();
-  const { currency } = useUserCurrency();
-  const currencySymbol = currency === 'INR' ? '₹' : '€';
+  const location = useLocation();
+  // TODO: Re-implement currency logic
+  const currency = 'INR'; // Default currency
+  const currencySymbol = '₹';
   
   const [autoAcceptCalls, setAutoAcceptCalls] = useState(false);
   const [incomingCalls, setIncomingCalls] = useState<CallRequest[]>([]);
   const [missedCalls, setMissedCalls] = useState<CallRequest[]>([]);
   const [offlineMessages, setOfflineMessages] = useState<OfflineMessage[]>([]);
   const [currentCall, setCurrentCall] = useState<CallRequest | null>(null);
+  const [incomingCallDialog, setIncomingCallDialog] = useState<CallRequest | null>(null);
   const [callStats, setCallStats] = useState({
     todaysCalls: 0,
     totalDuration: 0,
@@ -70,21 +84,33 @@ const CallManagementPage: React.FC = () => {
   const awayMessagesTableExistsRef = useRef<boolean | null>(null);
 
   useEffect(() => {
-    if (expert?.id) {
+    // Use auth_id instead of id - call requests use auth_id
+    if (expert?.auth_id || expert?.id) {
       loadCallData();
       setupRealtimeSubscriptions();
+      
+      // Check if we navigated here with an accepted call ID
+      const acceptedCallId = (location.state as any)?.acceptedCallId;
+      if (acceptedCallId) {
+        console.log('📞 Loading accepted call from navigation:', acceptedCallId);
+        loadAcceptedCall(acceptedCallId);
+        // Clear the state to prevent reloading on re-render
+        window.history.replaceState({}, document.title);
+      }
     }
-  }, [expert?.id]);
+  }, [expert?.auth_id, expert?.id, location.state]);
 
   const loadCallData = async () => {
-    if (!expert?.id) return;
+    // Use auth_id - this is what's stored in incoming_call_requests.expert_id
+    const expertAuthId = expert?.auth_id || expert?.id;
+    if (!expertAuthId) return;
 
     try {
-      // Load incoming call requests
+      // Load incoming call requests - expert_id in this table references auth_id
       const { data: calls, error: callsError } = await supabase
         .from('incoming_call_requests')
         .select('*')
-        .eq('expert_id', expert.id)
+        .eq('expert_id', expertAuthId)
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
 
@@ -95,7 +121,7 @@ const CallManagementPage: React.FC = () => {
       const { data: missed, error: missedError } = await supabase
         .from('incoming_call_requests')
         .select('*')
-        .eq('expert_id', expert.id)
+        .eq('expert_id', expertAuthId)
         .eq('status', 'expired')
         .order('created_at', { ascending: false })
         .limit(10);
@@ -148,33 +174,98 @@ const CallManagementPage: React.FC = () => {
   };
 
   const setupRealtimeSubscriptions = () => {
-    if (!expert?.id) return;
+    // Use auth_id - this is what's stored in incoming_call_requests.expert_id
+    const expertAuthId = expert?.auth_id || expert?.id;
+    if (!expertAuthId) return;
 
-    // Subscribe to incoming call requests
+    console.log('🔔 Setting up real-time subscription for expert auth_id:', expertAuthId);
+
+    // Subscribe to incoming call requests - expert_id references auth_id
     const callsSubscription = supabase
-      .channel('incoming_calls')
+      .channel(`incoming_calls_${expertAuthId}`)
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
           table: 'incoming_call_requests',
-          filter: `expert_id=eq.${expert.id}`
+          filter: `expert_id=eq.${expertAuthId}` // Must match auth_id used in callService.ts
         },
         (payload) => {
+          console.log('📞 Real-time call received:', payload);
           const newCall = payload.new as CallRequest;
-          setIncomingCalls(prev => [newCall, ...prev]);
           
-          // Show notification
-          toast.info(`Incoming ${newCall.call_type} call!`, {
-            action: {
-              label: 'Answer',
-              onClick: () => handleAcceptCall(newCall.id)
+          // Only process pending calls
+          if (newCall.status === 'pending') {
+            setIncomingCalls(prev => {
+              // Avoid duplicates
+              if (prev.some(call => call.id === newCall.id)) {
+                return prev;
+              }
+              return [newCall, ...prev];
+            });
+            
+            // Show incoming call dialog popup
+            setIncomingCallDialog(newCall);
+            
+            // Show toast notification as backup
+            const userName = newCall.user_metadata?.name || 'A user';
+            toast.info(`📞 Incoming ${newCall.call_type} call from ${userName}!`, {
+              duration: 5000
+            });
+
+            // Request browser notification permission and show native notification
+            if ('Notification' in window && Notification.permission === 'granted') {
+              try {
+                const notification = new Notification(`📞 Incoming ${newCall.call_type} Call`, {
+                  body: `${userName} wants to have a ${newCall.call_type} call with you`,
+                  icon: newCall.user_metadata?.avatar || '/favicon.ico',
+                  tag: `call-${newCall.id}`,
+                  requireInteraction: true,
+                  badge: '/favicon.ico'
+                });
+
+                // Handle notification click
+                notification.onclick = () => {
+                  window.focus();
+                  setIncomingCallDialog(newCall);
+                  notification.close();
+                };
+              } catch (err) {
+                console.warn('⚠️ Could not show browser notification:', err);
+              }
+            } else if ('Notification' in window && Notification.permission === 'default') {
+              // Request permission
+              Notification.requestPermission().then(permission => {
+                if (permission === 'granted') {
+                  try {
+                    const notification = new Notification(`📞 Incoming ${newCall.call_type} Call`, {
+                      body: `${userName} wants to have a ${newCall.call_type} call with you`,
+                      icon: newCall.user_metadata?.avatar || '/favicon.ico',
+                      tag: `call-${newCall.id}`,
+                      requireInteraction: true
+                    });
+
+                    notification.onclick = () => {
+                      window.focus();
+                      setIncomingCallDialog(newCall);
+                      notification.close();
+                    };
+                  } catch (err) {
+                    console.warn('⚠️ Could not show browser notification:', err);
+                  }
+                }
+              });
             }
-          });
+          }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('📡 Subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Successfully subscribed to incoming calls');
+        }
+      });
 
     // Subscribe to offline messages (gracefully handle if table doesn't exist)
     let messagesSubscription: any = null;
@@ -215,21 +306,72 @@ const CallManagementPage: React.FC = () => {
   };
 
 
-  const handleAcceptCall = async (callId: string) => {
+  const loadAcceptedCall = async (callId: string) => {
     try {
-      const { error } = await supabase
+      // Fetch full call request with channel details and call session metadata
+      const { data: fullCall, error: fetchError } = await supabase
         .from('incoming_call_requests')
-        .update({ status: 'accepted' })
-        .eq('id', callId);
+        .select(`
+          *,
+          call_sessions (
+            id,
+            channel_name,
+            agora_channel_name,
+            call_metadata,
+            status
+          )
+        `)
+        .eq('id', callId)
+        .single();
 
-      if (error) throw error;
+      if (fetchError) {
+        console.error('❌ Error fetching accepted call details:', fetchError);
+        toast.error('Failed to load call details');
+        return;
+      }
 
-      const call = incomingCalls.find(c => c.id === callId);
-      if (call) {
-        setCurrentCall(call);
-        setIncomingCalls(prev => prev.filter(c => c.id !== callId));
+      if (fullCall && fullCall.status === 'accepted') {
+        // Extract expert token and UID from call_session metadata
+        const callSession = (fullCall as any).call_sessions;
+        const metadata = callSession?.call_metadata || {};
+        const expertToken = metadata.expert_token || null;
+        const expertUid = metadata.expert_uid || null;
+        const channelName = callSession?.agora_channel_name || callSession?.channel_name || (fullCall as any).channel_name;
+        
+        // Create call request object with all necessary data
+        const callRequestData: CallRequest = {
+          ...fullCall,
+          channel_name: channelName,
+          agora_token: expertToken,
+          agora_uid: expertUid,
+          call_session_id: callSession?.id || (fullCall as any).call_session_id,
+          status: 'accepted'
+        } as CallRequest;
+
+        setCurrentCall(callRequestData);
         toast.success('Call accepted - connecting...');
       }
+    } catch (error) {
+      console.error('Error loading accepted call:', error);
+      toast.error('Failed to load call');
+    }
+  };
+
+  const handleAcceptCall = async (callId: string) => {
+    try {
+      const success = await acceptCall(callId);
+      
+      if (!success) {
+        toast.error('Failed to accept call');
+        return;
+      }
+
+      // Load the accepted call
+      await loadAcceptedCall(callId);
+      
+      // Remove from incoming calls list
+      setIncomingCalls(prev => prev.filter(c => c.id !== callId));
+      setIncomingCallDialog(null); // Close dialog
     } catch (error) {
       console.error('Error accepting call:', error);
       toast.error('Failed to accept call');
@@ -246,6 +388,7 @@ const CallManagementPage: React.FC = () => {
       if (error) throw error;
 
       setIncomingCalls(prev => prev.filter(c => c.id !== callId));
+      setIncomingCallDialog(null); // Close dialog
       toast.info('Call declined');
     } catch (error) {
       console.error('Error declining call:', error);
@@ -634,47 +777,39 @@ const CallManagementPage: React.FC = () => {
         </TabsContent>
       </Tabs>
 
-      {/* Current Call Interface */}
-      {currentCall && (
-        <Card className="border-green-200 bg-green-50">
-          <CardHeader>
-            <CardTitle className="text-green-800">Active Call</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-3">
-                <div className="h-12 w-12 bg-green-500 rounded-full flex items-center justify-center">
-                  <Phone className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">
-                    {currentCall.user_metadata?.name || 'Anonymous User'}
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    {currentCall.call_type} call in progress
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline">
-                  <MicOff className="h-4 w-4" />
-                </Button>
-                <Button size="sm" variant="outline">
-                  <Video className="h-4 w-4" />
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="destructive"
-                  onClick={() => setCurrentCall(null)}
-                >
-                  <PhoneOff className="h-4 w-4 mr-1" />
-                  End Call
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Current Call Interface - Show in Modal */}
+      {currentCall && currentCall.status === 'accepted' && (
+        <ExpertInCallModal
+          isOpen={true}
+          onClose={() => {
+            setCurrentCall(null);
+            toast.info('Call ended');
+          }}
+          callRequest={{
+            id: currentCall.id,
+            user_id: currentCall.user_id,
+            call_type: currentCall.call_type as 'audio' | 'video',
+            channel_name: currentCall.channel_name || '',
+            agora_token: currentCall.agora_token || null,
+            agora_uid: currentCall.agora_uid || null,
+            user_metadata: currentCall.user_metadata || {},
+            call_session_id: currentCall.call_session_id || null
+          }}
+          onCallEnd={() => {
+            setCurrentCall(null);
+            toast.info('Call ended');
+          }}
+        />
       )}
+
+      {/* Incoming Call Dialog */}
+      <IncomingCallDialog
+        callRequest={incomingCallDialog}
+        isOpen={!!incomingCallDialog}
+        onAccept={handleAcceptCall}
+        onDecline={handleDeclineCall}
+        onClose={() => setIncomingCallDialog(null)}
+      />
     </div>
   );
 };

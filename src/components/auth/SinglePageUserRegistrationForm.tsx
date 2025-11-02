@@ -13,8 +13,9 @@ import { toast } from 'sonner';
 import { Loader2, User, Mail, Phone, Calendar, MapPin, Shield, Globe, Gift } from 'lucide-react';
 import { processReferralCode } from '@/utils/referralUtils';
 import { ReferralSettings } from '@/types/supabase';
-import { useIPBasedPricing } from '@/hooks/call/useIPBasedPricing';
-import { useUserCurrency } from '@/hooks/call/useUserCurrency';
+// TODO: Re-implement pricing hooks
+// import { useIPBasedPricing } from '@/hooks/call/useIPBasedPricing';
+// import { useUserCurrency } from '@/hooks/call/useUserCurrency';
 
 // Comprehensive registration schema
 const registrationSchema = z.object({
@@ -72,7 +73,9 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
   referralSettings
 }) => {
   const [isLoading, setIsLoading] = useState(false);
-  const pricing = useIPBasedPricing();
+  // TODO: Re-implement pricing logic
+  // const pricing = useIPBasedPricing();
+  const pricing = { currency: 'INR', pricePerMinute: 30 }; // Default pricing
 
   const form = useForm<RegistrationFormData>({
     resolver: zodResolver(registrationSchema),

@@ -20,7 +20,8 @@ import {
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
-import { useAppointmentToCall } from '@/hooks/useAppointmentToCall';
+// TODO: Re-implement appointment to call hook
+// import { useAppointmentToCall } from '@/hooks/useAppointmentToCall';
 import { toast } from 'sonner';
 
 interface UserDashboardData {
@@ -38,7 +39,12 @@ interface UserDashboardData {
 export const UserDashboard: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { initiateCallFromAppointment, getAppointmentStatus } = useAppointmentToCall();
+  // TODO: Re-implement appointment to call functionality
+  // const { initiateCallFromAppointment, getAppointmentStatus } = useAppointmentToCall();
+  const initiateCallFromAppointment = async () => {
+    toast.error('Call functionality not available yet');
+  };
+  const getAppointmentStatus = async () => ({ canJoin: false, isExpired: false, timeUntilJoin: 0 });
   const [data, setData] = useState<UserDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 

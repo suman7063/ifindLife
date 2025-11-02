@@ -135,7 +135,7 @@ const EmailVerificationTest: React.FC = () => {
             <ul className="text-sm text-blue-700 space-y-1">
               <li>• Current URL: {window.location.origin}</li>
               <li>• Redirect URL: {window.location.origin}/auth-callback?type=user</li>
-              <li>• Supabase URL: {import.meta.env.VITE_SUPABASE_URL || 'https://jrkjdiefnvgrfpjvnjng.supabase.co'}</li>
+              <li>• Supabase URL: {import.meta.env.VITE_SUPABASE_URL }</li>
             </ul>
           </div>
         </CardContent>

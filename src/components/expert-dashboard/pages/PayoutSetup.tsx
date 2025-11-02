@@ -9,7 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { AlertCircle, Check, CreditCard, Building2, Wallet, ArrowLeft } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useUserCurrency } from '@/hooks/call/useUserCurrency';
+// TODO: Re-implement currency hook
+// import { useUserCurrency } from '@/hooks/call/useUserCurrency';
 import { toast } from 'sonner';
 
 interface PayoutSetupProps {
@@ -25,7 +26,8 @@ interface PayoutMethod {
 }
 
 const PayoutSetup: React.FC<PayoutSetupProps> = ({ onBack }) => {
-  const { currency } = useUserCurrency();
+  // TODO: Re-implement currency logic
+  const currency = 'INR'; // Default currency
   const [selectedMethod, setSelectedMethod] = useState<string>('');
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);

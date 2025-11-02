@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
-import EnhancedAgoraCallModal from '@/components/call/modals/EnhancedAgoraCallModal';
+// TODO: Re-implement call modal
+// import EnhancedAgoraCallModal from '@/components/call/modals/EnhancedAgoraCallModal';
 import { Shield } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -130,8 +131,8 @@ const EnhancedExpertSelectionModal: React.FC<EnhancedExpertSelectionModalProps> 
         </DialogContent>
       </Dialog>
 
-      {/* Enhanced Call Modal with Proper Flow */}
-      {showCallModal && selectedExpert && (
+      {/* TODO: Re-implement call modal */}
+      {/* {showCallModal && selectedExpert && (
         <EnhancedAgoraCallModal
           isOpen={showCallModal}
           onClose={handleCallEnd}
@@ -142,7 +143,7 @@ const EnhancedExpertSelectionModal: React.FC<EnhancedExpertSelectionModalProps> 
             price: selectedExpert.price || 30
           }}
         />
-      )}
+      )} */}
     </>
   );
 };

@@ -29,7 +29,7 @@ serve(async (req) => {
     const expiresAt = new Date(Date.now() + 2 * 60 * 1000); // 2 minutes from now
     
     // Get Agora token for the test call
-    const { data: tokenData, error: tokenError } = await supabase.functions.invoke('generate-agora-token', {
+    const { data: tokenData, error: tokenError } = await supabase.functions.invoke('smooth-action', {
       body: {
         channelName,
         uid: Math.floor(Math.random() * 1000000),

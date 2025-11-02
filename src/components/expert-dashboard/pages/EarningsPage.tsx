@@ -6,7 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Wallet, TrendingUp, Download, Calendar, CreditCard, Euro, IndianRupee, FileText, FileSpreadsheet } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { useUserCurrency } from '@/hooks/call/useUserCurrency';
+// TODO: Re-implement currency hook
+// import { useUserCurrency } from '@/hooks/call/useUserCurrency';
 import PayoutSetup from './PayoutSetup';
 import { exportToPDF, exportToExcel, generateEarningsExportData } from '@/utils/exportUtils';
 import { toast } from 'sonner';
@@ -15,9 +16,10 @@ const EarningsPage = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('this-month');
   const [showPayoutSetup, setShowPayoutSetup] = useState(false);
   const [hasPayoutMethod, setHasPayoutMethod] = useState(false);
-  const { currency } = useUserCurrency();
-  const currencySymbol = currency === 'INR' ? '₹' : '€';
-  const CurrencyIcon = currency === 'INR' ? IndianRupee : Euro;
+  // TODO: Re-implement currency logic
+  const currency = 'INR'; // Default currency
+  const currencySymbol = '₹';
+  const CurrencyIcon = IndianRupee;
 
   // Check if payout method is configured
   useEffect(() => {

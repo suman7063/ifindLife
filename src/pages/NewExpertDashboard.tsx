@@ -14,13 +14,21 @@ import AnalyticsPage from '@/components/expert-dashboard/pages/analytics/Analyti
 import ExpertReviewsPage from '@/components/expert-dashboard/pages/ExpertReviewsPage';
 import CallManagementPage from '@/components/expert-dashboard/pages/CallManagementPage';
 import ExpertOnboardingFlow from '@/components/expert/dashboard/ExpertOnboardingFlow';
-import CallReceptionWidget from '@/components/expert-dashboard/call/CallReceptionWidget';
-import { useIncomingCalls } from '@/hooks/call/useIncomingCalls';
-import IncomingCallDialog from '@/components/expert-dashboard/call/IncomingCallDialog';
+// TODO: Re-implement call components
+// import CallReceptionWidget from '@/components/expert-dashboard/call/CallReceptionWidget';
+// import { useIncomingCalls } from '@/hooks/call/useIncomingCalls';
+// import IncomingCallDialog from '@/components/expert-dashboard/call/IncomingCallDialog';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { useIntegratedExpertPresence } from '@/hooks/useIntegratedExpertPresence';
 import { supabase } from '@/lib/supabase';
+import { useGlobalCallNotifications } from '@/hooks/useGlobalCallNotifications';
 import { toast } from 'sonner';
+import IncomingCallDialog from '@/components/expert-dashboard/call/IncomingCallDialog';
+import { acceptCall, declineCall as declineCallService } from '@/services/callService';
+// Import test utility (only in development)
+if (import.meta.env.DEV) {
+  import('@/utils/testNotification');
+}
 
 const NewExpertDashboard: React.FC = () => {
   const { expert, isAuthenticated, isLoading, userType } = useSimpleAuth();
@@ -30,8 +38,27 @@ const NewExpertDashboard: React.FC = () => {
   // Sync expert presence automatically
   const { isExpertOnline } = useIntegratedExpertPresence();
   
-  // Realtime incoming call notifications for experts - MUST be called before any early returns
-  const { incoming, setIncoming, acceptCall, declineCall } = useIncomingCalls(expert?.auth_id);
+  // Global call notifications - works across all dashboard pages
+  const { incomingCall, setIncomingCall } = useGlobalCallNotifications(expert?.auth_id || expert?.id);
+  
+  // Handler functions for incoming call dialog
+  const handleAcceptCall = async (callRequestId: string) => {
+    const ok = await acceptCall(callRequestId);
+    if (ok) {
+      setIncomingCall(null);
+      // Navigate to calls page with call ID in state so CallManagementPage can load it
+      navigate('/expert-dashboard/calls', { 
+        state: { acceptedCallId: callRequestId } 
+      });
+    }
+  };
+
+  const handleDeclineCall = async (callRequestId: string) => {
+    const ok = await declineCallService(callRequestId);
+    if (ok) {
+      setIncomingCall(null);
+    }
+  };
   
   // Check onboarding completion status
   useEffect(() => {
@@ -128,26 +155,16 @@ const NewExpertDashboard: React.FC = () => {
     return <div className="flex items-center justify-center min-h-screen">Preparing your dashboard...</div>;
   }
 
-  const handleAccept = async (req: any) => {
-    const ok = await acceptCall(req);
-    if (ok) {
-      // On accept, navigate to Calls page or open your call modal if desired
-      setIncoming(null);
-      navigate('/expert-dashboard/calls');
-    }
-  };
-
-  const handleDecline = async (req: any) => {
-    const ok = await declineCall(req);
-    if (ok) setIncoming(null);
-  };
-
   return (
     <ExpertDashboardLayout>
-      {/* Call Reception Widget - Always available */}
-      <CallReceptionWidget />
-      {/* Incoming Call Dialog */}
-      <IncomingCallDialog request={incoming} onAccept={handleAccept} onDecline={handleDecline} />
+      {/* Global Incoming Call Dialog - shows popup when call request arrives */}
+      <IncomingCallDialog
+        callRequest={incomingCall}
+        isOpen={!!incomingCall}
+        onAccept={handleAcceptCall}
+        onDecline={handleDeclineCall}
+        onClose={() => setIncomingCall(null)}
+      />
       
       <Routes>
         {/* Dashboard Home */}

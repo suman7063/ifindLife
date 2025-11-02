@@ -72,7 +72,7 @@ serve(async (req) => {
       const uid = Math.floor(Math.random() * 1000000)
 
       // Generate Agora token using our token service
-      const tokenResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/generate-agora-token`, {
+      const tokenResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/smooth-action`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,

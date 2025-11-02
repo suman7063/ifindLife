@@ -1,33 +1,43 @@
-import React, { useState, useEffect, useRef } from 'react';
+/**
+ * Agora Call Interface (Expert Side)
+ * Expert-side call interface component
+ */
+
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { 
   Phone, 
   PhoneOff, 
   Mic, 
   MicOff,
   Video,
-  VideoOff,
-  Users,
-  User,
-  Clock,
-  DollarSign
+  VideoOff
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   createClient, 
   joinCall, 
   leaveCall, 
-  toggleMute, 
-  toggleVideo,
   type CallState,
   type CallType 
 } from '@/utils/agoraService';
 import { AGORA_CONFIG } from '@/utils/agoraConfig';
 import type { IAgoraRTCClient } from 'agora-rtc-sdk-ng';
 import { toast } from 'sonner';
+import { endCall } from '@/services/callService';
 
 interface UserMetadata {
   name?: string;
@@ -44,10 +54,8 @@ interface AgoraCallInterfaceProps {
     channel_name: string;
     agora_token: string | null;
     agora_uid: number | null;
-    estimated_cost_eur?: number | null;
-    estimated_cost_inr?: number | null;
-    estimated_cost_usd?: number | null; // Keep for backward compatibility
     user_metadata: UserMetadata;
+    call_session_id?: string | null;
   };
   onCallEnd: () => void;
 }
@@ -74,6 +82,9 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
   const clientRef = useRef<IAgoraRTCClient | null>(null);
   const localVideoRef = useRef<HTMLDivElement>(null);
   const remoteVideoRef = useRef<HTMLDivElement>(null);
+  const currentSessionIdRef = useRef<string | null>(null);
+  const durationTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [showEndCallConfirm, setShowEndCallConfirm] = useState(false);
 
   // Format call duration
   const formatDuration = (seconds: number) => {
@@ -82,335 +93,224 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Start duration timer
+  const startDurationTimer = useCallback((startTime?: Date) => {
+    if (durationTimerRef.current) {
+      clearInterval(durationTimerRef.current);
+    }
+
+    const actualStartTime = startTime || callStartTime || new Date();
+    if (!callStartTime && !startTime) {
+      setCallStartTime(actualStartTime);
+    }
+
+    const updateDuration = () => {
+      const now = Date.now();
+      const startTimeMs = actualStartTime.getTime();
+      const duration = Math.floor((now - startTimeMs) / 1000);
+      setCallDuration(duration);
+    };
+
+    updateDuration();
+    durationTimerRef.current = setInterval(updateDuration, 1000);
+  }, [callStartTime]);
+
   // Join the Agora call
   const handleJoinCall = async () => {
     try {
       setIsConnecting(true);
-      // CRITICAL: Use console.error to ensure it's visible
-      console.error('🚨🔗 JOIN CALL STARTED - This should ALWAYS be visible');
-      console.log('🔗 Joining Agora call...', callRequest);
-
-      // Get or generate token - if token is null, generate a fresh one
-      let token = callRequest.agora_token;
-      const uid = callRequest.agora_uid || Math.floor(Math.random() * 1000000);
-
-      // DEBUG: Log token value BEFORE checking - use console.error to ensure visibility
-      console.error('🚨🔍 TOKEN CHECK - This should ALWAYS be visible:', {
-        tokenValue: token,
-        tokenType: typeof token,
-        isNull: token === null,
-        isUndefined: token === undefined,
-        isEmptyString: token === '',
-        isNullString: token === 'null',
-        isUndefinedString: token === 'undefined',
-        willGenerate: !token || token === 'null' || token === '' || token === 'undefined',
-        fullCallRequest: callRequest
+      console.log('🔗 Expert joining Agora call...', {
+        channel_name: callRequest.channel_name,
+        call_type: callRequest.call_type,
+        has_token: !!callRequest.agora_token,
+        has_uid: !!callRequest.agora_uid,
+        call_session_id: callRequest.call_session_id
       });
 
-      // Check for invalid/empty token values - treat as missing
+      let token = callRequest.agora_token;
+      const uid = callRequest.agora_uid || Math.floor(Math.random() * 1000000);
+      
+      // Generate token if missing
       if (!token || token === 'null' || token === '' || token === 'undefined') {
-        console.log('🔄 Token missing, attempting to generate new token...');
-        console.log('📋 Call details:', { 
-          channelName: callRequest.channel_name, 
-          uid, 
-          appId: AGORA_CONFIG.APP_ID || 'NOT SET (check VITE_AGORA_APP_ID in .env)' 
+        console.log('🔄 Token missing, generating new token...');
+        const { data: tokenData, error: tokenError } = await supabase.functions.invoke('smooth-action', {
+          body: {
+            channelName: callRequest.channel_name,
+            uid: uid,
+            role: 1,
+            expireTime: 3600
+          }
         });
-        
-        // Verify Supabase connection first
-        try {
-          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-          console.log('🔍 Checking Supabase connection:', { 
-            hasUrl: !!supabaseUrl,
-            url: supabaseUrl ? `${supabaseUrl.substring(0, 30)}...` : 'missing'
-          });
-        } catch (checkErr) {
-          console.warn('⚠️ Could not verify Supabase URL:', checkErr);
+
+        if (tokenError) {
+          console.error('❌ Failed to generate token:', tokenError);
+          toast.error('Failed to generate call token');
+          setIsConnecting(false);
+          return;
         }
 
-        try {
-          const { data: tokenData, error: tokenError } = await supabase.functions.invoke('generate-agora-token', {
-            body: {
-              channelName: callRequest.channel_name,
-              uid: uid,
-              role: 1, // Publisher role
-              expireTime: 3600 // 1 hour expiry
-            }
-          });
-
-          console.log('📥 Token generation response:', { 
-            hasData: !!tokenData, 
-            hasError: !!tokenError,
-            errorMessage: tokenError?.message,
-            tokenType: tokenData?.tokenType,
-            warning: tokenData?.warning
-          });
-
-          if (tokenError) {
-            console.error('❌ Failed to generate token via edge function:', tokenError);
-            console.error('❌ Error details:', {
-              message: tokenError.message,
-              name: tokenError.name,
-              stack: tokenError.stack
-            });
-            
-            // Check for specific error types
-            if (tokenError.message?.includes('Failed to send a request') || 
-                tokenError.name === 'FunctionsFetchError') {
-              console.error('');
-              console.error('🔴 ========================================');
-              console.error('🔴 EDGE FUNCTION NOT DEPLOYED OR UNREACHABLE');
-              console.error('🔴 ========================================');
-              console.error('');
-              console.error('This error means the Supabase Edge Function cannot be reached.');
-              console.error('');
-              console.error('📋 IMMEDIATE STEPS TO FIX:');
-              console.error('');
-              console.error('1️⃣  Verify Supabase project is linked:');
-              console.error('   Run: supabase link --project-ref nmcqyudqvbldxwzhyzma');
-              console.error('');
-              console.error('2️⃣  Deploy the edge function:');
-              console.error('   Run: supabase functions deploy generate-agora-token');
-              console.error('');
-              console.error('3️⃣  Verify deployment success:');
-              console.error('   You should see: "✅ Function deployed successfully"');
-              console.error('');
-              console.error('4️⃣  Check Supabase Dashboard:');
-              console.error('   Go to: Edge Functions → generate-agora-token');
-              console.error('   Verify the function appears in the list');
-              console.error('');
-              console.error('5️⃣  Verify environment variables:');
-              console.error('   Supabase Dashboard → Project Settings → Edge Functions → Secrets');
-              console.error('   Required secrets:');
-              console.error('   - AGORA_APP_ID = (get from your .env VITE_AGORA_APP_ID)');
-              console.error('   - AGORA_APP_CERTIFICATE = (your certificate from Agora Console)');
-              console.error('');
-              console.error('6️⃣  Test the function manually:');
-              console.error('   Go to Supabase Dashboard → Edge Functions → generate-agora-token → Test');
-              console.error('');
-            } else {
-              console.error('🔴 CRITICAL: Cannot join call without token. The edge function must be deployed!');
-              console.error('🔴 Action required:');
-              console.error('   1. Deploy edge function: supabase functions deploy generate-agora-token');
-              console.error('   2. Verify AGORA_APP_CERTIFICATE is set in Supabase Secrets');
-              console.error('   3. Verify AGORA_APP_ID is set in Supabase Secrets (should match VITE_AGORA_APP_ID from .env)');
-            }
-            
-            // Show user-friendly error
-            toast.error('Failed to connect to token service. Please deploy the edge function.');
-            throw new Error('Edge function not available: ' + tokenError.message);
-          } else {
-            token = tokenData?.token || null;
-            console.log('✅ Generated new token:', token ? 'Token received (length: ' + token.length + ')' : 'Token is null');
-            
-            if (!token) {
-              // Token is null - try temporary token from env, then tokenless mode
-              const tempToken = import.meta.env.VITE_AGORA_TEMP_TOKEN;
-              
-              if (tempToken && tempToken !== '') {
-                console.log('⚠️ Using temporary token from environment (for testing)');
-                console.log('⚠️ Temporary tokens expire - generate new one in Agora Console when needed');
-                token = tempToken;
-              } else {
-                // Token is null - using tokenless mode
-                console.log('ℹ️ Token is null - using tokenless mode');
-                console.log('ℹ️ Free Agora accounts often use "APP ID only" mode (tokenless by default)');
-                console.log('ℹ️ Attempting to join call with null token...');
-                console.log('ℹ️ If you get "invalid vendor key" error, your project requires certificates');
-                console.log('ℹ️ SOLUTION: Add VITE_AGORA_TEMP_TOKEN to .env with token from Agora Console');
-                // Don't throw error - allow tokenless mode to proceed
-                // The Agora SDK will handle null tokens if tokenless mode is enabled in the project
-              }
-            }
-          }
-        } catch (tokenErr: unknown) {
-          const error = tokenErr instanceof Error ? tokenErr : new Error(String(tokenErr));
-          console.error('');
-          console.error('❌ ========================================');
-          console.error('❌ ERROR CALLING TOKEN GENERATION FUNCTION');
-          console.error('❌ ========================================');
-          console.error('');
-          console.error('❌ Error calling token generation function:', error);
-          console.error('❌ Error type:', error?.constructor?.name);
-          console.error('❌ Error message:', error?.message);
-          console.error('❌ Error stack:', error?.stack);
-          console.error('');
-          
-          if (error?.message?.includes('Failed to send a request') || 
-              error?.name === 'FunctionsFetchError') {
-            console.error('🔴 This is a connection error - the function is not deployed or unreachable.');
-            console.error('');
-            console.error('📋 TO FIX:');
-            console.error('   1. Run: supabase functions deploy generate-agora-token');
-            console.error('   2. Verify: Supabase Dashboard → Edge Functions');
-            console.error('   3. Check: Network connectivity and Supabase URL configuration');
-            console.error('');
-            toast.error('Cannot reach token service. Please deploy the edge function.');
-          } else {
-            console.error('🔴 CRITICAL: Edge function may not be deployed!');
-            console.error('🔴 Run: supabase functions deploy generate-agora-token');
-            toast.error('Token generation failed. Please check deployment.');
-          }
-          
-          // Throw error to prevent joining with null token
-          throw new Error('Token generation failed: ' + (error?.message || 'Unknown error'));
-        }
+        token = tokenData?.token || null;
+        console.log('✅ Generated new token');
       }
 
-      // Create Agora client
       const client = createClient();
       clientRef.current = client;
 
       // Set up event listeners
-      client.on('user-published', (user, mediaType) => {
-        console.log('👤 Remote user published:', user.uid, mediaType);
+      client.on('user-published', async (user, mediaType) => {
+        console.log('👤 User published:', user.uid, mediaType);
         
-        client.subscribe(user, mediaType).then(() => {
-          // Handle audio tracks - ensure they play
-          if (mediaType === 'audio') {
-            user.audioTrack?.play();
-            console.log('✅ Playing remote audio track');
-          }
-
-          // Update remote users list - merge tracks for same user
-          setCallState(prev => {
-            const existingUser = prev.remoteUsers.find(u => u.uid === user.uid);
-            if (existingUser) {
-              // Update existing user with new track
-              return {
-                ...prev,
-                remoteUsers: prev.remoteUsers.map(u => 
-                  u.uid === user.uid ? user : u
-                )
-              };
-            } else {
-              // Add new user
-              return {
-                ...prev,
-                remoteUsers: [...prev.remoteUsers, user]
-              };
-            }
-          });
-
-          // Play remote video if it's a video call
-          if (mediaType === 'video' && remoteVideoRef.current) {
-            user.videoTrack?.play(remoteVideoRef.current);
-            console.log('✅ Playing remote video track');
-          }
-        }).catch((error) => {
-          console.error('❌ Error subscribing to remote user:', error);
-        });
-      });
-
-      client.on('user-unpublished', (user, mediaType) => {
-        console.log('👤 Remote user unpublished:', user.uid, mediaType);
-        
-        // Stop tracks when unpublished
-        if (mediaType === 'audio') {
-          user.audioTrack?.stop();
-        }
-        if (mediaType === 'video') {
-          user.videoTrack?.stop();
-        }
-        
-        // Update state - only remove user if they've unpublished all tracks
-        setCallState(prev => {
-          const existingUser = prev.remoteUsers.find(u => u.uid === user.uid);
-          if (existingUser) {
-            // Check if user has any remaining tracks
-            const hasAudio = mediaType !== 'audio' && existingUser.audioTrack;
-            const hasVideo = mediaType !== 'video' && existingUser.videoTrack;
-            
-            if (!hasAudio && !hasVideo) {
-              // Remove user if no tracks remain
-              return {
-                ...prev,
-                remoteUsers: prev.remoteUsers.filter(u => u.uid !== user.uid)
-              };
-            } else {
-              // Keep user but update their tracks
-              return {
-                ...prev,
-                remoteUsers: prev.remoteUsers.map(u => 
-                  u.uid === user.uid ? user : u
-                )
-              };
-            }
-          }
-          return prev;
-        });
-      });
-
-      client.on('user-left', (user) => {
-        console.log('👤 Remote user left:', user.uid);
-        
-        // Stop all tracks when user leaves
-        user.audioTrack?.stop();
-        user.videoTrack?.stop();
+        await client.subscribe(user, mediaType);
         
         setCallState(prev => ({
           ...prev,
+          remoteUsers: [...prev.remoteUsers.filter(u => u.uid !== user.uid), user]
+        }));
+
+        // Play remote video if video call
+        if (mediaType === 'video' && remoteVideoRef.current && user.videoTrack) {
+          try {
+            await user.videoTrack.play(remoteVideoRef.current);
+            console.log('✅ Playing remote video track (expert side)');
+          } catch (error) {
+            console.warn('⚠️ Could not play remote video:', error);
+          }
+        }
+        
+        // Handle remote audio - explicitly configure audio track
+        // Note: In video calls, audio and video are published separately, so we handle both
+        if (mediaType === 'audio' && user.audioTrack) {
+          console.log('✅ Remote audio track subscribed (expert side)');
+          try {
+            // Set volume for remote audio track (0-100)
+            user.audioTrack.setVolume(100);
+            console.log('✅ Remote audio track volume set to 100 (expert side)');
+            
+            // Note: Agora SDK typically auto-plays remote audio, but we ensure it's configured
+            // Remote audio tracks don't have a .play() method like video tracks
+            // They are automatically played when subscribed
+          } catch (audioError) {
+            console.warn('⚠️ Could not configure remote audio:', audioError);
+          }
+        }
+      });
+
+      client.on('user-unpublished', (user) => {
+        console.log('👤 User unpublished:', user.uid);
+        setCallState(prev => ({
+              ...prev,
           remoteUsers: prev.remoteUsers.filter(u => u.uid !== user.uid)
         }));
       });
 
-      // DEBUG: Log token value RIGHT BEFORE joining
-      const actualAppId = AGORA_CONFIG.APP_ID;
-      console.log('');
-      console.log('🔍 ========================================');
-      console.log('🔍 CALL JOIN ATTEMPT - DETAILED INFO');
-      console.log('🔍 ========================================');
-      console.log('   Channel Name:', callRequest.channel_name);
-      console.log('   Call Type:', callRequest.call_type);
-      console.log('   UID:', uid);
-      console.log('');
-      console.log('   🔑 APP ID:');
-      console.log('      Value:', actualAppId);
-      console.log('      Length:', actualAppId?.length || 0);
-      console.log('      From Env:', import.meta.env.VITE_AGORA_APP_ID || 'NOT SET');
-      console.log('      From Config:', AGORA_CONFIG.APP_ID);
-      console.log('');
-      console.log('   🎫 TOKEN:');
-      console.log('      Value:', token ? `${token.substring(0, 20)}...` : 'NULL');
-      console.log('      Type:', typeof token);
-      console.log('      Length:', token ? token.length : 0);
-      console.log('      Has Token:', !!token);
-      console.log('      Is Null:', token === null);
-      console.log('');
-      console.log('   ⚠️ If error occurs, verify:');
-      console.log('      1. App ID matches Agora Console');
-      console.log('      2. App ID is 32 characters');
-      console.log('      3. Project exists in your Agora account');
-      console.log('🔍 ========================================');
-      console.log('');
+      client.on('user-left', (user) => {
+        console.log('👤 User left:', user.uid);
+        setCallState(prev => ({
+            ...prev,
+          remoteUsers: prev.remoteUsers.filter(u => u.uid !== user.uid)
+        }));
+      });
 
-      // Join the call with the token (generated or existing)
       const { localAudioTrack, localVideoTrack } = await joinCall(
         {
           channelName: callRequest.channel_name,
-          callType: callRequest.call_type as CallType,
+          callType: callRequest.call_type,
           token: token,
           uid: uid
         },
         client
       );
 
-      // Play local video if it's a video call
-      if (localVideoTrack && localVideoRef.current) {
-        localVideoTrack.play(localVideoRef.current);
+      console.log('✅ Successfully joined Agora channel:', {
+        channelName: callRequest.channel_name,
+        hasAudioTrack: !!localAudioTrack,
+        hasVideoTrack: !!localVideoTrack,
+        uid
+      });
+      
+      // Play local video if video call
+      if (localVideoTrack && callRequest.call_type === 'video' && localVideoRef.current) {
+        try {
+          localVideoTrack.play(localVideoRef.current, { mirror: true });
+          console.log('✅ Playing local video track (expert side)');
+        } catch (playError) {
+          console.warn('⚠️ Could not play local video:', playError);
+        }
       }
 
-      // Update call state
-      setCallState(prev => ({
-        ...prev,
-        client,
+      const newCallState: CallState = {
         localAudioTrack,
         localVideoTrack,
-        isJoined: true
-      }));
+        remoteUsers: [],
+        client,
+        isJoined: true,
+        isMuted: false,
+        isVideoEnabled: callRequest.call_type === 'video',
+        isAudioEnabled: true
+      };
 
-      setCallStartTime(new Date());
+      setCallState(newCallState);
       setIsConnecting(false);
-      
+      const startTime = new Date();
+      setCallStartTime(startTime);
+      currentSessionIdRef.current = callRequest.call_session_id || null;
+
+      // Ensure audio is enabled and volume is set AFTER publishing
+      if (localAudioTrack) {
+        try {
+          // Ensure audio track is enabled
+          if (!localAudioTrack.enabled) {
+            localAudioTrack.setEnabled(true);
+            console.log('✅ Enabled local audio track (expert side)');
+          }
+          
+          // Set volume to maximum
+          localAudioTrack.setVolume(100);
+          
+          // Verify audio track is ready and transmitting
+          console.log('✅ Local audio track configured (expert side):', {
+            enabled: localAudioTrack.enabled,
+            volume: '100%',
+            muted: localAudioTrack.muted || false,
+            published: true
+          });
+          
+          // Double-check after a short delay to ensure it stays enabled
+          setTimeout(() => {
+            if (localAudioTrack && !localAudioTrack.enabled) {
+              console.warn('⚠️ Audio track was disabled, re-enabling... (expert side)');
+              localAudioTrack.setEnabled(true);
+              localAudioTrack.setVolume(100);
+            }
+          }, 1000);
+          
+          console.log('✅ Local audio track enabled and volume set to 100 (expert side)');
+        } catch (audioError) {
+          console.warn('⚠️ Could not configure local audio:', audioError);
+        }
+      } else {
+        console.error('❌ localAudioTrack is null! (expert side)');
+      }
+
+      // Update session status to active
+      if (callRequest.call_session_id) {
+        try {
+          await supabase
+            .from('call_sessions')
+            .update({ 
+              status: 'active',
+              start_time: startTime.toISOString()
+            })
+            .eq('id', callRequest.call_session_id);
+          console.log('✅ Call session status updated to active');
+        } catch (dbError) {
+          console.error('❌ Error updating session status:', dbError);
+        }
+      }
+
+      // Start timer with the actual start time
+      startDurationTimer(startTime);
+
       toast.success('Connected to call successfully');
     } catch (error) {
       console.error('❌ Error joining call:', error);
@@ -422,221 +322,307 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
   // Leave the call
   const handleLeaveCall = async () => {
     try {
-      if (clientRef.current && callState.localAudioTrack) {
-        await leaveCall(clientRef.current, callState.localAudioTrack, callState.localVideoTrack);
-      }
+      console.log('🔴 Expert ending call');
       
-      setCallState({
-        localAudioTrack: null,
-        localVideoTrack: null,
-        remoteUsers: [],
-        client: null,
-        isJoined: false,
-        isMuted: false,
-        isVideoEnabled: false,
-        isAudioEnabled: false
-      });
-
-      // Update call session in database
+      // Calculate duration
+      let finalDuration = 0;
       if (callStartTime) {
-        const duration = Math.floor((new Date().getTime() - callStartTime.getTime()) / 1000);
-        
-        await supabase
-          .from('call_sessions')
-          .insert({
-            id: crypto.randomUUID(),
-            user_id: callRequest.user_id,
-            expert_id: Math.floor(Math.random() * 1000000), // You'll need to get actual expert ID
-            channel_name: callRequest.channel_name,
-            agora_channel_name: callRequest.channel_name,
-            call_type: callRequest.call_type,
-            status: 'completed',
-            duration,
-            start_time: callStartTime.toISOString(),
-            end_time: new Date().toISOString(),
-            call_direction: 'incoming'
+        finalDuration = Math.floor((new Date().getTime() - callStartTime.getTime()) / 1000);
+      }
+
+      // Update database
+      if (currentSessionIdRef.current) {
+        try {
+          await endCall(currentSessionIdRef.current, finalDuration, 'expert');
+          console.log('✅ Call session updated in database');
+        } catch (dbError) {
+          console.error('❌ Error updating call session:', dbError);
+        }
+      }
+
+      // Stop remote tracks
+      if (callState.remoteUsers.length > 0) {
+          callState.remoteUsers.forEach(user => {
+            try {
+              user.audioTrack?.stop();
+              user.videoTrack?.stop();
+            } catch (err) {
+              console.warn('⚠️ Error stopping remote track:', err);
+            }
           });
       }
 
+      // Leave Agora channel
+        if (clientRef.current && callState.localAudioTrack) {
+        try {
+          await leaveCall(
+            clientRef.current,
+            callState.localAudioTrack,
+            callState.localVideoTrack
+          );
+          console.log('✅ Successfully left Agora channel');
+      } catch (agoraError) {
+        console.error('❌ Error leaving Agora call:', agoraError);
+        }
+      }
+
+      // Stop timer
+      if (durationTimerRef.current) {
+        clearInterval(durationTimerRef.current);
+        durationTimerRef.current = null;
+      }
+
+      toast.success(`Call ended. Duration: ${formatDuration(finalDuration)}`);
       onCallEnd();
-      toast.success('Call ended');
     } catch (error) {
       console.error('❌ Error leaving call:', error);
       toast.error('Error ending call');
+      onCallEnd();
     }
   };
 
-  // Toggle microphone
-  const handleToggleMute = () => {
-    if (callState.localAudioTrack) {
-      const newMutedState = toggleMute(callState.localAudioTrack, callState.isMuted);
-      setCallState(prev => ({ ...prev, isMuted: newMutedState }));
+  // Toggle mute
+  const toggleMute = () => {
+    console.log('🔇 Toggle mute called (expert side)', {
+      hasAudioTrack: !!callState.localAudioTrack,
+      currentMutedState: callState.isMuted,
+      audioTrackEnabled: callState.localAudioTrack?.enabled
+    });
+
+    if (!callState.localAudioTrack) {
+      console.error('❌ Audio track not available (expert side)');
+      toast.error('Audio track not available');
+      return;
+    }
+    
+    try {
+      const currentMutedState = callState.isMuted;
+      const newMutedState = !currentMutedState;
+      console.log('🔇 Toggling mute (expert side):', { from: currentMutedState, to: newMutedState });
+      
+      // Enable/disable the audio track
+      const audioTrack = callState.localAudioTrack;
+      audioTrack.setEnabled(!newMutedState);
+      
+      // Also ensure volume is set when unmuting
+      if (!newMutedState) {
+        // Unmuting: enable the track and ensure volume is set
+        console.log('🔇 Unmuting audio track (expert side)');
+        audioTrack.setVolume(100);
+      } else {
+        // Muting: disable the track
+        console.log('🔇 Muting audio track (expert side)');
+      }
+      
+      console.log('✅ Audio track enabled state (expert side):', audioTrack.enabled);
+      
+      // Update state
+      setCallState(prev => ({
+        ...prev,
+        isMuted: newMutedState
+      }));
+      
+      toast.success(newMutedState ? 'Microphone muted' : 'Microphone unmuted');
+      console.log('✅ Mute state updated successfully (expert side)');
+    } catch (error) {
+      console.error('❌ Error toggling mute (expert side):', error);
+      toast.error('Failed to toggle mute: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
   };
 
   // Toggle video
-  const handleToggleVideo = () => {
-    if (callState.localVideoTrack) {
-      const newVideoState = toggleVideo(callState.localVideoTrack, callState.isVideoEnabled);
-      setCallState(prev => ({ ...prev, isVideoEnabled: newVideoState }));
-    }
+  const toggleVideo = () => {
+    if (!callState.localVideoTrack) return;
+    
+    const newVideoState = !callState.isVideoEnabled;
+    callState.localVideoTrack.setEnabled(newVideoState);
+    
+    setCallState(prev => ({
+      ...prev,
+      isVideoEnabled: newVideoState
+    }));
   };
 
-  // Update call duration timer
+  // Auto-join on mount if not already joined
   useEffect(() => {
-    if (!callStartTime) return;
+    if (!callState.isJoined && !isConnecting && callRequest.channel_name) {
+      console.log('🚀 Auto-joining call on mount...', {
+        channel_name: callRequest.channel_name,
+        has_token: !!callRequest.agora_token,
+        has_uid: !!callRequest.agora_uid
+      });
+      handleJoinCall();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [callRequest.channel_name]);
 
-    const interval = setInterval(() => {
-      const now = new Date();
-      const duration = Math.floor((now.getTime() - callStartTime.getTime()) / 1000);
-      setCallDuration(duration);
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [callStartTime]);
-
-  // Auto-join call on mount
+  // Cleanup on unmount
   useEffect(() => {
-    handleJoinCall();
-    
     return () => {
+      if (durationTimerRef.current) {
+        clearInterval(durationTimerRef.current);
+      }
+      
       if (clientRef.current && callState.localAudioTrack) {
-        leaveCall(clientRef.current, callState.localAudioTrack, callState.localVideoTrack);
+        leaveCall(clientRef.current, callState.localAudioTrack, callState.localVideoTrack).catch(console.error);
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Intentionally empty - only run on mount
+  }, []);
 
-  const userDisplayName = callRequest.user_metadata?.name || 'Anonymous User';
+  const userName = callRequest.user_metadata?.name || 'User';
   const userAvatar = callRequest.user_metadata?.avatar || null;
-  const estimatedCost = callRequest.estimated_cost_inr || callRequest.estimated_cost_usd || 0;
-  const currency = callRequest.estimated_cost_inr ? 'INR' : 'EUR';
-  const currencySymbol = currency === 'INR' ? '₹' : '€';
 
   return (
-    <Card className="w-full max-w-4xl mx-auto">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center space-x-2">
-            {callRequest.call_type === 'video' ? (
-              <Video className="w-5 h-5" />
-            ) : (
-              <Phone className="w-5 h-5" />
-            )}
-            <span>Active {callRequest.call_type === 'video' ? 'Video' : 'Audio'} Call</span>
-          </CardTitle>
-          
-          <div className="flex items-center space-x-4">
-            <Badge variant="default" className="bg-green-600">
-              <Clock className="w-3 h-3 mr-1" />
-              {formatDuration(callDuration)}
+    <div className="space-y-4 h-full flex flex-col overflow-hidden">
+      {/* Connection Status */}
+      {isConnecting && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+          <p className="text-yellow-800">🔄 Connecting to call...</p>
+        </div>
+      )}
+      
+      {!callState.isJoined && !isConnecting && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+          <p className="text-red-800">⚠️ Not connected. Please wait...</p>
+        </div>
+      )}
+      
+      {/* Call Header */}
+      <Card className="flex-shrink-0">
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <span>Call with {userName}</span>
+            <Badge variant={callState.isJoined ? "default" : "secondary"}>
+              {callState.isJoined ? formatDuration(callDuration) : '0:00'}
             </Badge>
-            
-            {estimatedCost > 0 && (
-              <Badge variant="outline">
-                <DollarSign className="w-3 h-3 mr-1" />
-                ${estimatedCost.toFixed(2)}
-              </Badge>
-            )}
-          </div>
-        </div>
-      </CardHeader>
+          </CardTitle>
+        </CardHeader>
+      </Card>
 
-      <CardContent className="space-y-6">
-        {/* User Info */}
-        <div className="flex items-center justify-center space-x-4">
-          <Avatar className="w-16 h-16">
-            <AvatarImage src={userAvatar} alt={userDisplayName} />
-            <AvatarFallback>
-              <User className="w-8 h-8" />
-            </AvatarFallback>
-          </Avatar>
-          <div className="text-center">
-            <h3 className="text-lg font-medium">{userDisplayName}</h3>
-            <p className="text-sm text-muted-foreground">
-              {callState.remoteUsers.length > 0 ? 'Connected' : 'Connecting...'}
-            </p>
-          </div>
-        </div>
-
-        {/* Video Area */}
-        {callRequest.call_type === 'video' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Local Video */}
-            <div className="relative bg-gray-900 rounded-lg overflow-hidden aspect-video">
-              <div ref={localVideoRef} className="w-full h-full" />
-              <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-xs">
-                You
-              </div>
-              {!callState.isVideoEnabled && (
-                <div className="absolute inset-0 bg-gray-800 flex items-center justify-center">
-                  <VideoOff className="w-8 h-8 text-gray-400" />
-                </div>
-              )}
-            </div>
-
-            {/* Remote Video */}
-            <div className="relative bg-gray-900 rounded-lg overflow-hidden aspect-video">
+      {/* Video Display */}
+      {callRequest.call_type === 'video' && (
+        <div className="grid grid-cols-2 gap-4 h-full flex-1 min-h-0">
+          {/* Remote Video */}
+          <Card className="relative overflow-hidden bg-black">
+            <CardContent className="p-0 h-full">
               <div ref={remoteVideoRef} className="w-full h-full" />
-              <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-xs">
-                {userDisplayName}
-              </div>
-              {callState.remoteUsers.length === 0 && (
-                <div className="absolute inset-0 bg-gray-800 flex items-center justify-center">
-                  <Users className="w-8 h-8 text-gray-400" />
-                  <span className="ml-2 text-gray-400">Waiting for user...</span>
+              {!callState.remoteUsers.length && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Avatar className="h-24 w-24">
+                    <AvatarImage src={userAvatar || undefined} />
+                    <AvatarFallback>{userName[0]}</AvatarFallback>
+                  </Avatar>
                 </div>
               )}
-            </div>
-          </div>
-        )}
+              <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-sm">
+                {userName}
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* Call Controls */}
-        <div className="flex justify-center space-x-4">
-          {isConnecting ? (
-            <Button disabled>
-              <Clock className="w-4 h-4 mr-2 animate-spin" />
-              Connecting...
-            </Button>
-          ) : callState.isJoined ? (
-            <>
+          {/* Local Video */}
+          <Card className="relative overflow-hidden bg-black">
+            <CardContent className="p-0 h-full">
+              <div ref={localVideoRef} className="w-full h-full" />
+              {!callState.localVideoTrack && (
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
+                  <Avatar className="h-16 w-16">
+                    <AvatarFallback>You</AvatarFallback>
+                  </Avatar>
+                </div>
+              )}
+              <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-sm">
+                You {callState.isVideoEnabled ? '(Video On)' : '(Video Off)'}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Audio Call Display */}
+      {callRequest.call_type === 'audio' && (
+        <Card className="flex-1 flex items-center justify-center">
+          <CardContent className="p-8">
+            <div className="flex flex-col items-center space-y-4">
+              <Avatar className="h-24 w-24">
+                <AvatarImage src={userAvatar || undefined} />
+                <AvatarFallback>{userName[0]}</AvatarFallback>
+              </Avatar>
+              <div className="text-center">
+                <h3 className="text-lg font-semibold">{userName}</h3>
+                <p className="text-sm text-muted-foreground">Audio Call</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Call Controls */}
+      <div className="flex justify-center space-x-4 flex-shrink-0 pb-4">
               <Button
-                variant={callState.isMuted ? "destructive" : "outline"}
+          variant={callState.isMuted ? 'destructive' : 'outline'}
                 size="lg"
-                onClick={handleToggleMute}
+          onClick={() => {
+            console.log('🔇 Mute button clicked (expert side)', {
+              hasAudioTrack: !!callState.localAudioTrack,
+              isMuted: callState.isMuted,
+              isJoined: callState.isJoined
+            });
+            if (callState.localAudioTrack) {
+              toggleMute();
+            } else {
+              console.error('❌ Cannot toggle mute: audio track not available');
+            }
+          }}
+          disabled={!callState.localAudioTrack || !callState.isJoined}
+          title={callState.isMuted ? 'Unmute microphone' : 'Mute microphone'}
               >
                 {callState.isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
               </Button>
 
               {callRequest.call_type === 'video' && (
                 <Button
-                  variant={callState.isVideoEnabled ? "outline" : "destructive"}
+            variant={callState.isVideoEnabled ? 'outline' : 'destructive'}
                   size="lg"
-                  onClick={handleToggleVideo}
-                >
-                  {callState.isVideoEnabled ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
+            onClick={toggleVideo}
+            disabled={!callState.localVideoTrack}
+          >
+            {callState.isVideoEnabled ? (
+              <Video className="w-5 h-5" />
+            ) : (
+              <VideoOff className="w-5 h-5" />
+            )}
                 </Button>
               )}
 
               <Button
                 variant="destructive"
                 size="lg"
-                onClick={handleLeaveCall}
+          onClick={() => setShowEndCallConfirm(true)}
               >
                 <PhoneOff className="w-5 h-5 mr-2" />
                 End Call
               </Button>
-            </>
-          ) : (
-            <Button onClick={handleJoinCall}>
-              <Phone className="w-4 h-4 mr-2" />
-              Rejoin Call
-            </Button>
-          )}
         </div>
-      </CardContent>
-    </Card>
+
+      {/* End Call Confirmation */}
+    <AlertDialog open={showEndCallConfirm} onOpenChange={setShowEndCallConfirm}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>End Call?</AlertDialogTitle>
+          <AlertDialogDescription>
+              Are you sure you want to end this call? Duration: {formatDuration(callDuration)}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleLeaveCall}>End Call</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </div>
   );
 };
 
 export default AgoraCallInterface;
+
