@@ -60,8 +60,6 @@ import ReferralProgram from './pages/ReferralProgram';
 import AuthCallback from './pages/AuthCallback';
 import ResendVerification from './pages/ResendVerification';
 import EmailVerificationTest from './pages/EmailVerificationTest';
-// TODO: Re-implement call interface demo
-// import { CallInterfaceDemo } from '@/components/call-interface/CallInterfaceDemo';
 import { MobileAppDemo } from '@/mobile-app/index';
 import SouliLanding from './pages/SouliLanding';
 import SouliTeam from './pages/SouliTeam';
