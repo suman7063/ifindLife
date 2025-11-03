@@ -72,17 +72,46 @@ export const ProfileCompletionStep: React.FC<ProfileCompletionStepProps> = ({
       }
 
       // Update expert account
-      const { error } = await supabase
-        .from('expert_accounts')
-        .update({
-          bio: profile.bio,
-          specialization: profile.specialization,
-          profile_picture: profilePictureUrl,
-          profile_completed: true
-        })
-        .eq('id', expertAccount.id);
+      // Use auth_id for the update to ensure RLS policy works correctly
+      const updateData = {
+        bio: profile.bio,
+        specialization: profile.specialization,
+        profile_picture: profilePictureUrl,
+        profile_completed: true
+      };
 
-      if (error) throw error;
+      console.log('Updating expert account:', {
+        expertAccountId: expertAccount.id,
+        authId: expertAccount.auth_id,
+        updateData
+      });
+
+      const { error, data } = await supabase
+        .from('expert_accounts')
+        .update(updateData)
+        .eq('auth_id', expertAccount.auth_id || expertAccount.id) // Try auth_id first, fallback to id
+        .select();
+
+      if (error) {
+        console.error('Error updating expert account:', error);
+        console.error('Trying with id instead...');
+        
+        // Fallback: try with id if auth_id doesn't work
+        const { error: error2, data: data2 } = await supabase
+          .from('expert_accounts')
+          .update(updateData)
+          .eq('id', expertAccount.id)
+          .select();
+        
+        if (error2) {
+          console.error('Error updating with id:', error2);
+          throw error2;
+        }
+        
+        console.log('Profile updated successfully with id:', data2);
+      } else {
+        console.log('Profile updated successfully with auth_id:', data);
+      }
 
       toast.success('Profile updated successfully!');
       onComplete();

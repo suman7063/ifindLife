@@ -47,7 +47,9 @@ export function useExpertData({ serviceId, specialization }: UseExpertDataProps 
       verified: Boolean(dbExpert.verified),
       status: isApproved && presence?.status === 'available' ? 'online' : 'offline',
       waitTime: isApproved && presence?.isAvailable ? 'Available Now' : 'Not Available',
-      dbStatus: dbExpert.status
+      dbStatus: dbExpert.status,
+      pricing_set: Boolean(dbExpert.pricing_set),
+      availability_set: Boolean(dbExpert.availability_set)
     };
   };
 

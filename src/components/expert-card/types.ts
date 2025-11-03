@@ -19,6 +19,9 @@ export interface ExpertCardData {
   rating?: number;
   reviewCount?: number;
   dbStatus?: string; // Database status field (approved, pending, etc.)
+  pricing_set: boolean;
+  availability_set: boolean;
+  profile_completed?: boolean; // Profile completion status
 }
 
 export interface ExpertActionsProps {

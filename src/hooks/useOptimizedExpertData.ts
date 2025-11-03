@@ -9,9 +9,29 @@ interface UseOptimizedExpertDataProps {
   enablePresenceChecking?: boolean;
 }
 
+// Type for raw expert data from database
+type RawExpertData = {
+  id: string;
+  auth_id: string;
+  name: string;
+  profile_picture?: string;
+  specialization?: string;
+  experience?: string | number;
+  average_rating?: number;
+  reviews_count?: number;
+  verified?: boolean;
+  category?: string;
+  status: string;
+  profile_completed?: boolean;
+  pricing_set?: boolean;
+  availability_set?: boolean;
+  selected_services?: number[];
+  [key: string]: unknown;
+};
+
 // Global cache to prevent duplicate API calls - Clear cache by setting timestamp to 0
-let expertDataCache: {
-  data: any[] | null;
+const expertDataCache: {
+  data: RawExpertData[] | null;
   timestamp: number;
   loading: boolean;
 } = {
@@ -30,28 +50,21 @@ export function useOptimizedExpertData({
   const [experts, setExperts] = useState<ExpertCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [rawExperts, setRawExperts] = useState<any[]>([]);
+  const [rawExperts, setRawExperts] = useState<RawExpertData[]>([]);
 
-  // Safe context access to prevent errors when provider is not available
-  const presenceContext = (() => {
-    try {
-      return useExpertPresence();
-    } catch (error) {
-      console.warn('ExpertPresence context not available, using fallback');
-      return {
-        getExpertPresence: () => null,
-        bulkCheckPresence: () => Promise.resolve(),
-        isLoading: false,
-        version: 0
-      } as any;
-    }
-  })();
+  // Call hook unconditionally at top level
+  const presenceContext = useExpertPresence();
   
-  const { getExpertPresence, bulkCheckPresence, version } = presenceContext;
+  const { getExpertPresence, bulkCheckPresence, version } = presenceContext || {
+    getExpertPresence: () => null,
+    bulkCheckPresence: () => Promise.resolve(),
+    isLoading: false,
+    version: 0
+  };
 
   // Memoized expert mapping to prevent unnecessary recalculations
   const mapDbExpertToExpertCard = useMemo(() => {
-    return (dbExpert: any): ExpertCardData => {
+    return (dbExpert: RawExpertData): ExpertCardData => {
       const expertId = String(dbExpert.id); // UUID from expert_accounts.id
       const expertAuthId = dbExpert.auth_id;
       const isApproved = dbExpert.status === 'approved';
@@ -75,7 +88,10 @@ export function useOptimizedExpertData({
         waitTime: isApproved && isAvailable ? 'Available Now' : 
                   isApproved && expertStatus === 'away' ? 'Away' : 'Not Available',
         category: dbExpert.category || 'listening-volunteer',
-        dbStatus: dbExpert.status
+        dbStatus: dbExpert.status,
+        profile_completed: Boolean(dbExpert.profile_completed),
+        pricing_set: Boolean(dbExpert.pricing_set),
+        availability_set: Boolean(dbExpert.availability_set)
       };
     };
   }, [getExpertPresence, version]);
@@ -168,7 +184,12 @@ export function useOptimizedExpertData({
   useEffect(() => {
     if (rawExperts.length > 0) {
       const formattedExperts = rawExperts.map(expert => mapDbExpertToExpertCard(expert));
-      setExperts(formattedExperts);
+      // Filter to only show experts with profile_completed === true
+      // If profile_completed field doesn't exist (migration not applied), show all experts for backward compatibility
+      const filteredExperts = formattedExperts.filter(expert => 
+        expert.profile_completed === true || expert.profile_completed === undefined
+      );
+      setExperts(filteredExperts);
     }
   }, [rawExperts, mapDbExpertToExpertCard]);
 

@@ -19,7 +19,8 @@ RETURNS TABLE(
   category text,
   languages text[],
   selected_services integer[],
-  status text
+  status text,
+  profile_completed boolean
 )
 LANGUAGE plpgsql
 STABLE
@@ -41,9 +42,11 @@ BEGIN
     ea.category,
     ea.languages,
     ea.selected_services,
-    'approved'::text AS status
+    'approved'::text AS status,
+    COALESCE(ea.profile_completed, false) AS profile_completed
   FROM public.expert_accounts ea
   WHERE ea.status = 'approved'
+    AND COALESCE(ea.profile_completed, false) = true
   ORDER BY ea.created_at DESC;
 END;
 $$;

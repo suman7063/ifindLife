@@ -8,14 +8,16 @@ import { usePublicExpertsData } from '@/hooks/usePublicExpertsData';
 import { useExpertPresence } from '@/contexts/ExpertPresenceContext';
 import { supabase } from '@/integrations/supabase/client';
 
-const ENABLE_POLLING = (import.meta as any).env?.VITE_PRESENCE_POLLING === 'true';
+const ENABLE_POLLING = (import.meta.env as Record<string, string>)?.VITE_PRESENCE_POLLING === 'true';
 
 const ExpertsOnlineSection: React.FC = () => {
   const navigate = useNavigate();
   const { experts: allExperts, loading } = usePublicExpertsData();
+  console.log('5555555555', allExperts);
   const { bulkCheckPresence, getExpertPresence, version } = useExpertPresence();
   
   const approvedExperts = allExperts.filter(expert => expert.dbStatus === 'approved');
+  console.log(approvedExperts,"approvedExperts")
 
   const { onlineExperts, offlineExperts } = useMemo(() => {
     const online: typeof approvedExperts = [];

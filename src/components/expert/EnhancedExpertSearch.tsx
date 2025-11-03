@@ -453,7 +453,9 @@ export const EnhancedExpertSearch: React.FC = () => {
                     price: 50, // This should come from pricing data
                     verified: true,
                     status: 'online',
-                    waitTime: 'Available Now'
+                    waitTime: 'Available Now',
+                    pricing_set: false,
+                    availability_set: false
                   }}
                   onConnectNow={(type) => {
                     console.log(`Connecting to ${expert.name} via ${type}`);

@@ -60,6 +60,8 @@ const ExpertLogin: React.FC = () => {
     
     try {
       const result = await login(email, password, { asExpert: true });
+      console.log(result,"result")
+      console.log('ExpertLogin: Login result:', result);
       
       if (result.success) {
         toast.success('Login successful!');
@@ -71,14 +73,28 @@ const ExpertLogin: React.FC = () => {
         
         return true;
       } else {
-        setLoginError(result.error || 'Login failed. Please check your credentials and try again.');
-        toast.error(result.error || 'Login failed. Please check your credentials and try again.', { duration: 3000 });
+        // Use the specific error message from the login function
+        const errorMsg = result.error || 'Login failed. Please check your credentials and try again.';
+        console.log('ExpertLogin: Login failed with error:', errorMsg);
+        setLoginError(errorMsg);
+        
+        // Only show toast for non-approval errors to avoid duplicate messages
+        if (!errorMsg.includes('pending') && !errorMsg.includes('disapproved') && !errorMsg.includes('suspended') && !errorMsg.includes('not approved')) {
+          toast.error(errorMsg, { duration: 3000 });
+        }
+        
         return false;
       }
     } catch (error) {
       console.error('Login error:', error);
-      setLoginError('An error occurred during login. Please try again.');
-      toast.error('An error occurred during login. Please try again.');
+      const errorMsg = error instanceof Error ? error.message : 'An error occurred during login. Please try again.';
+      setLoginError(errorMsg);
+      
+      // Only show toast for non-approval errors
+      if (!errorMsg.includes('pending') && !errorMsg.includes('disapproved') && !errorMsg.includes('suspended') && !errorMsg.includes('not approved')) {
+        toast.error(errorMsg);
+      }
+      
       return false;
     } finally {
       setIsLoggingIn(false);
