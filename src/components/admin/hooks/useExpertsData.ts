@@ -125,12 +125,6 @@ export function useExpertsData(
           const { data: expertAccountsData, error: expertAccountsError } = await supabase
             .from('expert_accounts')
             .select('*');
-          
-          console.log('Supabase expert_accounts response:', { 
-            count: expertAccountsData?.length, 
-            error: expertAccountsError ? expertAccountsError.message : null 
-          });
-          
           if (expertAccountsError) {
             // Check for specific error types that might indicate configuration issues
             if (expertAccountsError.code === '42P17' || expertAccountsError.message?.includes('recursion')) {

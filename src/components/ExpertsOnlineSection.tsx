@@ -13,11 +13,10 @@ const ENABLE_POLLING = (import.meta.env as Record<string, string>)?.VITE_PRESENC
 const ExpertsOnlineSection: React.FC = () => {
   const navigate = useNavigate();
   const { experts: allExperts, loading } = usePublicExpertsData();
-  console.log('5555555555', allExperts);
   const { bulkCheckPresence, getExpertPresence, version } = useExpertPresence();
   
   const approvedExperts = allExperts.filter(expert => expert.dbStatus === 'approved');
-  console.log(approvedExperts,"approvedExperts")
+
 
   const { onlineExperts, offlineExperts } = useMemo(() => {
     const online: typeof approvedExperts = [];

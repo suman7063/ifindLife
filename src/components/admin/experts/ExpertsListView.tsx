@@ -45,8 +45,7 @@ const ExpertsListView: React.FC<ExpertsListViewProps> = ({
     try {
       setLoading(true);
       setError(null);
-      
-      console.log('ExpertsListView: Fetching experts from expert_accounts...');
+          
       
       const { data, error } = await supabase
         .rpc('admin_list_approved_experts');
@@ -56,7 +55,6 @@ const ExpertsListView: React.FC<ExpertsListViewProps> = ({
         throw error;
       }
       
-      console.log('ExpertsListView: Found approved experts:', data?.length || 0);
       setExperts(data as AdminExpert[] || []);
       
     } catch (error) {

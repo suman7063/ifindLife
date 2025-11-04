@@ -40,7 +40,7 @@ const ExpertsEditor: React.FC<ExpertsEditorProps> = ({
 
   const handleViewDetails = (expert: Expert) => {
     // For now, just log the expert details
-    console.log('View expert details:', expert);
+    console.warn('View expert details:', expert);
   };
   
   if (loading) {

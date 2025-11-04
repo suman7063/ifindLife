@@ -100,12 +100,11 @@ export const useAdminContentData = () => {
   }, []);
 
   const onRefresh = () => {
-    console.log('Admin content refresh requested');
     // Reload all data
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-      console.log('Admin content refreshed');
+
     }, 1000);
   };
 
