@@ -9,6 +9,15 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    // Allow external hosts for tunneling (ngrok, cloudflare, localtunnel, etc.)
+    allowedHosts: [
+      ".ngrok.io",
+      ".ngrok-free.app",
+      ".trycloudflare.com",
+      ".loca.lt",
+      ".localtunnel.me",
+      "localhost",
+    ],
   },
   build: {
     // Generate source maps for better debugging

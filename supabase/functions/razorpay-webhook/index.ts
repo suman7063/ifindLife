@@ -130,8 +130,35 @@ serve(async (req) => {
 
     // Verify webhook signature for security
     const signature = req.headers.get('x-razorpay-signature')
+    const body = await req.text()
+    
+    // Log webhook attempt even if signature fails (for debugging)
+    let webhookLogId: string | null = null
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
+    
     if (!signature) {
       console.error('Missing Razorpay signature header')
+      // Log failed attempt
+      try {
+        const { data } = await supabaseClient
+          .from('webhook_logs')
+          .insert({
+            provider: 'razorpay',
+            event_type: 'unknown',
+            payload: { error: 'Missing signature header', body: body.substring(0, 500) },
+            processed_at: new Date().toISOString(),
+            status: 'failed'
+          })
+          .select()
+          .single()
+        webhookLogId = data?.id || null
+      } catch (e) {
+        console.error('Failed to log webhook error:', e)
+      }
+      
       return new Response(
         JSON.stringify({ error: 'Missing signature' }),
         { 
@@ -141,11 +168,25 @@ serve(async (req) => {
       )
     }
 
-    const body = await req.text()
     const webhookSecret = Deno.env.get('RAZORPAY_WEBHOOK_SECRET')
     
     if (!webhookSecret) {
       console.error('Razorpay webhook secret not configured')
+      // Log failed attempt
+      try {
+        await supabaseClient
+          .from('webhook_logs')
+          .insert({
+            provider: 'razorpay',
+            event_type: 'unknown',
+            payload: { error: 'Webhook secret not configured' },
+            processed_at: new Date().toISOString(),
+            status: 'failed'
+          })
+      } catch (e) {
+        console.error('Failed to log webhook error:', e)
+      }
+      
       return new Response(
         JSON.stringify({ error: 'Webhook secret not configured' }),
         { 
@@ -155,13 +196,51 @@ serve(async (req) => {
       )
     }
 
+    // Razorpay sends signatures in format: "signature1,signature2" (comma-separated)
+    // We need to check if any of the signatures match
+    const signatures = signature.split(',').map(s => s.trim())
+    
     // Verify signature using HMAC SHA256
     const expectedSignature = createHmac('sha256', webhookSecret)
       .update(body)
       .digest('hex')
 
-    if (expectedSignature !== signature) {
-      console.error('Invalid webhook signature')
+    // Check if any signature matches
+    const isValidSignature = signatures.some(sig => {
+      // Razorpay uses format: "signature1|key_id1,signature2|key_id2"
+      // We need to extract just the signature part (before |)
+      const sigPart = sig.split('|')[0].trim()
+      return sigPart === expectedSignature || sig === expectedSignature
+    })
+
+    if (!isValidSignature) {
+      console.error('Invalid webhook signature', {
+        received: signature,
+        expected: expectedSignature,
+        signatures: signatures,
+        bodyLength: body.length
+      })
+      
+      // Log failed attempt with details (but not full body for security)
+      try {
+        await supabaseClient
+          .from('webhook_logs')
+          .insert({
+            provider: 'razorpay',
+            event_type: 'unknown',
+            payload: { 
+              error: 'Invalid signature',
+              receivedSignature: signature.substring(0, 50) + '...',
+              expectedSignature: expectedSignature.substring(0, 50) + '...',
+              bodyPreview: body.substring(0, 200)
+            },
+            processed_at: new Date().toISOString(),
+            status: 'failed'
+          })
+      } catch (e) {
+        console.error('Failed to log webhook error:', e)
+      }
+      
       return new Response(
         JSON.stringify({ error: 'Invalid signature' }),
         { 
@@ -173,12 +252,12 @@ serve(async (req) => {
 
     // Parse webhook payload
     const payload: RazorpayWebhookPayload = JSON.parse(body)
-
-
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    
+    console.log('✅ Webhook signature verified successfully', {
+      event: payload.event,
+      orderId: payload.payload?.payment?.entity?.order_id || payload.payload?.order?.entity?.id,
+      paymentId: payload.payload?.payment?.entity?.id
+    })
 
     // Handle different webhook events
     switch (payload.event) {
@@ -298,7 +377,7 @@ serve(async (req) => {
         .insert({
           provider: 'razorpay',
           event_type: 'error',
-          payload: { error: error.message },
+          payload: { error: String(error), stack: error instanceof Error ? error.stack : undefined },
           processed_at: new Date().toISOString(),
           status: 'failed'
         })
@@ -323,6 +402,165 @@ async function handlePaymentCaptured(supabase: any, payload: RazorpayWebhookPayl
 
   
   try {
+    console.log(`🔍 Processing payment.captured for order: ${orderId}`);
+    console.log(`📋 Payment details:`, {
+      paymentId: payment.id,
+      amount: payment.amount,
+      currency: payment.currency,
+      orderId: payment.order_id,
+      notes: payment.notes,
+    });
+
+    // Get order details to find user_id
+    const { data: orderData, error: orderError } = await supabase
+      .from('orders')
+      .select('user_id, amount, currency, item_type')
+      .eq('razorpay_order_id', orderId)
+      .single()
+
+    if (orderError) {
+      console.error('❌ Order not found in database:', orderError);
+      console.log('📋 Attempting to find order by payment notes...');
+    } else {
+      console.log('✅ Order found:', {
+        user_id: orderData.user_id,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        item_type: orderData.item_type,
+      });
+    }
+
+    // If this is a wallet top-up (purchase), add credits to wallet
+    // Check if payment notes indicate wallet top-up
+    const isWalletTopUp = payment.notes?.purpose === 'wallet_topup' || 
+                          payment.notes?.itemType === 'wallet' ||
+                          orderData?.item_type === 'wallet' ||
+                          (!payment.notes?.appointment_id && !payment.notes?.callSessionId) // If no appointment_id or callSessionId, likely wallet top-up
+
+    console.log('🔍 Wallet top-up detection:', {
+      isWalletTopUp,
+      purpose: payment.notes?.purpose,
+      itemType: payment.notes?.itemType,
+      orderItemType: orderData?.item_type,
+      hasAppointmentId: !!payment.notes?.appointment_id,
+      hasCallSessionId: !!payment.notes?.callSessionId,
+    });
+
+    // Get user_id from order notes or order table
+    let userId = payment.notes?.user_id;
+    
+    if (!userId && orderData?.user_id) {
+      userId = orderData.user_id;
+      console.log('✅ Found user_id from order table:', userId);
+    }
+
+    if (!userId) {
+      console.error('❌ No user_id found in payment notes or order table');
+    }
+
+    if (!isWalletTopUp) {
+      console.log('⚠️ Not a wallet top-up, skipping credit addition');
+    }
+
+    if (!userId) {
+      console.error('❌ Cannot process wallet top-up: user_id is missing');
+    }
+
+    if (isWalletTopUp && userId) {
+      const amount = payment.amount / 100 // Convert from paise/cents to currency units
+      const currency = payment.currency
+
+      console.log(`💰 Processing wallet top-up: ${amount} ${currency} for user ${userId}`);
+      console.log(`📊 Amount details:`, {
+        amountInPaise: payment.amount,
+        amountInCurrencyUnits: amount,
+        currency: currency,
+      });
+
+      // Add credits directly to wallet (webhook has service role access)
+      try {
+        // Calculate expiry (12 months from now)
+        const expiresAt = new Date()
+        expiresAt.setMonth(expiresAt.getMonth() + 12)
+
+        // Create credit transaction
+        const { data: transactionData, error: transactionError } = await supabase
+          .from('wallet_transactions')
+          .insert({
+            user_id: userId,
+            type: 'credit',
+            amount: amount,
+            reason: 'purchase',
+            reference_id: payment.id,
+            reference_type: 'razorpay_payment',
+            description: `Wallet top-up via ${currency} payment`,
+            expires_at: expiresAt.toISOString(),
+            metadata: {}
+          })
+          .select()
+          .single()
+
+        if (transactionError) {
+          console.error('❌ Failed to create wallet transaction:', transactionError);
+          throw transactionError;
+        }
+
+        console.log('✅ Wallet transaction created:', transactionData.id);
+
+        // Calculate new balance (credits - debits, only non-expired credits count)
+        const { data: creditData, error: creditError } = await supabase
+          .from('wallet_transactions')
+          .select('amount')
+          .eq('user_id', userId)
+          .eq('type', 'credit')
+          .gte('expires_at', new Date().toISOString())
+
+        const { data: debitData, error: debitError } = await supabase
+          .from('wallet_transactions')
+          .select('amount')
+          .eq('user_id', userId)
+          .eq('type', 'debit')
+
+        if (creditError || debitError) {
+          console.warn('⚠️ Failed to calculate balance:', creditError || debitError);
+        } else {
+          const credits = creditData?.reduce((sum: number, t: { amount: number }) => sum + Number(t.amount), 0) || 0;
+          const debits = debitData?.reduce((sum: number, t: { amount: number }) => sum + Number(t.amount), 0) || 0;
+          const newBalance = credits - debits;
+          
+          // Update user's wallet_balance
+          const { error: updateError } = await supabase
+            .from('users')
+            .update({ wallet_balance: newBalance })
+            .eq('id', userId)
+
+          if (updateError) {
+            console.warn('⚠️ Failed to update wallet_balance:', updateError);
+          } else {
+            console.log('✅ Wallet balance updated:', newBalance, `(Credits: ${credits}, Debits: ${debits})`);
+          }
+        }
+        
+        // Update order status
+        const { error: orderUpdateError } = await supabase
+          .from('orders')
+          .update({
+            status: 'completed',
+            razorpay_payment_id: payment.id
+          })
+          .eq('razorpay_order_id', orderId)
+
+        if (orderUpdateError) {
+          console.error('❌ Failed to update order status:', orderUpdateError);
+        } else {
+          console.log('✅ Order status updated to completed');
+        }
+      } catch (walletError) {
+        console.error('❌ Error adding credits to wallet:', walletError)
+        throw walletError
+      }
+    }
+
     // Update call sessions if this is a call payment
     const { data: callSession, error: callSessionError } = await supabase
       .from('call_sessions')
@@ -337,6 +575,12 @@ async function handlePaymentCaptured(supabase: any, payload: RazorpayWebhookPayl
       .single()
 
     if (callSession) {
+      // If payment was via gateway (not wallet), add credits equivalent for future refunds
+      // This ensures refunds can be processed even if payment was via gateway
+      if (callSession.payment_method === 'gateway' && callSession.user_id) {
+        // Note: We don't add credits here for bookings - credits are only added for wallet top-ups
+        // Bookings deduct from wallet if using wallet, or process via gateway directly
+      }
       return
     }
 

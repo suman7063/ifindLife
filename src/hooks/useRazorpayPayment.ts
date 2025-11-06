@@ -10,8 +10,8 @@ declare global {
 }
 
 interface PaymentDetails {
-  amount: number;
-  currency: 'INR' | 'USD';
+  amount: number; // Amount in currency units (e.g., 500 for ₹500 INR, 10 for $10 USD)
+  currency: 'INR' | 'USD'; // Currency code - defaults to 'INR' if not specified
   description: string;
   expertId?: string;
   serviceId?: string;
@@ -50,6 +50,25 @@ export const useRazorpayPayment = () => {
         throw new Error('User not authenticated');
       }
 
+      // Validate amount
+      if (!paymentDetails.amount || paymentDetails.amount <= 0) {
+        throw new Error('Invalid payment amount');
+      }
+
+      // Razorpay only supports INR for Indian merchants
+      // Always use INR regardless of user's preferred currency
+      // If user currency is USD, we'll need to convert the amount to INR
+      const currency = 'INR'; // Force INR for Razorpay
+      
+      // Convert amount to INR if needed
+      // If user passed USD amount, convert to INR (approximate rate: 1 USD = 83 INR)
+      let amountInINR = paymentDetails.amount;
+      if (paymentDetails.currency === 'USD') {
+        // Convert USD to INR (approximate rate: 1 USD = 83 INR)
+        amountInINR = Math.round(paymentDetails.amount * 83);
+      }
+      // If already INR or not specified, use as-is
+
       // Initialize Razorpay
       const res = await initializeRazorpay();
       if (!res) {
@@ -57,36 +76,133 @@ export const useRazorpayPayment = () => {
       }
 
       // Create order on backend
+      // Pass amount in INR (e.g., 500 for ₹500)
+      // Backend will convert to paise (500 * 100 = 50000 paise)
+      // IMPORTANT: Always use INR currency for Razorpay (Indian payment gateway)
       const { data: orderData, error: orderError } = await supabase.functions.invoke(
         'create-razorpay-order',
         {
           body: {
-            amount: paymentDetails.amount,
-            currency: paymentDetails.currency,
+            amount: amountInINR, // Amount in INR (e.g., 500 for ₹500)
+            currency: 'INR', // Always use INR for Razorpay
             description: paymentDetails.description,
             expertId: paymentDetails.expertId,
             serviceId: paymentDetails.serviceId,
             callSessionId: paymentDetails.callSessionId,
+            itemType: !paymentDetails.expertId && !paymentDetails.serviceId && !paymentDetails.callSessionId 
+              ? 'wallet' 
+              : 'consultation', // Determine if this is a wallet top-up
           },
         }
       );
 
       if (orderError) {
+        console.error('❌ Order creation error:', orderError);
         throw orderError;
       }
 
       if (!orderData?.id) {
+        console.error('❌ Order creation failed - missing order ID:', orderData);
         throw new Error('Failed to create payment order');
       }
 
+      // Validate order data before proceeding
+      if (!orderData.razorpayKeyId) {
+        console.error('❌ Missing Razorpay key ID in order response:', orderData);
+        throw new Error('Payment gateway configuration error');
+      }
+
+      if (!orderData.amount || orderData.amount <= 0) {
+        console.error('❌ Invalid amount in order response:', orderData);
+        throw new Error('Invalid payment amount');
+      }
+
+      console.log('✅ Order received from backend:', {
+        orderId: orderData.id,
+        amount: orderData.amount,
+        amountInRupees: orderData.amount / 100,
+        currency: orderData.currency,
+        keyId: orderData.razorpayKeyId,
+        isTestMode: orderData.isTestMode,
+      });
+
+      // Show test mode indicator if in test mode
+      if (orderData.isTestMode) {
+        console.log('🧪 TEST MODE: Using Razorpay test keys - No real money will be charged');
+        toast.info('🧪 Test Mode: Using test payment gateway', {
+          description: 'No real money will be charged. Use test card: 4111 1111 1111 1111',
+          duration: 5000,
+        });
+      }
+
+      // Close any open dialogs before opening Razorpay modal to prevent overlap
+      const closeAllDialogs = () => {
+        // Find all Radix UI dialog roots with open state
+        const openDialogs = document.querySelectorAll('[data-radix-dialog-root][data-state="open"]');
+        openDialogs.forEach((dialogRoot) => {
+          // Find the close button within this dialog
+          const closeButton = dialogRoot.querySelector('[data-radix-dialog-close]');
+          if (closeButton) {
+            (closeButton as HTMLElement).click();
+          }
+        });
+        
+        // Also find dialogs by overlay and trigger escape
+        const dialogOverlays = document.querySelectorAll('[data-radix-dialog-overlay][data-state="open"]');
+        dialogOverlays.forEach((overlay) => {
+          // Create and dispatch escape key event
+          const escapeEvent = new KeyboardEvent('keydown', {
+            key: 'Escape',
+            code: 'Escape',
+            keyCode: 27,
+            bubbles: true,
+            cancelable: true,
+          });
+          overlay.dispatchEvent(escapeEvent);
+          
+          // Also try clicking the overlay to close (Radix UI behavior)
+          (overlay as HTMLElement).click();
+        });
+        
+        // Fallback: Find any elements with data-state="open" that look like dialogs
+        const anyOpenDialogs = document.querySelectorAll('[data-state="open"]');
+        anyOpenDialogs.forEach((element) => {
+          // Check if it's a dialog-related element
+          if (element.hasAttribute('data-radix-dialog-content') || 
+              element.hasAttribute('data-radix-dialog-overlay') ||
+              element.closest('[data-radix-dialog-root]')) {
+            const closeBtn = element.querySelector('[data-radix-dialog-close], button[aria-label*="Close"]');
+            if (closeBtn) {
+              (closeBtn as HTMLElement).click();
+            }
+          }
+        });
+      };
+
+      // Close dialogs before opening Razorpay
+      closeAllDialogs();
+      
+      // Small delay to ensure dialogs are closed and animations complete before Razorpay opens
+      await new Promise(resolve => setTimeout(resolve, 150));
+
       // Configure Razorpay options
+      // IMPORTANT: Always use INR currency for Razorpay (Indian payment gateway)
+      console.log('🔧 Razorpay Options:', {
+        key: orderData.razorpayKeyId,
+        amount: orderData.amount,
+        currency: 'INR',
+        order_id: orderData.id,
+        amountInPaise: orderData.amount,
+        amountInRupees: orderData.amount / 100,
+      });
+
       const options = {
         key: orderData.razorpayKeyId, // Use key from backend only
-        amount: orderData.amount,
-        currency: orderData.currency,
-        name: 'Expert Consultation',
+        amount: orderData.amount, // Amount in paise (from Razorpay order)
+        currency: 'INR', // Always use INR for Razorpay
+        name: 'iFindLife',
         description: paymentDetails.description,
-        order_id: orderData.id,
+        order_id: orderData.id, // Must match the order created on backend
         prefill: {
           email: user.email || '',
           name: user.user_metadata?.name || user.email || '',
@@ -94,6 +210,23 @@ export const useRazorpayPayment = () => {
         theme: {
           color: '#3B82F6',
         },
+        // Enable all payment methods - Razorpay will show all enabled methods
+        // NOTE: The payment methods shown depend on your Razorpay Dashboard settings
+        // To enable UPI, Wallets, Net Banking: Go to Razorpay Dashboard > Settings > Payment Methods
+        // If only Cards show, check your Razorpay account configuration
+        method: {
+          upi: true,           // UPI (Google Pay, PhonePe, Paytm, etc.) - Requires Razorpay Dashboard activation
+          card: true,          // Credit/Debit Cards (Visa, Mastercard, RuPay, etc.) - Usually enabled by default
+          netbanking: true,    // Net Banking (All major banks) - Requires Razorpay Dashboard activation
+          wallet: true,        // Wallets (Paytm, PhonePe, Freecharge, etc.) - Requires Razorpay Dashboard activation
+          emi: false,          // EMI (disabled)
+          paylater: false,     // Pay Later (disabled)
+        },
+        // NOTE: "Invalid VPA" error is Razorpay's built-in validation for UPI IDs
+        // Valid UPI format: username@bankname (e.g., "yourname@paytm", "yourname@ybl", "yourname@okaxis")
+        // This validation happens inside Razorpay's modal UI and cannot be controlled from our code
+        // Users must enter a valid UPI ID format to proceed with UPI payment
+
         handler: async (response: any) => {
           try {
             // Verify payment on backend
@@ -133,14 +266,97 @@ export const useRazorpayPayment = () => {
         },
       };
 
-      // Open Razorpay modal
-      const razorpay = new window.Razorpay(options);
-      razorpay.open();
+      // Open Razorpay modal with error handling
+      try {
+        const razorpay = new window.Razorpay(options);
+        
+        // Add additional error handlers
+        razorpay.on('payment.failed', (response: any) => {
+          console.error('❌ Razorpay payment failed:', {
+            error: response.error,
+            fullResponse: response,
+            orderId: orderData.id,
+            amount: orderData.amount,
+          });
+          
+          // Extract error message with better handling for different error types
+          let errorMessage = 'Payment failed. Please try again.';
+          let errorDetails = '';
+          
+          if (response.error) {
+            // Handle SERVER_ERROR specifically
+            if (response.error.code === 'SERVER_ERROR') {
+              errorMessage = response.error.description || 
+                'We are facing some trouble completing your request at the moment. Please try again shortly.';
+              errorDetails = 'This is a temporary server issue. Please wait a moment and try again.';
+            } else if (response.error.code === 'BAD_REQUEST_ERROR' || response.error.code === 'BAD_REQUEST') {
+              // Handle 400 Bad Request errors
+              if (response.error.reason === 'incorrect_card_details') {
+                // Specific handling for incorrect card details
+                errorMessage = response.error.description || 
+                  'You\'ve entered incorrect card details. Try again or retry the payment with another card or method.';
+                errorDetails = 'Please check: Card number, CVV, expiry date, and cardholder name. Use test card: 4111 1111 1111 1111 for testing.';
+              } else {
+                // Other bad request errors
+                errorMessage = response.error.description || 
+                  'Invalid payment details. Please check your card/UPI information and try again.';
+                errorDetails = 'Common causes: Invalid card number, expired card, incorrect CVV, or invalid UPI ID.';
+              }
+            } else {
+              // For other errors, use description or reason
+              errorMessage = response.error.description || 
+                             response.error.reason || 
+                             response.error.code ||
+                             errorMessage;
+              errorDetails = response.error.metadata?.step || '';
+            }
+          }
+          
+          console.error('❌ Payment Error Details:', {
+            code: response.error?.code,
+            description: response.error?.description,
+            reason: response.error?.reason,
+            step: response.error?.step,
+            source: response.error?.source,
+            metadata: response.error?.metadata,
+            orderId: response.error?.metadata?.order_id,
+            paymentId: response.error?.metadata?.payment_id,
+          });
+          
+          onFailure(new Error(errorMessage));
+          
+          // Show error toast with helpful description
+          toast.error(errorMessage, {
+            duration: response.error?.code === 'SERVER_ERROR' ? 8000 : 
+                     response.error?.reason === 'incorrect_card_details' ? 7000 : 5000,
+            description: errorDetails || 
+              (response.error?.code === 'SERVER_ERROR' 
+                ? 'This is a temporary issue. Please wait a moment and try again.'
+                : undefined),
+          });
+        });
 
-    } catch (error) {
+        razorpay.open();
+      } catch (razorpayError: any) {
+        console.error('Error opening Razorpay modal:', razorpayError);
+        throw new Error(razorpayError.message || 'Failed to open payment gateway');
+      }
+
+    } catch (error: any) {
       console.error('Payment processing error:', error);
+      
+      // Provide user-friendly error messages
+      let errorMessage = 'Failed to process payment';
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (error.error?.description) {
+        errorMessage = error.error.description;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
       onFailure(error);
-      toast.error('Failed to process payment');
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

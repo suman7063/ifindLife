@@ -1,9 +1,8 @@
 
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from 'react';
 import ExpertCardSimplified from '../expert-card/ExpertCardSimplified';
 import { ExpertCardData } from '../expert-card/types';
-import { toast } from 'sonner';
+import UnifiedExpertConnection from '../expert-connection/UnifiedExpertConnection';
 
 interface ExpertsGridProps {
   experts?: ExpertCardData[];
@@ -16,61 +15,8 @@ const ExpertsGrid: React.FC<ExpertsGridProps> = ({
   loading = false,
   onResetFilters
 }) => {
-  const navigate = useNavigate();
-  const [expertConnectOptions, setExpertConnectOptions] = useState<{[key: string]: boolean}>({});
-
   // Use provided experts or show empty state
   const displayExperts = experts;
-
-  const handleExpertCardClick = (expert: ExpertCardData) => {
-    console.log('Expert card clicked:', expert);
-    console.log('Expert ID:', expert.id);
-    console.log('Expert auth_id:', expert.auth_id);
-    
-    const expertId = expert.auth_id || expert.id;
-    console.log('Using expertId for navigation:', expertId);
-    
-    if (!expertId) {
-      console.error('No valid expert ID found:', expert);
-      toast.error('Unable to navigate to expert page - missing ID');
-      return;
-    }
-    
-    const targetUrl = `/experts/${expertId}`;
-    console.log('Navigating to:', targetUrl);
-    
-    // Navigate to dedicated expert page
-    navigate(targetUrl);
-  };
-
-  const handleConnectNow = (expert: ExpertCardData, type: 'video' | 'voice') => {
-    console.log(`Connecting to ${expert.name} via ${type}`);
-    toast.success(`Initiating ${type} call with ${expert.name}...`);
-    // Here you would integrate with Agora SDK for video/voice calls
-  };
-
-  const handleBookNow = (expert: ExpertCardData) => {
-    console.log(`Booking session with ${expert.name}`);
-    
-    // Navigate to expert's booking page with booking tab active
-    const expertUrl = `/experts/${expert.auth_id || expert.id}?book=true`;
-    window.location.href = expertUrl;
-  };
-
-  const handleShowConnectOptions = (expertId: string, show: boolean) => {
-    setExpertConnectOptions(prev => ({
-      ...prev,
-      [expertId]: show
-    }));
-  };
-
-  const handleModalConnectNow = (type: 'video' | 'voice') => {
-    // No longer needed since we don't have modals
-  };
-
-  const handleModalBookNow = () => {
-    // No longer needed since we don't have modals
-  };
 
   if (loading) {
     return (
@@ -103,22 +49,25 @@ const ExpertsGrid: React.FC<ExpertsGridProps> = ({
   }
 
   return (
-    <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {displayExperts.map((expert) => (
-          <ExpertCardSimplified
-            key={expert.id.toString()}
-            expert={expert}
-            onClick={() => handleExpertCardClick(expert)}
-            onConnectNow={(type) => handleConnectNow(expert, type)}
-            onBookNow={() => handleBookNow(expert)}
-            showConnectOptions={expertConnectOptions[expert.id.toString()] || false}
-            onShowConnectOptions={(show) => handleShowConnectOptions(expert.id.toString(), show)}
-            className="h-full"
-          />
-        ))}
-      </div>
-    </>
+    <UnifiedExpertConnection serviceTitle="Expert Consultation" serviceId="consultation">
+      {({ state, handleExpertCardClick, handleConnectNow, handleBookNow, handleChat, handleShowConnectOptions }) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {displayExperts.map((expert) => (
+            <ExpertCardSimplified
+              key={expert.id.toString()}
+              expert={expert}
+              onClick={() => handleExpertCardClick(expert)}
+              onConnectNow={(type) => handleConnectNow(expert, type)}
+              onBookNow={() => handleBookNow(expert)}
+              onChat={() => handleChat(expert)}
+              showConnectOptions={state.expertConnectOptions[expert.id.toString()] || false}
+              onShowConnectOptions={(show) => handleShowConnectOptions(expert.id.toString(), show)}
+              className="h-full"
+            />
+          ))}
+        </div>
+      )}
+    </UnifiedExpertConnection>
   );
 };
 

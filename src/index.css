@@ -201,3 +201,28 @@
     @apply container mx-auto px-0;
   }
 }
+
+/* Ensure Razorpay modal appears above all other modals */
+@layer utilities {
+  /* Razorpay modal container - ensure it's above all other modals */
+  .razorpay-checkout-frame,
+  .razorpay-container,
+  iframe[src*="razorpay"],
+  [id^="razorpay-checkout"],
+  [class*="razorpay"] {
+    z-index: 9999 !important;
+  }
+  
+  /* Ensure Razorpay overlay is above everything */
+  .razorpay-checkout-overlay,
+  [class*="razorpay"][class*="overlay"] {
+    z-index: 9998 !important;
+  }
+  
+  /* When Razorpay is open, reduce z-index of other dialogs */
+  body:has(.razorpay-checkout-frame) [data-radix-dialog-overlay],
+  body:has(.razorpay-container) [data-radix-dialog-overlay],
+  body:has(iframe[src*="razorpay"]) [data-radix-dialog-overlay] {
+    z-index: 40 !important;
+  }
+}

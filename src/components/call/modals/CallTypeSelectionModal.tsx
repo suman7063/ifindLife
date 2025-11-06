@@ -8,6 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Video, Phone, Clock } from 'lucide-react';
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 interface CallTypeSelectionModalProps {
   isOpen: boolean;
@@ -15,6 +17,7 @@ interface CallTypeSelectionModalProps {
   expertName: string;
   expertPrice?: number;
   onStartCall: (callType: 'audio' | 'video', duration: number) => void;
+  walletBalance?: number;
 }
 
 const CallTypeSelectionModal: React.FC<CallTypeSelectionModalProps> = ({
@@ -22,14 +25,38 @@ const CallTypeSelectionModal: React.FC<CallTypeSelectionModalProps> = ({
   onClose,
   expertName,
   expertPrice = 30,
-  onStartCall
+  onStartCall,
+  walletBalance = 0
 }) => {
+  const navigate = useNavigate();
   const [callType, setCallType] = useState<'audio' | 'video'>('video');
   const [duration, setDuration] = useState(15); // minutes
 
   const durations = [5, 10, 15, 30, 60];
 
+  // Recalculate cost when duration changes
+  const estimatedCost = (duration * expertPrice) / 60;
+  const safeWalletBalance = typeof walletBalance === 'number' && !isNaN(walletBalance) ? walletBalance : 0;
+  const hasSufficientBalance = safeWalletBalance >= estimatedCost;
+  const balanceShortfall = Math.max(0, estimatedCost - safeWalletBalance);
+
   const handleStart = async () => {
+    // Check wallet balance first
+    if (!hasSufficientBalance) {
+      toast.error('Insufficient wallet balance', {
+        description: `You need ₹${balanceShortfall.toFixed(2)} more. Please recharge your wallet first.`,
+        action: {
+          label: 'Add Credits',
+          onClick: () => {
+            onClose();
+            navigate('/user-dashboard/wallet');
+          }
+        },
+        duration: 5000
+      });
+      return;
+    }
+
     // Check browser permissions
     try {
       if (callType === 'video') {
@@ -52,8 +79,6 @@ const CallTypeSelectionModal: React.FC<CallTypeSelectionModalProps> = ({
       }
     }
   };
-
-  const estimatedCost = (duration * expertPrice) / 60;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -116,11 +141,27 @@ const CallTypeSelectionModal: React.FC<CallTypeSelectionModalProps> = ({
           </div>
 
           {/* Cost Estimate */}
-          <div className="bg-muted p-4 rounded-lg">
+          <div className="bg-muted p-4 rounded-lg space-y-2">
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Estimated Cost:</span>
               <span className="text-lg font-semibold">₹{estimatedCost.toFixed(2)}</span>
             </div>
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-muted-foreground">Wallet Balance:</span>
+              <span className={hasSufficientBalance ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
+                ₹{safeWalletBalance.toFixed(2)}
+              </span>
+            </div>
+            {!hasSufficientBalance && (
+              <div className="text-xs text-red-600 bg-red-50 p-2 rounded">
+                Insufficient balance. Need ₹{balanceShortfall.toFixed(2)} more. Please recharge your wallet.
+              </div>
+            )}
+            {hasSufficientBalance && (
+              <div className="text-xs text-muted-foreground">
+                ₹{estimatedCost.toFixed(2)} will be deducted from your wallet before the call starts
+              </div>
+            )}
           </div>
 
           {/* Actions */}
@@ -128,9 +169,24 @@ const CallTypeSelectionModal: React.FC<CallTypeSelectionModalProps> = ({
             <Button variant="outline" onClick={onClose} className="flex-1">
               Cancel
             </Button>
-            <Button onClick={handleStart} className="flex-1">
-              Start Call
-            </Button>
+            {!hasSufficientBalance ? (
+              <Button 
+                onClick={() => {
+                  onClose();
+                  navigate('/user-dashboard/wallet');
+                }}
+                className="flex-1 bg-primary hover:bg-primary/90"
+              >
+                Recharge Wallet
+              </Button>
+            ) : (
+              <Button 
+                onClick={handleStart} 
+                className="flex-1"
+              >
+                Start Call
+              </Button>
+            )}
           </div>
         </div>
       </DialogContent>

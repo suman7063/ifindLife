@@ -10,6 +10,8 @@ import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { useExpertPricing } from '@/hooks/useExpertPricing';
 import { useExpertAvailability } from '@/hooks/useExpertAvailability';
 import { useRazorpayPayment } from '@/hooks/useRazorpayPayment';
+import { useWallet } from '@/hooks/useWallet';
+import PaymentMethodSelector from './PaymentMethodSelector';
 
 interface TimeSlot {
   id: string;
@@ -48,6 +50,13 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
     formatPrice, 
     getSlotPrice 
   } = useExpertPricing(expertId);
+
+  // Wallet integration
+  const { balance: walletBalance, deductCredits, checkBalance, loading: walletLoading } = useWallet();
+  const [paymentMethod, setPaymentMethod] = useState<'wallet' | 'gateway'>('gateway');
+  
+  // Ensure walletBalance is always a number
+  const safeWalletBalance = typeof walletBalance === 'number' && !isNaN(walletBalance) ? walletBalance : 0;
   
   console.log('🔧 EnhancedStreamlinedBooking: Hook results - pricing:', pricing, 'pricingLoading:', pricingLoading, 'userCurrency:', userCurrency);
 
@@ -291,6 +300,8 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
     const totalCost = calculateTotalCost();
     console.log('🔧 Payment: totalCost calculated:', totalCost);
     console.log('🔧 Payment: userCurrency:', userCurrency);
+    console.log('🔧 Payment: paymentMethod:', paymentMethod);
+    console.log('🔧 Payment: walletBalance:', safeWalletBalance);
     
     if (totalCost <= 0) {
       console.log('🔧 Payment: Invalid total cost, aborting');
@@ -298,65 +309,169 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
       return;
     }
 
+    // Check wallet balance if using wallet
+    if (paymentMethod === 'wallet') {
+      if (safeWalletBalance < totalCost) {
+        toast.error('Insufficient wallet balance. Please add credits or use payment gateway.');
+        return;
+      }
+      const hasBalance = await checkBalance(totalCost);
+      if (!hasBalance) {
+        toast.error('Insufficient wallet balance. Please add credits or use payment gateway.');
+        return;
+      }
+    }
+
     try {
       setLoading(true);
       console.log('🔧 Payment: Initiating payment process');
-      
-      // Process payment first using Razorpay
-      await processPayment(
-        {
-          amount: totalCost, // Amount in INR/EUR, edge function will convert to smallest unit
-          currency: userCurrency as 'INR' | 'USD',
-          description: `Booking ${selectedSlots.length} session(s) with ${expertName}`,
-          expertId: expert.auth_id
-        },
-        async (paymentId: string, orderId: string) => {
-          console.log('🔧 Payment: Payment successful:', paymentId, orderId);
-          // Payment successful, create appointments
-          const appointments = selectedSlots.map(slotId => {
-            const slot = availableSlots.find(s => s.id === slotId);
-            if (!slot) return null;
 
-            return {
-              user_id: user.id,
-              expert_id: expert.auth_id,
-              expert_name: expert.name,
-              appointment_date: selectedDate.toISOString().split('T')[0],
-              start_time: slot.start_time,
-              end_time: slot.end_time,
-              status: 'confirmed',
-              duration: 30,
-              payment_status: 'completed',
-              payment_id: paymentId,
-              razorpay_payment_id: paymentId,
-              order_id: orderId
-            };
-          }).filter(Boolean);
+      let paymentId: string | null = null;
+      let orderId: string | null = null;
 
-          const { data, error } = await supabase
-            .from('appointments')
-            .insert(appointments);
+      // Handle wallet payment
+      if (paymentMethod === 'wallet') {
+        console.log('🔧 Payment: Using wallet payment');
+        
+        // Create appointments first, then deduct credits
+        const appointments = selectedSlots.map(slotId => {
+          const slot = availableSlots.find(s => s.id === slotId);
+          if (!slot) return null;
 
-          if (error) {
-            console.error('Error creating appointments:', error);
-            throw error;
-          }
+          return {
+            user_id: user.id,
+            expert_id: expert.auth_id,
+            expert_name: expert.name,
+            appointment_date: selectedDate.toISOString().split('T')[0],
+            start_time: slot.start_time,
+            end_time: slot.end_time,
+            status: 'confirmed',
+            duration: 30,
+            payment_status: 'pending',
+            payment_method: 'wallet'
+          };
+        }).filter(Boolean);
 
-          toast.success(`Successfully booked ${selectedSlots.length} session(s)!`, {
-            description: `Total cost: ${formatPrice(totalCost)}`
-          });
-          
-          onBookingComplete();
-          
-          // Reset form
-          setSelectedSlots([]);
-          fetchAvailableTimeSlots(); // Refresh slots
-        },
-        (error: any) => {
-          console.error('Payment failed:', error);
-          toast.error('Payment failed. Please try again.');
+        const { data: appointmentData, error: appointmentError } = await supabase
+          .from('appointments')
+          .insert(appointments)
+          .select();
+
+        if (appointmentError) {
+          console.error('Error creating appointments:', appointmentError);
+          throw appointmentError;
         }
-      );
+
+        // Deduct credits from wallet with appointment reference
+        const appointmentIds = appointmentData?.map(a => a.id).join(',') || null;
+        const result = await deductCredits(
+          totalCost,
+          'booking',
+          appointmentData?.[0]?.id || null,
+          'appointment',
+          `Booking ${selectedSlots.length} session(s) with ${expertName}`
+        );
+
+        if (!result.success) {
+          // Rollback: delete appointments if wallet deduction fails
+          if (appointmentData) {
+            await supabase
+              .from('appointments')
+              .delete()
+              .in('id', appointmentData.map(a => a.id));
+          }
+          toast.error(result.error || 'Failed to deduct credits from wallet');
+          return;
+        }
+
+        // Update appointments with payment info
+        paymentId = `wallet_${Date.now()}`;
+        orderId = paymentId;
+
+        await supabase
+          .from('appointments')
+          .update({
+            payment_status: 'completed',
+            payment_id: paymentId,
+            order_id: orderId
+          })
+          .in('id', appointmentData.map(a => a.id));
+
+        console.log('🔧 Payment: Wallet deduction successful:', result);
+        
+        toast.success(`Successfully booked ${selectedSlots.length} session(s)!`, {
+          description: `Total cost: ${formatPrice(totalCost)} (Paid with wallet)`
+        });
+        
+        onBookingComplete();
+        setSelectedSlots([]);
+        fetchAvailableTimeSlots();
+        return;
+      } else {
+        // Process payment via Razorpay
+        console.log('🔧 Payment: Using Razorpay payment gateway');
+        
+        await processPayment(
+          {
+            amount: totalCost, // Amount in INR/EUR, edge function will convert to smallest unit
+            currency: userCurrency as 'INR' | 'USD',
+            description: `Booking ${selectedSlots.length} session(s) with ${expertName}`,
+            expertId: expert.auth_id
+          },
+          async (paymentIdReceived: string, orderIdReceived: string) => {
+            paymentId = paymentIdReceived;
+            orderId = orderIdReceived;
+            console.log('🔧 Payment: Payment successful:', paymentId, orderId);
+
+            // Create appointments after successful payment
+            const appointments = selectedSlots.map(slotId => {
+              const slot = availableSlots.find(s => s.id === slotId);
+              if (!slot) return null;
+
+              return {
+                user_id: user.id,
+                expert_id: expert.auth_id,
+                expert_name: expert.name,
+                appointment_date: selectedDate.toISOString().split('T')[0],
+                start_time: slot.start_time,
+                end_time: slot.end_time,
+                status: 'confirmed',
+                duration: 30,
+                payment_status: 'completed',
+                payment_method: 'gateway',
+                payment_id: paymentId,
+                razorpay_payment_id: paymentId,
+                order_id: orderId
+              };
+            }).filter(Boolean);
+
+            const { data, error } = await supabase
+              .from('appointments')
+              .insert(appointments)
+              .select();
+
+            if (error) {
+              console.error('Error creating appointments:', error);
+              toast.error('Failed to create appointments after payment');
+              throw error;
+            }
+
+            toast.success(`Successfully booked ${selectedSlots.length} session(s)!`, {
+              description: `Total cost: ${formatPrice(totalCost)}`
+            });
+            
+            onBookingComplete();
+            setSelectedSlots([]);
+            fetchAvailableTimeSlots();
+          },
+          (error: any) => {
+            console.error('Payment failed:', error);
+            toast.error('Payment failed. Please try again.');
+            setLoading(false);
+          }
+        );
+        return; // Exit early for Razorpay flow
+      }
     } catch (error) {
       console.error('Error booking appointments:', error);
       toast.error('Failed to initiate booking process');
@@ -518,10 +633,22 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
                    <span className="text-2xl font-bold text-ifind-teal">{formatPrice(calculateTotalCost())}</span>
                  </div>
               </div>
+
+              {/* Payment Method Selection */}
+              <div className="border-t border-ifind-teal/20 pt-4">
+                <PaymentMethodSelector
+                  selectedMethod={paymentMethod}
+                  onMethodChange={setPaymentMethod}
+                  walletBalance={safeWalletBalance}
+                  requiredAmount={calculateTotalCost()}
+                  currency={userCurrency || 'INR'}
+                  loading={loading || walletLoading}
+                />
+              </div>
               
                <Button
                 onClick={handleBookAppointments}
-                disabled={loading}
+                disabled={loading || walletLoading || (paymentMethod === 'wallet' && safeWalletBalance < calculateTotalCost())}
                 size="lg"
                 className="w-full bg-ifind-aqua hover:bg-ifind-aqua/90 text-white"
               >

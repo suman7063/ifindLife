@@ -1,0 +1,316 @@
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    // Get authenticated user
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: { Authorization: authHeader },
+        },
+      }
+    )
+
+    // Verify user
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser()
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const { action, ...params } = await req.json()
+
+    // Use service role for database operations
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
+
+    switch (action) {
+      case 'get_balance':
+        return await getWalletBalance(supabaseAdmin, user.id, corsHeaders)
+
+      case 'get_transactions':
+        return await getWalletTransactions(supabaseAdmin, user.id, params, corsHeaders)
+
+      case 'add_credits':
+        // This will be called after Razorpay payment success
+        // Amount should be in credits (1 credit = 1 currency unit)
+        return await addCredits(
+          supabaseAdmin,
+          user.id,
+          params.amount,
+          params.reason || 'purchase',
+          params.reference_id,
+          params.reference_type || 'razorpay_payment',
+          params.description,
+          corsHeaders
+        )
+
+      case 'deduct_credits':
+        // This will be called during booking
+        return await deductCredits(
+          supabaseAdmin,
+          user.id,
+          params.amount,
+          params.reason || 'booking',
+          params.reference_id,
+          params.reference_type || 'appointment',
+          params.description,
+          corsHeaders
+        )
+
+      default:
+        return new Response(
+          JSON.stringify({ error: 'Invalid action' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+    }
+  } catch (error) {
+    console.error('Wallet operations error:', error)
+    return new Response(
+      JSON.stringify({ error: 'Internal server error', details: error.message }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  }
+})
+
+async function getWalletBalance(supabase: any, userId: string, corsHeaders: any) {
+  try {
+    // Use the database function to calculate balance
+    const { data, error } = await supabase.rpc('get_wallet_balance', {
+      p_user_id: userId
+    })
+
+    if (error) throw error
+
+    return new Response(
+      JSON.stringify({ balance: parseFloat(data || 0) }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  } catch (error) {
+    console.error('Error getting wallet balance:', error)
+    return new Response(
+      JSON.stringify({ error: 'Failed to get wallet balance', details: error.message }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  }
+}
+
+async function getWalletTransactions(supabase: any, userId: string, params: any, corsHeaders: any) {
+  try {
+    let query = supabase
+      .from('wallet_transactions')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(params.limit || 50)
+
+    if (params.reason) {
+      query = query.eq('reason', params.reason)
+    }
+
+    if (params.type) {
+      query = query.eq('type', params.type)
+    }
+
+    const { data, error } = await query
+
+    if (error) throw error
+
+    return new Response(
+      JSON.stringify({ transactions: data || [] }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  } catch (error) {
+    console.error('Error getting wallet transactions:', error)
+    return new Response(
+      JSON.stringify({ error: 'Failed to get transactions', details: error.message }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  }
+}
+
+async function addCredits(
+  supabase: any,
+  userId: string,
+  amount: number,
+  reason: string,
+  referenceId: string | null,
+  referenceType: string | null,
+  description: string | null,
+  corsHeaders: any
+) {
+  try {
+    // Validate amount
+    if (!amount || amount <= 0) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid amount' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Calculate expiry (12 months from now)
+    const expiresAt = new Date()
+    expiresAt.setMonth(expiresAt.getMonth() + 12)
+
+    // Create credit transaction
+    const { data, error } = await supabase
+      .from('wallet_transactions')
+      .insert({
+        user_id: userId,
+        type: 'credit',
+        amount: amount,
+        reason: reason,
+        reference_id: referenceId,
+        reference_type: referenceType,
+        description: description || `Credits added: ${reason}`,
+        expires_at: expiresAt.toISOString(),
+        metadata: {}
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+
+    // Update user's wallet_balance (for backward compatibility)
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({ wallet_balance: await getWalletBalanceValue(supabase, userId) })
+      .eq('id', userId)
+
+    if (updateError) {
+      console.warn('Failed to update wallet_balance field:', updateError)
+      // Don't fail the transaction if this update fails
+    }
+
+    return new Response(
+      JSON.stringify({ 
+        success: true, 
+        transaction: data,
+        new_balance: await getWalletBalanceValue(supabase, userId)
+      }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  } catch (error) {
+    console.error('Error adding credits:', error)
+    return new Response(
+      JSON.stringify({ error: 'Failed to add credits', details: error.message }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  }
+}
+
+async function deductCredits(
+  supabase: any,
+  userId: string,
+  amount: number,
+  reason: string,
+  referenceId: string | null,
+  referenceType: string | null,
+  description: string | null,
+  corsHeaders: any
+) {
+  try {
+    // Validate amount
+    if (!amount || amount <= 0) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid amount' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Check balance first
+    const currentBalance = await getWalletBalanceValue(supabase, userId)
+    if (currentBalance < amount) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Insufficient balance',
+          current_balance: currentBalance,
+          required: amount
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Create debit transaction
+    const { data, error } = await supabase
+      .from('wallet_transactions')
+      .insert({
+        user_id: userId,
+        type: 'debit',
+        amount: amount,
+        reason: reason,
+        reference_id: referenceId,
+        reference_type: referenceType,
+        description: description || `Credits deducted: ${reason}`,
+        metadata: {}
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+
+    // Update user's wallet_balance (for backward compatibility)
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({ wallet_balance: await getWalletBalanceValue(supabase, userId) })
+      .eq('id', userId)
+
+    if (updateError) {
+      console.warn('Failed to update wallet_balance field:', updateError)
+    }
+
+    return new Response(
+      JSON.stringify({ 
+        success: true, 
+        transaction: data,
+        new_balance: await getWalletBalanceValue(supabase, userId)
+      }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  } catch (error) {
+    console.error('Error deducting credits:', error)
+    return new Response(
+      JSON.stringify({ error: 'Failed to deduct credits', details: error.message }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  }
+}
+
+async function getWalletBalanceValue(supabase: any, userId: string): Promise<number> {
+  const { data, error } = await supabase.rpc('get_wallet_balance', {
+    p_user_id: userId
+  })
+  if (error) {
+    console.error('Error calculating balance:', error)
+    return 0
+  }
+  return parseFloat(data || 0)
+}
+
+
+

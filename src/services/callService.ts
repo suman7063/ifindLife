@@ -109,6 +109,8 @@ export async function initiateCall(params: InitiateCallParams): Promise<CallRequ
         selected_duration: duration,
         cost: estimatedCost,
         currency,
+        payment_method: 'wallet', // Default to wallet payment
+        payment_status: 'pending',
         call_direction: 'outgoing',
         expert_auth_id: expertAuthId,
         call_metadata: {
@@ -193,19 +195,15 @@ export async function initiateCall(params: InitiateCallParams): Promise<CallRequ
       });
 
       if (notificationError) {
-        console.error('❌ Failed to send notification:', notificationError);
-        console.error('Notification error details:', {
-          message: notificationError.message,
-          name: notificationError.name,
-          status: notificationError.status,
-          cause: notificationError.cause
-        });
+        // Silently handle notification errors - they're non-critical
+        console.warn('⚠️ Notification service unavailable (call will still proceed):', notificationError.message || 'Unknown error');
         // Don't fail the call initiation if notification fails
       } else {
         console.log('✅ Notification sent to expert successfully');
       }
-    } catch (notificationErr) {
-      console.warn('⚠️ Error sending notification (non-critical):', notificationErr);
+    } catch (notificationErr: any) {
+      // Silently handle notification errors - they're non-critical
+      console.warn('⚠️ Notification service unavailable (call will still proceed):', notificationErr?.message || 'Unknown error');
       // Don't fail the call initiation if notification fails
     }
 

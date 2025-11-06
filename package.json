@@ -8,7 +8,10 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "tunnel": "chmod +x scripts/tunnel.sh && ./scripts/tunnel.sh",
+    "tunnel:cloudflare": "cloudflared tunnel --url http://localhost:8080",
+    "tunnel:localtunnel": "npx localtunnel --port 8080"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
