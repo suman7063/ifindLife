@@ -158,16 +158,36 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
             // Set volume for remote audio track (0-100)
             user.audioTrack.setVolume(100);
             
-            // Verify audio track is enabled (remote tracks should auto-play)
-            console.log('✅ Remote audio track configured:', {
-              volume: 100
-            });
+            // CRITICAL: Play remote audio track explicitly
+            // Remote audio tracks need to be played on an audio element
+            // Create a hidden audio element if it doesn't exist
+            let audioElement = document.getElementById(`remote-audio-${user.uid}`) as HTMLAudioElement;
+            if (!audioElement) {
+              audioElement = document.createElement('audio');
+              audioElement.id = `remote-audio-${user.uid}`;
+              audioElement.autoplay = true;
+              audioElement.setAttribute('playsinline', 'true');
+              document.body.appendChild(audioElement);
+            }
             
-            // Note: Agora SDK typically auto-plays remote audio, but we ensure it's configured
-            // Remote audio tracks don't have a .play() method like video tracks
-            // They are automatically played when subscribed
+            // Play the remote audio track
+            await user.audioTrack.play();
+            console.log('✅ Remote audio track played:', {
+              volume: 100,
+              isPlaying: user.audioTrack.isPlaying || false,
+              uid: user.uid
+            });
           } catch (audioError) {
             console.warn('⚠️ Could not configure remote audio:', audioError);
+            // Try alternative method - set volume and ensure track is enabled
+            try {
+              if (user.audioTrack) {
+                user.audioTrack.setVolume(100);
+                console.log('✅ Set remote audio volume as fallback');
+              }
+            } catch (fallbackError) {
+              console.error('❌ Fallback audio configuration failed:', fallbackError);
+            }
           }
         }
       });
@@ -181,6 +201,13 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
             remoteUsers: prev.callState.remoteUsers.filter(u => u.uid !== user.uid)
           } : null
         }));
+        
+        // Cleanup audio element when user unpublishes
+        const audioElement = document.getElementById(`remote-audio-${user.uid}`);
+        if (audioElement) {
+          audioElement.remove();
+          console.log('✅ Removed remote audio element for user:', user.uid);
+        }
       });
 
       client.on('user-left', (user) => {
@@ -193,6 +220,13 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
             remoteUsers: prev.callState.remoteUsers.filter(u => u.uid !== user.uid)
           } : null
         }));
+        
+        // Cleanup audio element when user leaves
+        const audioElement = document.getElementById(`remote-audio-${user.uid}`);
+        if (audioElement) {
+          audioElement.remove();
+          console.log('✅ Removed remote audio element for user:', user.uid);
+        }
       });
 
       // Join the call

@@ -177,20 +177,44 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
           }
         }
         
-        // Handle remote audio - explicitly configure audio track
+        // Handle remote audio - explicitly configure and play audio track
         // Note: In video calls, audio and video are published separately, so we handle both
         if (mediaType === 'audio' && user.audioTrack) {
           console.log('✅ Remote audio track subscribed (expert side)');
           try {
             // Set volume for remote audio track (0-100)
             user.audioTrack.setVolume(100);
-            console.log('✅ Remote audio track volume set to 100 (expert side)');
             
-            // Note: Agora SDK typically auto-plays remote audio, but we ensure it's configured
-            // Remote audio tracks don't have a .play() method like video tracks
-            // They are automatically played when subscribed
+            // CRITICAL: Play remote audio track explicitly
+            // Remote audio tracks need to be played on an audio element
+            // Create a hidden audio element if it doesn't exist
+            let audioElement = document.getElementById(`remote-audio-${user.uid}`) as HTMLAudioElement;
+            if (!audioElement) {
+              audioElement = document.createElement('audio');
+              audioElement.id = `remote-audio-${user.uid}`;
+              audioElement.autoplay = true;
+              audioElement.setAttribute('playsinline', 'true');
+              document.body.appendChild(audioElement);
+            }
+            
+            // Play the remote audio track
+            await user.audioTrack.play();
+            console.log('✅ Remote audio track played (expert side):', {
+              volume: 100,
+              isPlaying: user.audioTrack.isPlaying || false,
+              uid: user.uid
+            });
           } catch (audioError) {
             console.warn('⚠️ Could not configure remote audio:', audioError);
+            // Try alternative method - set volume and ensure track is enabled
+            try {
+              if (user.audioTrack) {
+                user.audioTrack.setVolume(100);
+                console.log('✅ Set remote audio volume as fallback (expert side)');
+              }
+            } catch (fallbackError) {
+              console.error('❌ Fallback audio configuration failed (expert side):', fallbackError);
+            }
           }
         }
       });
@@ -201,6 +225,13 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
               ...prev,
           remoteUsers: prev.remoteUsers.filter(u => u.uid !== user.uid)
         }));
+        
+        // Cleanup audio element when user unpublishes
+        const audioElement = document.getElementById(`remote-audio-${user.uid}`);
+        if (audioElement) {
+          audioElement.remove();
+          console.log('✅ Removed remote audio element for user:', user.uid);
+        }
       });
 
       client.on('user-left', (user) => {
@@ -209,6 +240,13 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
             ...prev,
           remoteUsers: prev.remoteUsers.filter(u => u.uid !== user.uid)
         }));
+        
+        // Cleanup audio element when user leaves
+        const audioElement = document.getElementById(`remote-audio-${user.uid}`);
+        if (audioElement) {
+          audioElement.remove();
+          console.log('✅ Removed remote audio element for user:', user.uid);
+        }
       });
 
       const { localAudioTrack, localVideoTrack } = await joinCall(
