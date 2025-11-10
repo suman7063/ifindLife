@@ -7,7 +7,7 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Video, Phone, Clock } from 'lucide-react';
+import { Video, Phone, Clock, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
@@ -18,6 +18,7 @@ interface CallTypeSelectionModalProps {
   expertPrice?: number;
   onStartCall: (callType: 'audio' | 'video', duration: number) => void;
   walletBalance?: number;
+  walletLoading?: boolean; // Loading state for wallet balance
 }
 
 const CallTypeSelectionModal: React.FC<CallTypeSelectionModalProps> = ({
@@ -26,7 +27,8 @@ const CallTypeSelectionModal: React.FC<CallTypeSelectionModalProps> = ({
   expertName,
   expertPrice = 30,
   onStartCall,
-  walletBalance = 0
+  walletBalance = 0,
+  walletLoading = false
 }) => {
   const navigate = useNavigate();
   const [callType, setCallType] = useState<'audio' | 'video'>('video');
@@ -37,7 +39,8 @@ const CallTypeSelectionModal: React.FC<CallTypeSelectionModalProps> = ({
   // Recalculate cost when duration changes
   const estimatedCost = (duration * expertPrice) / 60;
   const safeWalletBalance = typeof walletBalance === 'number' && !isNaN(walletBalance) ? walletBalance : 0;
-  const hasSufficientBalance = safeWalletBalance >= estimatedCost;
+  // Don't show insufficient message while loading
+  const hasSufficientBalance = walletLoading ? true : safeWalletBalance >= estimatedCost;
   const balanceShortfall = Math.max(0, estimatedCost - safeWalletBalance);
 
   const handleStart = async () => {
@@ -148,16 +151,23 @@ const CallTypeSelectionModal: React.FC<CallTypeSelectionModalProps> = ({
             </div>
             <div className="flex justify-between items-center text-xs">
               <span className="text-muted-foreground">Wallet Balance:</span>
-              <span className={hasSufficientBalance ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
-                ₹{safeWalletBalance.toFixed(2)}
-              </span>
+              {walletLoading ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                  <span className="text-muted-foreground">Loading...</span>
+                </div>
+              ) : (
+                <span className={hasSufficientBalance ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
+                  ₹{safeWalletBalance.toFixed(2)}
+                </span>
+              )}
             </div>
-            {!hasSufficientBalance && (
+            {!walletLoading && !hasSufficientBalance && (
               <div className="text-xs text-red-600 bg-red-50 p-2 rounded">
                 Insufficient balance. Need ₹{balanceShortfall.toFixed(2)} more. Please recharge your wallet.
               </div>
             )}
-            {hasSufficientBalance && (
+            {!walletLoading && hasSufficientBalance && (
               <div className="text-xs text-muted-foreground">
                 ₹{estimatedCost.toFixed(2)} will be deducted from your wallet before the call starts
               </div>
@@ -166,10 +176,18 @@ const CallTypeSelectionModal: React.FC<CallTypeSelectionModalProps> = ({
 
           {/* Actions */}
           <div className="flex gap-3">
-            <Button variant="outline" onClick={onClose} className="flex-1">
+            <Button variant="outline" onClick={onClose} className="flex-1" disabled={walletLoading}>
               Cancel
             </Button>
-            {!hasSufficientBalance ? (
+            {walletLoading ? (
+              <Button 
+                disabled
+                className="flex-1"
+              >
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Loading...
+              </Button>
+            ) : !hasSufficientBalance ? (
               <Button 
                 onClick={() => {
                   onClose();

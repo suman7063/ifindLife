@@ -34,7 +34,7 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
 }) => {
   const { user } = useSimpleAuth();
   const navigate = useNavigate();
-  const { balance: walletBalance, deductCredits, checkBalance, fetchBalance } = useWallet();
+  const { balance: walletBalance, loading: walletLoading, deductCredits, checkBalance, fetchBalance } = useWallet();
   const [modalState, setModalState] = useState<'selection' | 'waiting' | 'incall'>('selection');
   const [callType, setCallType] = useState<'audio' | 'video'>('video');
   const [selectedDuration, setSelectedDuration] = useState<number>(15);
@@ -224,6 +224,7 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
       expertPrice={expertPrice}
       onStartCall={handleStartCall}
       walletBalance={walletBalance}
+      walletLoading={walletLoading}
     />
   );
 };
