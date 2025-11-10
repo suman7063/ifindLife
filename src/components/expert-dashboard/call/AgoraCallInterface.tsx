@@ -292,6 +292,8 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
       const startTime = new Date();
       setCallStartTime(startTime);
       currentSessionIdRef.current = callRequest.call_session_id || null;
+      console.log('✅ Call joined - Session ID set to:', currentSessionIdRef.current);
+      console.log('✅ Call request session ID:', callRequest.call_session_id);
 
       // Ensure audio is enabled and volume is set AFTER publishing
       if (localAudioTrack) {
@@ -359,8 +361,13 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
 
   // Leave the call
   const handleLeaveCall = async () => {
+    console.log('🔴 ========== EXPERT ENDING CALL ==========');
+    console.log('🔴 Step 1: handleLeaveCall function called');
+    
     try {
-      console.log('🔴 Expert ending call');
+      // Close confirmation dialog immediately
+      setShowEndCallConfirm(false);
+      console.log('🔴 Step 2: Dialog closed');
       
       // Calculate duration
       let finalDuration = 0;
@@ -368,53 +375,113 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
         finalDuration = Math.floor((new Date().getTime() - callStartTime.getTime()) / 1000);
       }
 
-      // Update database
+      console.log('🔴 Step 3: Duration calculated:', finalDuration, 'seconds');
+      console.log('🔴 Step 4: Session ID:', currentSessionIdRef.current);
+      console.log('🔴 Step 5: Client exists:', !!clientRef.current);
+      console.log('🔴 Step 6: Is joined:', callState.isJoined);
+
+      // Update database FIRST (most important)
       if (currentSessionIdRef.current) {
         try {
-          await endCall(currentSessionIdRef.current, finalDuration, 'expert');
-          console.log('✅ Call session updated in database');
+          console.log('🔴 Step 7: Updating database...');
+          const result = await endCall(currentSessionIdRef.current, finalDuration, 'expert');
+          console.log('🔴 Step 8: Database update result:', result);
+          if (!result) {
+            console.error('❌ Database update returned false!');
+          }
         } catch (dbError) {
-          console.error('❌ Error updating call session:', dbError);
+          console.error('❌ Step 7 FAILED - Database error:', dbError);
+          // Continue anyway - try to leave channel
         }
+      } else {
+        console.error('❌ Step 7 SKIPPED - No session ID!');
+        console.error('❌ Call request:', callRequest);
+        console.error('❌ Call session ID from request:', callRequest.call_session_id);
       }
 
       // Stop remote tracks
       if (callState.remoteUsers.length > 0) {
-          callState.remoteUsers.forEach(user => {
-            try {
-              user.audioTrack?.stop();
-              user.videoTrack?.stop();
-            } catch (err) {
-              console.warn('⚠️ Error stopping remote track:', err);
-            }
-          });
+        console.log('🛑 Stopping', callState.remoteUsers.length, 'remote user tracks');
+        callState.remoteUsers.forEach(user => {
+          try {
+            user.audioTrack?.stop();
+            user.videoTrack?.stop();
+          } catch (err) {
+            console.warn('⚠️ Error stopping remote track:', err);
+          }
+        });
       }
 
-      // Leave Agora channel
-        if (clientRef.current && callState.localAudioTrack) {
+      // Leave Agora channel - try to leave even if tracks are missing
+      console.log('🔴 Step 9: Attempting to leave Agora channel...');
+      if (clientRef.current) {
         try {
+          console.log('🔴 Step 9a: Calling leaveCall function...');
           await leaveCall(
             clientRef.current,
             callState.localAudioTrack,
             callState.localVideoTrack
           );
-          console.log('✅ Successfully left Agora channel');
-      } catch (agoraError) {
-        console.error('❌ Error leaving Agora call:', agoraError);
+          console.log('🔴 Step 9b: Successfully left Agora channel');
+        } catch (agoraError) {
+          console.error('❌ Step 9a FAILED - Agora error:', agoraError);
+          // Try to leave without tracks if leaveCall failed
+          try {
+            console.log('🔴 Step 9c: Attempting fallback channel leave...');
+            await clientRef.current.leave();
+            console.log('🔴 Step 9d: Left channel via fallback');
+          } catch (leaveError) {
+            console.error('❌ Step 9c FAILED - Fallback leave error:', leaveError);
+          }
         }
+      } else {
+        console.warn('⚠️ Step 9 SKIPPED - No Agora client available');
       }
 
       // Stop timer
       if (durationTimerRef.current) {
         clearInterval(durationTimerRef.current);
         durationTimerRef.current = null;
+        console.log('⏱️ Timer stopped');
       }
 
+      // Reset call state
+      console.log('🔄 Resetting call state...');
+      setCallState({
+        localAudioTrack: null,
+        localVideoTrack: null,
+        remoteUsers: [],
+        client: null,
+        isJoined: false,
+        isMuted: false,
+        isVideoEnabled: false,
+        isAudioEnabled: false
+      });
+
+      // Clear refs
+      clientRef.current = null;
+      currentSessionIdRef.current = null;
+      setCallStartTime(null);
+      setCallDuration(0);
+      console.log('🧹 All refs cleared');
+
+      console.log('🔴 Step 10: All cleanup done, showing toast and calling onCallEnd');
       toast.success(`Call ended. Duration: ${formatDuration(finalDuration)}`);
+      console.log('🔴 Step 11: Calling onCallEnd callback...');
       onCallEnd();
+      console.log('🔴 ========== CALL END PROCESS COMPLETE ==========');
     } catch (error) {
       console.error('❌ Error leaving call:', error);
       toast.error('Error ending call');
+      // Still try to clean up and call onCallEnd
+      setShowEndCallConfirm(false);
+      if (clientRef.current) {
+        try {
+          await clientRef.current.leave();
+        } catch (e) {
+          console.error('❌ Error in cleanup:', e);
+        }
+      }
       onCallEnd();
     }
   };
@@ -636,7 +703,11 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
               <Button
                 variant="destructive"
                 size="lg"
-          onClick={() => setShowEndCallConfirm(true)}
+                onClick={() => {
+                  console.log('🔘 End Call button clicked - opening confirmation');
+                  setShowEndCallConfirm(true);
+                }}
+                disabled={!callState.isJoined}
               >
                 <PhoneOff className="w-5 h-5 mr-2" />
                 End Call
@@ -653,8 +724,23 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleLeaveCall}>End Call</AlertDialogAction>
+          <AlertDialogCancel onClick={() => {
+            console.log('❌ Cancel clicked - keeping call active');
+            setShowEndCallConfirm(false);
+          }}>
+            Cancel
+          </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🔘 End Call confirmed in AlertDialog - calling handleLeaveCall');
+                await handleLeaveCall();
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              End Call
+            </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

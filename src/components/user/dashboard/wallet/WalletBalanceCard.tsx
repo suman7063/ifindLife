@@ -16,12 +16,6 @@ const WalletBalanceCard: React.FC<WalletBalanceCardProps> = ({ user, onBalanceUp
   const [balance, setBalance] = useState<number>(0);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user?.id) {
-      fetchBalance();
-    }
-  }, [user?.id]);
-
   const fetchBalance = async () => {
     try {
       const { data, error } = await supabase.functions.invoke('wallet-operations', {
@@ -35,13 +29,60 @@ const WalletBalanceCard: React.FC<WalletBalanceCardProps> = ({ user, onBalanceUp
       if (onBalanceUpdate) {
         onBalanceUpdate(newBalance);
       }
+      return newBalance;
     } catch (error) {
       console.error('Error fetching wallet balance:', error);
       // Fallback to user profile balance
-      setBalance(user?.wallet_balance || 0);
+      const fallbackBalance = user?.wallet_balance || 0;
+      setBalance(fallbackBalance);
+      return fallbackBalance;
     } finally {
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchBalance();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
+  // Poll for balance update after payment (webhook processes asynchronously)
+  const pollForBalanceUpdate = async () => {
+    // First, immediately fetch balance (in case webhook was fast)
+    const initialBalance = await fetchBalance();
+    
+    let attempts = 0;
+    const maxAttempts = 8; // Poll for up to 8 seconds
+    const pollInterval = 1000; // Check every 1 second
+
+    const poll = async () => {
+      attempts++;
+      try {
+        const currentBalance = await fetchBalance();
+        
+        // If balance changed, stop polling
+        if (currentBalance !== initialBalance) {
+          toast.success('Wallet balance updated!');
+          return;
+        }
+        
+        // Continue polling if balance hasn't changed and we haven't exceeded max attempts
+        if (attempts < maxAttempts) {
+          setTimeout(poll, pollInterval);
+        } else {
+          // After max attempts, show a message to refresh manually
+          toast.info('Payment processed. If balance doesn\'t update, please refresh the page.');
+        }
+      } catch (error) {
+        console.error('Error during balance polling:', error);
+        // Stop polling on error
+      }
+    };
+
+    // Start polling after a short delay (give webhook time to process)
+    setTimeout(poll, 2000); // Wait 2 seconds before first check
   };
 
   const currency = user?.currency || 'INR';
@@ -110,8 +151,12 @@ const WalletBalanceCard: React.FC<WalletBalanceCardProps> = ({ user, onBalanceUp
         isOpen={showAddCreditsDialog}
         onClose={() => setShowAddCreditsDialog(false)}
         onSuccess={() => {
-          fetchBalance();
           setShowAddCreditsDialog(false);
+          // Immediately fetch balance, then poll for updates
+          fetchBalance().then(() => {
+            // Poll for balance update (webhook processes asynchronously)
+            pollForBalanceUpdate();
+          });
         }}
         userCurrency={currency}
       />

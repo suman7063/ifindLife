@@ -396,7 +396,11 @@ serve(async (req) => {
 })
 
 async function handlePaymentCaptured(supabase: any, payload: RazorpayWebhookPayload) {
-  const payment = payload.payload.payment.entity
+  const payment = payload.payload.payment?.entity
+  if (!payment) {
+    console.error('❌ Payment entity not found in payload');
+    return;
+  }
   const orderId = payment.order_id
   
 
@@ -454,111 +458,115 @@ async function handlePaymentCaptured(supabase: any, payload: RazorpayWebhookPayl
       console.log('✅ Found user_id from order table:', userId);
     }
 
-    if (!userId) {
-      console.error('❌ No user_id found in payment notes or order table');
-    }
+    // Process wallet top-up if applicable
+    if (isWalletTopUp) {
+      if (!userId) {
+        console.error('❌ Cannot process wallet top-up: user_id is missing');
+        console.error('Payment notes:', payment.notes);
+        console.error('Order data:', orderData);
+        // Continue processing - might be handled elsewhere or might not be a wallet top-up after all
+      } else {
+        // Process wallet top-up
+        const amount = payment.amount / 100 // Convert from paise/cents to currency units
+        const currency = payment.currency
 
-    if (!isWalletTopUp) {
-      console.log('⚠️ Not a wallet top-up, skipping credit addition');
-    }
+        console.log(`💰 Processing wallet top-up: ${amount} ${currency} for user ${userId}`);
+        console.log(`📊 Amount details:`, {
+          amountInPaise: payment.amount,
+          amountInCurrencyUnits: amount,
+          currency: currency,
+        });
 
-    if (!userId) {
-      console.error('❌ Cannot process wallet top-up: user_id is missing');
-    }
+        // Add credits directly to wallet (webhook has service role access)
+        try {
+          // Calculate expiry (12 months from now)
+          const expiresAt = new Date()
+          expiresAt.setMonth(expiresAt.getMonth() + 12)
 
-    if (isWalletTopUp && userId) {
-      const amount = payment.amount / 100 // Convert from paise/cents to currency units
-      const currency = payment.currency
+          // Create credit transaction
+          // Note: reference_id is UUID type, but Razorpay payment IDs are strings
+          // Store payment ID in metadata instead
+          const { data: transactionData, error: transactionError } = await supabase
+            .from('wallet_transactions')
+            .insert({
+              user_id: userId,
+              type: 'credit',
+              amount: amount,
+              reason: 'purchase',
+              reference_id: null, // UUID type - Razorpay payment IDs are strings, so store in metadata
+              reference_type: 'razorpay_payment',
+              description: `Wallet top-up via ${currency} payment`,
+              expires_at: expiresAt.toISOString(),
+              metadata: {
+                razorpay_payment_id: payment.id,
+                razorpay_order_id: orderId
+              }
+            })
+            .select()
+            .single()
 
-      console.log(`💰 Processing wallet top-up: ${amount} ${currency} for user ${userId}`);
-      console.log(`📊 Amount details:`, {
-        amountInPaise: payment.amount,
-        amountInCurrencyUnits: amount,
-        currency: currency,
-      });
-
-      // Add credits directly to wallet (webhook has service role access)
-      try {
-        // Calculate expiry (12 months from now)
-        const expiresAt = new Date()
-        expiresAt.setMonth(expiresAt.getMonth() + 12)
-
-        // Create credit transaction
-        const { data: transactionData, error: transactionError } = await supabase
-          .from('wallet_transactions')
-          .insert({
-            user_id: userId,
-            type: 'credit',
-            amount: amount,
-            reason: 'purchase',
-            reference_id: payment.id,
-            reference_type: 'razorpay_payment',
-            description: `Wallet top-up via ${currency} payment`,
-            expires_at: expiresAt.toISOString(),
-            metadata: {}
-          })
-          .select()
-          .single()
-
-        if (transactionError) {
-          console.error('❌ Failed to create wallet transaction:', transactionError);
-          throw transactionError;
-        }
-
-        console.log('✅ Wallet transaction created:', transactionData.id);
-
-        // Calculate new balance (credits - debits, only non-expired credits count)
-        const { data: creditData, error: creditError } = await supabase
-          .from('wallet_transactions')
-          .select('amount')
-          .eq('user_id', userId)
-          .eq('type', 'credit')
-          .gte('expires_at', new Date().toISOString())
-
-        const { data: debitData, error: debitError } = await supabase
-          .from('wallet_transactions')
-          .select('amount')
-          .eq('user_id', userId)
-          .eq('type', 'debit')
-
-        if (creditError || debitError) {
-          console.warn('⚠️ Failed to calculate balance:', creditError || debitError);
-        } else {
-          const credits = creditData?.reduce((sum: number, t: { amount: number }) => sum + Number(t.amount), 0) || 0;
-          const debits = debitData?.reduce((sum: number, t: { amount: number }) => sum + Number(t.amount), 0) || 0;
-          const newBalance = credits - debits;
-          
-          // Update user's wallet_balance
-          const { error: updateError } = await supabase
-            .from('users')
-            .update({ wallet_balance: newBalance })
-            .eq('id', userId)
-
-          if (updateError) {
-            console.warn('⚠️ Failed to update wallet_balance:', updateError);
-          } else {
-            console.log('✅ Wallet balance updated:', newBalance, `(Credits: ${credits}, Debits: ${debits})`);
+          if (transactionError) {
+            console.error('❌ Failed to create wallet transaction:', transactionError);
+            throw transactionError;
           }
-        }
-        
-        // Update order status
-        const { error: orderUpdateError } = await supabase
-          .from('orders')
-          .update({
-            status: 'completed',
-            razorpay_payment_id: payment.id
-          })
-          .eq('razorpay_order_id', orderId)
 
-        if (orderUpdateError) {
-          console.error('❌ Failed to update order status:', orderUpdateError);
-        } else {
-          console.log('✅ Order status updated to completed');
+          console.log('✅ Wallet transaction created:', transactionData.id);
+
+          // Calculate new balance (credits - debits, only non-expired credits count)
+          const { data: creditData, error: creditError } = await supabase
+            .from('wallet_transactions')
+            .select('amount')
+            .eq('user_id', userId)
+            .eq('type', 'credit')
+            .gte('expires_at', new Date().toISOString())
+
+          const { data: debitData, error: debitError } = await supabase
+            .from('wallet_transactions')
+            .select('amount')
+            .eq('user_id', userId)
+            .eq('type', 'debit')
+
+          if (creditError || debitError) {
+            console.warn('⚠️ Failed to calculate balance:', creditError || debitError);
+          } else {
+            const credits = creditData?.reduce((sum: number, t: { amount: number }) => sum + Number(t.amount), 0) || 0;
+            const debits = debitData?.reduce((sum: number, t: { amount: number }) => sum + Number(t.amount), 0) || 0;
+            const newBalance = credits - debits;
+            
+            // Update user's wallet_balance
+            const { error: updateError } = await supabase
+              .from('users')
+              .update({ wallet_balance: newBalance })
+              .eq('id', userId)
+
+            if (updateError) {
+              console.warn('⚠️ Failed to update wallet_balance:', updateError);
+            } else {
+              console.log('✅ Wallet balance updated:', newBalance, `(Credits: ${credits}, Debits: ${debits})`);
+            }
+          }
+          
+          // Update order status
+          const { error: orderUpdateError } = await supabase
+            .from('orders')
+            .update({
+              status: 'completed',
+              razorpay_payment_id: payment.id
+            })
+            .eq('razorpay_order_id', orderId)
+
+          if (orderUpdateError) {
+            console.error('❌ Failed to update order status:', orderUpdateError);
+          } else {
+            console.log('✅ Order status updated to completed');
+          }
+        } catch (walletError) {
+          console.error('❌ Error adding credits to wallet:', walletError)
+          throw walletError
         }
-      } catch (walletError) {
-        console.error('❌ Error adding credits to wallet:', walletError)
-        throw walletError
       }
+    } else {
+      console.log('⚠️ Not a wallet top-up, skipping credit addition');
     }
 
     // Update call sessions if this is a call payment
@@ -611,7 +619,11 @@ async function handlePaymentCaptured(supabase: any, payload: RazorpayWebhookPayl
 }
 
 async function handlePaymentFailed(supabase: any, payload: RazorpayWebhookPayload) {
-  const payment = payload.payload.payment.entity
+  const payment = payload.payload.payment?.entity
+  if (!payment) {
+    console.error('❌ Payment entity not found in payload');
+    return;
+  }
   const orderId = payment.order_id
   
   console.log(`Processing payment.failed for order: ${orderId}`)
@@ -648,7 +660,11 @@ async function handlePaymentFailed(supabase: any, payload: RazorpayWebhookPayloa
 }
 
 async function handlePaymentAuthorized(supabase: any, payload: RazorpayWebhookPayload) {
-  const payment = payload.payload.payment.entity
+  const payment = payload.payload.payment?.entity
+  if (!payment) {
+    console.error('❌ Payment entity not found in payload');
+    return;
+  }
   const orderId = payment.order_id
   
   

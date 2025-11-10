@@ -94,10 +94,9 @@ serve(async (req) => {
     // Amount should be passed in INR (e.g., 500 for ₹500), convert to paise (500 * 100 = 50000)
     // If amount > 10000, assume it's already in paise
     // Note: If original currency was USD, frontend should have converted it to INR already
-    let amountInSmallestUnit: number;
     // Always treat as INR - convert rupees to paise
     // If amount > 10000, likely already in paise, otherwise convert rupees to paise
-    amountInSmallestUnit = amount > 10000 ? Math.round(amount) : Math.round(amount * 100);
+    const amountInSmallestUnit = amount > 10000 ? Math.round(amount) : Math.round(amount * 100);
 
     // Create Razorpay order
     // IMPORTANT: Always use INR currency for Razorpay (Indian payment gateway)
@@ -150,17 +149,27 @@ serve(async (req) => {
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
       );
 
-      await supabaseAdmin
+      const { data: orderData, error: orderError } = await supabaseAdmin
         .from('orders')
         .insert({
           razorpay_order_id: responseData.id,
           user_id: user.id,
           amount: amountInSmallestUnit / 100, // Convert back to currency units
-          currency: currency,
+          currency: currency || 'INR',
           status: 'pending',
           item_type: 'wallet',
           created_at: new Date().toISOString()
-        });
+        })
+        .select()
+        .single();
+
+      if (orderError) {
+        console.error('❌ Failed to insert order into database:', orderError);
+        // Don't fail the entire request, but log the error
+        // The order was created in Razorpay, so we can still return success
+      } else {
+        console.log('✅ Order inserted into database:', orderData.id);
+      }
     }
 
     // Return order details with key ID for frontend

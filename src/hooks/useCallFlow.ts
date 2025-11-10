@@ -768,6 +768,185 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
     }
   }, [joinAgoraCall]);
 
+  // Subscribe to call session status changes (to detect when expert ends call)
+  useEffect(() => {
+    if (!flowState.callSessionId || !flowState.isInCall) {
+      return;
+    }
+
+    console.log('📡 Setting up real-time subscription for call session:', flowState.callSessionId);
+    
+    const sessionChannel = supabase
+      .channel(`call_session_${flowState.callSessionId}_${Date.now()}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'call_sessions',
+          filter: `id=eq.${flowState.callSessionId}`
+        },
+        async (payload) => {
+          console.log('📡 Call session status update received:', payload);
+          const updatedSession = payload.new as { status: string; end_time?: string };
+          
+          if (updatedSession.status === 'ended') {
+            console.log('🔴 Call ended by expert (detected via real-time)');
+            toast.info('Call ended by expert');
+            
+            // Stop timer
+            if (durationTimerRef.current) {
+              clearInterval(durationTimerRef.current);
+              durationTimerRef.current = null;
+            }
+            
+            // Get current state for cleanup
+            setFlowState(prev => {
+              // Leave Agora channel
+              if (clientRef.current && prev.callState?.localAudioTrack) {
+                leaveCall(
+                  clientRef.current,
+                  prev.callState.localAudioTrack,
+                  prev.callState.localVideoTrack
+                ).then(() => {
+                  console.log('✅ Left Agora channel after expert ended call');
+                }).catch((agoraError) => {
+                  console.error('❌ Error leaving Agora call:', agoraError);
+                  // Try fallback
+                  if (clientRef.current) {
+                    clientRef.current.leave().catch((e) => {
+                      console.error('❌ Fallback leave failed:', e);
+                    });
+                  }
+                });
+              }
+              
+              // Stop remote tracks
+              if (prev.callState?.remoteUsers.length > 0) {
+                prev.callState.remoteUsers.forEach(user => {
+                  try {
+                    user.audioTrack?.stop();
+                    user.videoTrack?.stop();
+                  } catch (err) {
+                    console.warn('⚠️ Error stopping remote track:', err);
+                  }
+                });
+              }
+              
+              return prev; // Return unchanged, we'll reset below
+            });
+            
+            // Clear session storage
+            sessionStorage.removeItem('user_call_session');
+            sessionStorage.removeItem('user_call_data');
+            
+            // Reset state
+            setFlowState({
+              isConnecting: false,
+              isInCall: false,
+              callState: null,
+              callSessionId: null,
+              callRequestId: null,
+              channelName: null,
+              agoraToken: null,
+              agoraUid: null,
+              callType: null,
+              duration: 0,
+              error: null,
+              showRejoin: false,
+              wasDisconnected: false,
+              expertEndedCall: true
+            });
+            
+            clientRef.current = null;
+            callStartTimeRef.current = null;
+            
+            // Call the callback
+            options.onCallEnded?.();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('🧹 Cleaning up call session subscription');
+      supabase.removeChannel(sessionChannel);
+    };
+  }, [flowState.callSessionId, flowState.isInCall, options]);
+
+  // Check on mount if call session is already ended (for page refresh scenario)
+  useEffect(() => {
+    const checkCallStatus = async () => {
+      const storedSession = sessionStorage.getItem('user_call_session');
+      if (!storedSession) {
+        return;
+      }
+
+      try {
+        console.log('🔍 Checking call session status on mount:', storedSession);
+        const { data: session, error } = await supabase
+          .from('call_sessions')
+          .select('status, end_time, start_time')
+          .eq('id', storedSession)
+          .single();
+
+        if (error) {
+          console.error('❌ Error checking call status:', error);
+          // Clear invalid session
+          sessionStorage.removeItem('user_call_session');
+          sessionStorage.removeItem('user_call_data');
+          return;
+        }
+
+        if (session && session.status === 'ended') {
+          console.log('🔴 Call session already ended, cleaning up...');
+          
+          // Stop timer if running
+          if (durationTimerRef.current) {
+            clearInterval(durationTimerRef.current);
+            durationTimerRef.current = null;
+          }
+          
+          // Clear session storage
+          sessionStorage.removeItem('user_call_session');
+          sessionStorage.removeItem('user_call_data');
+          
+          // Reset state
+          setFlowState(prev => ({
+            ...prev,
+            isConnecting: false,
+            isInCall: false,
+            callState: null,
+            callSessionId: null,
+            callRequestId: null,
+            channelName: null,
+            agoraToken: null,
+            agoraUid: null,
+            callType: null,
+            duration: 0,
+            error: null,
+            showRejoin: false,
+            wasDisconnected: false,
+            expertEndedCall: true
+          }));
+          
+          clientRef.current = null;
+          callStartTimeRef.current = null;
+          
+          console.log('✅ Cleaned up ended call session');
+        } else if (session && session.status === 'active') {
+          console.log('✅ Call session is still active');
+          // Session is active, but we're not in call - this is normal after refresh
+          // The user can rejoin if needed
+        }
+      } catch (error) {
+        console.error('❌ Error in checkCallStatus:', error);
+      }
+    };
+
+    checkCallStatus();
+  }, []); // Only run on mount
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {

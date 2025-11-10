@@ -312,6 +312,18 @@ export async function endCall(callSessionId: string, duration?: number, endedBy?
   try {
     const endTime = new Date().toISOString();
     
+    // Fetch call session to get user_id before updating
+    const { data: callSession, error: fetchError } = await supabase
+      .from('call_sessions')
+      .select('user_id, expert_id')
+      .eq('id', callSessionId)
+      .single();
+
+    if (fetchError) {
+      console.error('❌ Failed to fetch call session:', fetchError);
+      return false;
+    }
+
     const updateData: {
       status: 'ended';
       end_time: string;
@@ -342,6 +354,39 @@ export async function endCall(callSessionId: string, duration?: number, endedBy?
       .update({ status: 'cancelled' })
       .eq('call_session_id', callSessionId)
       .in('status', ['pending', 'accepted']);
+
+    // Send notification to user if expert ended the call
+    if (endedBy === 'expert' && callSession?.user_id) {
+      try {
+        console.log('📨 Sending notification to user about call end:', callSession.user_id);
+        
+        const { error: notificationError } = await supabase.functions.invoke('send-notification', {
+          body: {
+            userId: callSession.user_id,
+            type: 'call_ended',
+            title: 'Call Ended',
+            content: 'Call end by expert',
+            referenceId: callSessionId,
+            senderId: callSession.expert_id,
+            data: {
+              callSessionId: callSessionId,
+              endedBy: 'expert',
+              duration: duration
+            }
+          }
+        });
+
+        if (notificationError) {
+          // Silently handle notification errors - they're non-critical
+          console.warn('⚠️ Failed to send notification (call still ended):', notificationError.message || 'Unknown error');
+        } else {
+          console.log('✅ Notification sent to user successfully');
+        }
+      } catch (notificationErr: any) {
+        // Silently handle notification errors - they're non-critical
+        console.warn('⚠️ Notification service unavailable (call still ended):', notificationErr?.message || 'Unknown error');
+      }
+    }
 
     return true;
   } catch (error) {

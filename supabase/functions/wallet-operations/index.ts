@@ -178,6 +178,9 @@ async function addCredits(
     expiresAt.setMonth(expiresAt.getMonth() + 12)
 
     // Create credit transaction
+    // Note: reference_id is UUID type - if referenceId is not a valid UUID, store it in metadata
+    const isUUID = referenceId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(referenceId)
+    
     const { data, error } = await supabase
       .from('wallet_transactions')
       .insert({
@@ -185,11 +188,11 @@ async function addCredits(
         type: 'credit',
         amount: amount,
         reason: reason,
-        reference_id: referenceId,
+        reference_id: isUUID ? referenceId : null, // Only set if it's a valid UUID
         reference_type: referenceType,
         description: description || `Credits added: ${reason}`,
         expires_at: expiresAt.toISOString(),
-        metadata: {}
+        metadata: isUUID ? {} : { reference_id: referenceId } // Store non-UUID reference in metadata
       })
       .select()
       .single()

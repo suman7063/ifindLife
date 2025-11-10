@@ -58,8 +58,7 @@ const AddCreditsDialog: React.FC<AddCreditsDialogProps> = ({
           amount: creditAmount, // Amount in currency units (will be converted in backend)
           currency: currency as 'INR' | 'USD',
           description: `Add ${symbol}${creditAmount} credits to wallet`,
-          expertId: '', // Not needed for wallet top-up
-          serviceId: undefined,
+          // Not passing expertId, serviceId, or callSessionId to ensure itemType is set to 'wallet'
         },
         async (paymentId: string, orderId: string) => {
           // Payment successful - credits will be added via webhook

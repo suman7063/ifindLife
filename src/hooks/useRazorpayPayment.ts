@@ -89,7 +89,9 @@ export const useRazorpayPayment = () => {
             expertId: paymentDetails.expertId,
             serviceId: paymentDetails.serviceId,
             callSessionId: paymentDetails.callSessionId,
-            itemType: !paymentDetails.expertId && !paymentDetails.serviceId && !paymentDetails.callSessionId 
+            itemType: (!paymentDetails.expertId || paymentDetails.expertId === '') && 
+                      (!paymentDetails.serviceId || paymentDetails.serviceId === '') && 
+                      (!paymentDetails.callSessionId || paymentDetails.callSessionId === '') 
               ? 'wallet' 
               : 'consultation', // Determine if this is a wallet top-up
           },
@@ -229,6 +231,25 @@ export const useRazorpayPayment = () => {
 
         handler: async (response: any) => {
           try {
+            console.log('🔍 Razorpay payment response:', {
+              order_id: response.razorpay_order_id,
+              payment_id: response.razorpay_payment_id,
+              has_signature: !!response.razorpay_signature,
+              signature_length: response.razorpay_signature?.length,
+              callSessionId: paymentDetails.callSessionId,
+            });
+
+            // Validate response data before sending
+            if (!response.razorpay_order_id) {
+              throw new Error('Missing razorpay_order_id in payment response');
+            }
+            if (!response.razorpay_payment_id) {
+              throw new Error('Missing razorpay_payment_id in payment response');
+            }
+            if (!response.razorpay_signature) {
+              throw new Error('Missing razorpay_signature in payment response');
+            }
+
             // Verify payment on backend
             const { data: verifyData, error: verifyError } = await supabase.functions.invoke(
               'verify-razorpay-payment',
@@ -240,22 +261,86 @@ export const useRazorpayPayment = () => {
                   callSessionId: paymentDetails.callSessionId,
                 },
               }
-            );
+            ).catch(async (err) => {
+              // If invoke fails, try to extract error from response
+              console.error('Function invoke error:', err);
+              if (err.response) {
+                try {
+                  const errorBody = await err.response.json();
+                  console.error('Error response body:', errorBody);
+                  return { data: null, error: { message: errorBody.error || errorBody.details || err.message } };
+                } catch (e) {
+                  console.error('Failed to parse error response:', e);
+                }
+              }
+              return { data: null, error: err };
+            });
 
             if (verifyError) {
-              throw verifyError;
+              console.error('❌ Payment verification error (full object):', verifyError);
+              console.error('Error details:', {
+                message: verifyError.message,
+                error: verifyError.error,
+                context: verifyError.context,
+                status: verifyError.status,
+                statusText: verifyError.statusText,
+                name: verifyError.name
+              });
+              
+              // Try to extract error message from response
+              let errorMessage = 'Payment verification failed';
+              
+              // Try to read from Response object if context is a Response
+              if (verifyError.context && typeof verifyError.context.json === 'function') {
+                try {
+                  // Clone the response to read it (body can only be read once)
+                  const clonedResponse = verifyError.context.clone();
+                  const errorBody = await clonedResponse.json();
+                  console.log('Error response body:', errorBody);
+                  errorMessage = errorBody?.error || errorBody?.details || errorMessage;
+                } catch (e) {
+                  console.error('Failed to read error response body:', e);
+                  // Try text() instead
+                  try {
+                    const clonedResponse = verifyError.context.clone();
+                    const errorText = await clonedResponse.text();
+                    console.log('Error response text:', errorText);
+                    const parsed = JSON.parse(errorText);
+                    errorMessage = parsed?.error || parsed?.details || errorMessage;
+                  } catch (e2) {
+                    console.error('Failed to parse error text:', e2);
+                  }
+                }
+              } else if (verifyError.message && verifyError.message !== 'Edge Function returned a non-2xx status code') {
+                errorMessage = verifyError.message;
+              } else if (verifyError.error) {
+                errorMessage = typeof verifyError.error === 'string' 
+                  ? verifyError.error 
+                  : verifyError.error?.message || verifyError.error?.error || errorMessage;
+              }
+              
+              // If we still don't have a good error message, provide helpful guidance
+              if (errorMessage === 'Payment verification failed' || errorMessage.includes('non-2xx')) {
+                errorMessage = 'Payment verification failed. Most likely causes: 1) Invalid payment signature (check RAZORPAY_KEY_SECRET in Supabase secrets), 2) Missing required fields, 3) Order not found in database. Check function logs for details.';
+              }
+              
+              console.error('Final error message:', errorMessage);
+              throw new Error(errorMessage);
             }
 
             if (verifyData?.success) {
+              console.log('✅ Payment verified successfully:', verifyData);
               onSuccess(response.razorpay_payment_id, response.razorpay_order_id);
               toast.success('Payment successful!');
             } else {
-              throw new Error('Payment verification failed');
+              console.error('❌ Payment verification failed - no success flag:', verifyData);
+              throw new Error(verifyData?.error || 'Payment verification failed');
             }
-          } catch (error) {
-            console.error('Payment verification error:', error);
+          } catch (error: any) {
+            console.error('❌ Payment verification error:', error);
+            const errorMessage = error?.message || error?.error || 'Payment verification failed';
             onFailure(error);
-            toast.error('Payment verification failed');
+            toast.error(errorMessage);
           }
         },
         modal: {
