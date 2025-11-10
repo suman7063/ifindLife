@@ -41,7 +41,8 @@ export const useRazorpayPayment = () => {
   const processPayment = async (
     paymentDetails: PaymentDetails,
     onSuccess: (paymentId: string, orderId: string) => void,
-    onFailure: (error: any) => void
+    onFailure: (error: any) => void,
+    onPaymentReceived?: () => void // Callback called immediately when payment is received (before verification)
   ): Promise<void> => {
     try {
       setIsLoading(true);
@@ -248,6 +249,12 @@ export const useRazorpayPayment = () => {
             }
             if (!response.razorpay_signature) {
               throw new Error('Missing razorpay_signature in payment response');
+            }
+
+            // Call onPaymentReceived immediately when payment is received (before verification)
+            // This allows UI to show loader immediately
+            if (onPaymentReceived) {
+              onPaymentReceived();
             }
 
             // Verify payment on backend

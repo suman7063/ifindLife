@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Wallet, Plus, IndianRupee, Euro } from 'lucide-react';
+import { Wallet, Plus, IndianRupee, Euro, Loader2 } from 'lucide-react';
 import { UserProfile } from '@/types/supabase/user';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -15,6 +15,12 @@ interface WalletBalanceCardProps {
 const WalletBalanceCard: React.FC<WalletBalanceCardProps> = ({ user, onBalanceUpdate }) => {
   const [balance, setBalance] = useState<number>(0);
   const [loading, setLoading] = useState(true);
+  const [updatingBalance, setUpdatingBalance] = useState(false);
+  const subscriptionRef = useRef<{ 
+    transactionsChannel: ReturnType<typeof supabase.channel>; 
+    usersChannel: ReturnType<typeof supabase.channel> 
+  } | null>(null);
+  const fallbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchBalance = async () => {
     try {
@@ -48,14 +54,106 @@ const WalletBalanceCard: React.FC<WalletBalanceCardProps> = ({ user, onBalanceUp
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
-  // Poll for balance update after payment (webhook processes asynchronously)
-  const pollForBalanceUpdate = async () => {
-    // First, immediately fetch balance (in case webhook was fast)
-    const initialBalance = await fetchBalance();
-    
+  // Set up real-time subscription for wallet balance updates
+  useEffect(() => {
+    if (!user?.id) return;
+
+    console.log('🔔 Setting up real-time wallet balance subscription for user:', user.id);
+
+    // Subscribe to wallet_transactions INSERT events for this user
+    const transactionsChannel = supabase
+      .channel(`wallet_transactions_${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'wallet_transactions',
+          filter: `user_id=eq.${user.id}`
+        },
+        async () => {
+          console.log('💰 New wallet transaction detected via real-time');
+          // Clear any polling since real-time caught it
+          if (fallbackTimeoutRef.current) {
+            clearTimeout(fallbackTimeoutRef.current);
+            fallbackTimeoutRef.current = null;
+          }
+          // Fetch updated balance immediately
+          await fetchBalance();
+          setUpdatingBalance((prev) => {
+            if (prev) {
+              toast.success('Wallet balance updated!');
+              return false;
+            }
+            return prev;
+          });
+        }
+      )
+      .subscribe();
+
+    // Subscribe to users table UPDATE events for wallet_balance
+    const usersChannel = supabase
+      .channel(`user_wallet_balance_${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'users',
+          filter: `id=eq.${user.id}`
+        },
+        (payload) => {
+          const newBalance = (payload.new as { wallet_balance?: number })?.wallet_balance;
+          if (newBalance !== undefined) {
+            console.log('💰 Wallet balance updated via real-time (users table):', newBalance);
+            // Clear any polling since real-time caught it
+            if (fallbackTimeoutRef.current) {
+              clearTimeout(fallbackTimeoutRef.current);
+              fallbackTimeoutRef.current = null;
+            }
+            setBalance((prevBalance) => {
+              if (newBalance !== prevBalance) {
+                if (onBalanceUpdate) {
+                  onBalanceUpdate(newBalance);
+                }
+                setUpdatingBalance((prev) => {
+                  if (prev) {
+                    toast.success('Wallet balance updated!');
+                    return false;
+                  }
+                  return prev;
+                });
+                return newBalance;
+              }
+              return prevBalance;
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    subscriptionRef.current = { transactionsChannel, usersChannel };
+
+    return () => {
+      console.log('🔔 Cleaning up wallet balance subscriptions');
+      if (subscriptionRef.current) {
+        supabase.removeChannel(subscriptionRef.current.transactionsChannel);
+        supabase.removeChannel(subscriptionRef.current.usersChannel);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
+  // Aggressive polling for balance update (as backup to real-time)
+  const startBalancePolling = (initialBalance: number) => {
+    // Clear any existing polling
+    if (fallbackTimeoutRef.current) {
+      clearTimeout(fallbackTimeoutRef.current);
+    }
+
     let attempts = 0;
-    const maxAttempts = 8; // Poll for up to 8 seconds
-    const pollInterval = 1000; // Check every 1 second
+    const maxAttempts = 20; // Poll for up to 10 seconds (20 * 500ms)
+    const pollInterval = 500; // Check every 500ms for faster updates
 
     const poll = async () => {
       attempts++;
@@ -64,26 +162,37 @@ const WalletBalanceCard: React.FC<WalletBalanceCardProps> = ({ user, onBalanceUp
         
         // If balance changed, stop polling
         if (currentBalance !== initialBalance) {
+          setUpdatingBalance(false);
           toast.success('Wallet balance updated!');
           return;
         }
         
         // Continue polling if balance hasn't changed and we haven't exceeded max attempts
         if (attempts < maxAttempts) {
-          setTimeout(poll, pollInterval);
+          fallbackTimeoutRef.current = setTimeout(poll, pollInterval);
         } else {
-          // After max attempts, show a message to refresh manually
+          // After max attempts, stop loading
+          setUpdatingBalance(false);
           toast.info('Payment processed. If balance doesn\'t update, please refresh the page.');
         }
       } catch (error) {
         console.error('Error during balance polling:', error);
-        // Stop polling on error
+        setUpdatingBalance(false);
       }
     };
 
-    // Start polling after a short delay (give webhook time to process)
-    setTimeout(poll, 2000); // Wait 2 seconds before first check
+    // Start polling immediately
+    poll();
   };
+
+  // Cleanup fallback timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (fallbackTimeoutRef.current) {
+        clearTimeout(fallbackTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const currency = user?.currency || 'INR';
   const symbol = currency === 'INR' ? '₹' : '€';
@@ -115,13 +224,18 @@ const WalletBalanceCard: React.FC<WalletBalanceCardProps> = ({ user, onBalanceUp
             <>
               <div className="flex items-center space-x-2">
                 {/* <CurrencyIcon className="h-6 w-6 text-primary" /> */}
-                <div>
+                <div className="flex-1">
                   <p className="text-sm text-muted-foreground">Available Credits</p>
-                  <h2 className="text-3xl font-bold text-primary">
-                    {symbol}{balance.toFixed(2)}
-                  </h2>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-3xl font-bold text-primary">
+                      {symbol}{balance.toFixed(2)}
+                    </h2>
+                    {updatingBalance && (
+                      <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                    )}
+                  </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {balance.toFixed(0)} credits
+                    {updatingBalance ? 'Updating balance...' : `${balance.toFixed(0)} credits`}
                   </p>
                 </div>
               </div>
@@ -138,6 +252,7 @@ const WalletBalanceCard: React.FC<WalletBalanceCardProps> = ({ user, onBalanceUp
                 className="w-full"
                 onClick={handleAddCredits}
                 size="lg"
+                disabled={updatingBalance}
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Credits
@@ -150,13 +265,38 @@ const WalletBalanceCard: React.FC<WalletBalanceCardProps> = ({ user, onBalanceUp
       <AddCreditsDialog
         isOpen={showAddCreditsDialog}
         onClose={() => setShowAddCreditsDialog(false)}
-        onSuccess={() => {
+        onPaymentReceived={() => {
+          // Show loader immediately when payment is received (before verification)
+          // This happens as soon as Razorpay window closes with successful payment
+          setUpdatingBalance(true);
+          
+          // Get current balance before webhook processes
+          const currentBalance = balance;
+          
+          // Start aggressive polling as backup (real-time subscription is primary)
+          // This ensures we catch the update quickly even if real-time has delays
+          startBalancePolling(currentBalance);
+        }}
+        onSuccess={async () => {
           setShowAddCreditsDialog(false);
-          // Immediately fetch balance, then poll for updates
-          fetchBalance().then(() => {
-            // Poll for balance update (webhook processes asynchronously)
-            pollForBalanceUpdate();
-          });
+          // Payment verified successfully - fetch balance immediately
+          // This helps catch the update faster if webhook already processed
+          try {
+            const newBalance = await fetchBalance();
+            if (newBalance !== balance) {
+              setUpdatingBalance(false);
+              toast.success('Wallet balance updated!');
+            }
+            // If balance hasn't changed yet, polling will catch it
+          } catch (error) {
+            console.error('Error fetching balance after payment:', error);
+            // Polling will continue as backup
+          }
+        }}
+        onPaymentFailed={() => {
+          // Hide loader if payment fails
+          setUpdatingBalance(false);
+          setShowAddCreditsDialog(false);
         }}
         userCurrency={currency}
       />
