@@ -395,3 +395,83 @@ export async function endCall(callSessionId: string, duration?: number, endedBy?
   }
 }
 
+/**
+ * Check if a call session has ended
+ * @param callSessionId - The call session ID to check
+ * @returns Object with call status information, or null if session not found
+ */
+export async function checkCallStatus(callSessionId: string): Promise<{
+  isEnded: boolean;
+  status: string;
+  endTime: string | null;
+  duration: number | null;
+} | null> {
+  try {
+    const { data: session, error } = await supabase
+      .from('call_sessions')
+      .select('status, end_time, duration')
+      .eq('id', callSessionId)
+      .single();
+
+    if (error) {
+      console.error('❌ Failed to check call status:', error);
+      return null;
+    }
+
+    if (!session) {
+      return null;
+    }
+
+    return {
+      isEnded: session.status === 'ended',
+      status: session.status,
+      endTime: session.end_time || null,
+      duration: session.duration || null
+    };
+  } catch (error) {
+    console.error('❌ Error checking call status:', error);
+    return null;
+  }
+}
+
+/**
+ * Subscribe to call session status changes to detect when expert ends call
+ * @param callSessionId - The call session ID to monitor
+ * @param onCallEnded - Callback function when call is ended
+ * @returns Cleanup function to unsubscribe
+ */
+export function subscribeToCallStatus(
+  callSessionId: string,
+  onCallEnded: (endedBy?: 'user' | 'expert') => void
+): () => void {
+  const channel = supabase
+    .channel(`call_status_${callSessionId}_${Date.now()}`)
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'call_sessions',
+        filter: `id=eq.${callSessionId}`
+      },
+      async (payload) => {
+        const updatedSession = payload.new as { status: string; end_time?: string };
+        
+        if (updatedSession.status === 'ended') {
+          console.log('🔴 Call ended detected via subscription');
+          
+          // Try to determine who ended it by checking the last update
+          // Note: This is a best-effort approach. For exact tracking, 
+          // you might want to add an 'ended_by' field to call_sessions table
+          onCallEnded();
+        }
+      }
+    )
+    .subscribe();
+
+  // Return cleanup function
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}
+

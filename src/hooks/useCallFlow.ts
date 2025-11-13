@@ -39,6 +39,7 @@ export interface CallFlowState {
   showRejoin: boolean;
   wasDisconnected: boolean;
   expertEndedCall: boolean;
+  showExpertEndCallConfirmation: boolean;
 }
 
 export function useCallFlow(options: UseCallFlowOptions = {}) {
@@ -57,7 +58,8 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
     error: null,
     showRejoin: false,
     wasDisconnected: false,
-    expertEndedCall: false
+    expertEndedCall: false,
+    showExpertEndCallConfirmation: false
   });
 
   const clientRef = useRef<IAgoraRTCClient | null>(null);
@@ -604,7 +606,8 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
         error: null,
         showRejoin: false,
         wasDisconnected: false,
-        expertEndedCall: false
+        expertEndedCall: false,
+        showExpertEndCallConfirmation: false
       });
 
       clientRef.current = null;
@@ -792,7 +795,6 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
           
           if (updatedSession.status === 'ended') {
             console.log('🔴 Call ended by expert (detected via real-time)');
-            toast.info('Call ended by expert');
             
             // Stop timer
             if (durationTimerRef.current) {
@@ -800,69 +802,12 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
               durationTimerRef.current = null;
             }
             
-            // Get current state for cleanup
-            setFlowState(prev => {
-              // Leave Agora channel
-              if (clientRef.current && prev.callState?.localAudioTrack) {
-                leaveCall(
-                  clientRef.current,
-                  prev.callState.localAudioTrack,
-                  prev.callState.localVideoTrack
-                ).then(() => {
-                  console.log('✅ Left Agora channel after expert ended call');
-                }).catch((agoraError) => {
-                  console.error('❌ Error leaving Agora call:', agoraError);
-                  // Try fallback
-                  if (clientRef.current) {
-                    clientRef.current.leave().catch((e) => {
-                      console.error('❌ Fallback leave failed:', e);
-                    });
-                  }
-                });
-              }
-              
-              // Stop remote tracks
-              if (prev.callState?.remoteUsers.length > 0) {
-                prev.callState.remoteUsers.forEach(user => {
-                  try {
-                    user.audioTrack?.stop();
-                    user.videoTrack?.stop();
-                  } catch (err) {
-                    console.warn('⚠️ Error stopping remote track:', err);
-                  }
-                });
-              }
-              
-              return prev; // Return unchanged, we'll reset below
-            });
-            
-            // Clear session storage
-            sessionStorage.removeItem('user_call_session');
-            sessionStorage.removeItem('user_call_data');
-            
-            // Reset state
-            setFlowState({
-              isConnecting: false,
-              isInCall: false,
-              callState: null,
-              callSessionId: null,
-              callRequestId: null,
-              channelName: null,
-              agoraToken: null,
-              agoraUid: null,
-              callType: null,
-              duration: 0,
-              error: null,
-              showRejoin: false,
-              wasDisconnected: false,
+            // Show confirmation dialog instead of immediately cleaning up
+            setFlowState(prev => ({
+              ...prev,
+              showExpertEndCallConfirmation: true,
               expertEndedCall: true
-            });
-            
-            clientRef.current = null;
-            callStartTimeRef.current = null;
-            
-            // Call the callback
-            options.onCallEnded?.();
+            }));
           }
         }
       )
@@ -927,7 +872,8 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
             error: null,
             showRejoin: false,
             wasDisconnected: false,
-            expertEndedCall: true
+            expertEndedCall: true,
+            showExpertEndCallConfirmation: false
           }));
           
           clientRef.current = null;
@@ -964,6 +910,77 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
     };
   }, []);
 
+  // Handle expert end call confirmation - cleanup after user confirms
+  const confirmExpertEndCall = useCallback(async () => {
+    console.log('✅ User confirmed expert ended call, cleaning up...');
+    
+    // Get current state for cleanup
+    const currentState = flowState;
+    
+    // Leave Agora channel
+    if (clientRef.current && currentState.callState?.localAudioTrack) {
+      try {
+        await leaveCall(
+          clientRef.current,
+          currentState.callState.localAudioTrack,
+          currentState.callState.localVideoTrack
+        );
+        console.log('✅ Left Agora channel after expert ended call');
+      } catch (agoraError) {
+        console.error('❌ Error leaving Agora call:', agoraError);
+        // Try fallback
+        if (clientRef.current) {
+          try {
+            await clientRef.current.leave();
+          } catch (e) {
+            console.error('❌ Fallback leave failed:', e);
+          }
+        }
+      }
+    }
+    
+    // Stop remote tracks
+    if (currentState.callState?.remoteUsers.length > 0) {
+      currentState.callState.remoteUsers.forEach(user => {
+        try {
+          user.audioTrack?.stop();
+          user.videoTrack?.stop();
+        } catch (err) {
+          console.warn('⚠️ Error stopping remote track:', err);
+        }
+      });
+    }
+    
+    // Clear session storage
+    sessionStorage.removeItem('user_call_session');
+    sessionStorage.removeItem('user_call_data');
+    
+    // Reset state
+    setFlowState({
+      isConnecting: false,
+      isInCall: false,
+      callState: null,
+      callSessionId: null,
+      callRequestId: null,
+      channelName: null,
+      agoraToken: null,
+      agoraUid: null,
+      callType: null,
+      duration: 0,
+      error: null,
+      showRejoin: false,
+      wasDisconnected: false,
+      expertEndedCall: true,
+      showExpertEndCallConfirmation: false
+    });
+    
+    clientRef.current = null;
+    callStartTimeRef.current = null;
+    
+    // Call the callback
+    options.onCallEnded?.();
+  }, [flowState, options]);
+
   return {
     ...flowState,
     startCall,
@@ -971,6 +988,7 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
     toggleMute,
     toggleVideo,
     rejoinCall,
+    confirmExpertEndCall,
     localVideoRef,
     remoteVideoRef
   };

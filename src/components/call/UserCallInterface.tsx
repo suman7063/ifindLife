@@ -12,6 +12,16 @@ import { useNavigate } from 'react-router-dom';
 import CallTypeSelectionModal from './modals/CallTypeSelectionModal';
 import WaitingForExpertModal from './modals/WaitingForExpertModal';
 import InCallModal from './modals/InCallModal';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface UserCallInterfaceProps {
   isOpen: boolean;
@@ -47,11 +57,13 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
     showRejoin,
     wasDisconnected,
     expertEndedCall,
+    showExpertEndCallConfirmation,
     startCall,
     stopCall,
     toggleMute,
     toggleVideo,
     rejoinCall,
+    confirmExpertEndCall,
     localVideoRef,
     remoteVideoRef,
     callSessionId
@@ -168,6 +180,13 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
+  // Format duration helper
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   if (!isOpen) {
     return null;
   }
@@ -176,26 +195,55 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
   if ((isInCall && callState) || modalState === 'incall') {
     if (callState) {
       return (
-        <InCallModal
-          isOpen={true}
-          onClose={onClose}
-          expertName={expertName}
-          expertAvatar={expertAvatar}
-          callType={callType}
-          callState={callState}
-          duration={duration}
-          showRejoin={showRejoin}
-          wasDisconnected={wasDisconnected}
-          expertEndedCall={expertEndedCall}
-          isConnecting={isConnecting}
-          onToggleMute={toggleMute}
-          onToggleVideo={toggleVideo}
-          onEndCall={stopCall}
-          onRejoin={handleRejoin}
-          onEndCallFromRejoin={handleEndCallFromRejoin}
-          localVideoRef={localVideoRef}
-          remoteVideoRef={remoteVideoRef}
-        />
+        <>
+          <InCallModal
+            isOpen={true}
+            onClose={onClose}
+            expertName={expertName}
+            expertAvatar={expertAvatar}
+            callType={callType}
+            callState={callState}
+            duration={duration}
+            showRejoin={showRejoin}
+            wasDisconnected={wasDisconnected}
+            expertEndedCall={expertEndedCall}
+            isConnecting={isConnecting}
+            onToggleMute={toggleMute}
+            onToggleVideo={toggleVideo}
+            onEndCall={stopCall}
+            onRejoin={handleRejoin}
+            onEndCallFromRejoin={handleEndCallFromRejoin}
+            localVideoRef={localVideoRef}
+            remoteVideoRef={remoteVideoRef}
+          />
+          
+          {/* Expert End Call Confirmation Dialog */}
+          <AlertDialog open={showExpertEndCallConfirmation} onOpenChange={() => {}}>
+            <AlertDialogContent className="sm:max-w-md">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2">
+                  <span className="text-orange-600">Call Ended by Expert</span>
+                </AlertDialogTitle>
+                <AlertDialogDescription className="pt-2">
+                  The expert has ended the call. Duration: <strong>{formatDuration(duration)}</strong>
+                  <br />
+                  <br />
+                  Click "OK" to disconnect from the call channel.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogAction
+                  onClick={async () => {
+                    await confirmExpertEndCall();
+                  }}
+                  className="w-full sm:w-auto"
+                >
+                  OK
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </>
       );
     } else if (isInCall) {
       return (
