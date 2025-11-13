@@ -17,9 +17,7 @@ const MasterStatusControl: React.FC = () => {
   const [acceptingCalls, setAcceptingCalls] = useState(false);
 
   useEffect(() => {
-    console.log('🔍 MasterStatusControl: Expert data:', expert);
     if (!expert?.id) {
-      console.log('❌ No expert.id found, expert:', expert);
       return;
     }
 

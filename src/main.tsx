@@ -245,21 +245,21 @@ const isDebugLog = (args: unknown[]): boolean => {
   return debugPatterns.some(pattern => fullMessage.includes(pattern));
 };
 
-console.log = (...args: unknown[]) => {
-  // First check Razorpay warnings
-  if (shouldSuppressMessage(args)) {
-    return;
-  }
+// console.log = (...args: unknown[]) => {
+//   // First check Razorpay warnings
+//   if (shouldSuppressMessage(args)) {
+//     return;
+//   }
   
-  // Then check if it's a debug log (suppress in both dev and prod)
-  // You can change this to only suppress in production by using: import.meta.env.PROD
-  if (isDebugLog(args)) {
-    return;
-  }
+//   // Then check if it's a debug log (suppress in both dev and prod)
+//   // You can change this to only suppress in production by using: import.meta.env.PROD
+//   if (isDebugLog(args)) {
+//     return;
+//   }
   
-  // Allow non-debug logs
-  originalLog.apply(console, args);
-};
+//   // Allow non-debug logs
+//   originalLog.apply(console, args);
+// };
 
 // Also intercept XMLHttpRequest to suppress Razorpay header warnings
 if (typeof XMLHttpRequest !== 'undefined') {

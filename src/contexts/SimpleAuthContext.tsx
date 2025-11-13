@@ -134,7 +134,6 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
   // Improved profile loading function
   const loadUserProfile = async (userId: string): Promise<UserProfile | null> => {
     try {
-      console.log('👤 Loading user profile for:', userId);
       
       // Only query the profiles table since users table might not have the user
       const { data: profilesData, error: profilesError } = await supabase
@@ -142,11 +141,6 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         .select('*')
         .eq('id', userId)
         .maybeSingle();
-        
-      console.log('👤 Profiles query result:', { 
-        hasData: !!profilesData, 
-        error: profilesError?.message || 'none' 
-      });
 
       if (profilesError && profilesError.code !== 'PGRST116') {
         // PGRST116 is "no rows returned" - this is expected if user doesn't have a profile yet
@@ -156,7 +150,6 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
       }
 
       if (!profilesData) {
-        console.log('ℹ️ No user profile found for:', userId, '- attempting to create one');
         
         // Try to get user metadata from auth
         const { data: { user: authUser } } = await supabase.auth.getUser();
@@ -186,7 +179,6 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
             }
             
             if (createdProfile) {
-              console.log('✅ Successfully created user profile');
               // Transform and return the newly created profile
               const transformedProfile: UserProfile = {
                 id: createdProfile.id,
@@ -222,7 +214,6 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
           }
         }
         
-        console.log('⚠️ Could not create profile - user may be expert-only');
         setUserProfile(null);
         return null;
       }
@@ -269,21 +260,16 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
 
   const loadExpertProfile = async (userId: string): Promise<ExpertProfile | null> => {
     try {
-      console.log('🎯 Loading expert profile for:', userId);
       
       // Check current auth state
       const { data: { user: currentUser } } = await supabase.auth.getUser();
-      console.log('🔍 Current authenticated user:', currentUser?.id);
-      console.log('🔍 User ID match:', currentUser?.id === userId);
       
       // Test basic query first
-      console.log('🔍 Testing basic expert_accounts query...');
       const { data: testData, error: testError } = await supabase
         .from('expert_accounts')
         .select('id, name, status')
         .limit(1);
       
-      console.log('🔍 Basic query result:', { hasData: !!testData, error: testError?.message || 'none' });
       
       const { data: expertData, error } = await supabase
         .from('expert_accounts')
@@ -291,16 +277,10 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         .eq('auth_id', userId)
         .maybeSingle();
 
-      console.log('🔍 Expert query result:', { 
-        hasData: !!expertData, 
-        error: error?.message || 'none',
-        errorCode: error?.code || 'none'
-      });
 
       if (error) {
         if (error.code === 'PGRST116') {
           // No rows returned - this is expected if user doesn't have an expert account
-          console.log('ℹ️ No expert profile found for user:', userId);
         } else {
           console.error('❌ Error fetching expert profile:', error);
         }
@@ -310,12 +290,10 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
 
       // Check if expertData is null (no expert account found)
       if (!expertData) {
-        console.log('ℹ️ No expert profile found for user (null data):', userId);
         setExpert(null);
         return null;
       }
 
-      console.log('✅ Expert profile loaded:', expertData);
       
       // Transform the data to match ExpertProfile interface with proper defaults
       const transformedExpert: ExpertProfile = {
@@ -361,27 +339,14 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
       return;
     }
 
-    console.log('🔄 Refreshing profiles for user:', targetUserId);
-    console.log('🔄 Current user state:', { 
-      isAuthenticated: !!user, 
-      userId: user?.id, 
-      targetUserId 
-    });
     
     try {
-      console.log('🔄 About to load profiles in parallel...');
       // Load both profiles in parallel with error handling
       const [userProfileData, expertData] = await Promise.allSettled([
         loadUserProfile(targetUserId),
         loadExpertProfile(targetUserId)
       ]);
       
-      console.log('🔄 Profile loading results:', {
-        userProfileStatus: userProfileData.status,
-        expertDataStatus: expertData.status,
-        userProfileValue: userProfileData.status === 'fulfilled' ? !!userProfileData.value : null,
-        expertDataValue: expertData.status === 'fulfilled' ? !!expertData.value : null
-      });
 
       // Extract successful results
       const userProfile = userProfileData.status === 'fulfilled' ? userProfileData.value : null;
@@ -400,14 +365,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
       const preferredRole = localStorage.getItem('preferredRole');
       const loginPreference = sessionType || preferredRole;
       
-      console.log('📋 Profile refresh results:', {
-        hasUserProfile: !!userProfile,
-        hasExpertProfile: !!expert,
-        expertStatus: expert?.status,
-        sessionType,
-        preferredRole,
-        loginPreference
-      });
+
       
       // Determine user type based on loaded profiles and preferences
       let newUserType: SessionType = 'none';
@@ -415,27 +373,22 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
       if (userProfile && expert) {
         // User has both profiles - STRICTLY honor the login preference
         if (loginPreference === 'expert' && expert.status === 'approved') {
-          console.log('✅ EXPERT LOGIN: User has both profiles but logged in as expert - honoring expert preference');
           newUserType = 'expert';
         } else if (loginPreference === 'user') {
-          console.log('✅ USER LOGIN: User has both profiles and logged in as user - honoring user preference');
+
           newUserType = 'user';
         } else if (expert.status === 'approved') {
           // If no clear preference but expert is approved, default to expert
-          console.log('ℹ️ No clear preference but expert approved - defaulting to expert');
           newUserType = 'expert';
         } else {
           // Default to user if expert not approved
-          console.log('ℹ️ Expert not approved - defaulting to user');
           newUserType = 'user';
         }
       } else if (expert && expert.status === 'approved') {
         // Only expert profile exists and is approved
-        console.log('✅ EXPERT ONLY: Only expert profile exists and is approved');
         newUserType = 'expert';
       } else if (userProfile) {
         // Only user profile exists
-        console.log('✅ USER ONLY: Only user profile exists');
         newUserType = 'user';
       } else {
         // No profiles found - fall back gracefully to a safe default
@@ -448,8 +401,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
           newUserType = 'user';
         }
       }
-      
-      console.log('✅ Profiles refreshed. Final user type:', newUserType);
+       
       setUserType(newUserType);
       
     } catch (error) {
@@ -461,7 +413,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
   // Auth actions
   const login = async (email: string, password: string, options?: { asExpert?: boolean }): Promise<{ success: boolean; userType?: SessionType; error?: string }> => {
     try {
-      console.log('🔐 SimpleAuthContext: Login attempt for:', email, 'as expert:', options?.asExpert);
+      
       
       // First attempt to sign in to get the user ID
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -525,16 +477,14 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
 
       // Set session type preference after successful validation
       if (options?.asExpert) {
-        console.log('🎯 Setting expert login preference');
         localStorage.setItem('sessionType', 'expert');
         localStorage.setItem('preferredRole', 'expert');
       } else {
-        console.log('👤 Setting user login preference');
         localStorage.setItem('sessionType', 'user');
         localStorage.setItem('preferredRole', 'user');
       }
 
-      console.log('✅ SimpleAuthContext: Login successful and validated');
+
       
       // Return success with determined user type
       return { 
@@ -549,7 +499,6 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
   };
 
   const logout = async (): Promise<void> => {
-    console.log('🚪 Starting logout...');
     setIsLoading(true);
     
     try {
@@ -571,7 +520,6 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
       localStorage.removeItem('sessionType');
       localStorage.removeItem('preferredRole');
       
-      console.log('✅ Logout completed');
     } catch (error) {
       console.error('❌ Logout failed:', error);
       throw error;
@@ -583,32 +531,23 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
   // Auth initialization and state management
   useEffect(() => {
     try {
-      console.log('🔥 SimpleAuthContext useEffect triggered');
       let mounted = true;
     
     const initializeAuth = async () => {
-      console.log('🚀 Auth: Starting initialization...');
       
       try {
-        console.log('🔍 Getting session from Supabase...');
         const { data: { session }, error } = await supabase.auth.getSession();
-        console.log('🔍 Session result:', { hasSession: !!session, error: error?.message || 'none' });
         
         if (!mounted) return;
         
         if (error) {
           console.warn('⚠️ Auth: Session check error:', error);
         } else if (session) {
-          console.log('✅ Auth: Initial session found:', { userId: session.user.id, email: session.user.email });
           setSession(session);
           setUser(session.user);
           // Load profiles immediately for initial session
-          console.log('👤 Loading profiles for initial session...');
-          console.log('👤 Calling refreshProfiles with userId:', session.user.id);
           await refreshProfiles(session.user.id);
-          console.log('👤 refreshProfiles completed');
         } else {
-          console.log('ℹ️ Auth: No initial session found');
           setUserProfile(null);
           setExpert(null);
           setUserType('none');
@@ -618,28 +557,23 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         console.error('❌ Auth: Initialization failed:', error);
       } finally {
         if (mounted) {
-          console.log('✅ Auth: Initial check complete');
           setIsLoading(false);
         }
       }
     };
     
-    console.log('🔥 About to call initializeAuth()');
     initializeAuth();
-    console.log('🔥 initializeAuth() called');
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
         
-        console.log('🔄 Auth: State change event:', event, session ? { userId: session.user.id } : 'no session');
         
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          console.log('👤 User authenticated, loading profiles...');
-          // Immediately refresh profiles with the user ID to prevent race conditions
+                // Immediately refresh profiles with the user ID to prevent race conditions
           setTimeout(async () => {
             if (mounted) {
               await refreshProfiles(session.user.id);
@@ -647,7 +581,6 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
           }, 100); // Reduced delay to fix race condition in expert login
         } else {
           // Clear profiles when user is not authenticated
-          console.log('🚫 User logged out, clearing profiles');
           setUserProfile(null);
           setExpert(null);
           setUserType('none');
@@ -683,10 +616,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
     refreshProfiles
   }), [isAuthenticated, isLoading, user, session, userType, userProfile, expert, login, logout, refreshProfiles]);
 
-  // Reduced logging in production
-  if (process.env.NODE_ENV === 'development') {
-    console.log('📡 SimpleAuthContext: Context value updated');
-  }
+
 
   return (
     <SimpleAuthContext.Provider value={contextValue}>

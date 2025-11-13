@@ -14,12 +14,7 @@ const NavbarUserAvatar: React.FC<NavbarUserAvatarProps> = ({
   onLogout,
   isLoggingOut 
 }) => {
-  console.log('NavbarUserAvatar: Rendering with user:', {
-    hasUser: !!currentUser,
-    userName: currentUser?.name,
-    userEmail: currentUser?.email,
-    profilePicture: currentUser?.profile_picture
-  });
+
 
   // Get display name with better fallback logic
   const getDisplayName = () => {
@@ -65,11 +60,7 @@ const NavbarUserAvatar: React.FC<NavbarUserAvatarProps> = ({
     email: ''
   };
 
-  console.log('NavbarUserAvatar: Enhanced user data:', {
-    displayName: enhancedUser.displayName,
-    initials: enhancedUser.initials,
-    profile_picture: enhancedUser.profile_picture
-  });
+
 
   return (
     <NavbarUserMenu 

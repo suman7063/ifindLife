@@ -56,15 +56,14 @@ const ExpertDashboardLayout: React.FC<ExpertDashboardLayoutProps> = ({ children 
   // Initialize expert presence tracking
   const { isExpertOnline } = useIntegratedExpertPresence();
   
-  // Enhanced debug logging
-  console.log('ExpertDashboardLayout - Simple auth state:', {
-    isAuthenticated: simpleAuth.isAuthenticated,
-    userType: simpleAuth.userType,
-    hasExpertProfile: !!simpleAuth.expert,
-    isLoading: simpleAuth.isLoading,
-    expertStatus: simpleAuth.expert?.status,
-    isExpertOnline
-  });
+  // Handle edge case where user is authenticated but not as expert
+  // This must be called before any conditional returns (React Hooks rule)
+  useEffect(() => {
+    if (!simpleAuth.isLoading && simpleAuth.isAuthenticated && simpleAuth.userType !== 'expert') {
+      toast.error('You do not have expert privileges');
+      navigate('/user-dashboard', { replace: true });
+    }
+  }, [simpleAuth.isLoading, simpleAuth.isAuthenticated, simpleAuth.userType, navigate]);
   
   // Show loading state while checking authentication
   if (simpleAuth.isLoading) {
@@ -73,10 +72,9 @@ const ExpertDashboardLayout: React.FC<ExpertDashboardLayoutProps> = ({ children 
   
   // Handle unauthorized access with redirect safety
   if (!isExpertAuthenticated(simpleAuth)) {
-    console.log('ExpertDashboardLayout: Not authenticated as expert, checking redirect safety');
+
     
     if (!hasRedirected && redirectSafety.canRedirect('/expert-dashboard', '/expert-login')) {
-      console.log('ExpertDashboardLayout: Redirecting to expert login');
       setHasRedirected(true);
       return <Navigate to="/expert-login" replace />;
     } else if (!redirectSafety.canRedirect('/expert-dashboard', '/expert-login')) {
@@ -106,15 +104,6 @@ const ExpertDashboardLayout: React.FC<ExpertDashboardLayoutProps> = ({ children 
     // Fallback if redirect safety prevents redirect
     return <Navigate to="/expert-login" replace />;
   }
-
-  // Handle edge case where user is authenticated but not as expert
-  useEffect(() => {
-    if (!simpleAuth.isLoading && simpleAuth.isAuthenticated && simpleAuth.userType !== 'expert') {
-      console.log('ExpertDashboardLayout: User authenticated but not as expert');
-      toast.error('You do not have expert privileges');
-      navigate('/user-dashboard', { replace: true });
-    }
-  }, [simpleAuth.isLoading, simpleAuth.isAuthenticated, simpleAuth.userType, navigate]);
 
   return (
     <MobileResponsiveWrapper className="bg-gray-50">

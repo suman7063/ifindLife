@@ -85,19 +85,10 @@ const NewExpertDashboard: React.FC = () => {
         const hasServices = data.selected_services && data.selected_services.length > 0;
         const hasPricing = data.pricing_set;
         const hasAvailability = data.availability_set;
-        console.log('hasServices', hasServices ,hasPricing ,hasAvailability,data.onboarding_completed);
         // Onboarding is needed if any core step is incomplete
         const needsOnboardingFlow = !hasServices || !hasPricing || !hasAvailability || !data.onboarding_completed;
         setNeedsOnboarding(needsOnboardingFlow);
 
-        console.log('Onboarding check:', {
-          status: data.status,
-          onboardingCompleted: data.onboarding_completed,
-          hasServices,
-          hasPricing,
-          hasAvailability,
-          needsOnboarding: needsOnboardingFlow
-        });
       } catch (error) {
         console.error('Error checking onboarding status:', error);
         setNeedsOnboarding(false);
@@ -109,17 +100,10 @@ const NewExpertDashboard: React.FC = () => {
 
   // Enhanced debug logging
   useEffect(() => {
-    console.log('NewExpertDashboard - Auth state:', {
-      isAuthenticated,
-      hasExpertProfile: !!expert,
-      isLoading,
-      userType,
-      needsOnboarding
-    });
+
     
     // Ensure userType is set to expert when accessing this page
     if (isAuthenticated && expert) {
-      console.log('Setting preferred role to expert');
       localStorage.setItem('preferredRole', 'expert');
       localStorage.setItem('sessionType', 'expert');
     }
@@ -130,10 +114,6 @@ const NewExpertDashboard: React.FC = () => {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
   
-  console.log('isAuthenticated', isAuthenticated,userType,expert,needsOnboarding);
-  console.log('userType', isAuthenticated && userType === 'expert' && expert && needsOnboarding);
-  console.log('expert', expert);
-  console.log('needsOnboarding', needsOnboarding);
   // If expert is authenticated and needs onboarding, show onboarding flow first
   if (isAuthenticated && userType === 'expert' && expert && needsOnboarding) {
     return <ExpertOnboardingFlow />;

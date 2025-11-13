@@ -39,19 +39,12 @@ export const useFetchUserProfile = (userId: string | undefined, session: Session
         });
 
         if (profileError || !profileData) {
-          // If no profile found in 'users' table, try 'profiles' table
-          console.log('Falling back to profiles table');
           const { data: fallbackData, error: fallbackError } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', userId)
             .single();
           
-          console.log('Profiles query result:', { 
-            fallbackData: fallbackData ? 'Data exists' : 'No data', 
-            fallbackError: fallbackError ? fallbackError.message : 'No error'
-          });
-
           if (fallbackError && fallbackError.code !== 'PGRST116') { // PGRST116 is "no rows returned" error
             console.error('Error fetching from profiles table:', fallbackError);
             throw fallbackError;
@@ -74,12 +67,12 @@ export const useFetchUserProfile = (userId: string | undefined, session: Session
             (profileData as any).reports = [];
             (profileData as any).referrals = [];
             
-            console.log('Created profile data from fallback:', JSON.stringify(profileData));
+          
           } else {
-            console.log('No profile data found in either table');
+        
             
             // Attempt to create a new profile 
-            console.log('Attempting to create new profile for user:', userId);
+          
             try {
               const newProfileData = {
                 id: userId,
@@ -99,7 +92,7 @@ export const useFetchUserProfile = (userId: string | undefined, session: Session
               if (insertError) {
                 console.error('Error creating new profile:', insertError);
               } else {
-                console.log('Created new profile successfully:', insertData);
+               
                 profileData = insertData[0];
               }
             } catch (createError) {
@@ -109,7 +102,7 @@ export const useFetchUserProfile = (userId: string | undefined, session: Session
         }
 
         if (profileData) {
-          console.log('Profile data found, processing...');
+          
           // Use type assertion to bypass TypeScript restrictions
           const rawProfileData = profileData as any;
           
@@ -147,39 +140,21 @@ export const useFetchUserProfile = (userId: string | undefined, session: Session
             recent_activities: (rawProfileData.recent_activities || []) as any[],
             upcoming_appointments: (rawProfileData.upcoming_appointments || []) as any[]
           };
-          
-          console.log('Enhanced profile created:', {
-            id: enhancedProfile.id,
-            name: enhancedProfile.name,
-            hasFavoriteExperts: Array.isArray(enhancedProfile.favorite_experts),
-            favoriteExpertsCount: enhancedProfile.favorite_experts?.length || 0,
-            hasFavoritePrograms: Array.isArray(enhancedProfile.favorite_programs),
-            favoriteProgramsCount: enhancedProfile.favorite_programs?.length || 0
-          });
+      
           
           setUserProfile(enhancedProfile);
-        } else {
-          console.log('No profile data to set after all attempts');
         }
       } catch (err) {
         console.error('Error fetching user profile:', err);
         setError(err instanceof Error ? err : new Error('Unknown error'));
       } finally {
         setLoading(false);
-        console.log('==== PROFILE FETCHING COMPLETED ====');
+        
       }
     };
 
     fetchUserProfile();
   }, [userId, session]);
-
-  console.log('useFetchUserProfile hook returning:', { 
-    userProfileExists: !!userProfile, 
-    loading, 
-    hasError: !!error,
-    favoriteExperts: userProfile?.favorite_experts?.length || 0,
-    favoritePrograms: userProfile?.favorite_programs?.length || 0
-  });
   
   return { userProfile, loading, error };
 };

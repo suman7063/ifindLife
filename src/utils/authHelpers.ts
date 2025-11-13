@@ -18,13 +18,7 @@ export const isUserAuthenticated = (auth: SimpleAuthContextType): boolean => {
 };
 
 export const isExpertAuthenticated = (auth: SimpleAuthContextType): boolean => {
-  console.log('🔍 isExpertAuthenticated check:', {
-    isAuthenticated: auth.isAuthenticated,
-    userType: auth.userType,
-    hasUser: !!auth.user,
-    hasExpert: !!auth.expert,
-    expertStatus: auth.expert?.status
-  });
+
   
   return Boolean(
     auth.isAuthenticated && 

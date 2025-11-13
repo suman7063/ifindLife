@@ -26,11 +26,10 @@ export function useGlobalCallNotifications(expertAuthId: string | undefined) {
 
   useEffect(() => {
     if (!expertAuthId) {
-      console.log('⚠️ No expertAuthId provided, skipping notification setup');
       return;
     }
 
-    console.log('🔔 Setting up global call notification listener for expert:', expertAuthId);
+    
 
     // Request browser notification permission on mount
     if ('Notification' in window && Notification.permission === 'default') {
@@ -51,7 +50,7 @@ export function useGlobalCallNotifications(expertAuthId: string | undefined) {
           filter: `expert_id=eq.${expertAuthId}`
         },
         (payload) => {
-          console.log('📞 Global notification: New call received:', payload);
+        
           const newCall = payload.new as CallRequest;
           
           // Only process pending calls
@@ -96,10 +95,8 @@ export function useGlobalCallNotifications(expertAuthId: string | undefined) {
         }
       )
       .subscribe((status, err) => {
-        console.log('📡 Calls subscription status:', status, err ? `Error: ${err.message}` : '');
-        if (status === 'SUBSCRIBED') {
-          console.log('✅ Successfully subscribed to incoming call requests');
-        } else if (status === 'CHANNEL_ERROR') {
+       
+        if (status === 'CHANNEL_ERROR') {
           console.error('❌ Channel error:', err);
         }
       });
@@ -116,7 +113,7 @@ export function useGlobalCallNotifications(expertAuthId: string | undefined) {
           filter: `user_id=eq.${expertAuthId}`
         },
         (payload) => {
-          console.log('📨 Global notification: New database notification:', payload);
+         
           const notification = payload.new as {
             id: string;
             type: string;
@@ -160,16 +157,12 @@ export function useGlobalCallNotifications(expertAuthId: string | undefined) {
         }
       )
       .subscribe((status, err) => {
-        console.log('📡 Notifications subscription status:', status, err ? `Error: ${err.message}` : '');
-        if (status === 'SUBSCRIBED') {
-          console.log('✅ Successfully subscribed to notifications table');
-        } else if (status === 'CHANNEL_ERROR') {
+       if (status === 'CHANNEL_ERROR') {
           console.error('❌ Channel error:', err);
         }
       });
 
     return () => {
-      console.log('🔴 Unsubscribing from global call notifications');
       supabase.removeChannel(callsChannel);
       supabase.removeChannel(notificationsChannel);
     };

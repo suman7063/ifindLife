@@ -247,3 +247,94 @@ export const leaveCall = async (
   }
 };
 
+/**
+ * Connection state types from Agora SDK
+ */
+export type ConnectionState = 
+  | 'DISCONNECTED' 
+  | 'CONNECTING' 
+  | 'CONNECTED' 
+  | 'RECONNECTING' 
+  | 'DISCONNECTING';
+
+/**
+ * Get the current connection state of the Agora client
+ * @param client - The Agora RTC client instance
+ * @returns The current connection state, or null if client is not available
+ */
+export const getConnectionState = (client: IAgoraRTCClient | null): ConnectionState | null => {
+  if (!client) {
+    return null;
+  }
+  
+  return client.connectionState as ConnectionState;
+};
+
+/**
+ * Check if the Agora connection is established (CONNECTED state)
+ * @param client - The Agora RTC client instance
+ * @returns true if connected, false otherwise
+ */
+export const isConnected = (client: IAgoraRTCClient | null): boolean => {
+  if (!client) {
+    return false;
+  }
+  
+  return client.connectionState === 'CONNECTED';
+};
+
+/**
+ * Check if the Agora connection is in a connecting state (CONNECTING or RECONNECTING)
+ * @param client - The Agora RTC client instance
+ * @returns true if connecting or reconnecting, false otherwise
+ */
+export const isConnecting = (client: IAgoraRTCClient | null): boolean => {
+  if (!client) {
+    return false;
+  }
+  
+  const state = client.connectionState;
+  return state === 'CONNECTING' || state === 'RECONNECTING';
+};
+
+/**
+ * Check if the Agora connection is disconnected
+ * @param client - The Agora RTC client instance
+ * @returns true if disconnected, false otherwise
+ */
+export const isDisconnected = (client: IAgoraRTCClient | null): boolean => {
+  if (!client) {
+    return true;
+  }
+  
+  return client.connectionState === 'DISCONNECTED';
+};
+
+/**
+ * Get detailed connection status information
+ * @param client - The Agora RTC client instance
+ * @returns Object with connection status details
+ */
+export const getConnectionStatus = (client: IAgoraRTCClient | null) => {
+  if (!client) {
+    return {
+      isConnected: false,
+      isConnecting: false,
+      isDisconnected: true,
+      state: null,
+      hasClient: false
+    };
+  }
+  
+  const state = client.connectionState as ConnectionState;
+  
+  return {
+    isConnected: state === 'CONNECTED',
+    isConnecting: state === 'CONNECTING' || state === 'RECONNECTING',
+    isDisconnected: state === 'DISCONNECTED',
+    isDisconnecting: state === 'DISCONNECTING',
+    state,
+    hasClient: true
+  };
+};
+

@@ -159,7 +159,6 @@ export const ExpertPresenceProvider: React.FC<{ children: React.ReactNode }> = (
   }, [getExpertPresence]);
 
   const bulkCheckPresence = useCallback(async (expertIds: string[]) => {
-    console.log('🔍 Checking presence for experts:', expertIds.length);
     setIsLoading(true);
     
     try {
@@ -174,7 +173,6 @@ export const ExpertPresenceProvider: React.FC<{ children: React.ReactNode }> = (
       });
       
       if (expertsToCheck.length === 0) {
-        console.log('✅ All expert presence data is fresh');
         return;
       }
 
