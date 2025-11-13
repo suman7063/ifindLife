@@ -84,7 +84,9 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
   const remoteVideoRef = useRef<HTMLDivElement>(null);
   const currentSessionIdRef = useRef<string | null>(null);
   const durationTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const sessionChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const [showEndCallConfirm, setShowEndCallConfirm] = useState(false);
+  const [showUserEndCallConfirmation, setShowUserEndCallConfirmation] = useState(false);
 
   // Format call duration
   const formatDuration = (seconds: number) => {
@@ -294,6 +296,43 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
       currentSessionIdRef.current = callRequest.call_session_id || null;
       console.log('✅ Call joined - Session ID set to:', currentSessionIdRef.current);
       console.log('✅ Call request session ID:', callRequest.call_session_id);
+
+      // Subscribe to call session status changes (to detect when user ends call)
+      if (currentSessionIdRef.current) {
+        console.log('📡 Setting up real-time subscription for call session (expert side):', currentSessionIdRef.current);
+        
+        const sessionChannel = supabase
+          .channel(`call_session_expert_${currentSessionIdRef.current}_${Date.now()}`)
+          .on(
+            'postgres_changes',
+            {
+              event: 'UPDATE',
+              schema: 'public',
+              table: 'call_sessions',
+              filter: `id=eq.${currentSessionIdRef.current}`
+            },
+            async (payload) => {
+              console.log('📡 Call session status update received (expert side):', payload);
+              const updatedSession = payload.new as { status: string; end_time?: string };
+              
+              if (updatedSession.status === 'ended') {
+                console.log('🔴 Call ended by user (detected via real-time)');
+                
+                // Stop timer
+                if (durationTimerRef.current) {
+                  clearInterval(durationTimerRef.current);
+                  durationTimerRef.current = null;
+                }
+                
+                // Show confirmation dialog instead of immediately cleaning up
+                setShowUserEndCallConfirmation(true);
+              }
+            }
+          )
+          .subscribe();
+
+        sessionChannelRef.current = sessionChannel;
+      }
 
       // Ensure audio is enabled and volume is set AFTER publishing
       if (localAudioTrack) {
@@ -548,6 +587,67 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
     }));
   };
 
+  // Handle user end call confirmation - cleanup after expert confirms
+  const confirmUserEndCall = useCallback(async () => {
+    console.log('✅ Expert confirmed user ended call, cleaning up...');
+    
+    // Leave Agora channel
+    if (clientRef.current && callState.localAudioTrack) {
+      try {
+        await leaveCall(
+          clientRef.current,
+          callState.localAudioTrack,
+          callState.localVideoTrack
+        );
+        console.log('✅ Left Agora channel after user ended call');
+      } catch (agoraError) {
+        console.error('❌ Error leaving Agora call:', agoraError);
+        // Try fallback
+        if (clientRef.current) {
+          try {
+            await clientRef.current.leave();
+          } catch (e) {
+            console.error('❌ Fallback leave failed:', e);
+          }
+        }
+      }
+    }
+    
+    // Stop remote tracks
+    if (callState.remoteUsers.length > 0) {
+      callState.remoteUsers.forEach(user => {
+        try {
+          user.audioTrack?.stop();
+          user.videoTrack?.stop();
+        } catch (err) {
+          console.warn('⚠️ Error stopping remote track:', err);
+        }
+      });
+    }
+    
+    // Reset call state
+    setCallState({
+      localAudioTrack: null,
+      localVideoTrack: null,
+      remoteUsers: [],
+      client: null,
+      isJoined: false,
+      isMuted: false,
+      isVideoEnabled: false,
+      isAudioEnabled: false
+    });
+
+    // Clear refs
+    clientRef.current = null;
+    currentSessionIdRef.current = null;
+    setCallStartTime(null);
+    setCallDuration(0);
+    setShowUserEndCallConfirmation(false);
+    
+    // Call the callback
+    onCallEnd();
+  }, [callState, onCallEnd]);
+
   // Auto-join on mount if not already joined
   useEffect(() => {
     if (!callState.isJoined && !isConnecting && callRequest.channel_name) {
@@ -561,6 +661,19 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [callRequest.channel_name]);
 
+  // Subscribe to call session status changes (to detect when user ends call)
+  // Note: Subscription is set up in handleJoinCall when session ID is available
+  // This effect only handles cleanup when call state changes
+  useEffect(() => {
+    // Cleanup subscription when call is no longer joined
+    if (!callState.isJoined && sessionChannelRef.current) {
+      console.log('🧹 Cleaning up call session subscription (expert side) - call no longer joined');
+      const channel = sessionChannelRef.current;
+      supabase.removeChannel(channel);
+      sessionChannelRef.current = null;
+    }
+  }, [callState.isJoined]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -568,10 +681,16 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
         clearInterval(durationTimerRef.current);
       }
       
+      const channel = sessionChannelRef.current;
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+      
       if (clientRef.current && callState.localAudioTrack) {
         leaveCall(clientRef.current, callState.localAudioTrack, callState.localVideoTrack).catch(console.error);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const userName = callRequest.user_metadata?.name || 'User';
@@ -714,36 +833,63 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
               </Button>
         </div>
 
-      {/* End Call Confirmation */}
-    <AlertDialog open={showEndCallConfirm} onOpenChange={setShowEndCallConfirm}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>End Call?</AlertDialogTitle>
-          <AlertDialogDescription>
-              Are you sure you want to end this call? Duration: {formatDuration(callDuration)}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel onClick={() => {
-            console.log('❌ Cancel clicked - keeping call active');
-            setShowEndCallConfirm(false);
-          }}>
-            Cancel
-          </AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={async (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('🔘 End Call confirmed in AlertDialog - calling handleLeaveCall');
-                await handleLeaveCall();
+      {/* Expert End Call Confirmation */}
+      <AlertDialog open={showEndCallConfirm} onOpenChange={setShowEndCallConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>End Call?</AlertDialogTitle>
+            <AlertDialogDescription>
+                Are you sure you want to end this call? Duration: {formatDuration(callDuration)}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              console.log('❌ Cancel clicked - keeping call active');
+              setShowEndCallConfirm(false);
+            }}>
+              Cancel
+            </AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={async (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('🔘 End Call confirmed in AlertDialog - calling handleLeaveCall');
+                  await handleLeaveCall();
+                }}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                End Call
+              </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* User End Call Confirmation Dialog */}
+      <AlertDialog open={showUserEndCallConfirmation} onOpenChange={() => {}}>
+        <AlertDialogContent className="sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <span className="text-orange-600">Call Ended by User</span>
+            </AlertDialogTitle>
+            <AlertDialogDescription className="pt-2">
+              The user has ended the call. Duration: <strong>{formatDuration(callDuration)}</strong>
+              <br />
+              <br />
+              Click "OK" to disconnect from the call channel.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction
+              onClick={async () => {
+                await confirmUserEndCall();
               }}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="w-full sm:w-auto"
             >
-              End Call
+              OK
             </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
