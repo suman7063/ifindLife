@@ -25,6 +25,7 @@ import { useGlobalCallNotifications } from '@/hooks/useGlobalCallNotifications';
 import { toast } from 'sonner';
 import IncomingCallDialog from '@/components/expert-dashboard/call/IncomingCallDialog';
 import { acceptCall, declineCall as declineCallService } from '@/services/callService';
+import DashboardLoader from '@/components/expert/dashboard/DashboardLoader';
 // Import test utility (only in development)
 if (import.meta.env.DEV) {
   import('@/utils/testNotification');
@@ -109,9 +110,18 @@ const NewExpertDashboard: React.FC = () => {
     }
   }, [isAuthenticated, expert, isLoading, userType, needsOnboarding]);
   
-  // Display loading state
+  // Display loading state - wait for auth to initialize AND profiles to load
+  // On refresh, isLoading becomes false before userType/expert are set, so we need to wait
   if (isLoading || needsOnboarding === null) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+    return <DashboardLoader />;
+  }
+  
+  // Wait for expert profile to load on refresh - if authenticated but expert not loaded yet, show loader
+  // This prevents redirecting to login when userType hasn't been determined yet
+  // userType === 'none' means profiles are still loading
+  if (isAuthenticated && userType === 'none') {
+    // Still loading profiles - wait for userType to be determined
+    return <DashboardLoader />;
   }
   
   // If expert is authenticated and needs onboarding, show onboarding flow first
@@ -119,20 +129,26 @@ const NewExpertDashboard: React.FC = () => {
     return <ExpertOnboardingFlow />;
   }
 
-  // Handle unauthorized access (do NOT block onboarding path above)
-  if (!isAuthenticated || userType !== 'expert') {
-    console.error('User not authenticated as expert, redirecting to expert login', {
-      isAuthenticated,
-      userType,
-      hasExpertProfile: !!expert
-    });
-    toast.error('You must be logged in as an expert to access this page');
+  // Handle unauthorized access - only redirect if we're CERTAIN user is NOT an expert
+  // Don't redirect if userType is still 'none' (still loading) or if expert object exists
+  const isDefinitelyNotExpert = !isAuthenticated || (userType !== 'expert' && userType !== 'none' && !expert);
+  
+  if (isDefinitelyNotExpert) {
+    // Only show error if we're certain they're not an expert (not during loading)
+    if (userType !== 'none') {
+      console.error('User not authenticated as expert, redirecting to expert login', {
+        isAuthenticated,
+        userType,
+        hasExpertProfile: !!expert
+      });
+      toast.error('You must be logged in as an expert to access this page');
+    }
     return <Navigate to="/expert-login" replace />;
   }
 
   // If we are authenticated as expert but expert object not yet loaded, show a lightweight loader
-  if (!expert) {
-    return <div className="flex items-center justify-center min-h-screen">Preparing your dashboard...</div>;
+  if (isAuthenticated && userType === 'expert' && !expert) {
+    return <DashboardLoader />;
   }
 
   return (
