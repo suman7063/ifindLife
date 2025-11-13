@@ -10,6 +10,7 @@ import { useWallet } from '@/hooks/useWallet';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import CallTypeSelectionModal from './modals/CallTypeSelectionModal';
+import ConnectingModal from './modals/ConnectingModal';
 import WaitingForExpertModal from './modals/WaitingForExpertModal';
 import InCallModal from './modals/InCallModal';
 import {
@@ -45,9 +46,10 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
   const { user } = useSimpleAuth();
   const navigate = useNavigate();
   const { balance: walletBalance, loading: walletLoading, deductCredits, checkBalance, fetchBalance } = useWallet();
-  const [modalState, setModalState] = useState<'selection' | 'waiting' | 'incall'>('selection');
+  const [modalState, setModalState] = useState<'selection' | 'connecting' | 'waiting' | 'incall'>('selection');
   const [callType, setCallType] = useState<'audio' | 'video'>('video');
   const [selectedDuration, setSelectedDuration] = useState<number>(15);
+  const connectingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const {
     isConnecting,
@@ -81,14 +83,22 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
   });
 
   const handleStartCall = async (selectedCallType: 'audio' | 'video', duration: number) => {
+    // Set modal to connecting state IMMEDIATELY for instant feedback
+    // Use setTimeout to ensure UI updates in next tick, allowing immediate visual feedback
+    setModalState('connecting');
+    
+    // Use setTimeout(0) to ensure state update renders before async operations
+    await new Promise(resolve => setTimeout(resolve, 0));
+    
     setCallType(selectedCallType);
     setSelectedDuration(duration);
     
     // Calculate estimated cost
     const estimatedCost = (duration * expertPrice) / 60;
     
-    // Check wallet balance first
-    const currentBalance = await fetchBalance();
+    // Use the already-fetched wallet balance (fetched when modal opens)
+    // No need to fetch again as the modal already validated the balance
+    const currentBalance = walletBalance || 0;
     
     if (currentBalance < estimatedCost) {
       const shortfall = estimatedCost - currentBalance;
@@ -105,6 +115,7 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
         },
         duration: 5000
       });
+      setModalState('selection');
       return;
     }
     
@@ -119,11 +130,9 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
 
     if (!deductResult.success) {
       toast.error(deductResult.error || 'Failed to deduct credits from wallet');
+      setModalState('selection');
       return;
     }
-
-    // Set modal to waiting state
-    setModalState('waiting');
     
     // Start the call (this will create the call session)
     const success = await startCall(
@@ -142,6 +151,13 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
       setModalState('selection');
       return;
     }
+
+    // After a brief delay, transition to waiting state
+    // This gives time for the connecting modal to be visible
+    connectingTimeoutRef.current = setTimeout(() => {
+      setModalState('waiting');
+      connectingTimeoutRef.current = null;
+    }, 1500); // 1.5 seconds delay
 
     // Note: callSessionId will be available in the flowState after call initiation
     // The wallet transaction reference_id can be updated later if needed
@@ -170,6 +186,11 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
   useEffect(() => {
     if (!isOpen) {
       setModalState('selection');
+      // Clear any pending timeout when modal closes
+      if (connectingTimeoutRef.current) {
+        clearTimeout(connectingTimeoutRef.current);
+        connectingTimeoutRef.current = null;
+      }
     } else {
       // Refresh wallet balance when modal opens (silently handle errors)
       fetchBalance().catch(err => {
@@ -179,6 +200,15 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (connectingTimeoutRef.current) {
+        clearTimeout(connectingTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Format duration helper
   const formatDuration = (seconds: number) => {
@@ -253,6 +283,15 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
         />
       );
     }
+  }
+
+  if (modalState === 'connecting') {
+    return (
+      <ConnectingModal
+        isOpen={true}
+        expertName={expertName}
+      />
+    );
   }
 
   if (modalState === 'waiting') {

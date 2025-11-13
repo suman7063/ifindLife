@@ -120,19 +120,34 @@ export default {
 					transform: 'translateY(0) scale(1)',
 					opacity: '1'
 				}
-			}
 			},
-			animation: {
-				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out',
-				'float': 'float 6s ease-in-out infinite',
-				'breathe': 'breathe 4s ease-in-out infinite',
-				'bounce-smooth': 'bounce-smooth 2s ease-in-out 1'
-			},
-			backgroundImage: {
-				'soft-gradient': 'linear-gradient(to right, #5AC8FA, #7DD8C9)',
-				'calm-gradient': 'linear-gradient(to bottom, #F8F8F8, #A88BEB10)',
+			'progress': {
+				'0%': { 
+					width: '0%',
+					transform: 'translateX(0)'
+				},
+				'50%': { 
+					width: '70%',
+					transform: 'translateX(0)'
+				},
+				'100%': { 
+					width: '100%',
+					transform: 'translateX(0)'
+				}
 			}
+		},
+		animation: {
+			'accordion-down': 'accordion-down 0.2s ease-out',
+			'accordion-up': 'accordion-up 0.2s ease-out',
+			'float': 'float 6s ease-in-out infinite',
+			'breathe': 'breathe 4s ease-in-out infinite',
+			'bounce-smooth': 'bounce-smooth 2s ease-in-out 1',
+			'progress': 'progress 2s ease-in-out infinite'
+		},
+		backgroundImage: {
+			'soft-gradient': 'linear-gradient(to right, #5AC8FA, #7DD8C9)',
+			'calm-gradient': 'linear-gradient(to bottom, #F8F8F8, #A88BEB10)',
+		}
 		}
 	},
 	plugins: [require("tailwindcss-animate")],
