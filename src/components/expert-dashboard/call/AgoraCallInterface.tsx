@@ -24,7 +24,9 @@ import {
   Mic, 
   MicOff,
   Video,
-  VideoOff
+  VideoOff,
+  MessageSquare,
+  MessageSquareOff
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { 
@@ -34,10 +36,12 @@ import {
   type CallState,
   type CallType 
 } from '@/utils/agoraService';
+import CallChat from '@/components/call/CallChat';
 import { AGORA_CONFIG } from '@/utils/agoraConfig';
 import type { IAgoraRTCClient } from 'agora-rtc-sdk-ng';
 import { toast } from 'sonner';
 import { endCall } from '@/services/callService';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 
 interface UserMetadata {
   name?: string;
@@ -87,6 +91,9 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
   const sessionChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const [showEndCallConfirm, setShowEndCallConfirm] = useState(false);
   const [showUserEndCallConfirmation, setShowUserEndCallConfirmation] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+  const { expert } = useSimpleAuth();
+  const expertName = expert?.name || 'Expert';
 
   // Format call duration
   const formatDuration = (seconds: number) => {
@@ -674,6 +681,52 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
     }
   }, [callState.isJoined]);
 
+  // Play videos when refs are ready or layout changes
+  useEffect(() => {
+    if (callRequest.call_type === 'video' && callState.isJoined) {
+      // Play local video
+      if (callState.localVideoTrack && localVideoRef.current && callState.isVideoEnabled) {
+        const playLocalVideo = async () => {
+          try {
+            if (!callState.localVideoTrack!.enabled) {
+              callState.localVideoTrack!.setEnabled(true);
+            }
+            await callState.localVideoTrack!.play(localVideoRef.current!, { mirror: true });
+            console.log('✅ Playing local video track (expert side - useEffect)');
+          } catch (error) {
+            console.warn('⚠️ Could not play local video:', error);
+          }
+        };
+        
+        // Use requestAnimationFrame for better timing
+        const rafId = requestAnimationFrame(() => {
+          setTimeout(playLocalVideo, 100);
+        });
+        
+        return () => cancelAnimationFrame(rafId);
+      }
+    }
+  }, [callRequest.call_type, callState.isJoined, callState.localVideoTrack, callState.isVideoEnabled, showChat]);
+
+  // Play remote video when available
+  useEffect(() => {
+    if (callRequest.call_type === 'video' && callState.remoteUsers.length > 0 && remoteVideoRef.current) {
+      const remoteUser = callState.remoteUsers[0];
+      if (remoteUser.videoTrack) {
+        const playRemoteVideo = async () => {
+          try {
+            await remoteUser.videoTrack!.play(remoteVideoRef.current!);
+            console.log('✅ Playing remote video track (expert side - useEffect)');
+          } catch (error) {
+            console.warn('⚠️ Could not play remote video:', error);
+          }
+        };
+        
+        setTimeout(playRemoteVideo, 100);
+      }
+    }
+  }, [callRequest.call_type, callState.remoteUsers, showChat]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -725,60 +778,107 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
 
       {/* Video Display */}
       {callRequest.call_type === 'video' && (
-        <div className="grid grid-cols-2 gap-4 h-full flex-1 min-h-0">
-          {/* Remote Video */}
-          <Card className="relative overflow-hidden bg-black">
-            <CardContent className="p-0 h-full">
-              <div ref={remoteVideoRef} className="w-full h-full" />
-              {!callState.remoteUsers.length && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Avatar className="h-24 w-24">
-                    <AvatarImage src={userAvatar || undefined} />
-                    <AvatarFallback>{userName[0]}</AvatarFallback>
-                  </Avatar>
-                </div>
-              )}
-              <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-sm">
-                {userName}
-              </div>
-            </CardContent>
-          </Card>
+        <div className={`flex ${showChat ? 'flex-row gap-4' : 'flex-col'} h-full flex-1 min-h-0`}>
+          <div className={`${showChat ? 'flex-1' : 'w-full'} min-h-0`}>
+            <div className="grid grid-cols-2 gap-4 h-full min-h-[400px]">
+              {/* Remote Video */}
+              <Card className="relative overflow-hidden bg-black min-h-0">
+                <CardContent className="p-0 h-full min-h-0">
+                  <div ref={remoteVideoRef} className="w-full h-full min-h-[200px]" />
+                  {!callState.remoteUsers.length && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Avatar className="h-24 w-24">
+                        <AvatarImage src={userAvatar || undefined} />
+                        <AvatarFallback>{userName[0]}</AvatarFallback>
+                      </Avatar>
+                    </div>
+                  )}
+                  <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-sm">
+                    {userName}
+                  </div>
+                </CardContent>
+              </Card>
 
-          {/* Local Video */}
-          <Card className="relative overflow-hidden bg-black">
-            <CardContent className="p-0 h-full">
-              <div ref={localVideoRef} className="w-full h-full" />
-              {!callState.localVideoTrack && (
-                <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
-                  <Avatar className="h-16 w-16">
-                    <AvatarFallback>You</AvatarFallback>
-                  </Avatar>
-                </div>
-              )}
-              <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-sm">
-                You {callState.isVideoEnabled ? '(Video On)' : '(Video Off)'}
-              </div>
-            </CardContent>
-          </Card>
+              {/* Local Video */}
+              <Card className="relative overflow-hidden bg-black min-h-0">
+                <CardContent className="p-0 h-full min-h-0">
+                  <div ref={localVideoRef} className="w-full h-full min-h-[200px]" />
+                  {!callState.localVideoTrack && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
+                      <Avatar className="h-16 w-16">
+                        <AvatarFallback>You</AvatarFallback>
+                      </Avatar>
+                    </div>
+                  )}
+                  {callState.localVideoTrack && !callState.isVideoEnabled && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
+                      <VideoOff className="h-12 w-12 text-gray-500" />
+                    </div>
+                  )}
+                  <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-sm">
+                    You {callState.isVideoEnabled ? '(Video On)' : '(Video Off)'}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Chat Panel - Always render to preserve messages */}
+          {callState.client && (
+            <div className={`flex-1 min-w-0 ${showChat ? '' : 'hidden'}`}>
+              <Card className="border border-border/50 shadow-inner h-full">
+                <CardContent className="p-0 h-full">
+                  <CallChat
+                    visible={showChat}
+                    client={callState.client}
+                    userName={expertName}
+                    expertName={userName}
+                    expertAvatar={userAvatar || undefined}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
       )}
 
       {/* Audio Call Display */}
       {callRequest.call_type === 'audio' && (
-        <Card className="flex-1 flex items-center justify-center">
-          <CardContent className="p-8">
-            <div className="flex flex-col items-center space-y-4">
-              <Avatar className="h-24 w-24">
-                <AvatarImage src={userAvatar || undefined} />
-                <AvatarFallback>{userName[0]}</AvatarFallback>
-              </Avatar>
-              <div className="text-center">
-                <h3 className="text-lg font-semibold">{userName}</h3>
-                <p className="text-sm text-muted-foreground">Audio Call</p>
-              </div>
+        <div className={`flex ${showChat ? 'flex-row gap-4' : 'flex-col'} flex-1 min-h-0`}>
+          <div className={`${showChat ? 'flex-1' : 'w-full'}`}>
+            <Card className="flex-1 flex items-center justify-center h-full">
+              <CardContent className="p-8">
+                <div className="flex flex-col items-center space-y-4">
+                  <Avatar className="h-24 w-24">
+                    <AvatarImage src={userAvatar || undefined} />
+                    <AvatarFallback>{userName[0]}</AvatarFallback>
+                  </Avatar>
+                  <div className="text-center">
+                    <h3 className="text-lg font-semibold">{userName}</h3>
+                    <p className="text-sm text-muted-foreground">Audio Call</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Chat Panel - Always render to preserve messages */}
+          {callState.client && (
+            <div className={`flex-1 min-w-0 ${showChat ? '' : 'hidden'}`}>
+              <Card className="border border-border/50 shadow-inner h-full">
+                <CardContent className="p-0 h-full">
+                  <CallChat
+                    visible={showChat}
+                    client={callState.client}
+                    userName={expertName}
+                    expertName={userName}
+                    expertAvatar={userAvatar || undefined}
+                  />
+                </CardContent>
+              </Card>
             </div>
-          </CardContent>
-        </Card>
+          )}
+        </div>
       )}
 
       {/* Call Controls */}
@@ -818,6 +918,20 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
             )}
                 </Button>
               )}
+
+              <Button
+                variant={showChat ? 'default' : 'outline'}
+                size="lg"
+                onClick={() => setShowChat(!showChat)}
+                title={showChat ? 'Hide chat' : 'Show chat'}
+                disabled={!callState.client || callState.client?.connectionState !== 'CONNECTED'}
+              >
+                {showChat ? (
+                  <MessageSquareOff className="w-5 h-5" />
+                ) : (
+                  <MessageSquare className="w-5 h-5" />
+                )}
+              </Button>
 
               <Button
                 variant="destructive"

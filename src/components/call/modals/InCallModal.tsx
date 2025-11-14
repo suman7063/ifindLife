@@ -3,7 +3,7 @@
  * Main interface during active call
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -15,9 +15,13 @@ import {
   Mic,
   MicOff,
   WifiOff,
-  RotateCcw
+  RotateCcw,
+  MessageSquare,
+  MessageSquareOff
 } from 'lucide-react';
 import type { CallState } from '@/utils/agoraService';
+import CallChat from '@/components/call/CallChat';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 
 interface InCallModalProps {
   isOpen: boolean;
@@ -60,10 +64,18 @@ const InCallModal: React.FC<InCallModalProps> = ({
   localVideoRef,
   remoteVideoRef
 }) => {
+  const { user } = useSimpleAuth();
+  const [showChat, setShowChat] = useState(false);
+  const userName = user?.name || user?.email || 'You';
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const toggleChat = () => {
+    setShowChat(!showChat);
   };
 
   // Play local video when available - trigger immediately when modal opens or state changes
@@ -135,7 +147,7 @@ const InCallModal: React.FC<InCallModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-auto">
+      <DialogContent className={`${showChat ? 'sm:max-w-6xl' : 'sm:max-w-4xl'} max-h-[90vh] overflow-auto`}>
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <span>Call with {expertName}</span>
@@ -174,69 +186,111 @@ const InCallModal: React.FC<InCallModalProps> = ({
 
           {/* Video Display */}
           {callType === 'video' && (
-            <div className="grid grid-cols-2 gap-4 h-[400px]">
-              {/* Remote Video */}
-              <Card className="relative overflow-hidden bg-black">
-                <CardContent className="p-0 h-full">
-                  <div ref={remoteVideoRef} className="w-full h-full" />
-                  {!callState.remoteUsers.length && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Avatar className="h-24 w-24">
-                        <AvatarImage src={expertAvatar} />
-                        <AvatarFallback>{expertName[0]}</AvatarFallback>
-                      </Avatar>
-                    </div>
-                  )}
-                  <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-sm">
-                    {expertName}
-                  </div>
-                </CardContent>
-              </Card>
+            <div className={`flex ${showChat ? 'flex-row gap-4' : 'flex-col'} items-start`}>
+              <div className={`${showChat ? 'flex-1' : 'w-full'}`}>
+                <div className="grid grid-cols-2 gap-4 h-[400px]">
+                  {/* Remote Video */}
+                  <Card className="relative overflow-hidden bg-black">
+                    <CardContent className="p-0 h-full">
+                      <div ref={remoteVideoRef} className="w-full h-full" />
+                      {!callState.remoteUsers.length && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Avatar className="h-24 w-24">
+                            <AvatarImage src={expertAvatar} />
+                            <AvatarFallback>{expertName[0]}</AvatarFallback>
+                          </Avatar>
+                        </div>
+                      )}
+                      <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-sm">
+                        {expertName}
+                      </div>
+                    </CardContent>
+                  </Card>
 
-              {/* Local Video */}
-              <Card className="relative overflow-hidden bg-black">
-                <CardContent className="p-0 h-full">
-                  <div 
-                    ref={localVideoRef} 
-                    className="w-full h-full min-h-[200px]"
-                    style={{ minHeight: '200px' }}
-                  />
-                  {!callState?.localVideoTrack && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
-                      <Avatar className="h-16 w-16">
-                        <AvatarFallback>You</AvatarFallback>
-                      </Avatar>
-                    </div>
-                  )}
-                  {callState?.localVideoTrack && !callState.isVideoEnabled && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
-                      <VideoOff className="h-12 w-12 text-gray-500" />
-                    </div>
-                  )}
-                  <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-sm">
-                    You {callState?.isVideoEnabled ? '(Video On)' : '(Video Off)'}
-                  </div>
-                </CardContent>
-              </Card>
+                  {/* Local Video */}
+                  <Card className="relative overflow-hidden bg-black">
+                    <CardContent className="p-0 h-full">
+                      <div 
+                        ref={localVideoRef} 
+                        className="w-full h-full min-h-[200px]"
+                        style={{ minHeight: '200px' }}
+                      />
+                      {!callState?.localVideoTrack && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
+                          <Avatar className="h-16 w-16">
+                            <AvatarFallback>You</AvatarFallback>
+                          </Avatar>
+                        </div>
+                      )}
+                      {callState?.localVideoTrack && !callState.isVideoEnabled && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
+                          <VideoOff className="h-12 w-12 text-gray-500" />
+                        </div>
+                      )}
+                      <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-sm">
+                        You {callState?.isVideoEnabled ? '(Video On)' : '(Video Off)'}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+
+              {/* Chat Panel - Always render to preserve messages */}
+              {callState?.client && (
+                <div className={`flex-1 min-w-0 ${showChat ? '' : 'hidden'}`}>
+                  <Card className="border border-border/50 shadow-inner">
+                    <CardContent className="p-0">
+                      <CallChat
+                        visible={showChat}
+                        client={callState.client}
+                        userName={userName}
+                        expertName={expertName}
+                        expertAvatar={expertAvatar}
+                      />
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
             </div>
           )}
 
           {/* Audio Call Display */}
           {callType === 'audio' && (
-            <Card>
-              <CardContent className="p-8">
-                <div className="flex flex-col items-center space-y-4">
-                  <Avatar className="h-24 w-24">
-                    <AvatarImage src={expertAvatar} />
-                    <AvatarFallback>{expertName[0]}</AvatarFallback>
-                  </Avatar>
-                  <div className="text-center">
-                    <h3 className="text-lg font-semibold">{expertName}</h3>
-                    <p className="text-sm text-muted-foreground">Audio Call</p>
-                  </div>
+            <div className={`flex ${showChat ? 'flex-row gap-4' : 'flex-col'} items-start`}>
+              <div className={`${showChat ? 'flex-1' : 'w-full'}`}>
+                <Card>
+                  <CardContent className="p-8">
+                    <div className="flex flex-col items-center space-y-4">
+                      <Avatar className="h-24 w-24">
+                        <AvatarImage src={expertAvatar} />
+                        <AvatarFallback>{expertName[0]}</AvatarFallback>
+                      </Avatar>
+                      <div className="text-center">
+                        <h3 className="text-lg font-semibold">{expertName}</h3>
+                        <p className="text-sm text-muted-foreground">Audio Call</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Chat Panel - Always render to preserve messages */}
+              {callState?.client && (
+                <div className={`flex-1 min-w-0 ${showChat ? '' : 'hidden'}`}>
+                  <Card className="border border-border/50 shadow-inner">
+                    <CardContent className="p-0">
+                      <CallChat
+                        visible={showChat}
+                        client={callState.client}
+                        userName={userName}
+                        expertName={expertName}
+                        expertAvatar={expertAvatar}
+                      />
+                    </CardContent>
+                  </Card>
                 </div>
-              </CardContent>
-            </Card>
+              )}
+            </div>
           )}
 
           {/* Call Controls */}
@@ -278,6 +332,20 @@ const InCallModal: React.FC<InCallModalProps> = ({
                   )}
                 </Button>
               )}
+
+              <Button
+                variant={showChat ? 'default' : 'outline'}
+                size="lg"
+                onClick={toggleChat}
+                title={showChat ? 'Hide chat' : 'Show chat'}
+                disabled={!callState?.client || callState?.client?.connectionState !== 'CONNECTED'}
+              >
+                {showChat ? (
+                  <MessageSquareOff className="w-5 h-5" />
+                ) : (
+                  <MessageSquare className="w-5 h-5" />
+                )}
+              </Button>
 
               <Button
                 variant="destructive"

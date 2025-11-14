@@ -338,3 +338,131 @@ export const getConnectionStatus = (client: IAgoraRTCClient | null) => {
   };
 };
 
+/**
+ * Chat message interface for Agora RTC data streams
+ */
+export interface ChatMessage {
+  id: string;
+  senderId: number | string;
+  senderName: string;
+  content: string;
+  timestamp: number;
+}
+
+/**
+ * Send a chat message through Agora RTC data stream
+ * Uses the same channel as the video/audio call
+ * 
+ * NOTE: Agora RTC SDK v4+ supports data streams via createDataStream and sendStreamMessage
+ * If these methods don't exist, consider using Agora RTM SDK for messaging
+ * 
+ * @param client - The Agora RTC client instance
+ * @param message - The message content
+ * @param senderName - Name of the sender
+ * @returns true if message was sent successfully
+ */
+export const sendChatMessage = async (
+  client: IAgoraRTCClient | null,
+  message: string,
+  senderName: string
+): Promise<boolean> => {
+  if (!client) {
+    console.error('❌ Cannot send message: Agora client not available');
+    return false;
+  }
+
+  if (client.connectionState !== 'CONNECTED') {
+    console.error('❌ Cannot send message: Not connected to channel');
+    return false;
+  }
+
+  if (!message.trim()) {
+    console.warn('⚠️ Cannot send empty message');
+    return false;
+  }
+
+  try {
+    const messageData: ChatMessage = {
+      id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      senderId: client.uid || 'unknown',
+      senderName,
+      content: message.trim(),
+      timestamp: Date.now()
+    };
+
+    // Convert message to Uint8Array for Agora data stream
+    const encoder = new TextEncoder();
+    const data = encoder.encode(JSON.stringify(messageData));
+
+    // Check if sendStreamMessage method exists (Agora RTC SDK v4.1+)
+    if (typeof (client as any).sendStreamMessage === 'function') {
+      // Send message through data stream (reliable, ordered)
+      await (client as any).sendStreamMessage(data);
+      console.log('✅ Chat message sent via RTC data stream:', messageData.content);
+      return true;
+    } else {
+      // Fallback: Try createDataStream if available
+      console.warn('⚠️ sendStreamMessage not available. Data streams may require Agora RTM SDK.');
+      console.warn('   Consider using Agora RTM SDK for reliable messaging: npm install agora-rtm-sdk');
+      return false;
+    }
+  } catch (error) {
+    console.error('❌ Error sending chat message:', error);
+    return false;
+  }
+};
+
+/**
+ * Setup chat message listener for Agora RTC data stream
+ * 
+ * NOTE: This requires Agora RTC SDK v4.1+ with data stream support
+ * If 'stream-message' event is not available, consider using Agora RTM SDK
+ * 
+ * @param client - The Agora RTC client instance
+ * @param onMessage - Callback function when a message is received
+ * @returns Cleanup function to remove the listener
+ */
+export const setupChatMessageListener = (
+  client: IAgoraRTCClient | null,
+  onMessage: (message: ChatMessage) => void
+): (() => void) => {
+  if (!client) {
+    console.warn('⚠️ Cannot setup message listener: Agora client not available');
+    return () => {};
+  }
+
+  const handleStreamMessage = (uid: number | string, data: Uint8Array) => {
+    try {
+      const decoder = new TextDecoder();
+      const messageText = decoder.decode(data);
+      const message: ChatMessage = JSON.parse(messageText);
+      
+      console.log('📨 Chat message received from', uid, ':', message.content);
+      onMessage(message);
+    } catch (error) {
+      console.error('❌ Error parsing chat message:', error);
+    }
+  };
+
+  // Listen for stream messages (if event exists)
+  if (typeof client.on === 'function') {
+    try {
+      client.on('stream-message' as any, handleStreamMessage);
+      console.log('✅ Chat message listener setup');
+    } catch (error) {
+      console.warn('⚠️ stream-message event not available. Consider using Agora RTM SDK for messaging.');
+    }
+  }
+
+  // Return cleanup function
+  return () => {
+    if (typeof client.off === 'function') {
+      try {
+        client.off('stream-message' as any, handleStreamMessage);
+      } catch (error) {
+        // Ignore cleanup errors
+      }
+    }
+  };
+};
+
