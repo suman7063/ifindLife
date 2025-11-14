@@ -289,13 +289,56 @@ export async function declineCall(callRequestId: string): Promise<boolean> {
       .single();
 
     if (callRequest) {
+      const endTime = new Date().toISOString();
+      
+      // Update call session status
       await supabase
         .from('call_sessions')
         .update({ 
           status: 'ended',
-          end_time: new Date().toISOString()
+          end_time: endTime
         })
         .eq('id', callRequest.call_session_id);
+
+      // Fetch call session to get expert_id for notification
+      const { data: callSession } = await supabase
+        .from('call_sessions')
+        .select('user_id, expert_id')
+        .eq('id', callRequest.call_session_id)
+        .single();
+
+      // Send notification to user (same as when expert ends call)
+      if (callSession?.user_id) {
+        try {
+          console.log('📨 Sending notification to user about call decline:', callSession.user_id);
+          
+          const { error: notificationError } = await supabase.functions.invoke('send-notification', {
+            body: {
+              userId: callSession.user_id,
+              type: 'call_ended',
+              title: 'Call Ended',
+              content: 'Call declined by expert',
+              referenceId: callRequest.call_session_id,
+              senderId: callSession.expert_id,
+              data: {
+                callSessionId: callRequest.call_session_id,
+                endedBy: 'expert',
+                declined: true
+              }
+            }
+          });
+
+          if (notificationError) {
+            // Silently handle notification errors - they're non-critical
+            console.warn('⚠️ Failed to send notification (call still declined):', notificationError.message || 'Unknown error');
+          } else {
+            console.log('✅ Notification sent to user successfully');
+          }
+        } catch (notificationErr: any) {
+          // Silently handle notification errors - they're non-critical
+          console.warn('⚠️ Notification service unavailable (call still declined):', notificationErr?.message || 'Unknown error');
+        }
+      }
     }
 
     return true;

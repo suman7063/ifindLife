@@ -27,7 +27,7 @@ import { useExpertPresence } from '@/contexts/ExpertPresenceContext';
 // import { useUserCurrency } from '@/hooks/call/useUserCurrency';
 import { supabase } from '@/lib/supabase';
 import AgoraCallInterface from '@/components/expert-dashboard/call/AgoraCallInterface';
-import { acceptCall } from '@/services/callService';
+import { acceptCall, declineCall } from '@/services/callService';
 import IncomingCallDialog from '@/components/expert-dashboard/call/IncomingCallDialog';
 import ExpertInCallModal from '@/components/expert-dashboard/call/ExpertInCallModal';
 import { toast } from 'sonner';
@@ -380,12 +380,12 @@ const CallManagementPage: React.FC = () => {
 
   const handleDeclineCall = async (callId: string) => {
     try {
-      const { error } = await supabase
-        .from('incoming_call_requests')
-        .update({ status: 'declined' })
-        .eq('id', callId);
-
-      if (error) throw error;
+      const success = await declineCall(callId);
+      
+      if (!success) {
+        toast.error('Failed to decline call');
+        return;
+      }
 
       setIncomingCalls(prev => prev.filter(c => c.id !== callId));
       setIncomingCallDialog(null); // Close dialog

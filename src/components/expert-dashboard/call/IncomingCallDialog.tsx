@@ -10,6 +10,16 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { PhoneCall, PhoneOff, Video, Mic, Clock } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface CallRequest {
   id: string;
@@ -48,6 +58,7 @@ const IncomingCallDialog: React.FC<IncomingCallDialogProps> = ({
 }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
+  const [showDeclineConfirm, setShowDeclineConfirm] = useState(false);
 
   // Calculate time remaining until call expires
   useEffect(() => {
@@ -89,9 +100,15 @@ const IncomingCallDialog: React.FC<IncomingCallDialogProps> = ({
     }
   };
 
-  const handleDecline = async () => {
+  const handleDecline = () => {
+    if (!callRequest || isProcessing) return;
+    setShowDeclineConfirm(true);
+  };
+
+  const confirmDecline = async () => {
     if (!callRequest || isProcessing) return;
     
+    setShowDeclineConfirm(false);
     setIsProcessing(true);
     try {
       await onDecline(callRequest.id);
@@ -198,6 +215,29 @@ const IncomingCallDialog: React.FC<IncomingCallDialogProps> = ({
           )}
         </div>
       </DialogContent>
+
+      {/* Decline Confirmation Dialog */}
+      <AlertDialog open={showDeclineConfirm} onOpenChange={setShowDeclineConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Decline Call?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to decline this call request? The user will be notified.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowDeclineConfirm(false)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDecline}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Decline Call
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 };

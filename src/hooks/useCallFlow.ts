@@ -40,6 +40,8 @@ export interface CallFlowState {
   wasDisconnected: boolean;
   expertEndedCall: boolean;
   showExpertEndCallConfirmation: boolean;
+  expertDeclinedCall: boolean;
+  showExpertDeclinedCallConfirmation: boolean;
 }
 
 export function useCallFlow(options: UseCallFlowOptions = {}) {
@@ -59,7 +61,9 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
     showRejoin: false,
     wasDisconnected: false,
     expertEndedCall: false,
-    showExpertEndCallConfirmation: false
+    showExpertEndCallConfirmation: false,
+    expertDeclinedCall: false,
+    showExpertDeclinedCallConfirmation: false
   });
 
   const clientRef = useRef<IAgoraRTCClient | null>(null);
@@ -459,11 +463,25 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
               await joinAgoraCall(callData);
             } else if (updatedRequest.status === 'declined') {
               console.log('❌ Expert declined via real-time');
-              toast.error('Call was declined by the expert');
+              
+              // Clean up subscriptions
+              if (subscriptionRef.current) {
+                await supabase.removeChannel(subscriptionRef.current);
+                subscriptionRef.current = null;
+              }
+              
+              if (pollingIntervalRef.current) {
+                clearInterval(pollingIntervalRef.current);
+                pollingIntervalRef.current = null;
+              }
+              
+              // Show confirmation dialog instead of just showing error
               setFlowState(prev => ({
                 ...prev,
                 isConnecting: false,
                 isInCall: false,
+                expertDeclinedCall: true,
+                showExpertDeclinedCallConfirmation: true,
                 error: 'Call declined'
               }));
             }
@@ -493,11 +511,20 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
           } else if (currentRequest?.status === 'declined') {
             console.log('❌ Expert declined (via polling)');
             clearInterval(pollInterval);
-            toast.error('Call was declined by the expert');
+            
+            // Clean up subscriptions
+            if (subscriptionRef.current) {
+              await supabase.removeChannel(subscriptionRef.current);
+              subscriptionRef.current = null;
+            }
+            
+            // Show confirmation dialog instead of just showing error
             setFlowState(prev => ({
               ...prev,
               isConnecting: false,
               isInCall: false,
+              expertDeclinedCall: true,
+              showExpertDeclinedCallConfirmation: true,
               error: 'Call declined'
             }));
           }
@@ -604,11 +631,13 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
         callType: null,
         duration: 0,
         error: null,
-        showRejoin: false,
-        wasDisconnected: false,
-        expertEndedCall: false,
-        showExpertEndCallConfirmation: false
-      });
+      showRejoin: false,
+      wasDisconnected: false,
+      expertEndedCall: false,
+      showExpertEndCallConfirmation: false,
+      expertDeclinedCall: false,
+      showExpertDeclinedCallConfirmation: false
+    });
 
       clientRef.current = null;
       callStartTimeRef.current = null;
@@ -873,7 +902,9 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
             showRejoin: false,
             wasDisconnected: false,
             expertEndedCall: true,
-            showExpertEndCallConfirmation: false
+            showExpertEndCallConfirmation: false,
+            expertDeclinedCall: false,
+            showExpertDeclinedCallConfirmation: false
           }));
           
           clientRef.current = null;
@@ -909,6 +940,53 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
       }
     };
   }, []);
+
+  // Handle expert declined call confirmation - cleanup after user confirms
+  const confirmExpertDeclinedCall = useCallback(async () => {
+    console.log('✅ User confirmed expert declined call, cleaning up...');
+    
+    // Clean up subscriptions if still active
+    if (subscriptionRef.current) {
+      await supabase.removeChannel(subscriptionRef.current);
+      subscriptionRef.current = null;
+    }
+    
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+    
+    // Clear session storage
+    sessionStorage.removeItem('user_call_session');
+    sessionStorage.removeItem('user_call_data');
+    
+    // Reset state
+    setFlowState({
+      isConnecting: false,
+      isInCall: false,
+      callState: null,
+      callSessionId: null,
+      callRequestId: null,
+      channelName: null,
+      agoraToken: null,
+      agoraUid: null,
+      callType: null,
+      duration: 0,
+      error: null,
+      showRejoin: false,
+      wasDisconnected: false,
+      expertEndedCall: false,
+      showExpertEndCallConfirmation: false,
+      expertDeclinedCall: true,
+      showExpertDeclinedCallConfirmation: false
+    });
+    
+    clientRef.current = null;
+    callStartTimeRef.current = null;
+    
+    // Call the callback
+    options.onCallEnded?.();
+  }, [options]);
 
   // Handle expert end call confirmation - cleanup after user confirms
   const confirmExpertEndCall = useCallback(async () => {
@@ -971,7 +1049,9 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
       showRejoin: false,
       wasDisconnected: false,
       expertEndedCall: true,
-      showExpertEndCallConfirmation: false
+      showExpertEndCallConfirmation: false,
+      expertDeclinedCall: false,
+      showExpertDeclinedCallConfirmation: false
     });
     
     clientRef.current = null;
@@ -989,6 +1069,7 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
     toggleVideo,
     rejoinCall,
     confirmExpertEndCall,
+    confirmExpertDeclinedCall,
     localVideoRef,
     remoteVideoRef
   };

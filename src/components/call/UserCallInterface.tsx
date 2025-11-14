@@ -60,12 +60,15 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
     wasDisconnected,
     expertEndedCall,
     showExpertEndCallConfirmation,
+    expertDeclinedCall,
+    showExpertDeclinedCallConfirmation,
     startCall,
     stopCall,
     toggleMute,
     toggleVideo,
     rejoinCall,
     confirmExpertEndCall,
+    confirmExpertDeclinedCall,
     localVideoRef,
     remoteVideoRef,
     callSessionId
@@ -273,6 +276,33 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+
+          {/* Expert Declined Call Confirmation Dialog */}
+          <AlertDialog open={showExpertDeclinedCallConfirmation} onOpenChange={() => {}}>
+            <AlertDialogContent className="sm:max-w-md">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2">
+                  <span className="text-orange-600">Call Declined by Expert</span>
+                </AlertDialogTitle>
+                <AlertDialogDescription className="pt-2">
+                  The expert has declined your call request.
+                  <br />
+                  <br />
+                  Click "OK" to close and cancel the call.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogAction
+                  onClick={async () => {
+                    await confirmExpertDeclinedCall();
+                  }}
+                  className="w-full sm:w-auto"
+                >
+                  OK
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </>
       );
     } else if (isInCall) {
@@ -287,19 +317,75 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
 
   if (modalState === 'connecting') {
     return (
-      <ConnectingModal
-        isOpen={true}
-        expertName={expertName}
-      />
+      <>
+        <ConnectingModal
+          isOpen={true}
+          expertName={expertName}
+        />
+        {/* Expert Declined Call Confirmation Dialog - shown even in connecting state */}
+        <AlertDialog open={showExpertDeclinedCallConfirmation} onOpenChange={() => {}}>
+          <AlertDialogContent className="sm:max-w-md">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <span className="text-orange-600">Call Declined by Expert</span>
+              </AlertDialogTitle>
+              <AlertDialogDescription className="pt-2">
+                The expert has declined your call request.
+                <br />
+                <br />
+                Click "OK" to close and cancel the call.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogAction
+                onClick={async () => {
+                  await confirmExpertDeclinedCall();
+                }}
+                className="w-full sm:w-auto"
+              >
+                OK
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </>
     );
   }
 
   if (modalState === 'waiting') {
     return (
-      <WaitingForExpertModal
-        isOpen={true}
-        expertName={expertName}
-      />
+      <>
+        <WaitingForExpertModal
+          isOpen={true}
+          expertName={expertName}
+        />
+        {/* Expert Declined Call Confirmation Dialog - shown even in waiting state */}
+        <AlertDialog open={showExpertDeclinedCallConfirmation} onOpenChange={() => {}}>
+          <AlertDialogContent className="sm:max-w-md">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <span className="text-orange-600">Call Declined by Expert</span>
+              </AlertDialogTitle>
+              <AlertDialogDescription className="pt-2">
+                The expert has declined your call request.
+                <br />
+                <br />
+                Click "OK" to close and cancel the call.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogAction
+                onClick={async () => {
+                  await confirmExpertDeclinedCall();
+                }}
+                className="w-full sm:w-auto"
+              >
+                OK
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </>
     );
   }
 
