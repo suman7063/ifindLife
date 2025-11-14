@@ -355,10 +355,10 @@ export async function endCall(callSessionId: string, duration?: number, endedBy?
   try {
     const endTime = new Date().toISOString();
     
-    // Fetch call session to get user_id before updating
+    // Fetch call session to get user_id, cost, and selected_duration before updating
     const { data: callSession, error: fetchError } = await supabase
       .from('call_sessions')
-      .select('user_id, expert_id')
+      .select('user_id, expert_id, cost, selected_duration, currency, payment_method')
       .eq('id', callSessionId)
       .single();
 
@@ -367,11 +367,21 @@ export async function endCall(callSessionId: string, duration?: number, endedBy?
       return false;
     }
 
+    // Fetch existing metadata to preserve it
+    const { data: existingSession } = await supabase
+      .from('call_sessions')
+      .select('call_metadata')
+      .eq('id', callSessionId)
+      .single();
+
+    const existingMetadata = (existingSession?.call_metadata as Record<string, any>) || {};
+    
     const updateData: {
       status: 'ended';
       end_time: string;
       updated_at: string;
       duration?: number;
+      call_metadata?: Record<string, any>;
     } = {
       status: 'ended',
       end_time: endTime,
@@ -382,14 +392,144 @@ export async function endCall(callSessionId: string, duration?: number, endedBy?
       updateData.duration = duration;
     }
 
-    const { error } = await supabase
+    // IMPORTANT: Update status to 'ended' FIRST (before refund processing)
+    // This ensures real-time subscription triggers immediately so user sees confirmation dialog
+    const { error: statusUpdateError } = await supabase
       .from('call_sessions')
-      .update(updateData)
+      .update({
+        status: 'ended',
+        end_time: endTime,
+        updated_at: endTime,
+        duration: duration !== undefined ? duration : undefined
+      })
       .eq('id', callSessionId);
 
-    if (error) {
-      console.error('❌ Failed to end call session:', error);
+    if (statusUpdateError) {
+      console.error('❌ Failed to update call session status:', statusUpdateError);
       return false;
+    }
+
+    console.log('✅ Call session status updated to ended - real-time subscription should trigger now');
+
+    // Now process refund asynchronously (don't block the status update)
+    // Calculate and process refund if expert ended the call
+    if (endedBy === 'expert' && callSession?.user_id && callSession?.cost && callSession?.selected_duration && duration !== undefined) {
+      try {
+        // Calculate refund: refund = cost - (remaining_minutes * per_minute_rate)
+        // Per-minute rate = cost / selected_duration
+        // Actual duration in minutes = duration (seconds) / 60
+        // Remaining minutes = selected_duration - actual_duration_in_minutes
+        
+        const actualDurationMinutes = duration / 60; // Convert seconds to minutes
+        const remainingMinutes = Math.max(0, callSession.selected_duration - actualDurationMinutes);
+        const perMinuteRate = callSession.cost / callSession.selected_duration;
+        const refundAmount = remainingMinutes * perMinuteRate;
+        
+        // Round to 2 decimal places
+        const roundedRefund = Math.round(refundAmount * 100) / 100;
+        
+        if (roundedRefund > 0) {
+          console.log('💰 Calculating refund:', {
+            cost: callSession.cost,
+            selected_duration: callSession.selected_duration,
+            actual_duration_minutes: actualDurationMinutes,
+            remaining_minutes: remainingMinutes,
+            per_minute_rate: perMinuteRate,
+            refund_amount: roundedRefund
+          });
+
+          // Process refund using dedicated edge function (works for both expert and user ending call)
+          const { data: refundData, error: refundError } = await supabase.functions.invoke('process-call-refund', {
+            body: {
+              callSessionId: callSessionId,
+              duration: duration
+            }
+          });
+
+          if (refundError) {
+            console.error('❌ Failed to process refund:', refundError);
+            // Continue with call ending even if refund fails
+            updateData.call_metadata = {
+              ...existingMetadata,
+              refund: {
+                amount: roundedRefund,
+                status: 'failed',
+                error: refundError.message || 'Unknown error',
+                calculated_at: endTime,
+                remaining_minutes: remainingMinutes
+              }
+            };
+          } else if (refundData?.success) {
+            console.log('✅ Refund processed successfully:', {
+              refund_amount: refundData.refund_amount || roundedRefund,
+              new_balance: refundData.new_balance,
+              transaction_id: refundData.transaction?.id
+            });
+            updateData.call_metadata = {
+              ...existingMetadata,
+              refund: {
+                amount: refundData.refund_amount || roundedRefund,
+                status: 'processed',
+                processed_at: endTime,
+                remaining_minutes: remainingMinutes,
+                new_balance: refundData.new_balance,
+                transaction_id: refundData.transaction?.id
+              }
+            };
+            
+            const currencySymbol = callSession.currency === 'INR' ? '₹' : callSession.currency === 'USD' ? '$' : callSession.currency === 'EUR' ? '€' : '';
+            toast.success(`Refund of ${currencySymbol}${(refundData.refund_amount || roundedRefund).toFixed(2)} processed for remaining ${remainingMinutes.toFixed(2)} minutes`);
+          } else {
+            // Refund was not needed or already processed
+            updateData.call_metadata = {
+              ...existingMetadata,
+              refund: {
+                amount: refundData?.refund_amount || 0,
+                status: refundData?.message === 'Refund already processed' ? 'already_processed' : 'not_applicable',
+                calculated_at: endTime,
+                remaining_minutes: remainingMinutes
+              }
+            };
+          }
+        } else {
+          console.log('ℹ️ No refund needed - call used full duration or exceeded selected duration');
+          updateData.call_metadata = {
+            ...existingMetadata,
+            refund: {
+              status: 'not_applicable',
+              reason: 'Call used full duration or exceeded selected duration',
+              calculated_at: endTime
+            }
+          };
+        }
+      } catch (refundErr: any) {
+        console.error('❌ Error processing refund:', refundErr);
+        // Continue with call ending even if refund calculation fails
+        updateData.call_metadata = {
+          ...existingMetadata,
+          refund: {
+            status: 'error',
+            error: refundErr.message || 'Unknown error',
+            calculated_at: endTime
+          }
+        };
+      }
+    } else {
+      // Preserve existing metadata if no refund processing
+      updateData.call_metadata = existingMetadata;
+    }
+
+    // Update metadata separately (status already updated above)
+    if (updateData.call_metadata) {
+      const { error: metadataError } = await supabase
+        .from('call_sessions')
+        .update({ call_metadata: updateData.call_metadata })
+        .eq('id', callSessionId);
+
+      if (metadataError) {
+        console.warn('⚠️ Failed to update call session metadata:', metadataError);
+        // Don't fail the call ending if metadata update fails
+      }
     }
 
     await supabase
@@ -414,7 +554,8 @@ export async function endCall(callSessionId: string, duration?: number, endedBy?
             data: {
               callSessionId: callSessionId,
               endedBy: 'expert',
-              duration: duration
+              duration: duration,
+              refundAmount: (updateData.call_metadata as any)?.refund?.amount || null
             }
           }
         });
