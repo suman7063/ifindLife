@@ -1,12 +1,15 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search, Pin, Archive } from 'lucide-react';
+import { Search, Pin, Archive, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface Conversation {
   id: string;
@@ -29,55 +32,216 @@ const ConversationList: React.FC<ConversationListProps> = ({
   onSelectConversation,
   selectedConversationId
 }) => {
+  const { expert } = useSimpleAuth();
+  const expertId = expert?.auth_id || '';
   const [searchQuery, setSearchQuery] = useState('');
   const [showArchived, setShowArchived] = useState(false);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const conversations: Conversation[] = [
-    {
-      id: '1',
-      clientName: 'Sarah Johnson',
-      clientAvatar: '/lovable-uploads/avatar1.jpg',
-      lastMessage: 'Thank you for the session yesterday. I feel much better!',
-      lastMessageTime: new Date(Date.now() - 300000),
-      unreadCount: 2,
-      isOnline: true,
-      isPinned: true,
-      isArchived: false
-    },
-    {
-      id: '2',
-      clientName: 'Michael Chen',
-      clientAvatar: '/lovable-uploads/avatar2.jpg',
-      lastMessage: 'Can we reschedule our appointment for next week?',
-      lastMessageTime: new Date(Date.now() - 1800000),
-      unreadCount: 1,
-      isOnline: false,
-      isPinned: false,
-      isArchived: false
-    },
-    {
-      id: '3',
-      clientName: 'Emily Davis',
-      clientAvatar: '/lovable-uploads/avatar3.jpg',
-      lastMessage: 'The breathing exercises are working great!',
-      lastMessageTime: new Date(Date.now() - 3600000),
-      unreadCount: 0,
-      isOnline: true,
-      isPinned: false,
-      isArchived: false
-    },
-    {
-      id: '4',
-      clientName: 'Robert Wilson',
-      clientAvatar: '/lovable-uploads/avatar4.jpg',
-      lastMessage: 'See you in our next session.',
-      lastMessageTime: new Date(Date.now() - 86400000),
-      unreadCount: 0,
-      isOnline: false,
-      isPinned: false,
-      isArchived: true
+  // Fetch conversations from database
+  useEffect(() => {
+    if (!expertId) {
+      setLoading(false);
+      return;
     }
-  ];
+
+    const fetchConversations = async () => {
+      try {
+        setLoading(true);
+        
+        // Get all messages where expert is sender or receiver
+        const { data: messagesData, error: messagesError } = await supabase
+          .from('messages')
+          .select('*')
+          .or(`sender_id.eq.${expertId},receiver_id.eq.${expertId}`)
+          .order('created_at', { ascending: false });
+
+        if (messagesError) throw messagesError;
+
+        // Group messages by user (the other participant)
+        const conversationsMap = new Map<string, {
+          userId: string;
+          messages: any[];
+          unreadCount: number;
+          lastMessage: any;
+        }>();
+
+        messagesData?.forEach((message) => {
+          // Get the user ID (the other party, not the expert)
+          const userId = message.sender_id === expertId ? message.receiver_id : message.sender_id;
+          
+          if (!conversationsMap.has(userId)) {
+            conversationsMap.set(userId, {
+              userId,
+              messages: [],
+              unreadCount: 0,
+              lastMessage: message
+            });
+          }
+
+          const conv = conversationsMap.get(userId)!;
+          conv.messages.push(message);
+
+          // Update last message if this is more recent
+          if (new Date(message.created_at) > new Date(conv.lastMessage.created_at)) {
+            conv.lastMessage = message;
+          }
+
+          // Count unread messages (messages sent to expert that are unread)
+          if (message.receiver_id === expertId && !message.read) {
+            conv.unreadCount++;
+          }
+        });
+
+        // Get user details for each conversation
+        const userIds = Array.from(conversationsMap.keys());
+        if (userIds.length > 0) {
+          const { data: usersData, error: usersError } = await supabase
+            .from('users')
+            .select('id, name, profile_picture')
+            .in('id', userIds);
+
+          if (usersError) throw usersError;
+
+          // Build conversations list
+          const conversationsList: Conversation[] = [];
+
+          conversationsMap.forEach((conv, userId) => {
+            const userInfo = usersData?.find(user => user.id === userId);
+
+            if (userInfo) {
+              conversationsList.push({
+                id: userId,
+                clientName: userInfo.name || 'Unknown User',
+                clientAvatar: userInfo.profile_picture || '',
+                lastMessage: conv.lastMessage.content,
+                lastMessageTime: new Date(conv.lastMessage.created_at),
+                unreadCount: conv.unreadCount,
+                isOnline: false, // TODO: Add user presence tracking
+                isPinned: false,
+                isArchived: false
+              });
+            }
+          });
+
+          // Sort by last message time
+          conversationsList.sort((a, b) => 
+            b.lastMessageTime.getTime() - a.lastMessageTime.getTime()
+          );
+
+          setConversations(conversationsList);
+        } else {
+          setConversations([]);
+        }
+      } catch (error) {
+        console.error('Error fetching conversations:', error);
+        toast.error('Failed to load conversations');
+        setConversations([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchConversations();
+
+    // Subscribe to new messages
+    const channel = supabase
+      .channel(`expert-conversations:${expertId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `receiver_id=eq.${expertId}`,
+        },
+        async () => {
+          // Refresh conversations when new message arrives
+          try {
+            const { data: messagesData, error: messagesError } = await supabase
+              .from('messages')
+              .select('*')
+              .or(`sender_id.eq.${expertId},receiver_id.eq.${expertId}`)
+              .order('created_at', { ascending: false });
+
+            if (messagesError) return;
+
+            const conversationsMap = new Map<string, {
+              userId: string;
+              messages: any[];
+              unreadCount: number;
+              lastMessage: any;
+            }>();
+
+            messagesData?.forEach((message) => {
+              const userId = message.sender_id === expertId ? message.receiver_id : message.sender_id;
+              
+              if (!conversationsMap.has(userId)) {
+                conversationsMap.set(userId, {
+                  userId,
+                  messages: [],
+                  unreadCount: 0,
+                  lastMessage: message
+                });
+              }
+
+              const conv = conversationsMap.get(userId)!;
+              conv.messages.push(message);
+
+              if (new Date(message.created_at) > new Date(conv.lastMessage.created_at)) {
+                conv.lastMessage = message;
+              }
+
+              if (message.receiver_id === expertId && !message.read) {
+                conv.unreadCount++;
+              }
+            });
+
+            const userIds = Array.from(conversationsMap.keys());
+            if (userIds.length > 0) {
+              const { data: usersData } = await supabase
+                .from('users')
+                .select('id, name, profile_picture')
+                .in('id', userIds);
+
+              const conversationsList: Conversation[] = [];
+
+              conversationsMap.forEach((conv, userId) => {
+                const userInfo = usersData?.find(user => user.id === userId);
+
+                if (userInfo) {
+                  conversationsList.push({
+                    id: userId,
+                    clientName: userInfo.name || 'Unknown User',
+                    clientAvatar: userInfo.profile_picture || '',
+                    lastMessage: conv.lastMessage.content,
+                    lastMessageTime: new Date(conv.lastMessage.created_at),
+                    unreadCount: conv.unreadCount,
+                    isOnline: false,
+                    isPinned: false,
+                    isArchived: false
+                  });
+                }
+              });
+
+              conversationsList.sort((a, b) => 
+                b.lastMessageTime.getTime() - a.lastMessageTime.getTime()
+              );
+
+              setConversations(conversationsList);
+            }
+          } catch (error) {
+            console.error('Error refreshing conversations:', error);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [expertId]);
 
   const filteredConversations = conversations.filter(conv => {
     const matchesSearch = conv.clientName.toLowerCase().includes(searchQuery.toLowerCase());
@@ -132,8 +296,18 @@ const ConversationList: React.FC<ConversationListProps> = ({
       </CardHeader>
       <CardContent className="p-0">
         <ScrollArea className="h-[600px]">
-          <div className="space-y-1">
-            {sortedConversations.map((conversation) => (
+          {loading ? (
+            <div className="flex justify-center items-center h-[600px]">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : sortedConversations.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-[600px] text-gray-500">
+              <p className="text-lg font-medium mb-2">No conversations yet</p>
+              <p className="text-sm">Messages from users will appear here</p>
+            </div>
+          ) : (
+            <div className="space-y-1">
+              {sortedConversations.map((conversation) => (
               <div
                 key={conversation.id}
                 className={`p-3 cursor-pointer border-b hover:bg-gray-50 transition-colors ${
@@ -181,8 +355,9 @@ const ConversationList: React.FC<ConversationListProps> = ({
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </ScrollArea>
       </CardContent>
     </Card>

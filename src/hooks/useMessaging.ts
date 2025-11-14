@@ -89,32 +89,62 @@ export const useMessaging = (userId?: string) => {
         }
       });
 
-      // Get expert information for each conversation
-      const expertIds = Array.from(conversationsMap.keys());
-      if (expertIds.length > 0) {
-        const { data: expertsData, error: expertsError } = await supabase
+      // Get participant information for each conversation
+      // Note: The other participant could be an expert OR a user
+      const participantIds = Array.from(conversationsMap.keys());
+      if (participantIds.length > 0) {
+        // Try to find experts first
+        const { data: expertsData } = await supabase
           .from('expert_accounts')
+          .select('id, auth_id, name, profile_picture')
+          .in('id', participantIds);
+        
+        const { data: expertsByAuthId } = await supabase
+          .from('expert_accounts')
+          .select('id, auth_id, name, profile_picture')
+          .in('auth_id', participantIds);
+        
+        // Also check users table (in case the other participant is a user, not an expert)
+        const { data: usersData } = await supabase
+          .from('users')
           .select('id, name, profile_picture')
-          .in('id', expertIds);
+          .in('id', participantIds);
 
-        if (expertsError) throw expertsError;
+        // Combine all experts
+        const allExperts = [...(expertsData || []), ...(expertsByAuthId || [])];
+        const uniqueExperts = Array.from(
+          new Map(allExperts.map(e => [e.id, e])).values()
+        );
 
-        // Get expert presence information
-        const { data: presenceData } = await supabase
+        // Get expert IDs for presence lookup
+        const expertIdsForPresence = uniqueExperts.map(e => e.id);
+        const { data: presenceData } = expertIdsForPresence.length > 0 ? await supabase
           .from('expert_presence')
           .select('*')
-          .in('expert_id', expertIds);
+          .in('expert_id', expertIdsForPresence) : { data: null };
 
-        // Build conversations with expert info
+        // Build conversations with participant info
         const conversationsList: Conversation[] = [];
 
-        conversationsMap.forEach((conv, expertId) => {
-          const expertInfo = expertsData?.find(expert => expert.id === expertId);
-          const presence = presenceData?.find(p => p.expert_id === expertId);
+        conversationsMap.forEach((conv, participantId) => {
+          // First try to find as expert
+          const expertInfo = uniqueExperts.find(
+            expert => expert.id === participantId || expert.auth_id === participantId
+          );
+          
+          // If not found as expert, try as user
+          const userInfo = !expertInfo ? usersData?.find(user => user.id === participantId) : null;
 
           if (expertInfo) {
+            // This is an expert conversation
+            // Use auth_id for expert_id to match messages (messages use auth.users.id)
+            const expertAuthId = expertInfo.auth_id || expertInfo.id;
+            const presence = presenceData?.find(
+              p => p.expert_id === expertInfo.id
+            );
+            
             conversationsList.push({
-              expert_id: expertId,
+              expert_id: expertAuthId, // Use auth_id to match messages table
               expert_name: expertInfo.name,
               expert_image: expertInfo.profile_picture,
               last_message: conv.messages[0], // Most recent message
@@ -124,6 +154,11 @@ export const useMessaging = (userId?: string) => {
                 status: presence.status as 'online' | 'away' | 'offline'
               } : undefined
             });
+          } else if (userInfo) {
+            // This is a user conversation (shouldn't happen for user messaging, but handle it)
+            // For user-to-user messaging, we'd need a different structure
+            // For now, skip user conversations in expert messaging context
+            console.warn('Found user conversation in expert context, skipping:', participantId);
           }
         });
 
@@ -143,6 +178,44 @@ export const useMessaging = (userId?: string) => {
       toast.error('Failed to load conversations');
     } finally {
       setLoading(false);
+    }
+  }, [userId]);
+
+  // Mark messages as read for a conversation
+  const markMessagesAsRead = useCallback(async (expertId: string) => {
+    if (!userId) return;
+
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .update({ read: true })
+        .eq('sender_id', expertId)
+        .eq('receiver_id', userId)
+        .eq('read', false);
+
+      if (error) throw error;
+
+      // Update local state
+      setMessages(prev => ({
+        ...prev,
+        [expertId]: prev[expertId]?.map(msg => 
+          msg.sender_id === expertId && msg.receiver_id === userId 
+            ? { ...msg, read: true }
+            : msg
+        ) || []
+      }));
+
+      // Update conversations unread count
+      setConversations(prev =>
+        prev.map(conv =>
+          conv.expert_id === expertId
+            ? { ...conv, unread_count: 0 }
+            : conv
+        )
+      );
+
+    } catch (err) {
+      console.error('Error marking messages as read:', err);
     }
   }, [userId]);
 
@@ -171,7 +244,7 @@ export const useMessaging = (userId?: string) => {
       console.error('Error fetching messages:', err);
       toast.error('Failed to load messages');
     }
-  }, [userId]);
+  }, [userId, markMessagesAsRead]);
 
   // Send a new message
   const sendMessage = useCallback(async (expertId: string, content: string) => {
@@ -212,84 +285,132 @@ export const useMessaging = (userId?: string) => {
     }
   }, [userId, fetchConversations]);
 
-  // Mark messages as read
-  const markMessagesAsRead = useCallback(async (expertId: string) => {
-    if (!userId) return;
-
-    try {
-      const { error } = await supabase
-        .from('messages')
-        .update({ read: true })
-        .eq('sender_id', expertId)
-        .eq('receiver_id', userId)
-        .eq('read', false);
-
-      if (error) throw error;
-
-      // Update local state
-      setMessages(prev => ({
-        ...prev,
-        [expertId]: prev[expertId]?.map(msg => 
-          msg.sender_id === expertId && msg.receiver_id === userId 
-            ? { ...msg, read: true }
-            : msg
-        ) || []
-      }));
-
-      // Update conversations unread count
-      setConversations(prev =>
-        prev.map(conv =>
-          conv.expert_id === expertId
-            ? { ...conv, unread_count: 0 }
-            : conv
-        )
-      );
-
-    } catch (err) {
-      console.error('Error marking messages as read:', err);
-    }
-  }, [userId]);
-
   // Start a new conversation with an expert
   const startConversation = useCallback(async (expertId: string, initialMessage?: string) => {
     if (!userId) return;
 
     try {
-      // Get expert info
-      const { data: expertData, error: expertError } = await supabase
+      // Get expert info - try both id and auth_id
+      let expertData = null;
+      let expertError = null;
+      let byId = null;
+      let errById = null;
+      let byAuthId = null;
+      let errByAuthId = null;
+      
+      // Try by id first (use maybeSingle to handle not found gracefully)
+      const { data: byIdResult, error: errByIdResult } = await supabase
         .from('expert_accounts')
-        .select('name, profile_picture')
+        .select('id, auth_id, name, profile_picture')
         .eq('id', expertId)
-        .single();
+        .maybeSingle();
+      byId = byIdResult;
+      errById = errByIdResult;
 
-      if (expertError) throw expertError;
+      if (!errById && byId) {
+        expertData = byId;
+      } else {
+        // Try by auth_id
+        const { data: byAuthIdResult, error: errByAuthIdResult } = await supabase
+          .from('expert_accounts')
+          .select('id, auth_id, name, profile_picture')
+          .eq('auth_id', expertId)
+          .maybeSingle();
+        byAuthId = byAuthIdResult;
+        errByAuthId = errByAuthIdResult;
+
+        if (!errByAuthId && byAuthId) {
+          expertData = byAuthId;
+        } else {
+          // If expert not found, it might be a user ID - check users table
+          const { data: userData, error: userError } = await supabase
+            .from('users')
+            .select('id, name, profile_picture')
+            .eq('id', expertId)
+            .maybeSingle();
+          
+          if (!userError && userData) {
+            // This is actually a user, not an expert - this shouldn't happen in normal flow
+            console.warn('Expert ID points to a user instead:', expertId);
+            expertError = new Error('Invalid expert ID');
+          } else {
+            expertError = errByAuthId || errById;
+          }
+        }
+      }
+
+      if (expertError || !expertData) {
+        console.error('Expert not found:', {
+          expertId,
+          error: expertError,
+          byIdError: errById,
+          byAuthIdError: errByAuthId,
+          byIdData: byId,
+          byAuthIdData: byAuthId
+        });
+        // Don't show error toast - just log it, as the expert might not exist yet
+        // or there might be an RLS issue
+        console.warn('Could not find expert with ID:', expertId);
+        return null;
+      }
+
+      // Use the expert's auth_id for the conversation (since messages use auth_id)
+      // This ensures consistency - messages use auth.users.id, so conversations should too
+      const conversationExpertId = expertData.auth_id || expertData.id;
+      console.log('Creating conversation with expert:', {
+        expertId,
+        expertDataId: expertData.id,
+        expertDataAuthId: expertData.auth_id,
+        conversationExpertId,
+        expertName: expertData.name
+      });
 
       // Add to conversations if not already there
-      const existingConv = conversations.find(c => c.expert_id === expertId);
+      // Check by both auth_id and id to handle any existing conversations
+      const existingConv = conversations.find(
+        c => c.expert_id === conversationExpertId || 
+             c.expert_id === expertData.id || 
+             c.expert_id === expertId ||
+             (expertData.auth_id && c.expert_id === expertData.auth_id)
+      );
+      
       if (!existingConv) {
         const newConversation: Conversation = {
-          expert_id: expertId,
+          expert_id: conversationExpertId, // Use auth_id for consistency with messages
           expert_name: expertData.name,
           expert_image: expertData.profile_picture,
           unread_count: 0
         };
 
+        console.log('Adding new conversation:', newConversation);
         setConversations(prev => [newConversation, ...prev]);
+      } else {
+        console.log('Conversation already exists:', existingConv);
       }
 
       // Send initial message if provided
       if (initialMessage) {
-        await sendMessage(expertId, initialMessage);
+        // Use the expert's auth_id for sending messages (messages table uses auth.users.id)
+        const messageExpertId = expertData.auth_id || conversationExpertId;
+        await sendMessage(messageExpertId, initialMessage);
       }
 
-      // Fetch messages for this conversation
-      await fetchMessages(expertId);
+      // Fetch messages for this conversation - use auth_id (messages use auth.users.id)
+      const messageExpertId = expertData.auth_id || conversationExpertId;
+      await fetchMessages(messageExpertId);
+      
+      // Refresh conversations list to ensure the new conversation appears
+      await fetchConversations();
+      
+      // Return the expert ID (auth_id) so the caller can select it
+      console.log('Returning conversationExpertId for selection:', conversationExpertId);
+      return conversationExpertId;
 
     } catch (err) {
       console.error('Error starting conversation:', err);
       toast.error('Failed to start conversation');
     }
-  }, [userId, conversations, sendMessage, fetchMessages]);
+  }, [userId, conversations, sendMessage, fetchMessages, fetchConversations]);
 
   // Set up real-time subscriptions
   useEffect(() => {

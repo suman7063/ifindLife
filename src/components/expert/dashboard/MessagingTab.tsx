@@ -3,13 +3,13 @@ import React, { useState } from 'react';
 import MessageList from '@/components/messaging/MessageList';
 import MessageThread from '@/components/messaging/MessageThread';
 import useMessaging from '@/hooks/messaging';
-import { useAuth } from '@/contexts/auth/AuthContext';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 
 const MessagingTab: React.FC = () => {
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [selectedUserName, setSelectedUserName] = useState<string>('');
   const { sendMessage } = useMessaging();
-  const { expertProfile } = useAuth();
+  const { expert } = useSimpleAuth();
 
   const handleSelectConversation = (userId: string, userName: string) => {
     setSelectedUserId(userId);
@@ -17,7 +17,7 @@ const MessagingTab: React.FC = () => {
   };
 
   const handleSendMessage = async (message: string) => {
-    if (!expertProfile?.auth_id || !selectedUserId) return;
+    if (!expert?.auth_id || !selectedUserId) return;
     // Call sendMessage with two arguments (recipientId and message)
     await sendMessage(selectedUserId, message);
   };
@@ -30,13 +30,13 @@ const MessagingTab: React.FC = () => {
           <MessageList 
             onSelectConversation={handleSelectConversation}
             selectedUserId={selectedUserId}
-            userId={expertProfile?.auth_id || ''} 
+            userId={expert?.auth_id || ''} 
           />
         </div>
         <div className="md:w-2/3">
           {selectedUserId ? (
             <MessageThread
-              userId={expertProfile?.auth_id || ''}
+              userId={expert?.auth_id || ''}
               recipientId={selectedUserId}
               recipientName={selectedUserName}
               onSendMessage={handleSendMessage}

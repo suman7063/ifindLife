@@ -4,11 +4,13 @@ import MessagingInterface from '@/components/messaging/MessagingInterface';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MessageCircle, ArrowLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 const MessagingPage: React.FC = () => {
   const { isAuthenticated } = useSimpleAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const expertId = searchParams.get('expert');
 
   if (!isAuthenticated) {
     return (
@@ -61,7 +63,10 @@ const MessagingPage: React.FC = () => {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-6">
-        <MessagingInterface onStartCall={handleStartCall} />
+        <MessagingInterface 
+          onStartCall={handleStartCall} 
+          initialExpertId={expertId || undefined}
+        />
       </div>
     </div>
   );

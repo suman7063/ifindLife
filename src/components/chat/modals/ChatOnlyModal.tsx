@@ -1,11 +1,26 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, Send, X } from 'lucide-react';
-import { useAuth } from '@/contexts/auth/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Send, X, Circle } from 'lucide-react';
+import { format, isToday, isYesterday } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
+import { useExpertPresence } from '@/contexts/ExpertPresenceContext';
+import { toast } from 'sonner';
+
+interface ChatOnlyModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  expert: {
+    id: string;
+    auth_id?: string;
+    name: string;
+    profile_picture?: string;
+  };
+}
 
 interface Message {
   id: string;
@@ -14,186 +29,244 @@ interface Message {
   content: string;
   created_at: string;
   read: boolean;
-  isMine: boolean;
-}
-
-interface ChatOnlyModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  expert: {
-    id: string;
-    name: string;
-    profilePicture?: string;
-    auth_id?: string;
-  };
 }
 
 const ChatOnlyModal: React.FC<ChatOnlyModalProps> = ({
   isOpen,
   onClose,
-  expert,
+  expert
 }) => {
-  const { userProfile, isAuthenticated } = useAuth();
+  const { user } = useSimpleAuth();
+  const userId = user?.id;
+  const expertAuthId = expert.auth_id || expert.id;
+  const { getExpertPresence } = useExpertPresence();
+  const presence = getExpertPresence(expert.id);
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const userId = userProfile?.id;
-  const expertAuthId = expert.auth_id || expert.id;
-
-  // Load messages
+  // Fetch messages
   useEffect(() => {
     if (!isOpen || !userId || !expertAuthId) return;
 
-    const loadMessages = async () => {
+    const fetchMessages = async () => {
       try {
         setLoading(true);
-        
-        // Get messages where user is sender and expert is receiver, or vice versa
         const { data, error } = await supabase
           .from('messages')
           .select('*')
           .or(`and(sender_id.eq.${userId},receiver_id.eq.${expertAuthId}),and(sender_id.eq.${expertAuthId},receiver_id.eq.${userId})`)
           .order('created_at', { ascending: true });
 
-        if (error) {
-          console.error('Error loading messages:', error);
-          return;
-        }
-
-        const formattedMessages = (data || []).map((msg) => ({
-          ...msg,
-          isMine: msg.sender_id === userId,
-        }));
-
-        setMessages(formattedMessages);
+        if (error) throw error;
+        setMessages(data || []);
       } catch (error) {
-        console.error('Error loading messages:', error);
+        console.error('Error fetching messages:', error);
         toast.error('Failed to load messages');
       } finally {
         setLoading(false);
       }
     };
 
-    loadMessages();
+    fetchMessages();
 
-    // Subscribe to new messages
+    // Method 1: Real-time subscription with simple filter
     const channel = supabase
-      .channel(`chat:${userId}:${expertAuthId}`)
+      .channel(`chat-${userId}-${expertAuthId}-${Date.now()}`)
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
           table: 'messages',
-          filter: `or(and(sender_id.eq.${userId},receiver_id.eq.${expertAuthId}),and(sender_id.eq.${expertAuthId},receiver_id.eq.${userId}))`,
+          filter: `receiver_id=eq.${userId}`,
         },
         (payload) => {
-          const newMsg = payload.new as any;
-          const formattedMsg = {
-            ...newMsg,
-            isMine: newMsg.sender_id === userId,
-          };
-          setMessages((prev) => {
-            // Avoid duplicates
-            if (prev.find((m) => m.id === newMsg.id)) {
-              return prev;
-            }
-            return [...prev, formattedMsg];
-          });
+          const newMsg = payload.new as Message;
+          console.log('📨 Real-time message received:', newMsg);
+          
+          // Only add if it's from this expert
+          if (newMsg.sender_id === expertAuthId) {
+            setMessages(prev => {
+              if (prev.find(m => m.id === newMsg.id)) {
+                return prev;
+              }
+              console.log('✅ Adding expert message:', newMsg.content);
+              const updated = [...prev, newMsg];
+              return updated.sort((a, b) => 
+                new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+              );
+            });
+          }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('🔔 Subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Successfully subscribed to messages');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Channel error, will use polling fallback');
+        }
+      });
+
+    // Method 2: Polling as fallback (check for new messages every 2 seconds)
+    const pollInterval = setInterval(async () => {
+      try {
+        const { data, error } = await supabase
+          .from('messages')
+          .select('*')
+          .or(`and(sender_id.eq.${expertAuthId},receiver_id.eq.${userId}),and(sender_id.eq.${userId},receiver_id.eq.${expertAuthId})`)
+          .order('created_at', { ascending: true });
+
+        if (error) {
+          console.error('Polling error:', error);
+          return;
+        }
+
+        if (data && data.length > 0) {
+          setMessages(prev => {
+            const existingIds = new Set(prev.map(m => m.id));
+            const newMessages = data.filter(msg => !existingIds.has(msg.id));
+            
+            if (newMessages.length > 0) {
+              console.log(`🔄 Polling found ${newMessages.length} new message(s)`);
+              const updated = [...prev, ...newMessages];
+              return updated.sort((a, b) => 
+                new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+              );
+            }
+            return prev;
+          });
+        }
+      } catch (error) {
+        console.error('Polling error:', error);
+      }
+    }, 2000); // Poll every 2 seconds
 
     return () => {
+      console.log('🧹 Cleaning up subscriptions');
       supabase.removeChannel(channel);
+      clearInterval(pollInterval);
     };
   }, [isOpen, userId, expertAuthId]);
 
   // Auto-scroll to bottom
   useEffect(() => {
-    if (messagesEndRef.current && scrollContainerRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSendMessage = async () => {
-    if (!newMessage.trim() || !userId || !expertAuthId) return;
+  // Mark messages as read
+  useEffect(() => {
+    if (!isOpen || !userId || !expertAuthId || messages.length === 0) return;
+
+    const markAsRead = async () => {
+      const unreadIds = messages
+        .filter(msg => msg.receiver_id === userId && msg.sender_id === expertAuthId && !msg.read)
+        .map(msg => msg.id);
+
+      if (unreadIds.length > 0) {
+        await supabase
+          .from('messages')
+          .update({ read: true })
+          .in('id', unreadIds);
+      }
+    };
+
+    markAsRead();
+  }, [isOpen, userId, expertAuthId, messages]);
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMessage.trim() || !userId || !expertAuthId || sending) return;
+
+    const messageContent = newMessage.trim();
+    setNewMessage('');
+    setSending(true);
 
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('messages')
         .insert({
           sender_id: userId,
           receiver_id: expertAuthId,
-          content: newMessage.trim(),
-          read: false,
-        });
+          content: messageContent,
+          read: false
+        })
+        .select()
+        .single();
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
-      // Optimistically add message
-      const tempMessage: Message = {
-        id: `temp-${Date.now()}`,
-        sender_id: userId,
-        receiver_id: expertAuthId,
-        content: newMessage.trim(),
-        created_at: new Date().toISOString(),
-        read: false,
-        isMine: true,
-      };
-      setMessages((prev) => [...prev, tempMessage]);
-      setNewMessage('');
+      // Message will be added via real-time subscription, but add optimistically for immediate feedback
+      setMessages(prev => {
+        if (prev.find(m => m.id === data.id)) return prev;
+        const updated = [...prev, data];
+        return updated.sort((a, b) => 
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+      });
     } catch (error) {
       console.error('Error sending message:', error);
       toast.error('Failed to send message');
+      setNewMessage(messageContent); // Restore message on error
+    } finally {
+      setSending(false);
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
-
-  const formatTime = (timestamp: string) => {
+  const formatMessageTime = (timestamp: string) => {
     const date = new Date(timestamp);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    if (isToday(date)) {
+      return format(date, 'HH:mm');
+    } else if (isYesterday(date)) {
+      return 'Yesterday';
+    } else {
+      return format(date, 'MMM dd, HH:mm');
+    }
   };
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map((part) => part[0])
-      .join('')
-      .toUpperCase()
-      .substring(0, 2);
+  const getPresenceStatus = () => {
+    if (!presence) return 'offline';
+    return presence.status;
   };
 
-  if (!isAuthenticated) {
-    return null;
-  }
+  const getPresenceColor = (status: string) => {
+    switch (status) {
+      case 'available': return 'bg-green-500';
+      case 'away': return 'bg-yellow-500';
+      case 'busy': return 'bg-red-500';
+      default: return 'bg-gray-400';
+    }
+  };
+
+  if (!isOpen) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl h-[600px] flex flex-col p-0">
-        <DialogHeader className="px-6 py-4 border-b">
+      <DialogContent className="sm:max-w-[600px] h-[600px] flex flex-col p-0" hideCloseButton>
+        <DialogHeader className="px-4 py-3 border-b">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10">
-                <AvatarImage src={expert.profilePicture} alt={expert.name} />
-                <AvatarFallback>{getInitials(expert.name)}</AvatarFallback>
-              </Avatar>
+              <div className="relative">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={expert.profile_picture} />
+                  <AvatarFallback>
+                    {expert.name.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+                <Circle 
+                  className={`absolute -bottom-1 -right-1 h-3 w-3 border-2 border-background rounded-full ${getPresenceColor(getPresenceStatus())}`}
+                  fill="currentColor"
+                />
+              </div>
               <div>
-                <DialogTitle className="text-lg font-semibold">
-                  Chat with {expert.name}
-                </DialogTitle>
-                <p className="text-xs text-muted-foreground">Expert is currently away</p>
+                <DialogTitle className="text-lg">{expert.name}</DialogTitle>
+                <p className="text-sm text-muted-foreground capitalize">
+                  {getPresenceStatus()}
+                </p>
               </div>
             </div>
             <Button variant="ghost" size="icon" onClick={onClose}>
@@ -202,78 +275,79 @@ const ChatOnlyModal: React.FC<ChatOnlyModalProps> = ({
           </div>
         </DialogHeader>
 
-        {/* Messages container */}
-        <div
-          ref={scrollContainerRef}
-          className="flex-1 overflow-y-auto px-6 py-4 space-y-4 bg-muted/20"
-        >
-          {loading && messages.length === 0 ? (
+        {/* Messages Area */}
+        <ScrollArea className="flex-1 px-4 py-4">
+          {loading ? (
             <div className="flex items-center justify-center h-full">
-              <div className="text-muted-foreground">Loading messages...</div>
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Loading messages...</p>
+              </div>
             </div>
           ) : messages.length === 0 ? (
             <div className="flex items-center justify-center h-full">
-              <div className="text-center space-y-2">
-                <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground opacity-50" />
-                <p className="text-muted-foreground">
-                  No messages yet. Start the conversation!
-                </p>
+              <div className="text-center text-muted-foreground">
+                <p className="mb-2">No messages yet</p>
+                <p className="text-sm">Start the conversation!</p>
               </div>
             </div>
           ) : (
-            <>
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex ${message.isMine ? 'justify-end' : 'justify-start'}`}
-                >
+            <div className="space-y-4">
+              {messages.map((message) => {
+                const isOwn = message.sender_id === userId;
+                return (
                   <div
-                    className={`max-w-[75%] rounded-lg px-4 py-2 ${
-                      message.isMine
-                        ? 'bg-primary text-primary-foreground rounded-br-none'
-                        : 'bg-background border border-border rounded-bl-none'
-                    }`}
+                    key={message.id}
+                    className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}
                   >
-                    <p className="text-sm whitespace-pre-wrap break-words">
-                      {message.content}
-                    </p>
-                    <p
-                      className={`text-xs mt-1 ${
-                        message.isMine
-                          ? 'text-primary-foreground/70'
-                          : 'text-muted-foreground'
-                      }`}
-                    >
-                      {formatTime(message.created_at)}
-                    </p>
+                    {!isOwn && (
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={expert.profile_picture} />
+                        <AvatarFallback>
+                          {expert.name.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
+                    <div className={`max-w-[70%] ${isOwn ? 'text-right' : 'text-left'}`}>
+                      <div
+                        className={`inline-block px-3 py-2 rounded-lg ${
+                          isOwn
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted'
+                        }`}
+                      >
+                        <p className="text-sm">{message.content}</p>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {formatMessageTime(message.created_at)}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
               <div ref={messagesEndRef} />
-            </>
+            </div>
           )}
-        </div>
+        </ScrollArea>
 
-        {/* Input area */}
-        <div className="border-t px-6 py-4 bg-background">
-          <div className="flex gap-2">
-            <textarea
+        {/* Message Input */}
+        <div className="border-t px-4 py-3">
+          <form onSubmit={handleSendMessage} className="flex gap-2">
+            <Input
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Type your message..."
-              className="flex-1 min-h-[60px] max-h-[120px] px-4 py-2 border border-border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary"
-              rows={2}
+              placeholder="Type a message..."
+              disabled={sending}
+              className="flex-1"
             />
-            <Button
-              onClick={handleSendMessage}
-              disabled={!newMessage.trim()}
-              size="default"
-              className="self-end"
+            <Button 
+              type="submit" 
+              disabled={!newMessage.trim() || sending}
+              size="sm"
             >
               <Send className="h-4 w-4" />
             </Button>
-          </div>
+          </form>
         </div>
       </DialogContent>
     </Dialog>

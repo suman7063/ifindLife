@@ -11,8 +11,8 @@ export interface ExpertConnectionState {
   selectedExpert: ExpertCardData | null;
   isExpertModalOpen: boolean;
   isBookingModalOpen: boolean;
-  isCallModalOpen: boolean;
   isChatModalOpen: boolean;
+  isCallModalOpen: boolean;
   expertConnectOptions: {[key: string]: boolean};
 }
 
@@ -29,8 +29,8 @@ export function useExpertConnection() {
     selectedExpert: null,
     isExpertModalOpen: false,
     isBookingModalOpen: false,
-    isCallModalOpen: false,
     isChatModalOpen: false,
+    isCallModalOpen: false,
     expertConnectOptions: {}
   });
 
@@ -43,8 +43,8 @@ export function useExpertConnection() {
       selectedExpert: null,
       isExpertModalOpen: false,
       isBookingModalOpen: false,
-      isCallModalOpen: false,
       isChatModalOpen: false,
+      isCallModalOpen: false,
       expertConnectOptions: {}
     });
   };
@@ -122,9 +122,17 @@ export function useExpertConnection() {
     }
 
     console.log(`Opening chat with ${expert.name}`);
+    // Open chat modal
     updateState({
       selectedExpert: expert,
       isChatModalOpen: true
+    });
+  };
+
+  const closeChatModal = () => {
+    updateState({
+      isChatModalOpen: false,
+      selectedExpert: null
     });
   };
 
@@ -178,13 +186,6 @@ export function useExpertConnection() {
     });
   };
 
-  const closeChatModal = () => {
-    updateState({
-      isChatModalOpen: false,
-      selectedExpert: null
-    });
-  };
-
   return {
     state,
     currentSession,
@@ -197,8 +198,8 @@ export function useExpertConnection() {
     handleModalBookNow,
     closeExpertModal,
     closeBookingModal,
-    closeCallModal,
     closeChatModal,
+    closeCallModal,
     resetState
   };
 }

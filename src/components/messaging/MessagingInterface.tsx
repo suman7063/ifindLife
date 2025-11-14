@@ -17,6 +17,7 @@ import {
 import { format, isToday, isYesterday } from 'date-fns';
 import { useMessaging, Message, Conversation } from '@/hooks/useMessaging';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 interface MessagingInterfaceProps {
   onStartCall?: (expertId: string, type: 'audio' | 'video') => void;
@@ -58,10 +59,58 @@ const MessagingInterface: React.FC<MessagingInterfaceProps> = ({
 
   // Initialize conversation if expertId is provided
   useEffect(() => {
-    if (initialExpertId && !conversations.find(c => c.expert_id === initialExpertId)) {
-      startConversation(initialExpertId);
+    if (initialExpertId && !loading && userProfile?.id && !selectedConversation) {
+      console.log('Initializing conversation with expertId:', initialExpertId);
+      const initializeConversation = async () => {
+        try {
+          // Start conversation - this will add expert to list if not exists
+          const expertId = await startConversation(initialExpertId);
+          console.log('startConversation returned:', expertId);
+          
+          if (expertId) {
+            // Automatically select the conversation after it's created
+            console.log('Selecting conversation:', expertId);
+            setSelectedConversation(expertId);
+          } else {
+            console.log('startConversation returned null, trying to find existing conversation');
+            // If startConversation returned null, try to find existing conversation
+            // Find conversation - the expert_id might be the expert's id (not auth_id)
+            const { data: expertData } = await supabase
+              .from('expert_accounts')
+              .select('id, auth_id')
+              .or(`id.eq.${initialExpertId},auth_id.eq.${initialExpertId}`)
+              .maybeSingle();
+            
+            console.log('Expert data lookup result:', expertData);
+            
+            if (expertData) {
+              // Try to find conversation by expert's id or auth_id
+              const conv = conversations.find(c => 
+                c.expert_id === expertData.id || 
+                c.expert_id === expertData.auth_id || 
+                c.expert_id === initialExpertId
+              );
+              
+              console.log('Found existing conversation:', conv);
+              
+              if (conv) {
+                setSelectedConversation(conv.expert_id);
+              } else {
+                // If no conversation found, wait for conversations to load and try again
+                console.log('No conversation found, will retry after conversations load');
+              }
+            } else {
+              console.warn('Expert not found in database:', initialExpertId);
+            }
+          }
+        } catch (error) {
+          console.error('Error initializing conversation:', error);
+        }
+      };
+      
+      initializeConversation();
     }
-  }, [initialExpertId, conversations, startConversation]);
+  }, [initialExpertId, loading, userProfile?.id, startConversation, selectedConversation, conversations]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();

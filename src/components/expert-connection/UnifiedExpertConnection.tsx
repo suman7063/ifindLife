@@ -1,5 +1,4 @@
 import React from 'react';
-import ExpertDetailModal from '@/components/expert-card/ExpertDetailModal';
 import UserCallInterface from '@/components/call/UserCallInterface';
 import ChatOnlyModal from '@/components/chat/modals/ChatOnlyModal';
 import { useExpertConnection } from '@/hooks/useExpertConnection';
@@ -33,8 +32,8 @@ const UnifiedExpertConnection: React.FC<UnifiedExpertConnectionProps> = ({
     handleModalConnectNow,
     handleModalBookNow,
     closeExpertModal,
-    closeCallModal,
-    closeChatModal
+    closeChatModal,
+    closeCallModal
   } = useExpertConnection();
 
   return (
@@ -70,9 +69,9 @@ const UnifiedExpertConnection: React.FC<UnifiedExpertConnectionProps> = ({
           onClose={closeChatModal}
           expert={{
             id: state.selectedExpert.id,
+            auth_id: state.selectedExpert.auth_id,
             name: state.selectedExpert.name,
-            profilePicture: state.selectedExpert.profilePicture,
-            auth_id: state.selectedExpert.auth_id
+            profile_picture: state.selectedExpert.profilePicture
           }}
         />
       )}

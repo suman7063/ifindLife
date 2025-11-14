@@ -24,6 +24,9 @@ import {
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
+import useMessaging from '@/hooks/messaging';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Message {
   id: string;
@@ -57,27 +60,11 @@ const EnhancedMessageThread: React.FC<EnhancedMessageThreadProps> = ({
   onStartVideoCall,
   onStartVoiceCall
 }) => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      senderId: clientId,
-      senderName: clientName,
-      content: 'Hi! I wanted to follow up on our last session. I\'ve been practicing the techniques you recommended.',
-      timestamp: new Date(Date.now() - 3600000),
-      type: 'text',
-      status: 'read'
-    },
-    {
-      id: '2',
-      senderId: 'expert',
-      senderName: 'You',
-      content: 'That\'s wonderful to hear! How are you finding the breathing exercises? Any challenges so far?',
-      timestamp: new Date(Date.now() - 3300000),
-      type: 'text',
-      status: 'read'
-    }
-  ]);
-
+  const { expert } = useSimpleAuth();
+  const expertId = expert?.auth_id || '';
+  const { getMessages } = useMessaging();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(true);
   const [newMessage, setNewMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [clientTyping, setClientTyping] = useState(false);
@@ -85,6 +72,73 @@ const EnhancedMessageThread: React.FC<EnhancedMessageThreadProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Load messages from database
+  useEffect(() => {
+    if (!expertId || !clientId) return;
+    
+    const loadMessages = async () => {
+      try {
+        setLoading(true);
+        const fetchedMessages = await getMessages(expertId, clientId);
+        
+        // Transform to Message format
+        const transformedMessages: Message[] = (fetchedMessages || []).map((msg: any) => ({
+          id: msg.id,
+          senderId: msg.sender_id === expertId ? 'expert' : msg.sender_id,
+          senderName: msg.sender_id === expertId ? 'You' : clientName,
+          content: msg.content,
+          timestamp: new Date(msg.created_at),
+          type: 'text' as const,
+          status: msg.read ? 'read' : 'delivered' as const
+        }));
+        
+        setMessages(transformedMessages);
+      } catch (error) {
+        console.error('Error loading messages:', error);
+        toast.error('Failed to load messages');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadMessages();
+
+    // Subscribe to new messages
+    const channel = supabase
+      .channel(`expert-chat:${expertId}:${clientId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `or(and(sender_id.eq.${expertId},receiver_id.eq.${clientId}),and(sender_id.eq.${clientId},receiver_id.eq.${expertId}))`,
+        },
+        (payload) => {
+          const newMsg = payload.new as any;
+          const transformedMsg: Message = {
+            id: newMsg.id,
+            senderId: newMsg.sender_id === expertId ? 'expert' : newMsg.sender_id,
+            senderName: newMsg.sender_id === expertId ? 'You' : clientName,
+            content: newMsg.content,
+            timestamp: new Date(newMsg.created_at),
+            type: 'text',
+            status: newMsg.read ? 'read' : 'delivered'
+          };
+          
+          setMessages(prev => {
+            if (prev.find(m => m.id === newMsg.id)) return prev;
+            return [...prev, transformedMsg];
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [expertId, clientId, clientName, getMessages]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -105,11 +159,13 @@ const EnhancedMessageThread: React.FC<EnhancedMessageThreadProps> = ({
     return () => clearInterval(interval);
   }, []);
 
-  const handleSendMessage = () => {
-    if (!newMessage.trim()) return;
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !expertId || !clientId) return;
 
-    const message: Message = {
-      id: Date.now().toString(),
+    // Optimistically add message
+    const tempMessageId = `temp-${Date.now()}`;
+    const tempMessage: Message = {
+      id: tempMessageId,
       senderId: 'expert',
       senderName: 'You',
       content: newMessage,
@@ -118,21 +174,54 @@ const EnhancedMessageThread: React.FC<EnhancedMessageThreadProps> = ({
       status: 'sent'
     };
 
-    setMessages(prev => [...prev, message]);
+    setMessages(prev => [...prev, tempMessage]);
+    const messageContent = newMessage;
     setNewMessage('');
-    
-    // Simulate message delivery and read status
-    setTimeout(() => {
-      setMessages(prev => prev.map(msg => 
-        msg.id === message.id ? { ...msg, status: 'delivered' } : msg
-      ));
-    }, 1000);
-    
-    setTimeout(() => {
-      setMessages(prev => prev.map(msg => 
-        msg.id === message.id ? { ...msg, status: 'read' } : msg
-      ));
-    }, 3000);
+
+    try {
+
+      // Send message directly to database using expert's auth_id
+      const { data, error } = await supabase
+        .from('messages')
+        .insert({
+          sender_id: expertId, // Use expert's auth_id as sender
+          receiver_id: clientId,
+          content: messageContent.trim(),
+          read: false
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error sending message:', error);
+        // Remove optimistic message on failure
+        setMessages(prev => prev.filter(m => m.id !== tempMessageId));
+        toast.error('Failed to send message');
+        return;
+      }
+
+      // Replace temp message with real message from database
+      const realMessage: Message = {
+        id: data.id,
+        senderId: 'expert',
+        senderName: 'You',
+        content: data.content,
+        timestamp: new Date(data.created_at),
+        type: 'text',
+        status: 'sent'
+      };
+
+      setMessages(prev => 
+        prev.map(m => m.id === tempMessageId ? realMessage : m)
+      );
+
+      console.log('Message sent successfully:', data);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      // Remove optimistic message on failure
+      setMessages(prev => prev.filter(m => m.id === tempMessage.id));
+      toast.error('Failed to send message');
+    }
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
