@@ -6,11 +6,13 @@ import { navigationItems } from './navigationConfig';
 import SidebarNavItem from './SidebarNavItem';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { showLogoutSuccessToast, showLogoutErrorToast } from '@/utils/toastConfig';
+import { useExpertUnreadCounts } from '@/hooks/useExpertUnreadCounts';
 
 const SidebarNavigation: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { logout } = useSimpleAuth();
+  const { counts } = useExpertUnreadCounts();
   
   // Function to check if a path is active - improved logic
   const isActive = (path: string) => {
@@ -39,6 +41,14 @@ const SidebarNavigation: React.FC = () => {
     }
   };
 
+  // Get badge for messages item
+  const getBadge = (href: string) => {
+    if (href === '/expert-dashboard/messages' && counts.messages > 0) {
+      return counts.messages.toString();
+    }
+    return undefined;
+  };
+
   return (
     <ScrollArea className="flex-1 px-4 py-6">
       <div className="space-y-2">
@@ -52,7 +62,7 @@ const SidebarNavigation: React.FC = () => {
               href={item.href}
               icon={<item.icon className="h-5 w-5" />}
               isActive={isActive(item.href)}
-              badge={item.badge}
+              badge={getBadge(item.href)}
             >
               {item.name}
             </SidebarNavItem>

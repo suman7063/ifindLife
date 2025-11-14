@@ -18,50 +18,45 @@ const useMessaging = () => {
     
     setLoading(true);
     try {
-      // Get unique conversation partners (people user has messaged with)
-      const { data: sentMessages, error: sentError } = await supabase
+      // Get all messages for this user to build conversations with real data
+      const { data: allMessages, error: messagesError } = await supabase
         .from('messages')
-        .select('receiver_id, created_at')
-        .eq('sender_id', userId)
+        .select('*')
+        .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
         .order('created_at', { ascending: false });
         
-      const { data: receivedMessages, error: receivedError } = await supabase
-        .from('messages')
-        .select('sender_id, created_at')
-        .eq('receiver_id', userId)
-        .order('created_at', { ascending: false });
-        
-      if (sentError || receivedError) {
-        console.error('Error fetching conversations:', sentError || receivedError);
+      if (messagesError) {
+        console.error('Error fetching messages:', messagesError);
         toast.error('Failed to load conversations');
         return [];
       }
       
-      // Combine and find unique conversation partners
-      const conversationPartners = new Map<string, { lastMessageDate: string }>();
+      // Group messages by conversation partner
+      const conversationPartners = new Map<string, {
+        lastMessage: string;
+        lastMessageDate: string;
+        unreadCount: number;
+      }>();
       
-      sentMessages?.forEach(msg => {
-        if (!conversationPartners.has(msg.receiver_id)) {
-          conversationPartners.set(msg.receiver_id, { 
-            lastMessageDate: msg.created_at 
+      allMessages?.forEach(msg => {
+        const partnerId = msg.sender_id === userId ? msg.receiver_id : msg.sender_id;
+        
+        if (!conversationPartners.has(partnerId)) {
+          conversationPartners.set(partnerId, {
+            lastMessage: msg.content,
+            lastMessageDate: msg.created_at,
+            unreadCount: msg.receiver_id === userId && !msg.read ? 1 : 0
           });
         } else {
-          const existing = conversationPartners.get(msg.receiver_id);
-          if (existing && new Date(msg.created_at) > new Date(existing.lastMessageDate)) {
+          const existing = conversationPartners.get(partnerId)!;
+          // Update last message if this is more recent
+          if (new Date(msg.created_at) > new Date(existing.lastMessageDate)) {
+            existing.lastMessage = msg.content;
             existing.lastMessageDate = msg.created_at;
           }
-        }
-      });
-      
-      receivedMessages?.forEach(msg => {
-        if (!conversationPartners.has(msg.sender_id)) {
-          conversationPartners.set(msg.sender_id, { 
-            lastMessageDate: msg.created_at 
-          });
-        } else {
-          const existing = conversationPartners.get(msg.sender_id);
-          if (existing && new Date(msg.created_at) > new Date(existing.lastMessageDate)) {
-            existing.lastMessageDate = msg.created_at;
+          // Count unread messages
+          if (msg.receiver_id === userId && !msg.read) {
+            existing.unreadCount++;
           }
         }
       });
@@ -75,7 +70,7 @@ const useMessaging = () => {
           .from('users')
           .select('name, profile_picture')
           .eq('id', partnerId)
-          .single();
+          .maybeSingle();
           
         if (!userError && userData) {
           conversationList.push({
@@ -84,12 +79,12 @@ const useMessaging = () => {
             participant_name: userData.name || 'Unknown User',
             name: userData.name || 'Unknown User',
             profilePicture: userData.profile_picture || '',
-            last_message: '',
-            lastMessage: '',
+            last_message: data.lastMessage,
+            lastMessage: data.lastMessage,
             last_message_time: data.lastMessageDate,
             lastMessageDate: data.lastMessageDate,
-            unread_count: 0,
-            unreadCount: 0
+            unread_count: data.unreadCount,
+            unreadCount: data.unreadCount
           });
         }
       }

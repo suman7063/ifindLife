@@ -1,56 +1,183 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Bell, Calendar, MessageSquare, DollarSign, User, X } from 'lucide-react';
+import { Bell, Calendar, MessageSquare, DollarSign, User, X, Loader2 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { supabase } from '@/integrations/supabase/client';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
+import { formatDistanceToNow } from 'date-fns';
+import { toast } from 'sonner';
 
 interface Notification {
   id: string;
-  type: 'appointment' | 'message' | 'payment' | 'client';
+  type: 'appointment' | 'message' | 'payment' | 'client' | 'system' | 'urgent';
   title: string;
   message: string;
   time: string;
   read: boolean;
+  created_at?: string;
 }
 
 const NotificationCenter: React.FC = () => {
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: '1',
-      type: 'appointment',
-      title: 'New Appointment Request',
-      message: 'Sarah Johnson has requested an appointment for tomorrow at 2:00 PM',
-      time: '5 minutes ago',
-      read: false
-    },
-    {
-      id: '2',
-      type: 'message',
-      title: 'New Message',
-      message: 'Michael Chen sent you a message',
-      time: '15 minutes ago',
-      read: false
-    },
-    {
-      id: '3',
-      type: 'payment',
-      title: 'Payment Received',
-      message: 'Payment of $120 received from Emma Davis',
-      time: '1 hour ago',
-      read: true
-    },
-    {
-      id: '4',
-      type: 'client',
-      title: 'New Client Registration',
-      message: 'John Smith has joined as a new client',
-      time: '2 hours ago',
-      read: true
+  const { expert } = useSimpleAuth();
+  const expertId = expert?.auth_id || '';
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!expertId) {
+      setLoading(false);
+      return;
     }
-  ]);
+
+    const fetchNotifications = async () => {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('notifications')
+          .select('*')
+          .eq('user_id', expertId)
+          .eq('type', 'message') // Only fetch message-related notifications
+          .order('created_at', { ascending: false })
+          .limit(50);
+
+        if (error) throw error;
+
+        // Transform database notifications to component format
+        const transformedNotifications: Notification[] = (data || []).map((notif: any) => ({
+          id: notif.id,
+          type: (notif.type as any) || 'system',
+          title: notif.title || 'Notification',
+          message: notif.content || notif.message || '',
+          time: formatDistanceToNow(new Date(notif.created_at), { addSuffix: true }),
+          read: notif.read || false,
+          created_at: notif.created_at
+        }));
+
+        setNotifications(transformedNotifications);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+        toast.error('Failed to load notifications');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNotifications();
+
+    // Request browser notification permission
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+
+    // Subscribe to real-time notifications - handle INSERT, UPDATE, DELETE
+    const channel = supabase
+      .channel(`expert-notifications-realtime-${expertId}-${Date.now()}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${expertId}`,
+        },
+        (payload) => {
+          const newNotif = payload.new as any;
+          // Only process message-related notifications for now
+          if (newNotif.type !== 'message') return;
+          
+          const transformed: Notification = {
+            id: newNotif.id,
+            type: (newNotif.type as any) || 'system',
+            title: newNotif.title || 'Notification',
+            message: newNotif.content || newNotif.message || '',
+            time: formatDistanceToNow(new Date(newNotif.created_at), { addSuffix: true }),
+            read: newNotif.read || false,
+            created_at: newNotif.created_at
+          };
+          
+          // Add to notifications list
+          setNotifications(prev => [transformed, ...prev]);
+          
+          // Show browser notification
+          if ('Notification' in window && Notification.permission === 'granted') {
+            try {
+              const browserNotif = new Notification(transformed.title, {
+                body: transformed.message,
+                icon: '/favicon.ico',
+                tag: `notification-${transformed.id}`,
+                badge: '/favicon.ico'
+              });
+              
+              browserNotif.onclick = () => {
+                window.focus();
+                browserNotif.close();
+              };
+            } catch (err) {
+              console.warn('Could not show browser notification:', err);
+            }
+          }
+          
+          // Show toast notification
+          toast.info(transformed.title, {
+            description: transformed.message,
+            duration: 5000
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${expertId}`,
+        },
+        (payload) => {
+          const updatedNotif = payload.new as any;
+          // Update notification in list
+          setNotifications(prev =>
+            prev.map(notif =>
+              notif.id === updatedNotif.id
+                ? {
+                    ...notif,
+                    read: updatedNotif.read || false,
+                    time: formatDistanceToNow(new Date(updatedNotif.created_at), { addSuffix: true })
+                  }
+                : notif
+            )
+          );
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${expertId}`,
+        },
+        (payload) => {
+          const deletedNotif = payload.old as { id: string };
+          // Remove notification from list
+          setNotifications(prev => prev.filter(notif => notif.id !== deletedNotif.id));
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Real-time notifications subscribed');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Notification channel error');
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [expertId]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -69,22 +196,64 @@ const NotificationCenter: React.FC = () => {
     }
   };
 
-  const markAsRead = (id: string) => {
-    setNotifications(prev =>
-      prev.map(notification =>
-        notification.id === id ? { ...notification, read: true } : notification
-      )
-    );
+  const markAsRead = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Optimistically update - real-time subscription will also update it
+      setNotifications(prev =>
+        prev.map(notification =>
+          notification.id === id ? { ...notification, read: true } : notification
+        )
+      );
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+      toast.error('Failed to update notification');
+    }
   };
 
-  const removeNotification = (id: string) => {
-    setNotifications(prev => prev.filter(notification => notification.id !== id));
+  const removeNotification = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Optimistically remove - real-time subscription will also remove it
+      setNotifications(prev => prev.filter(notification => notification.id !== id));
+    } catch (error) {
+      console.error('Error removing notification:', error);
+      toast.error('Failed to remove notification');
+    }
   };
 
-  const markAllAsRead = () => {
-    setNotifications(prev =>
-      prev.map(notification => ({ ...notification, read: true }))
-    );
+  const markAllAsRead = async () => {
+    if (!expertId) return;
+
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('user_id', expertId)
+        .eq('read', false)
+        .eq('type', 'message'); // Only mark message notifications as read
+
+      if (error) throw error;
+
+      setNotifications(prev =>
+        prev.map(notification => ({ ...notification, read: true }))
+      );
+    } catch (error) {
+      console.error('Error marking all as read:', error);
+      toast.error('Failed to update notifications');
+    }
   };
 
   return (
@@ -119,8 +288,13 @@ const NotificationCenter: React.FC = () => {
           </CardHeader>
           <CardContent className="p-0">
             <ScrollArea className="h-80">
-              <div className="space-y-2 p-4">
-                {notifications.map((notification) => (
+              {loading ? (
+                <div className="p-4 text-center">
+                  <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
+                </div>
+              ) : (
+                <div className="space-y-2 p-4">
+                  {notifications.map((notification) => (
                   <div
                     key={notification.id}
                     className={`p-3 rounded-lg border transition-colors ${
@@ -164,13 +338,14 @@ const NotificationCenter: React.FC = () => {
                   </div>
                 ))}
                 
-                {notifications.length === 0 && (
+                {notifications.length === 0 && !loading && (
                   <div className="text-center py-8 text-gray-500">
                     <Bell className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                     <p>No notifications</p>
                   </div>
                 )}
               </div>
+              )}
             </ScrollArea>
           </CardContent>
         </Card>

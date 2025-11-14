@@ -72,8 +72,8 @@ export const navigationItems: NavigationItem[] = [
     name: 'Messages',
     href: '/expert-dashboard/messages',
     icon: MessageSquare,
-    description: 'Communicate with clients',
-    badge: '3'
+    description: 'Communicate with clients'
+    // badge will be set dynamically in SidebarContent
   },
   {
     name: 'Earnings',
