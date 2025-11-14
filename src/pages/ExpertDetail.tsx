@@ -1,6 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import UserCallInterface from '@/components/call/UserCallInterface';
@@ -15,6 +17,7 @@ import ExpertDetailTabs from '@/components/expert/ExpertDetailTabs';
 const ExpertDetail = () => {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [isCallModalOpen, setIsCallModalOpen] = useState(false);
   
   const { executeIntendedAction, isAuthenticated } = useAuthRedirectSystem();
@@ -205,6 +208,14 @@ const ExpertDetail = () => {
       
       <main className="flex-1 py-8 bg-ifind-offwhite">
         <div className="container max-w-7xl mx-auto px-4">
+          <Button
+            variant="ghost"
+            onClick={() => navigate(-1)}
+            className="mb-6 flex items-center gap-2 text-gray-600 hover:text-gray-900"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
           <div className="grid lg:grid-cols-3 gap-8">
             <div className="lg:col-span-1">
               <div className="sticky top-8">
