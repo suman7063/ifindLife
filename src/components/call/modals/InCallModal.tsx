@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -64,9 +64,9 @@ const InCallModal: React.FC<InCallModalProps> = ({
   localVideoRef,
   remoteVideoRef
 }) => {
-  const { user } = useSimpleAuth();
+  const { user, userProfile } = useSimpleAuth();
   const [showChat, setShowChat] = useState(false);
-  const userName = user?.name || user?.email || 'You';
+  const userName = userProfile?.name || user?.email || 'You';
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -147,20 +147,24 @@ const InCallModal: React.FC<InCallModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className={`${showChat ? 'sm:max-w-6xl' : 'sm:max-w-4xl'} max-h-[90vh] overflow-auto`}>
-        <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            <span>Call with {expertName}</span>
-          </DialogTitle>
-          <DialogDescription>
-            {expertEndedCall ? 'Call ended by expert' : `Connected - Duration: ${formatTime(duration)}`}
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="max-w-[95vw] w-full h-[95vh] max-h-[95vh] p-0 overflow-hidden [&>button]:hidden">
+        <div className="h-full flex flex-col overflow-hidden">
+          {/* Header */}
+          <div className="px-6 py-4 border-b bg-gradient-to-r from-primary/5 to-accent/5 flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold">Call with {expertName}</h2>
+                <p className="text-sm text-muted-foreground">
+                  {expertEndedCall ? 'Call ended by expert' : `Connected - Duration: ${formatTime(duration)}`}
+                </p>
+              </div>
+            </div>
+          </div>
 
-        <div className="space-y-4">
+        <div className="flex-1 overflow-hidden min-h-0 flex flex-col">
           {/* Connection Lost / Rejoin */}
           {showRejoin && (
-            <Card className="border-orange-200 bg-orange-50">
+            <Card className="border-orange-200 bg-orange-50 m-6">
               <CardContent className="p-6">
                 <div className="flex flex-col items-center text-center space-y-4">
                   <WifiOff className="h-12 w-12 text-orange-500" />
@@ -186,13 +190,13 @@ const InCallModal: React.FC<InCallModalProps> = ({
 
           {/* Video Display */}
           {callType === 'video' && (
-            <div className={`flex ${showChat ? 'flex-row gap-4' : 'flex-col'} items-start`}>
-              <div className={`${showChat ? 'flex-1' : 'w-full'}`}>
-                <div className="grid grid-cols-2 gap-4 h-[400px]">
-                  {/* Remote Video */}
-                  <Card className="relative overflow-hidden bg-black">
-                    <CardContent className="p-0 h-full">
-                      <div ref={remoteVideoRef} className="w-full h-full" />
+            <div className={`flex ${showChat ? 'flex-row gap-4 px-6' : 'flex-col px-0'} h-full flex-1 min-h-0`}>
+              <div className={`${showChat ? 'flex-[0.7]' : 'w-full flex-1'} min-h-0`}>
+                <div className={`grid grid-cols-2 gap-4 h-full ${showChat ? 'min-h-0' : ''}`}>
+              {/* Remote Video */}
+              <Card className="relative overflow-hidden bg-black min-h-0">
+                <CardContent className="p-0 h-full min-h-0">
+                  <div ref={remoteVideoRef} className="w-full h-full min-h-[200px]" />
                       {!callState.remoteUsers.length && (
                         <div className="absolute inset-0 flex items-center justify-center">
                           <Avatar className="h-24 w-24">
@@ -207,14 +211,13 @@ const InCallModal: React.FC<InCallModalProps> = ({
                     </CardContent>
                   </Card>
 
-                  {/* Local Video */}
-                  <Card className="relative overflow-hidden bg-black">
-                    <CardContent className="p-0 h-full">
-                      <div 
-                        ref={localVideoRef} 
-                        className="w-full h-full min-h-[200px]"
-                        style={{ minHeight: '200px' }}
-                      />
+              {/* Local Video */}
+              <Card className="relative overflow-hidden bg-black min-h-0">
+                <CardContent className="p-0 h-full min-h-0">
+                  <div 
+                    ref={localVideoRef} 
+                    className="w-full h-full min-h-[200px]"
+                  />
                       {!callState?.localVideoTrack && (
                         <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
                           <Avatar className="h-16 w-16">
@@ -235,11 +238,11 @@ const InCallModal: React.FC<InCallModalProps> = ({
                 </div>
               </div>
 
-              {/* Chat Panel - Always render to preserve messages */}
+              {/* Chat Panel - Always render to preserve messages (30% width) */}
               {callState?.client && (
-                <div className={`flex-1 min-w-0 ${showChat ? '' : 'hidden'}`}>
-                  <Card className="border border-border/50 shadow-inner">
-                    <CardContent className="p-0">
+                <div className={`flex-[0.3] min-w-0 min-h-0 ${showChat ? '' : 'hidden'}`}>
+                  <Card className="border border-border/50 shadow-xl bg-gradient-to-br from-card via-background to-muted/20 overflow-hidden h-full flex flex-col">
+                    <CardContent className="p-0 h-full min-h-0 flex flex-col">
                       <CallChat
                         visible={showChat}
                         client={callState.client}
@@ -256,9 +259,9 @@ const InCallModal: React.FC<InCallModalProps> = ({
 
           {/* Audio Call Display */}
           {callType === 'audio' && (
-            <div className={`flex ${showChat ? 'flex-row gap-4' : 'flex-col'} items-start`}>
-              <div className={`${showChat ? 'flex-1' : 'w-full'}`}>
-                <Card>
+            <div className={`flex ${showChat ? 'flex-row gap-4 px-6' : 'flex-col px-0'} h-full flex-1 min-h-0`}>
+              <div className={`${showChat ? 'flex-[0.7]' : 'w-full flex-1'} min-h-0`}>
+                <Card className="h-full flex items-center justify-center">
                   <CardContent className="p-8">
                     <div className="flex flex-col items-center space-y-4">
                       <Avatar className="h-24 w-24">
@@ -274,11 +277,11 @@ const InCallModal: React.FC<InCallModalProps> = ({
                 </Card>
               </div>
 
-              {/* Chat Panel - Always render to preserve messages */}
+              {/* Chat Panel - Always render to preserve messages (30% width) */}
               {callState?.client && (
-                <div className={`flex-1 min-w-0 ${showChat ? '' : 'hidden'}`}>
-                  <Card className="border border-border/50 shadow-inner">
-                    <CardContent className="p-0">
+                <div className={`flex-[0.3] min-w-0 min-h-0 ${showChat ? '' : 'hidden'}`}>
+                  <Card className="border border-border/50 shadow-xl bg-gradient-to-br from-card via-background to-muted/20 overflow-hidden h-full flex flex-col">
+                    <CardContent className="p-0 h-full min-h-0 flex flex-col">
                       <CallChat
                         visible={showChat}
                         client={callState.client}
@@ -295,7 +298,7 @@ const InCallModal: React.FC<InCallModalProps> = ({
 
           {/* Call Controls */}
           {!showRejoin && (
-            <div className="flex justify-center space-x-4">
+            <div className="flex justify-center space-x-4 flex-shrink-0 p-6 border-t bg-gradient-to-r from-primary/5 to-accent/5">
               <Button
                 variant={callState?.isMuted ? 'destructive' : 'outline'}
                 size="lg"
@@ -357,6 +360,7 @@ const InCallModal: React.FC<InCallModalProps> = ({
               </Button>
             </div>
           )}
+        </div>
         </div>
       </DialogContent>
     </Dialog>

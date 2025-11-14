@@ -778,9 +778,9 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
 
       {/* Video Display */}
       {callRequest.call_type === 'video' && (
-        <div className={`flex ${showChat ? 'flex-row gap-4' : 'flex-col'} h-full flex-1 min-h-0`}>
-          <div className={`${showChat ? 'flex-1' : 'w-full'} min-h-0`}>
-            <div className="grid grid-cols-2 gap-4 h-full min-h-[400px]">
+        <div className={`flex ${showChat ? 'flex-row gap-4 px-6' : 'flex-col px-0'} h-full flex-1 min-h-0`}>
+          <div className={`${showChat ? 'flex-[0.7]' : 'w-full flex-1'} min-h-0`}>
+            <div className={`grid grid-cols-2 gap-4 h-full ${showChat ? 'min-h-0' : ''}`}>
               {/* Remote Video */}
               <Card className="relative overflow-hidden bg-black min-h-0">
                 <CardContent className="p-0 h-full min-h-0">
@@ -823,11 +823,11 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
             </div>
           </div>
 
-          {/* Chat Panel - Always render to preserve messages */}
+          {/* Chat Panel - Always render to preserve messages (30% width) */}
           {callState.client && (
-            <div className={`flex-1 min-w-0 ${showChat ? '' : 'hidden'}`}>
-              <Card className="border border-border/50 shadow-inner h-full">
-                <CardContent className="p-0 h-full">
+            <div className={`flex-[0.3] min-w-0 min-h-0 ${showChat ? '' : 'hidden'}`}>
+              <Card className="border border-border/50 shadow-xl bg-gradient-to-br from-card via-background to-muted/20 h-full overflow-hidden flex flex-col">
+                <CardContent className="p-0 h-full min-h-0 flex flex-col">
                   <CallChat
                     visible={showChat}
                     client={callState.client}
@@ -844,8 +844,8 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
 
       {/* Audio Call Display */}
       {callRequest.call_type === 'audio' && (
-        <div className={`flex ${showChat ? 'flex-row gap-4' : 'flex-col'} flex-1 min-h-0`}>
-          <div className={`${showChat ? 'flex-1' : 'w-full'}`}>
+        <div className={`flex ${showChat ? 'flex-row gap-4 px-6' : 'flex-col px-0'} flex-1 min-h-0`}>
+          <div className={`${showChat ? 'flex-[0.7]' : 'w-full flex-1'} min-h-0`}>
             <Card className="flex-1 flex items-center justify-center h-full">
               <CardContent className="p-8">
                 <div className="flex flex-col items-center space-y-4">
@@ -862,11 +862,11 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
             </Card>
           </div>
 
-          {/* Chat Panel - Always render to preserve messages */}
+          {/* Chat Panel - Always render to preserve messages (30% width) */}
           {callState.client && (
-            <div className={`flex-1 min-w-0 ${showChat ? '' : 'hidden'}`}>
-              <Card className="border border-border/50 shadow-inner h-full">
-                <CardContent className="p-0 h-full">
+            <div className={`flex-[0.3] min-w-0 min-h-0 ${showChat ? '' : 'hidden'}`}>
+              <Card className="border border-border/50 shadow-xl bg-gradient-to-br from-card via-background to-muted/20 h-full overflow-hidden flex flex-col">
+                <CardContent className="p-0 h-full min-h-0 flex flex-col">
                   <CallChat
                     visible={showChat}
                     client={callState.client}
