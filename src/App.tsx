@@ -67,6 +67,7 @@ import SouliInvestor from './pages/SouliInvestor';
 import SouliAuth from './pages/SouliAuth';
 import SouliAdminWaitlist from './pages/SouliAdminWaitlist';
 import { SouliAuthProvider } from '@/contexts/SouliAuthContext';
+import ScrollToTop from '@/components/ScrollToTop';
 
 // Create QueryClient outside component to avoid hook issues
 const queryClient = new QueryClient({
@@ -209,6 +210,7 @@ function App(): JSX.Element {
     <QueryClientProvider client={queryClient}>
       <Toaster />
       <BrowserRouter>
+        <ScrollToTop />
         <Routes>
           {/* CRITICAL: Admin routes with secure authentication */}
           <Route path="/admin-login" element={
