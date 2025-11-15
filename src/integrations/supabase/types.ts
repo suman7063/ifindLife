@@ -107,7 +107,7 @@ export type Database = {
           created_at: string
           expires_at: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           session_token: string
           user_agent: string | null
         }
@@ -116,7 +116,7 @@ export type Database = {
           created_at?: string
           expires_at: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           session_token: string
           user_agent?: string | null
         }
@@ -125,7 +125,7 @@ export type Database = {
           created_at?: string
           expires_at?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           session_token?: string
           user_agent?: string | null
         }
@@ -2049,7 +2049,7 @@ export type Database = {
           currency: string | null
           detected_at: string | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           user_id: string | null
         }
         Insert: {
@@ -2058,7 +2058,7 @@ export type Database = {
           currency?: string | null
           detected_at?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           user_id?: string | null
         }
         Update: {
@@ -2067,7 +2067,7 @@ export type Database = {
           currency?: string | null
           detected_at?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           user_id?: string | null
         }
         Relationships: []
@@ -2474,7 +2474,7 @@ export type Database = {
     }
     Functions: {
       admin_list_all_experts: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           address: string | null
           auth_id: string | null
@@ -2504,9 +2504,15 @@ export type Database = {
           user_id: string | null
           verified: boolean | null
         }[]
+        SetofOptions: {
+          from: "*"
+          to: "expert_accounts"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       admin_list_approved_experts: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           address: string | null
           auth_id: string | null
@@ -2536,9 +2542,15 @@ export type Database = {
           user_id: string | null
           verified: boolean | null
         }[]
+        SetofOptions: {
+          from: "*"
+          to: "expert_accounts"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       admin_list_pending_experts: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           address: string | null
           auth_id: string | null
@@ -2568,9 +2580,15 @@ export type Database = {
           user_id: string | null
           verified: boolean | null
         }[]
+        SetofOptions: {
+          from: "*"
+          to: "expert_accounts"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       admin_list_users: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           city: string | null
           country: string | null
@@ -2594,15 +2612,18 @@ export type Database = {
           terms_accepted: boolean | null
           wallet_balance: number | null
         }[]
+        SetofOptions: {
+          from: "*"
+          to: "users"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       authenticate_admin: {
         Args: { p_password: string; p_username: string }
         Returns: Json
       }
-      check_if_table_exists: {
-        Args: { table_name: string }
-        Returns: boolean
-      }
+      check_if_table_exists: { Args: { table_name: string }; Returns: boolean }
       check_time_slot_overlap: {
         Args: {
           p_availability_id: string
@@ -2621,14 +2642,8 @@ export type Database = {
         }
         Returns: undefined
       }
-      expire_old_call_requests: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      get_admin_metrics: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      expire_old_call_requests: { Args: never; Returns: undefined }
+      get_admin_metrics: { Args: never; Returns: Json }
       get_approved_expert_presence: {
         Args: { expert_auth_ids: string[] }
         Returns: {
@@ -2639,7 +2654,7 @@ export type Database = {
         }[]
       }
       get_approved_experts: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           auth_id: string
           average_rating: number
@@ -2707,30 +2722,17 @@ export type Database = {
         Args: { program_id: number }
         Returns: undefined
       }
-      is_admin: {
-        Args: { user_id: string }
-        Returns: boolean
-      }
-      is_any_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_superadmin: {
-        Args: Record<PropertyKey, never> | { user_id: string }
-        Returns: boolean
-      }
-      is_user_admin: {
-        Args: { check_user_id?: string }
-        Returns: boolean
-      }
+      is_admin: { Args: { user_id: string }; Returns: boolean }
+      is_any_admin: { Args: never; Returns: boolean }
+      is_superadmin:
+        | { Args: never; Returns: boolean }
+        | { Args: { user_id: string }; Returns: boolean }
+      is_user_admin: { Args: { check_user_id?: string }; Returns: boolean }
       mark_away_message_read: {
         Args: { message_id: string }
         Returns: undefined
       }
-      update_expert_away_status: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      update_expert_away_status: { Args: never; Returns: undefined }
     }
     Enums: {
       moderation_action_type: "warning" | "suspension" | "ban" | "no_action"
