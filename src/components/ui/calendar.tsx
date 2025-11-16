@@ -16,7 +16,7 @@ function Calendar({
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
-      className={cn("p-2 w-full", className)}
+      className={cn("p-2 w-full max-w-full pointer-events-auto", className)}
       classNames={{
         months: "flex flex-col w-full",
         month: "space-y-3 w-full",
