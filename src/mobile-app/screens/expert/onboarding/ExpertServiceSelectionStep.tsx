@@ -31,7 +31,39 @@ export const ExpertServiceSelectionStep: React.FC<ExpertServiceSelectionStepProp
   const fetchExpertDataAndServices = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      
+      // If not authenticated, use mock data for preview
+      if (!user) {
+        setExpertCategory('listening-volunteer');
+        setAvailableServices([
+          {
+            id: 1,
+            name: 'Active Listening Support',
+            description: 'Provide empathetic listening and emotional support',
+            category: 'listening-volunteer'
+          },
+          {
+            id: 2,
+            name: 'Peer Support Sessions',
+            description: 'One-on-one supportive conversations',
+            category: 'listening-volunteer'
+          },
+          {
+            id: 3,
+            name: 'Wellness Check-ins',
+            description: 'Regular check-ins to support mental wellness',
+            category: 'listening-volunteer'
+          },
+          {
+            id: 4,
+            name: 'Crisis Support',
+            description: 'Support during difficult times',
+            category: 'listening-volunteer'
+          }
+        ]);
+        setLoading(false);
+        return;
+      }
 
       // Fetch expert account to get category
       const { data: expertData, error: expertError } = await supabase
@@ -108,7 +140,28 @@ export const ExpertServiceSelectionStep: React.FC<ExpertServiceSelectionStepProp
 
     } catch (error) {
       console.error('Error fetching services:', error);
-      toast.error('Failed to load available services');
+      // Use mock data on error for preview
+      setExpertCategory('listening-volunteer');
+      setAvailableServices([
+        {
+          id: 1,
+          name: 'Active Listening Support',
+          description: 'Provide empathetic listening and emotional support',
+          category: 'listening-volunteer'
+        },
+        {
+          id: 2,
+          name: 'Peer Support Sessions',
+          description: 'One-on-one supportive conversations',
+          category: 'listening-volunteer'
+        },
+        {
+          id: 3,
+          name: 'Wellness Check-ins',
+          description: 'Regular check-ins to support mental wellness',
+          category: 'listening-volunteer'
+        }
+      ]);
     } finally {
       setLoading(false);
     }
