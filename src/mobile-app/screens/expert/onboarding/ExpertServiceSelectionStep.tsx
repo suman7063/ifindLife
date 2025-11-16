@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Check } from 'lucide-react';
+import { Check, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/lib/supabase';
 
 interface Service {
   id: number;
@@ -18,47 +19,100 @@ interface ExpertServiceSelectionStepProps {
 export const ExpertServiceSelectionStep: React.FC<ExpertServiceSelectionStepProps> = ({
   onNext
 }) => {
-  // Mock expert data
-  const mockExpert = {
-    name: 'Dr. Sarah Johnson',
-    category: 'Psychologist'
-  };
-
-  // Mock services based on expert category
-  const mockServices: Service[] = [
-    {
-      id: 1,
-      name: 'Individual Therapy',
-      description: 'One-on-one counseling sessions',
-      category: 'Psychologist'
-    },
-    {
-      id: 2,
-      name: 'Couples Therapy',
-      description: 'Relationship counseling for couples',
-      category: 'Psychologist'
-    },
-    {
-      id: 3,
-      name: 'Family Therapy',
-      description: 'Family dynamics and conflict resolution',
-      category: 'Psychologist'
-    },
-    {
-      id: 4,
-      name: 'Cognitive Behavioral Therapy',
-      description: 'CBT techniques for anxiety and depression',
-      category: 'Psychologist'
-    },
-    {
-      id: 5,
-      name: 'Stress Management',
-      description: 'Techniques to manage stress and anxiety',
-      category: 'Psychologist'
-    }
-  ];
-
+  const [availableServices, setAvailableServices] = useState<Service[]>([]);
   const [selectedServices, setSelectedServices] = useState<number[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [expertCategory, setExpertCategory] = useState<string>('');
+
+  useEffect(() => {
+    fetchExpertDataAndServices();
+  }, []);
+
+  const fetchExpertDataAndServices = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Fetch expert account to get category
+      const { data: expertData, error: expertError } = await supabase
+        .from('expert_accounts')
+        .select('category, id, auth_id')
+        .eq('auth_id', user.id)
+        .single();
+
+      if (expertError) throw expertError;
+      if (!expertData?.category) throw new Error('Expert category not found');
+
+      setExpertCategory(expertData.category);
+
+      // Check if services are already assigned by admin
+      const { data: adminAssignedServices, error: adminError } = await supabase
+        .from('expert_services')
+        .select('service_id')
+        .eq('expert_id', expertData.id)
+        .eq('is_active', true);
+
+      if (adminError) throw adminError;
+
+      let serviceIds: number[] = [];
+
+      if (adminAssignedServices && adminAssignedServices.length > 0) {
+        // Admin has assigned specific services
+        serviceIds = adminAssignedServices.map(s => s.service_id);
+      } else {
+        // Fetch services based on category from expert_category_services
+        const { data: categoryData, error: categoryError } = await supabase
+          .from('expert_categories')
+          .select('id')
+          .eq('id', expertData.category)
+          .single();
+
+        if (categoryError) throw categoryError;
+
+        const { data: categoryServices, error: categoryServicesError } = await supabase
+          .from('expert_category_services')
+          .select('service_id')
+          .eq('category_id', categoryData.id);
+
+        if (categoryServicesError) throw categoryServicesError;
+
+        serviceIds = categoryServices?.map(s => s.service_id) || [];
+      }
+
+      if (serviceIds.length === 0) {
+        toast.error('No services available for your category');
+        setLoading(false);
+        return;
+      }
+
+      // Fetch service details
+      const { data: servicesData, error: servicesError } = await supabase
+        .from('services')
+        .select('id, name, description, category')
+        .in('id', serviceIds)
+        .order('name');
+
+      if (servicesError) throw servicesError;
+
+      setAvailableServices(servicesData || []);
+
+      // Check existing specializations
+      const { data: existingServices, error: existingError } = await supabase
+        .from('expert_service_specializations')
+        .select('service_id')
+        .eq('expert_id', expertData.id);
+
+      if (!existingError && existingServices) {
+        setSelectedServices(existingServices.map(s => s.service_id));
+      }
+
+    } catch (error) {
+      console.error('Error fetching services:', error);
+      toast.error('Failed to load available services');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const toggleService = (serviceId: number) => {
     setSelectedServices(prev =>
@@ -77,6 +131,14 @@ export const ExpertServiceSelectionStep: React.FC<ExpertServiceSelectionStepProp
     onNext();
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 space-y-6 pb-24">
       {/* Header */}
@@ -87,16 +149,20 @@ export const ExpertServiceSelectionStep: React.FC<ExpertServiceSelectionStepProp
         <p className="text-muted-foreground">
           Choose the services you'll offer to clients. You can update these later.
         </p>
-        <div className="flex items-center gap-2 pt-2">
-          <div className="text-sm font-medium text-primary">
-            Category: {mockExpert.category}
+        {expertCategory && (
+          <div className="flex items-center gap-2 pt-2">
+            <div className="text-sm font-medium text-primary">
+              Category: {expertCategory.split('-').map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1)
+              ).join(' ')}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Services List */}
       <div className="space-y-3">
-        {mockServices.map((service) => {
+        {availableServices.map((service) => {
           const isSelected = selectedServices.includes(service.id);
           return (
             <Card
