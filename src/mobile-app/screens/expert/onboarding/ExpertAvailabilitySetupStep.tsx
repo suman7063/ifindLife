@@ -194,7 +194,7 @@ export const ExpertAvailabilitySetupStep: React.FC<ExpertAvailabilitySetupStepPr
 
       {/* Date Range Selection (only for date_range type) */}
       {availabilityType === 'date_range' && (
-        <Card className="p-4">
+        <Card className="p-4 relative z-10">
           <div className="space-y-4">
             <Label className="text-sm font-medium">Select Date Range</Label>
             
@@ -202,10 +202,10 @@ export const ExpertAvailabilitySetupStep: React.FC<ExpertAvailabilitySetupStepPr
             <div className="space-y-2">
               <Label className="text-xs text-muted-foreground">Duration</Label>
               <Select value={durationOption} onValueChange={handleDurationChange}>
-                <SelectTrigger>
+                <SelectTrigger className="z-20">
                   <SelectValue placeholder="Select duration" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-50">
                   <SelectItem value="3">3 Months</SelectItem>
                   <SelectItem value="6">6 Months</SelectItem>
                   <SelectItem value="9">9 Months</SelectItem>
@@ -218,14 +218,16 @@ export const ExpertAvailabilitySetupStep: React.FC<ExpertAvailabilitySetupStepPr
             {/* Start Date */}
             <div className="space-y-2">
               <Label className="text-xs text-muted-foreground">Start Date</Label>
-              <div className="border rounded-md w-full max-w-full overflow-x-hidden">
-                <Calendar
-                  mode="single"
-                  selected={startDate}
-                  onSelect={handleStartDateChange}
-                  disabled={(date) => date < new Date()}
-                  className="pointer-events-auto w-full"
-                />
+              <div className="border rounded-md w-full overflow-hidden bg-background relative">
+                <div className="w-full" style={{ maxWidth: '100%' }}>
+                  <Calendar
+                    mode="single"
+                    selected={startDate}
+                    onSelect={handleStartDateChange}
+                    disabled={(date) => date < new Date()}
+                    className="pointer-events-auto w-full"
+                  />
+                </div>
               </div>
               {startDate && (
                 <p className="text-xs text-primary flex items-center">
@@ -238,14 +240,16 @@ export const ExpertAvailabilitySetupStep: React.FC<ExpertAvailabilitySetupStepPr
             {/* End Date */}
             <div className="space-y-2">
               <Label className="text-xs text-muted-foreground">End Date</Label>
-              <div className="border rounded-md w-full max-w-full overflow-x-hidden">
-                <Calendar
-                  mode="single"
-                  selected={endDate}
-                  onSelect={setEndDate}
-                  disabled={(date) => date < (startDate || new Date())}
-                  className="pointer-events-auto w-full"
-                />
+              <div className="border rounded-md w-full overflow-hidden bg-background relative">
+                <div className="w-full" style={{ maxWidth: '100%' }}>
+                  <Calendar
+                    mode="single"
+                    selected={endDate}
+                    onSelect={setEndDate}
+                    disabled={(date) => date < (startDate || new Date())}
+                    className="pointer-events-auto w-full"
+                  />
+                </div>
               </div>
               {endDate && (
                 <p className="text-xs text-primary flex items-center">
