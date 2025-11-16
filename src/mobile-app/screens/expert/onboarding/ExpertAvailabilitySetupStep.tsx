@@ -218,7 +218,7 @@ export const ExpertAvailabilitySetupStep: React.FC<ExpertAvailabilitySetupStepPr
             {/* Start Date */}
             <div className="space-y-2">
               <Label className="text-xs text-muted-foreground">Start Date</Label>
-              <div className="border rounded-md overflow-hidden w-full">
+              <div className="border rounded-md w-full max-w-full overflow-x-hidden">
                 <Calendar
                   mode="single"
                   selected={startDate}
@@ -228,8 +228,8 @@ export const ExpertAvailabilitySetupStep: React.FC<ExpertAvailabilitySetupStepPr
                 />
               </div>
               {startDate && (
-                <p className="text-xs text-primary">
-                  <CalendarIcon className="inline w-3 h-3 mr-1" />
+                <p className="text-xs text-primary flex items-center">
+                  <CalendarIcon className="w-3 h-3 mr-1" />
                   {format(startDate, 'PPP')}
                 </p>
               )}
@@ -238,7 +238,7 @@ export const ExpertAvailabilitySetupStep: React.FC<ExpertAvailabilitySetupStepPr
             {/* End Date */}
             <div className="space-y-2">
               <Label className="text-xs text-muted-foreground">End Date</Label>
-              <div className="border rounded-md overflow-hidden w-full">
+              <div className="border rounded-md w-full max-w-full overflow-x-hidden">
                 <Calendar
                   mode="single"
                   selected={endDate}
@@ -248,8 +248,8 @@ export const ExpertAvailabilitySetupStep: React.FC<ExpertAvailabilitySetupStepPr
                 />
               </div>
               {endDate && (
-                <p className="text-xs text-primary">
-                  <CalendarIcon className="inline w-3 h-3 mr-1" />
+                <p className="text-xs text-primary flex items-center">
+                  <CalendarIcon className="w-3 h-3 mr-1" />
                   {format(endDate, 'PPP')}
                 </p>
               )}
