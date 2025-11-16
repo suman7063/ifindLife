@@ -3,8 +3,11 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Plus, Trash2, Calendar, Clock } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Calendar } from '@/components/ui/calendar';
+import { Plus, Trash2, Clock, CalendarIcon } from 'lucide-react';
 import { toast } from 'sonner';
+import { format } from 'date-fns';
 
 interface TimeSlot {
   start: string;
@@ -33,6 +36,11 @@ export const ExpertAvailabilitySetupStep: React.FC<ExpertAvailabilitySetupStepPr
   onNext,
   onBack
 }) => {
+  const [availabilityType, setAvailabilityType] = useState<'date_range' | 'recurring'>('date_range');
+  const [startDate, setStartDate] = useState<Date | undefined>(new Date());
+  const [endDate, setEndDate] = useState<Date | undefined>();
+  const [durationOption, setDurationOption] = useState<string>('3');
+  
   const [availability, setAvailability] = useState<Record<string, DayAvailability>>(
     DAYS.reduce((acc, day) => ({
       ...acc,
@@ -41,6 +49,28 @@ export const ExpertAvailabilitySetupStep: React.FC<ExpertAvailabilitySetupStepPr
   );
 
   const [saving, setSaving] = useState(false);
+
+  const calculateEndDate = (start: Date, months: number): Date => {
+    const end = new Date(start);
+    end.setMonth(end.getMonth() + months);
+    return end;
+  };
+
+  const handleDurationChange = (value: string) => {
+    setDurationOption(value);
+    if (value !== 'custom' && startDate) {
+      const months = parseInt(value);
+      setEndDate(calculateEndDate(startDate, months));
+    }
+  };
+
+  const handleStartDateChange = (date: Date | undefined) => {
+    setStartDate(date);
+    if (date && durationOption !== 'custom') {
+      const months = parseInt(durationOption);
+      setEndDate(calculateEndDate(date, months));
+    }
+  };
 
   const toggleDay = (day: string) => {
     setAvailability(prev => ({
@@ -103,6 +133,11 @@ export const ExpertAvailabilitySetupStep: React.FC<ExpertAvailabilitySetupStepPr
   };
 
   const handleSave = () => {
+    if (availabilityType === 'date_range' && (!startDate || !endDate)) {
+      toast.error('Please select start and end dates');
+      return;
+    }
+
     const enabledDays = Object.entries(availability).filter(([_, data]) => data.enabled);
     
     if (enabledDays.length === 0) {
@@ -127,16 +162,101 @@ export const ExpertAvailabilitySetupStep: React.FC<ExpertAvailabilitySetupStepPr
   const enabledDaysCount = Object.values(availability).filter(d => d.enabled).length;
 
   return (
-    <div className="p-4 space-y-6 pb-32">
+    <div className="p-4 space-y-6 pb-48">
       {/* Header */}
       <div className="space-y-2">
         <h1 className="text-2xl font-bold text-foreground">
           Set Your Availability
         </h1>
         <p className="text-muted-foreground">
-          Choose when you're available for client bookings
+          Define when you're available for client sessions
         </p>
       </div>
+
+      {/* Availability Type Selection */}
+      <Card className="p-4">
+        <div className="space-y-3">
+          <Label className="text-sm font-medium">Availability Type</Label>
+          <Select 
+            value={availabilityType} 
+            onValueChange={(value) => setAvailabilityType(value as 'date_range' | 'recurring')}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="date_range">Specific Date Range</SelectItem>
+              <SelectItem value="recurring">Recurring Weekly Schedule</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </Card>
+
+      {/* Date Range Selection (only for date_range type) */}
+      {availabilityType === 'date_range' && (
+        <Card className="p-4">
+          <div className="space-y-4">
+            <Label className="text-sm font-medium">Select Date Range</Label>
+            
+            {/* Duration Selector */}
+            <div className="space-y-2">
+              <Label className="text-xs text-muted-foreground">Duration</Label>
+              <Select value={durationOption} onValueChange={handleDurationChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select duration" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="3">3 Months</SelectItem>
+                  <SelectItem value="6">6 Months</SelectItem>
+                  <SelectItem value="9">9 Months</SelectItem>
+                  <SelectItem value="12">12 Months</SelectItem>
+                  <SelectItem value="custom">Custom Date Range</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Start Date */}
+            <div className="space-y-2">
+              <Label className="text-xs text-muted-foreground">Start Date</Label>
+              <div className="border rounded-md">
+                <Calendar
+                  mode="single"
+                  selected={startDate}
+                  onSelect={handleStartDateChange}
+                  disabled={(date) => date < new Date()}
+                  className="pointer-events-auto"
+                />
+              </div>
+              {startDate && (
+                <p className="text-xs text-primary">
+                  <CalendarIcon className="inline w-3 h-3 mr-1" />
+                  {format(startDate, 'PPP')}
+                </p>
+              )}
+            </div>
+
+            {/* End Date */}
+            <div className="space-y-2">
+              <Label className="text-xs text-muted-foreground">End Date</Label>
+              <div className="border rounded-md">
+                <Calendar
+                  mode="single"
+                  selected={endDate}
+                  onSelect={setEndDate}
+                  disabled={(date) => date < (startDate || new Date())}
+                  className="pointer-events-auto"
+                />
+              </div>
+              {endDate && (
+                <p className="text-xs text-primary">
+                  <CalendarIcon className="inline w-3 h-3 mr-1" />
+                  {format(endDate, 'PPP')}
+                </p>
+              )}
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Quick Options */}
       <Card className="p-4">
