@@ -218,13 +218,13 @@ export const ExpertAvailabilitySetupStep: React.FC<ExpertAvailabilitySetupStepPr
             {/* Start Date */}
             <div className="space-y-2">
               <Label className="text-xs text-muted-foreground">Start Date</Label>
-              <div className="border rounded-md">
+              <div className="border rounded-md overflow-hidden w-full">
                 <Calendar
                   mode="single"
                   selected={startDate}
                   onSelect={handleStartDateChange}
                   disabled={(date) => date < new Date()}
-                  className="pointer-events-auto"
+                  className="pointer-events-auto w-full"
                 />
               </div>
               {startDate && (
@@ -238,13 +238,13 @@ export const ExpertAvailabilitySetupStep: React.FC<ExpertAvailabilitySetupStepPr
             {/* End Date */}
             <div className="space-y-2">
               <Label className="text-xs text-muted-foreground">End Date</Label>
-              <div className="border rounded-md">
+              <div className="border rounded-md overflow-hidden w-full">
                 <Calendar
                   mode="single"
                   selected={endDate}
                   onSelect={setEndDate}
                   disabled={(date) => date < (startDate || new Date())}
-                  className="pointer-events-auto"
+                  className="pointer-events-auto w-full"
                 />
               </div>
               {endDate && (
