@@ -75,19 +75,41 @@ const ServiceSelectionStep: React.FC<ServiceSelectionStepProps> = ({
         setAvailableServices(combinedServices);
         setSelectedServices(combinedServices.map(s => s.id));
       } else {
-        // Fallback to old system if no admin assignment
-        console.log('🔍 Using fallback system for category:', expertAccount.category);
+        // Fetch services mapped to this category from expert_category_services table
+        console.log('🔍 Fetching services for category from expert_category_services:', expertAccount.category);
         
-        const categoryServices: Record<string, number[]> = {
-          'listening-volunteer': [1, 2, 3, 4, 6, 7],  // Basic listening + mindfulness
-          'listening-expert': [1, 2, 3, 4, 5, 6, 7, 8],  // All listening + basic mindfulness
-          'listening-coach': [1, 2, 3, 4, 5, 6, 7, 8, 9],  // All listening + mindfulness
-          'mindfulness-expert': [6, 7, 8, 9, 1, 2],  // All mindfulness + basic listening
-          'anxiety-expert': [10, 6, 7, 8, 1, 2],  // Anxiety + mindfulness + basic listening
-          'default': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]  // All services as fallback
-        };
+        const { data: categoryServicesData, error: categoryServicesError } = await supabase
+          .from('expert_category_services')
+          .select('service_id')
+          .eq('category_id', expertAccount.category);
 
-        const serviceIds = categoryServices[expertAccount.category] || categoryServices['default'] || [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+        if (categoryServicesError) {
+          console.error('Error fetching category services:', categoryServicesError);
+          throw categoryServicesError;
+        }
+
+        let serviceIds: number[] = [];
+        
+        if (categoryServicesData && categoryServicesData.length > 0) {
+          // Use services mapped to the category
+          serviceIds = categoryServicesData.map(item => item.service_id);
+          console.log('🔍 Found mapped services for category:', serviceIds);
+        } else {
+          // Fallback to hardcoded list if no mappings exist
+          console.log('🔍 No category mappings found, using fallback system for category:', expertAccount.category);
+          
+          const categoryServices: Record<string, number[]> = {
+            'listening-volunteer': [1, 2, 3, 4, 6, 7],  // Basic listening + mindfulness
+            'listening-expert': [1, 2, 3, 4, 5, 6, 7, 8],  // All listening + basic mindfulness
+            'listening-coach': [1, 2, 3, 4, 5, 6, 7, 8, 9],  // All listening + mindfulness
+            'mindfulness-expert': [6, 7, 8, 9, 1, 2],  // All mindfulness + basic listening
+            'anxiety-expert': [10, 6, 7, 8, 1, 2],  // Anxiety + mindfulness + basic listening
+            'default': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]  // All services as fallback
+          };
+
+          serviceIds = categoryServices[expertAccount.category] || categoryServices['default'] || [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+        }
+
         console.log('🔍 Service IDs for category:', serviceIds);
 
         const { data, error } = await supabase
