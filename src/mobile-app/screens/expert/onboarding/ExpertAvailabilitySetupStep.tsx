@@ -8,7 +8,7 @@ import { Plus, Trash2, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { addMonths } from 'date-fns';
 import { DateRange } from 'react-day-picker';
-import { DateRangePopover } from '@/components/expert/availability/DateRangePopover';
+import { Calendar } from '@/components/ui/calendar';
 
 interface TimeSlot {
   start: string;
@@ -190,27 +190,21 @@ export const ExpertAvailabilitySetupStep: React.FC<ExpertAvailabilitySetupStepPr
         {/* Date Range Selection */}
         <Card className="p-4 space-y-4">
           <div className="space-y-2">
-            <Label>Duration</Label>
-            <Select value={durationOption} onValueChange={handleDurationChange}>
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="3">3 Months</SelectItem>
-                <SelectItem value="6">6 Months</SelectItem>
-                <SelectItem value="9">9 Months</SelectItem>
-                <SelectItem value="12">12 Months</SelectItem>
-                <SelectItem value="custom">Custom Range</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label className="text-base font-medium">Select Your Availability Period</Label>
+            <p className="text-sm text-muted-foreground">
+              Choose the date range when you'll be available for consultations
+            </p>
           </div>
 
-          <div className="space-y-2">
-            <Label>Date Range</Label>
-            <DateRangePopover
-              range={dateRange}
-              onChange={handleDateRangeChange}
-              minDate={new Date()}
+          <div className="flex justify-center">
+            <Calendar
+              mode="range"
+              selected={dateRange}
+              onSelect={handleDateRangeChange}
+              disabled={(date) => date < new Date()}
+              initialFocus
+              numberOfMonths={1}
+              className="rounded-md border"
             />
           </div>
         </Card>
