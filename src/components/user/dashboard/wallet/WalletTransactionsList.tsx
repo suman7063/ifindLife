@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { UserProfile } from '@/types/supabase/user';
 import { supabase } from '@/lib/supabase';
-import { ArrowDown, ArrowUp, Calendar, Wallet, Gift, RefreshCw } from 'lucide-react';
+import { ArrowDown, ArrowUp, Calendar, Wallet, Gift, RefreshCw, Receipt } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useUserCurrency } from '@/hooks/useUserCurrency';
@@ -138,10 +138,19 @@ const WalletTransactionsList: React.FC<WalletTransactionsListProps> = ({ user })
       </CardHeader>
       <CardContent>
         {transactions.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <Wallet className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>No transactions yet</p>
-            <p className="text-sm">Your wallet transactions will appear here</p>
+          <div className="text-center py-12">
+            <div className="flex justify-center mb-4">
+              <div className="p-4 rounded-full bg-muted">
+                <Receipt className="h-10 w-10 text-muted-foreground" />
+              </div>
+            </div>
+            <h3 className="text-lg font-semibold mb-2">No transactions yet</h3>
+            <p className="text-sm text-muted-foreground mb-1">
+              Your transaction history will appear here
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Start by adding credits or booking a session
+            </p>
           </div>
         ) : (
           <div className="space-y-4">

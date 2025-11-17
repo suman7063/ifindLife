@@ -7,6 +7,7 @@ import { useRazorpayPayment } from '@/hooks/useRazorpayPayment';
 import { toast } from 'sonner';
 import { IndianRupee, Euro, Loader2 } from 'lucide-react';
 import { useUserCurrency } from '@/hooks/useUserCurrency';
+import { convertEURToINR } from '@/utils/currencyConversion';
 
 interface AddCreditsDialogProps {
   isOpen: boolean;
@@ -56,13 +57,25 @@ const AddCreditsDialog: React.FC<AddCreditsDialogProps> = ({
       // Close dialog before opening Razorpay to prevent overlap
       onClose();
 
+      // Show conversion notice if currency is EUR
+      if (currency === 'EUR') {
+        const convertedAmount = convertEURToINR(creditAmount);
+        toast.info(
+          `You will pay ₹${convertedAmount} INR via Razorpay`,
+          {
+            description: `Your wallet will be credited with ${symbol}${creditAmount} ${currency} (not ${convertedAmount} ${currency})`,
+            duration: 5000,
+          }
+        );
+      }
+
       // Process payment via Razorpay
       // The loader will be shown via isLoading from the hook
       await processPayment(
         {
-          amount: creditAmount, // Amount in currency units (will be converted in backend)
-          currency: currency as 'INR' | 'EUR',
-          description: `Add ${symbol}${creditAmount} credits to wallet`,
+          amount: creditAmount, // Amount in user's currency (e.g., 50 EUR)
+          currency: currency as 'INR' | 'EUR', // User's currency
+          description: `Add ${symbol}${creditAmount} ${currency} credits to wallet`,
           // Not passing expertId, serviceId, or callSessionId to ensure itemType is set to 'wallet'
         },
         async (paymentId: string, orderId: string) => {

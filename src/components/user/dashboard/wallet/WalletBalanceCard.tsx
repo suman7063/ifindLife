@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Wallet, Plus, IndianRupee, Euro, Loader2 } from 'lucide-react';
+import { Wallet, Plus, IndianRupee, Euro, Loader2, AlertTriangle } from 'lucide-react';
 import { useUserCurrency } from '@/hooks/useUserCurrency';
 import { UserProfile } from '@/types/supabase/user';
 import { supabase } from '@/lib/supabase';
@@ -227,18 +227,42 @@ const WalletBalanceCard: React.FC<WalletBalanceCardProps> = ({ user, onBalanceUp
                 <div className="flex-1">
                   <p className="text-sm text-muted-foreground">Available Credits</p>
                   <div className="flex items-center gap-2">
-                    <h2 className="text-3xl font-bold text-primary">
+                    <h2 className={`text-3xl font-bold ${
+                      balance < 0 ? 'text-red-600' : 'text-primary'
+                    }`}>
                       {symbol}{balance.toFixed(2)}
                     </h2>
                     {updatingBalance && (
                       <Loader2 className="h-5 w-5 animate-spin text-primary" />
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {updatingBalance ? 'Updating balance...' : `${balance.toFixed(0)} credits`}
+                  <p className={`text-xs mt-1 ${
+                    balance < 0 ? 'text-red-600 font-medium' : 'text-muted-foreground'
+                  }`}>
+                    {updatingBalance ? 'Updating balance...' : (
+                      balance < 0 
+                        ? `-${Math.abs(balance).toFixed(0)} credits (Negative balance)`
+                        : `${balance.toFixed(0)} credits`
+                    )}
                   </p>
                 </div>
               </div>
+
+              {balance < 0 && (
+                <div className="bg-red-50 border border-red-200 rounded-md p-3">
+                  <div className="flex items-start space-x-2">
+                    <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-red-900">
+                        Negative Balance
+                      </p>
+                      <p className="text-xs text-red-700 mt-1">
+                        Your wallet has a negative balance. Please add credits to resolve this and continue booking sessions.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="bg-muted rounded-md p-3">
                 <div className="flex items-center space-x-2 text-sm">

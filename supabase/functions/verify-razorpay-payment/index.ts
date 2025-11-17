@@ -211,7 +211,10 @@ serve(async (req) => {
       }
 
       const userId = orderData.user_id || user.id
-      const amount = orderData.amount // Already in currency units (not paise)
+      // Use original amount and currency from order (user's currency, e.g., 50 EUR)
+      // NOT the Razorpay amount (which is in INR, e.g., 4500 INR)
+      const amount = orderData.original_amount || orderData.amount // Use original amount if available
+      const currency = orderData.original_currency || orderData.currency || 'INR' // Use original currency if available
 
       // Add credits to wallet
       try {
@@ -231,7 +234,7 @@ serve(async (req) => {
             reason: 'purchase',
             reference_id: null, // UUID type - Razorpay payment IDs are strings, so store in metadata
             reference_type: 'razorpay_payment',
-            description: `Wallet top-up via ${orderData.currency || 'INR'} payment`,
+            description: `Wallet top-up via ${currency} payment`,
             expires_at: expiresAt.toISOString(),
             metadata: {
               razorpay_payment_id: razorpay_payment_id,

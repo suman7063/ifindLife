@@ -49,13 +49,30 @@ serve(async (req) => {
       );
     }
     
-    const { amount, currency, description, itemId, itemType } = await req.json();
+    const { amount, currency, original_amount, original_currency, description, itemId, itemType } = await req.json();
     
-    // Razorpay only supports INR for Indian merchants
-    // Force currency to INR regardless of what was passed
-    const razorpayCurrency = 'INR';
+    // Store original amount and currency for wallet credits
+    // Use provided original_amount/currency if available, otherwise use amount/currency
+    const originalAmount = original_amount || amount; // User's original amount (e.g., 25 EUR)
+    const originalCurrency = original_currency || currency || 'INR'; // User's original currency (e.g., 'EUR')
     
-    console.log('Request data:', { amount, currency: currency || 'INR', razorpayCurrency, description, itemId, itemType, userId: user.id });
+    // Use the currency from request - Razorpay supports multiple currencies (EUR, USD, INR, etc.)
+    // This will make Razorpay show the currency in the modal
+    // Supported currencies: INR, EUR, USD, GBP, AED, SGD, AUD, CAD, JPY, and many more
+    // Check Razorpay dashboard for full list
+    const razorpayCurrency = currency || 'INR';
+    
+    console.log('Request data:', { 
+      amount, 
+      currency: currency || 'INR', 
+      razorpayCurrency, 
+      originalAmount,
+      originalCurrency,
+      description, 
+      itemId, 
+      itemType, 
+      userId: user.id 
+    });
 
     // Validate required fields
     if (!amount || amount <= 0) {
@@ -91,27 +108,36 @@ serve(async (req) => {
     }
 
     // Convert amount to smallest currency unit (paise for INR)
-    // Amount should be passed in INR (e.g., 500 for ₹500), convert to paise (500 * 100 = 50000)
+    // Amount is always in INR (converted from EUR if needed)
+    // Convert rupees to paise (e.g., 4500 INR = 450000 paise)
     // If amount > 10000, assume it's already in paise
-    // Note: If original currency was USD, frontend should have converted it to INR already
-    // Always treat as INR - convert rupees to paise
-    // If amount > 10000, likely already in paise, otherwise convert rupees to paise
     const amountInSmallestUnit = amount > 10000 ? Math.round(amount) : Math.round(amount * 100);
 
     // Create Razorpay order
-    // IMPORTANT: Always use INR currency for Razorpay (Indian payment gateway)
+    // Use the currency from request - Razorpay supports multiple currencies
+    // This will make Razorpay show EUR/USD/etc. in the modal
     const receiptPrefix = itemType === 'wallet' ? 'wallet' : 'booking';
+    
+    // Customize description
+    let orderDescription = description || (itemType === 'wallet' ? 'Wallet top-up' : 'Expert consultation booking');
+    if (originalCurrency === 'EUR' && itemType === 'wallet') {
+      // If using EUR, show EUR amount clearly
+      orderDescription = `Add €${originalAmount} EUR Credits to Wallet`;
+    }
+    
     const orderData = {
-      amount: amountInSmallestUnit, // Amount in paise
-      currency: razorpayCurrency, // Always 'INR' for Razorpay
+      amount: amountInSmallestUnit, // Amount in smallest unit (cents for EUR/USD, paise for INR, yen for JPY)
+      currency: razorpayCurrency, // Currency for Razorpay (EUR, USD, INR, etc.) - Razorpay will show this currency
       receipt: `${receiptPrefix}_${Date.now()}`,
       notes: {
-        description: description || (itemType === 'wallet' ? 'Wallet top-up' : 'Expert consultation booking'),
+        description: orderDescription, // Show EUR amount in description
         itemId: itemId || '',
         itemType: itemType || 'consultation',
         user_id: user.id, // Include user_id for wallet top-ups
         purpose: itemType === 'wallet' ? 'wallet_topup' : undefined,
-        original_currency: currency || 'INR' // Store original currency for reference
+        original_amount: originalAmount?.toString() || amount.toString(), // Store original amount
+        original_currency: originalCurrency, // Store original currency (e.g., 'EUR')
+        display_message: originalCurrency === 'EUR' ? `Adding €${originalAmount} EUR to wallet` : undefined
       }
     };
 
@@ -154,8 +180,10 @@ serve(async (req) => {
         .insert({
           razorpay_order_id: responseData.id,
           user_id: user.id,
-          amount: amountInSmallestUnit / 100, // Convert back to currency units
-          currency: currency || 'INR',
+          amount: razorpayCurrency === 'JPY' ? amountInSmallestUnit : amountInSmallestUnit / 100, // Amount in currency units
+          currency: razorpayCurrency, // Currency used for Razorpay (EUR, USD, INR, etc.)
+          original_amount: originalAmount, // Original amount in user's currency (e.g., 50 EUR)
+          original_currency: originalCurrency, // Original currency (e.g., 'EUR')
           status: 'pending',
           item_type: 'wallet',
           created_at: new Date().toISOString()

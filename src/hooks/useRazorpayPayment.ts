@@ -56,19 +56,21 @@ export const useRazorpayPayment = () => {
         throw new Error('Invalid payment amount');
       }
 
-      // Razorpay only supports INR for Indian merchants
-      // Always use INR regardless of user's preferred currency
-      // If user currency is EUR, we'll need to convert the amount to INR
-      const currency = 'INR'; // Force INR for Razorpay
+      // Use the user's currency directly in Razorpay (Razorpay supports multiple currencies)
+      // This will make Razorpay show EUR in the modal if user selected EUR
+      let razorpayCurrency = paymentDetails.currency || 'INR';
+      let razorpayAmount = paymentDetails.amount;
       
-      // Convert amount to INR if needed
-      // If user passed EUR amount, convert to INR (approximate rate: 1 EUR = 90 INR)
-      let amountInINR = paymentDetails.amount;
-      if (paymentDetails.currency === 'EUR') {
-        // Convert EUR to INR (approximate rate: 1 EUR = 90 INR)
-        amountInINR = Math.round(paymentDetails.amount * 90);
+      // If currency is not supported by Razorpay, convert to INR
+      // Razorpay supports: INR, EUR, USD, GBP, and many others
+      // Check Razorpay dashboard for full list of supported currencies
+      const supportedCurrencies = ['INR', 'EUR', 'USD', 'GBP', 'AED', 'SGD', 'AUD', 'CAD', 'JPY'];
+      if (!supportedCurrencies.includes(razorpayCurrency)) {
+        // Convert to INR if currency not supported
+        const { convertEURToINR } = await import('@/utils/currencyConversion');
+        razorpayAmount = convertEURToINR(paymentDetails.amount);
+        razorpayCurrency = 'INR';
       }
-      // If already INR or not specified, use as-is
 
       // Initialize Razorpay
       const res = await initializeRazorpay();
@@ -77,15 +79,17 @@ export const useRazorpayPayment = () => {
       }
 
       // Create order on backend
-      // Pass amount in INR (e.g., 500 for ₹500)
-      // Backend will convert to paise (500 * 100 = 50000 paise)
-      // IMPORTANT: Always use INR currency for Razorpay (Indian payment gateway)
+      // Pass amount in user's currency (EUR, USD, etc.) - Razorpay supports multiple currencies
+      // Backend will convert to smallest unit (cents for EUR, paise for INR)
+      // Also pass original amount and currency (same as razorpay amount/currency for supported currencies)
       const { data: orderData, error: orderError } = await supabase.functions.invoke(
         'create-razorpay-order',
         {
           body: {
-            amount: amountInINR, // Amount in INR (e.g., 500 for ₹500)
-            currency: 'INR', // Always use INR for Razorpay
+            amount: razorpayAmount, // Amount in user's currency (e.g., 25 EUR or 4500 INR)
+            currency: razorpayCurrency, // User's currency (EUR, USD, INR, etc.) - Razorpay will show this
+            original_amount: paymentDetails.amount, // Original amount (same as razorpayAmount for supported currencies)
+            original_currency: paymentDetails.currency, // Original currency (e.g., 'EUR')
             description: paymentDetails.description,
             expertId: paymentDetails.expertId,
             serviceId: paymentDetails.serviceId,
@@ -188,6 +192,19 @@ export const useRazorpayPayment = () => {
       // Small delay to ensure dialogs are closed and animations complete before Razorpay opens
       await new Promise(resolve => setTimeout(resolve, 150));
 
+      // Show currency conversion notice if user currency is not INR
+      if (paymentDetails.currency === 'EUR') {
+        const { convertEURToINR } = await import('@/utils/currencyConversion');
+        const convertedAmount = convertEURToINR(paymentDetails.amount);
+        toast.info(
+          `Payment in ${paymentDetails.currency}: ${paymentDetails.amount} ${paymentDetails.currency} = ₹${convertedAmount} INR`,
+          {
+            description: 'Razorpay will show the amount in INR. Your wallet will be credited with the EUR amount you selected.',
+            duration: 6000,
+          }
+        );
+      }
+
       // Configure Razorpay options
       // IMPORTANT: Always use INR currency for Razorpay (Indian payment gateway)
       console.log('🔧 Razorpay Options:', {
@@ -197,15 +214,34 @@ export const useRazorpayPayment = () => {
         order_id: orderData.id,
         amountInPaise: orderData.amount,
         amountInRupees: orderData.amount / 100,
+        originalAmount: paymentDetails.amount,
+        originalCurrency: paymentDetails.currency,
       });
+
+      // Customize description - Razorpay will show the currency from the order
+      // If order is in EUR, Razorpay modal will show EUR
+      // If order is in INR, Razorpay modal will show INR
+      let displayDescription = paymentDetails.description;
+      if (paymentDetails.currency === 'EUR') {
+        // If using EUR, description can be simpler since Razorpay will show EUR
+        displayDescription = `Add €${paymentDetails.amount} EUR Credits to Wallet`;
+      }
 
       const options = {
         key: orderData.razorpayKeyId, // Use key from backend only
-        amount: orderData.amount, // Amount in paise (from Razorpay order)
-        currency: 'INR', // Always use INR for Razorpay
+        amount: orderData.amount, // Amount in smallest unit (cents for EUR, paise for INR)
+        currency: orderData.currency || 'INR', // Use currency from order (EUR, USD, INR, etc.) - Razorpay will show this currency
         name: 'iFindLife',
-        description: paymentDetails.description,
+        description: displayDescription, // Description visible in Razorpay modal
         order_id: orderData.id, // Must match the order created on backend
+        // Add notes with original currency information - these are visible in Razorpay
+        notes: paymentDetails.currency === 'EUR' ? {
+          original_amount: paymentDetails.amount.toString(),
+          original_currency: paymentDetails.currency,
+          user_message: `Adding €${paymentDetails.amount} EUR to wallet`,
+          display_currency: `€${paymentDetails.amount} EUR`, // Make EUR visible in Razorpay notes
+          payment_note: `You are adding €${paymentDetails.amount} EUR credits. Payment will be processed in INR.`
+        } : {},
         prefill: {
           email: user.email || '',
           name: user.user_metadata?.name || user.email || '',

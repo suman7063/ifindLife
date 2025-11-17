@@ -415,10 +415,10 @@ async function handlePaymentCaptured(supabase: any, payload: RazorpayWebhookPayl
       notes: payment.notes,
     });
 
-    // Get order details to find user_id
+    // Get order details to find user_id and original currency
     const { data: orderData, error: orderError } = await supabase
       .from('orders')
-      .select('user_id, amount, currency, item_type')
+      .select('user_id, amount, currency, original_amount, original_currency, item_type')
       .eq('razorpay_order_id', orderId)
       .single()
 
@@ -467,14 +467,20 @@ async function handlePaymentCaptured(supabase: any, payload: RazorpayWebhookPayl
         // Continue processing - might be handled elsewhere or might not be a wallet top-up after all
       } else {
         // Process wallet top-up
-        const amount = payment.amount / 100 // Convert from paise/cents to currency units
-        const currency = payment.currency
+        // Use original amount and currency from order (user's currency, e.g., 50 EUR)
+        // NOT the Razorpay amount (which is in INR, e.g., 4500 INR)
+        const amount = orderData?.original_amount || (payment.amount / 100); // Use original amount if available
+        const currency = orderData?.original_currency || payment.currency; // Use original currency if available
 
         console.log(`💰 Processing wallet top-up: ${amount} ${currency} for user ${userId}`);
         console.log(`📊 Amount details:`, {
-          amountInPaise: payment.amount,
-          amountInCurrencyUnits: amount,
-          currency: currency,
+          razorpayAmountInPaise: payment.amount,
+          razorpayAmountInCurrencyUnits: payment.amount / 100,
+          razorpayCurrency: payment.currency,
+          originalAmount: orderData?.original_amount,
+          originalCurrency: orderData?.original_currency,
+          finalAmount: amount,
+          finalCurrency: currency,
         });
 
         // Add credits directly to wallet (webhook has service role access)
