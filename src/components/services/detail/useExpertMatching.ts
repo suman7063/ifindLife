@@ -22,7 +22,7 @@ export const useExpertMatching = (serviceData: ServiceData | undefined) => {
       
       try {
         const { data, error } = await supabase
-          .from('experts')
+          .from('expert_accounts')
           .select('id, name, specialization');
           
         if (error) throw error;

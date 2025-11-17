@@ -57,7 +57,7 @@ const ProductionTestingSuite: React.FC = () => {
       // Test 1: Database Connection
       setCurrentTest('Database Connection');
       try {
-        const { data, error } = await supabase.from('experts').select('count').limit(1);
+        const { data, error } = await supabase.from('expert_accounts').select('count').limit(1);
         if (error) throw error;
         addTestResult('Database Connection', 'pass', 'Successfully connected to Supabase');
       } catch (error) {
@@ -187,7 +187,7 @@ const ProductionTestingSuite: React.FC = () => {
       // Test API response times
       setCurrentTest('API Response Times');
       const apiStart = performance.now();
-      await supabase.from('experts').select('id').limit(5);
+      await supabase.from('expert_accounts').select('id').limit(5);
       const apiTime = performance.now() - apiStart;
       
       if (apiTime < 500) {

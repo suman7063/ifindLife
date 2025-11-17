@@ -25,7 +25,7 @@ const FavoriteExperts: React.FC = () => {
         const expertIds = profile.favorite_experts.map(id => String(id));
         
         const { data, error } = await supabase
-          .from('experts')
+          .from('expert_accounts')
           .select('*')
           .in('id', expertIds);
           

@@ -25,7 +25,7 @@ const AdminOverview: React.FC = () => {
       try {
         // Fetch experts stats
         const { data: experts } = await supabase
-          .from('experts')
+          .from('expert_accounts')
           .select('*');
         
         const totalExperts = experts?.length || 0;

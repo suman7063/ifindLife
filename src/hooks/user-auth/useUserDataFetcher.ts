@@ -53,7 +53,7 @@ export const useUserDataFetcher = () => {
             const expertIdStrings = expertIds.map(id => String(id));
             
             const { data: expertData } = await supabase
-              .from('experts')
+              .from('expert_accounts')
               .select('*')
               .in('id', expertIdStrings);
               

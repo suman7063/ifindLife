@@ -12,7 +12,7 @@ export const useSupabaseExpertAuth = () => {
   const getExpert = async (email: string): Promise<Expert | null> => {
     try {
       const { data, error } = await supabase
-        .from('experts')
+        .from('expert_accounts')
         .select('*')
         .eq('email', email)
         .single();

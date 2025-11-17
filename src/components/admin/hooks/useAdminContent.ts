@@ -38,7 +38,7 @@ export const useAdminContentData = () => {
         // Load experts from Supabase
         try {
           const { data: expertData } = await supabase
-            .from('experts')
+            .from('expert_accounts')
             .select('*')
             .order('created_at', { ascending: false });
           

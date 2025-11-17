@@ -50,7 +50,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       // Fetch expert details for these IDs
       if (expertIds.length > 0) {
         const { data: expertsDetails, error: expertsDetailsError } = await supabase
-          .from('experts')
+          .from('expert_accounts')
           .select('id, name')
           .in('id', expertIds);
           
@@ -113,7 +113,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       
       // Fetch the expert details to update the details array
       const { data: expertData, error: expertError } = await supabase
-        .from('experts')
+        .from('expert_accounts')
         .select('id, name')
         .eq('id', expertId)
         .single();
