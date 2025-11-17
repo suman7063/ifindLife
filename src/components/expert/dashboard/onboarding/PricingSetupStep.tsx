@@ -55,10 +55,10 @@ export const PricingSetupStep: React.FC<PricingSetupStepProps> = ({
         // Set pricing based on database data
         const categoryData = data[0];
         setPricing({
-          session_30_inr: Number(categoryData.base_price_inr) || 0,
-          session_30_eur: Number(categoryData.base_price_eur) || 0,
-          session_60_inr: (Number(categoryData.base_price_inr) || 0) * 1.5,
-          session_60_eur: (Number(categoryData.base_price_eur) || 0) * 1.5,
+          session_30_inr: Number(categoryData.base_price_30_inr) || 0,
+          session_30_eur: Number(categoryData.base_price_30_eur) || 0,
+          session_60_inr: Number(categoryData.base_price_60_inr) || 0,
+          session_60_eur: Number(categoryData.base_price_60_eur) || 0,
         });
       } else {
         console.log('⚠️ No data found, using fallback pricing');

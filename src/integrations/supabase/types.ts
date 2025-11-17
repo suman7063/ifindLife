@@ -695,27 +695,30 @@ export type Database = {
       }
       expert_categories: {
         Row: {
-          base_price_eur: number | null
-          base_price_inr: number | null
-          base_price_usd: number | null
+          base_price_30_eur: number | null
+          base_price_30_inr: number | null
+          base_price_60_eur: number | null
+          base_price_60_inr: number | null
           created_at: string | null
           description: string | null
           id: string
           name: string
         }
         Insert: {
-          base_price_eur?: number | null
-          base_price_inr?: number | null
-          base_price_usd?: number | null
+          base_price_30_eur?: number | null
+          base_price_30_inr?: number | null
+          base_price_60_eur?: number | null
+          base_price_60_inr?: number | null
           created_at?: string | null
           description?: string | null
           id: string
           name: string
         }
         Update: {
-          base_price_eur?: number | null
-          base_price_inr?: number | null
-          base_price_usd?: number | null
+          base_price_30_eur?: number | null
+          base_price_30_inr?: number | null
+          base_price_60_eur?: number | null
+          base_price_60_inr?: number | null
           created_at?: string | null
           description?: string | null
           id?: string

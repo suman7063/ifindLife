@@ -45,9 +45,10 @@ interface ExpertCategory {
   id: string;
   name: string;
   description: string;
-  base_price_usd: number;
-  base_price_inr: number;
-  base_price_eur: number;
+  base_price_30_inr?: number;
+  base_price_30_eur?: number;
+  base_price_60_inr?: number;
+  base_price_60_eur?: number;
 }
 
 export const ExpertApprovalWorkflow: React.FC = () => {
@@ -223,18 +224,28 @@ export const ExpertApprovalWorkflow: React.FC = () => {
 
       if (categoryError) throw categoryError;
 
+      // Calculate pricing from 30-minute base pricing
+      const basePrice30Inr = categoryData.base_price_30_inr || 0;
+      const basePrice30Eur = categoryData.base_price_30_eur || 0;
+      const pricePerMinInr = basePrice30Inr / 30;
+      const pricePerMinEur = basePrice30Eur / 30;
+      const consultationFeeInr = basePrice30Inr / 2; // 15 minutes
+      const consultationFeeEur = basePrice30Eur / 2; // 15 minutes
+
       // Create initial pricing tier
       const { error } = await supabase
         .from('expert_pricing_tiers')
         .insert({
           expert_id: expertId,
           category: category,
-          price_per_min_usd: categoryData.base_price_usd,
-          price_per_min_inr: categoryData.base_price_inr,
-          price_per_min_eur: categoryData.base_price_eur,
-          consultation_fee_usd: categoryData.base_price_usd * 15,
-          consultation_fee_inr: categoryData.base_price_inr * 15,
-          consultation_fee_eur: categoryData.base_price_eur * 15
+          price_per_min_inr: pricePerMinInr,
+          price_per_min_eur: pricePerMinEur,
+          consultation_fee_inr: consultationFeeInr,
+          consultation_fee_eur: consultationFeeEur,
+          session_30_inr: basePrice30Inr,
+          session_30_eur: basePrice30Eur,
+          session_60_inr: categoryData.base_price_60_inr || 0,
+          session_60_eur: categoryData.base_price_60_eur || 0
         });
 
       if (error) throw error;

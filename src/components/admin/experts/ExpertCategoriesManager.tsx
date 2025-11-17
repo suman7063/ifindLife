@@ -28,8 +28,10 @@ interface ExpertCategory {
   id: string;
   name: string;
   description?: string;
-  base_price_inr: number;
-  base_price_eur: number;
+  base_price_30_inr?: number;
+  base_price_30_eur?: number;
+  base_price_60_inr?: number;
+  base_price_60_eur?: number;
   created_at?: string;
 }
 
@@ -60,8 +62,10 @@ const ExpertCategoriesManager: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    base_price_inr: 0,
-    base_price_eur: 0,
+    base_price_30_inr: '' as string | number,
+    base_price_30_eur: '' as string | number,
+    base_price_60_inr: '' as string | number,
+    base_price_60_eur: '' as string | number,
   });
 
   useEffect(() => {
@@ -163,8 +167,10 @@ const ExpertCategoriesManager: React.FC = () => {
         id: editingCategory?.id || formData.name.toLowerCase().replace(/\s+/g, '-'),
         name: formData.name,
         description: formData.description,
-        base_price_inr: formData.base_price_inr,
-        base_price_eur: formData.base_price_eur,
+        base_price_30_inr: formData.base_price_30_inr === '' ? 0 : Number(formData.base_price_30_inr) || 0,
+        base_price_30_eur: formData.base_price_30_eur === '' ? 0 : Number(formData.base_price_30_eur) || 0,
+        base_price_60_inr: formData.base_price_60_inr === '' ? 0 : Number(formData.base_price_60_inr) || 0,
+        base_price_60_eur: formData.base_price_60_eur === '' ? 0 : Number(formData.base_price_60_eur) || 0,
       };
 
       if (editingCategory) {
@@ -200,8 +206,10 @@ const ExpertCategoriesManager: React.FC = () => {
     setFormData({
       name: category.name,
       description: category.description || '',
-      base_price_inr: category.base_price_inr,
-      base_price_eur: category.base_price_eur,
+      base_price_30_inr: category.base_price_30_inr ?? '',
+      base_price_30_eur: category.base_price_30_eur ?? '',
+      base_price_60_inr: category.base_price_60_inr ?? '',
+      base_price_60_eur: category.base_price_60_eur ?? '',
     });
     setIsDialogOpen(true);
   };
@@ -309,8 +317,10 @@ const ExpertCategoriesManager: React.FC = () => {
     setFormData({
       name: '',
       description: '',
-      base_price_inr: 0,
-      base_price_eur: 0,
+      base_price_30_inr: '',
+      base_price_30_eur: '',
+      base_price_60_inr: '',
+      base_price_60_eur: '',
     });
     setEditingCategory(null);
   };
@@ -376,28 +386,73 @@ const ExpertCategoriesManager: React.FC = () => {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-4">
                     <div>
-                      <Label htmlFor="base_price_inr">Base Price INR (₹)</Label>
-                      <Input
-                        id="base_price_inr"
-                        type="number"
-                        step="0.01"
-                        value={formData.base_price_inr}
-                        onChange={(e) => setFormData({ ...formData, base_price_inr: parseFloat(e.target.value) || 0 })}
-                        required
-                      />
+                      <Label className="text-base font-semibold mb-2 block">30-Minute Session Pricing</Label>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="base_price_30_inr">30 Min Price INR (₹)</Label>
+                          <Input
+                            id="base_price_30_inr"
+                            type="number"
+                            step="0.01"
+                            value={formData.base_price_30_inr}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              setFormData({ ...formData, base_price_30_inr: value === '' ? '' : (isNaN(parseFloat(value)) ? '' : parseFloat(value)) });
+                            }}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="base_price_30_eur">30 Min Price EUR (€)</Label>
+                          <Input
+                            id="base_price_30_eur"
+                            type="number"
+                            step="0.01"
+                            value={formData.base_price_30_eur}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              setFormData({ ...formData, base_price_30_eur: value === '' ? '' : (isNaN(parseFloat(value)) ? '' : parseFloat(value)) });
+                            }}
+                            required
+                          />
+                        </div>
+                      </div>
                     </div>
+
                     <div>
-                      <Label htmlFor="base_price_eur">Base Price EUR (€)</Label>
-                      <Input
-                        id="base_price_eur"
-                        type="number"
-                        step="0.01"
-                        value={formData.base_price_eur}
-                        onChange={(e) => setFormData({ ...formData, base_price_eur: parseFloat(e.target.value) || 0 })}
-                        required
-                      />
+                      <Label className="text-base font-semibold mb-2 block">60-Minute Session Pricing</Label>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="base_price_60_inr">60 Min Price INR (₹)</Label>
+                          <Input
+                            id="base_price_60_inr"
+                            type="number"
+                            step="0.01"
+                            value={formData.base_price_60_inr}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              setFormData({ ...formData, base_price_60_inr: value === '' ? '' : (isNaN(parseFloat(value)) ? '' : parseFloat(value)) });
+                            }}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="base_price_60_eur">60 Min Price EUR (€)</Label>
+                          <Input
+                            id="base_price_60_eur"
+                            type="number"
+                            step="0.01"
+                            value={formData.base_price_60_eur}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              setFormData({ ...formData, base_price_60_eur: value === '' ? '' : (isNaN(parseFloat(value)) ? '' : parseFloat(value)) });
+                            }}
+                            required
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -439,8 +494,11 @@ const ExpertCategoriesManager: React.FC = () => {
                     <TableCell className="font-medium">{category.name}</TableCell>
                     <TableCell>{category.description || 'N/A'}</TableCell>
                     <TableCell>
-                      <div className="text-sm">
-                        ₹{category.base_price_inr} | €{category.base_price_eur}
+                      <div className="text-sm space-y-1">
+                        <div>30min: ₹{category.base_price_30_inr || 0} | €{category.base_price_30_eur || 0}</div>
+                        <div className="text-muted-foreground">
+                          60min: ₹{category.base_price_60_inr || 0} | €{category.base_price_60_eur || 0}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>
