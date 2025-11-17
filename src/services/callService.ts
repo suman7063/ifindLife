@@ -15,7 +15,7 @@ export interface InitiateCallParams {
   userName?: string;
   userAvatar?: string;
   estimatedCost?: number;
-  currency?: 'INR' | 'USD' | 'EUR';
+  currency?: 'INR' | 'EUR';
 }
 
 export interface CallRequestResponse {
@@ -477,7 +477,7 @@ export async function endCall(callSessionId: string, duration?: number, endedBy?
               }
             };
             
-            const currencySymbol = callSession.currency === 'INR' ? '₹' : callSession.currency === 'USD' ? '$' : callSession.currency === 'EUR' ? '€' : '';
+            const currencySymbol = callSession.currency === 'INR' ? '₹' : callSession.currency === 'EUR' ? '€' : '€';
             toast.success(`Refund of ${currencySymbol}${(refundData.refund_amount || roundedRefund).toFixed(2)} processed for remaining ${remainingMinutes.toFixed(2)} minutes`);
           } else {
             // Refund was not needed or already processed

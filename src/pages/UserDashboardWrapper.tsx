@@ -113,7 +113,7 @@ const UserDashboardWrapper = () => {
     phone: '',
     country: '',
     city: '',
-    currency: 'USD',
+    currency: 'EUR',
     profile_picture: '',
     referral_code: '',
     referral_link: '',

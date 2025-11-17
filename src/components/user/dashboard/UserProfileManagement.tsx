@@ -16,7 +16,7 @@ const UserProfileManagement: React.FC = () => {
     phone: '',
     country: '',
     city: '',
-    currency: 'USD'
+    currency: 'EUR'
   });
 
   // Update form data when user data changes
@@ -28,7 +28,7 @@ const UserProfileManagement: React.FC = () => {
         phone: user.phone || '',
         country: user.country || '',
         city: user.city || '',
-        currency: user.currency || 'USD'
+        currency: user.currency || 'EUR'
       });
     }
   }, [user]);

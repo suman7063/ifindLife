@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { ArrowDown, ArrowUp, Calendar, Wallet, Gift, RefreshCw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useUserCurrency } from '@/hooks/useUserCurrency';
 
 interface WalletTransaction {
   id: string;
@@ -97,8 +98,7 @@ const WalletTransactionsList: React.FC<WalletTransactionsListProps> = ({ user })
     return labels[reason] || reason;
   };
 
-  const currency = user?.currency || 'INR';
-  const symbol = currency === 'INR' ? '₹' : '€';
+  const { code: currency, symbol } = useUserCurrency();
 
   if (loading) {
     return (

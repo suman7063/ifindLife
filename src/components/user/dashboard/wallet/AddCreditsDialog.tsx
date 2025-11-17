@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { useRazorpayPayment } from '@/hooks/useRazorpayPayment';
 import { toast } from 'sonner';
 import { IndianRupee, Euro, Loader2 } from 'lucide-react';
+import { useUserCurrency } from '@/hooks/useUserCurrency';
 
 interface AddCreditsDialogProps {
   isOpen: boolean;
@@ -13,7 +14,7 @@ interface AddCreditsDialogProps {
   onSuccess?: () => void;
   onPaymentReceived?: () => void; // Called immediately when payment is received (before verification)
   onPaymentFailed?: () => void; // Called when payment fails or verification fails
-  userCurrency?: string;
+  userCurrency?: string; // Optional override, will use hook if not provided
 }
 
 const AddCreditsDialog: React.FC<AddCreditsDialogProps> = ({
@@ -22,13 +23,15 @@ const AddCreditsDialog: React.FC<AddCreditsDialogProps> = ({
   onSuccess,
   onPaymentReceived,
   onPaymentFailed,
-  userCurrency = 'INR'
+  userCurrency
 }) => {
   const [amount, setAmount] = useState<string>('');
   const { processPayment, isLoading } = useRazorpayPayment();
   const isDevelopment = import.meta.env.DEV || window.location.hostname === 'localhost';
-
-  const currency = userCurrency || 'INR';
+  
+  // Use hook to get currency, but allow override via prop
+  const currencyHook = useUserCurrency();
+  const currency = (userCurrency || currencyHook.code).toUpperCase() as 'INR' | 'EUR';
   const symbol = currency === 'INR' ? '₹' : '€';
   const CurrencyIcon = currency === 'INR' ? IndianRupee : Euro;
 
@@ -58,7 +61,7 @@ const AddCreditsDialog: React.FC<AddCreditsDialogProps> = ({
       await processPayment(
         {
           amount: creditAmount, // Amount in currency units (will be converted in backend)
-          currency: currency as 'INR' | 'USD',
+          currency: currency as 'INR' | 'EUR',
           description: `Add ${symbol}${creditAmount} credits to wallet`,
           // Not passing expertId, serviceId, or callSessionId to ensure itemType is set to 'wallet'
         },

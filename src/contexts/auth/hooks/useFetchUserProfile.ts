@@ -114,7 +114,7 @@ export const useFetchUserProfile = (userId: string | undefined, session: Session
             phone: rawProfileData.phone || '',
             country: rawProfileData.country || '',
             city: rawProfileData.city || '',
-            currency: rawProfileData.currency || 'USD',
+            currency: rawProfileData.currency || 'EUR',
             profile_picture: rawProfileData.profile_picture || '',
             wallet_balance: rawProfileData.wallet_balance || 0,
             created_at: rawProfileData.created_at || '',

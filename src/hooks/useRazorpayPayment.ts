@@ -10,8 +10,8 @@ declare global {
 }
 
 interface PaymentDetails {
-  amount: number; // Amount in currency units (e.g., 500 for ₹500 INR, 10 for $10 USD)
-  currency: 'INR' | 'USD'; // Currency code - defaults to 'INR' if not specified
+  amount: number; // Amount in currency units (e.g., 500 for ₹500 INR, 10 for €10 EUR)
+  currency: 'INR' | 'EUR'; // Currency code - defaults to 'INR' if not specified
   description: string;
   expertId?: string;
   serviceId?: string;
@@ -58,15 +58,15 @@ export const useRazorpayPayment = () => {
 
       // Razorpay only supports INR for Indian merchants
       // Always use INR regardless of user's preferred currency
-      // If user currency is USD, we'll need to convert the amount to INR
+      // If user currency is EUR, we'll need to convert the amount to INR
       const currency = 'INR'; // Force INR for Razorpay
       
       // Convert amount to INR if needed
-      // If user passed USD amount, convert to INR (approximate rate: 1 USD = 83 INR)
+      // If user passed EUR amount, convert to INR (approximate rate: 1 EUR = 90 INR)
       let amountInINR = paymentDetails.amount;
-      if (paymentDetails.currency === 'USD') {
-        // Convert USD to INR (approximate rate: 1 USD = 83 INR)
-        amountInINR = Math.round(paymentDetails.amount * 83);
+      if (paymentDetails.currency === 'EUR') {
+        // Convert EUR to INR (approximate rate: 1 EUR = 90 INR)
+        amountInINR = Math.round(paymentDetails.amount * 90);
       }
       // If already INR or not specified, use as-is
 

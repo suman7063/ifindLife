@@ -33,7 +33,7 @@ const formSchema = z.object({
   phone: z.string().min(5, 'Phone number is too short'),
   country: z.string().min(1, 'Country is required'),
   city: z.string().min(1, 'City is required'),
-  currency: z.string().default('USD'),
+  currency: z.string().default('EUR'),
 });
 
 const UserProfileForm: React.FC<UserProfileFormProps> = ({ profile, onComplete }) => {
@@ -48,7 +48,7 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ profile, onComplete }
       phone: profile?.phone || '',
       country: profile?.country || '',
       city: profile?.city || '',
-      currency: profile?.currency || 'USD',
+      currency: profile?.currency || 'EUR',
     },
   });
 
@@ -175,9 +175,7 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ profile, onComplete }
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="USD">USD ($)</SelectItem>
                     <SelectItem value="EUR">EUR (€)</SelectItem>
-                    <SelectItem value="GBP">GBP (£)</SelectItem>
                     <SelectItem value="INR">INR (₹)</SelectItem>
                   </SelectContent>
                 </Select>

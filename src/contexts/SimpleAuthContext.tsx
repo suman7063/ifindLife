@@ -135,7 +135,46 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
   const loadUserProfile = async (userId: string): Promise<UserProfile | null> => {
     try {
       
-      // Only query the profiles table since users table might not have the user
+      // First try to get from users table (primary source of truth)
+      const { data: usersData, error: usersError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+      
+      // If found in users table, use it
+      if (usersData && !usersError) {
+        const transformedProfile: UserProfile = {
+          id: usersData.id,
+          name: usersData.name || '',
+          email: usersData.email || '',
+          phone: usersData.phone || '',
+          country: usersData.country || '',
+          city: usersData.city || '',
+          currency: usersData.currency || 'EUR', // Default to EUR instead of USD
+          profile_picture: usersData.profile_picture || '',
+          referral_code: usersData.referral_code || '',
+          referral_link: usersData.referral_link || '',
+          referred_by: usersData.referred_by || '',
+          wallet_balance: usersData.wallet_balance || 0,
+          created_at: usersData.created_at,
+          updated_at: usersData.updated_at || usersData.created_at,
+          favorite_experts: [],
+          favorite_programs: [],
+          enrolled_courses: [],
+          reviews: [],
+          recent_activities: [],
+          upcoming_appointments: [],
+          transactions: [],
+          reports: [],
+          referrals: []
+        };
+        
+        setUserProfile(transformedProfile);
+        return transformedProfile;
+      }
+      
+      // Fallback to profiles table if not found in users table
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
@@ -187,7 +226,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
                 phone: createdProfile.phone || '',
                 country: createdProfile.country || '',
                 city: createdProfile.city || '',
-                currency: createdProfile.currency || 'USD',
+                currency: createdProfile.currency || 'EUR',
                 profile_picture: createdProfile.profile_picture || '',
                 referral_code: (createdProfile as any).referral_code || '',
                 referral_link: (createdProfile as any).referral_link || '',
@@ -230,7 +269,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         phone: profile.phone || '',
         country: profile.country || '',
         city: profile.city || '',
-        currency: profile.currency || 'USD',
+                currency: profile.currency || 'EUR',
         profile_picture: profile.profile_picture || '',
         referral_code: (profile as any).referral_code || '',
         referral_link: (profile as any).referral_link || '',

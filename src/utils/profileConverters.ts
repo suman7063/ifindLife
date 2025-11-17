@@ -13,7 +13,7 @@ export function convertUserToUserProfile(userData: any): UserProfile | null {
     phone: userData.phone,
     country: userData.country,
     city: userData.city,
-    currency: userData.currency || 'USD',
+    currency: userData.currency || 'EUR',
     profile_picture: userData.profile_picture,
     wallet_balance: userData.wallet_balance || 0,
     created_at: userData.created_at,

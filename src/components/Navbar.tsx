@@ -59,7 +59,7 @@ const Navbar = () => {
         phone: expert.phone || '',
         country: expert.country || '',
         city: expert.city || '',
-        currency: 'USD',
+        currency: 'EUR',
         profile_picture: expert.profile_picture || expert.profilePicture || '',
         wallet_balance: 0, // Experts don't have wallet balance
         created_at: expert.created_at || '',

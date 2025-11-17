@@ -29,7 +29,7 @@ const UserProfileSection: React.FC<UserProfileSectionProps> = ({ user }) => {
     phone: user?.phone || '',
     country: user?.country || '',
     city: user?.city || '',
-    currency: user?.currency || 'USD'
+    currency: user?.currency || 'EUR'
   });
   
   const [passwordData, setPasswordData] = useState({

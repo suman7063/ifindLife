@@ -166,7 +166,7 @@ export const useAuthFunctions = (): AuthFunctions => {
       phone: profile?.phone || '',
       city: profile?.city || '',
       country: profile?.country || '',
-      currency: profile?.currency || 'USD',
+      currency: profile?.currency || 'EUR',
       profile_picture: profile?.profile_picture || '',
       wallet_balance: profile?.wallet_balance || 0,
       created_at: profile?.created_at || new Date().toISOString(),

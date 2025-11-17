@@ -11,7 +11,7 @@ export function adaptUserProfile(user: any): UserProfile | null {
     phone: user.phone,
     country: user.country,
     city: user.city,
-    currency: user.currency || 'USD',
+    currency: user.currency || 'EUR',
     profile_picture: user.profile_picture || user.profilePicture,
     wallet_balance: user.wallet_balance || user.walletBalance || 0,
     created_at: user.created_at,

@@ -17,7 +17,7 @@ interface UserGeolocation {
 
 export function useCategoryPricing(expertCategory?: string) {
   const [pricingOptions, setPricingOptions] = useState<CategoryPricing[]>([]);
-  const [userCurrency, setUserCurrency] = useState<'USD' | 'INR'>('USD');
+  const [userCurrency, setUserCurrency] = useState<'EUR' | 'INR'>('EUR');
   const [isLoading, setIsLoading] = useState(true);
 
   // Fetch pricing options based on expert category
@@ -58,11 +58,11 @@ export function useCategoryPricing(expertCategory?: string) {
       const response = await fetch('https://ipapi.co/json/');
       const geoInfo = await response.json();
       
-      const currency = geoInfo.country_code === 'IN' ? 'INR' : 'USD';
+      const currency = geoInfo.country_code === 'IN' ? 'INR' : 'EUR';
       setUserCurrency(currency);
     } catch (error) {
       console.error('Error detecting currency:', error);
-      setUserCurrency('USD'); // Default fallback
+      setUserCurrency('EUR'); // Default fallback
     }
   };
 
@@ -76,12 +76,12 @@ export function useCategoryPricing(expertCategory?: string) {
     const option = pricingOptions.find(p => p.duration_minutes === durationMinutes);
     if (!option) return 0;
     
-    return userCurrency === 'INR' ? option.price_inr : option.price_usd;
+    return userCurrency === 'INR' ? option.price_inr : (option.price_usd || 0); // TODO: Update to price_eur when schema is updated
   };
 
   // Format price with currency symbol
   const formatPrice = (price: number): string => {
-    const symbol = userCurrency === 'INR' ? '₹' : '$';
+    const symbol = userCurrency === 'INR' ? '₹' : '€';
     return `${symbol}${price}`;
   };
 

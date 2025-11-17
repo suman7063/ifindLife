@@ -139,7 +139,7 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
             phone: data.phone,
             country: data.country,
             city: data.city,
-            currency: data.country.toLowerCase() === 'india' || data.country.toLowerCase() === 'in' ? 'INR' : 'EUR', // INR for India, EUR for rest
+            currency: data.country && (data.country.toLowerCase() === 'india' || data.country.toLowerCase() === 'in') ? 'INR' : 'EUR', // INR for India, EUR for rest
             date_of_birth: data.dateOfBirth,
             gender: data.gender,
             occupation: data.occupation,

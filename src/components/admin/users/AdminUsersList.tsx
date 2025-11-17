@@ -259,7 +259,7 @@ const AdminUsersList: React.FC = () => {
                           <TableCell>{formatDate(user.created_at)}</TableCell>
                           <TableCell>
                             <span className="font-medium">
-                              {user.currency || 'USD'} {(user.wallet_balance || 0).toFixed(2)}
+                              {user.currency || 'EUR'} {(user.wallet_balance || 0).toFixed(2)}
                             </span>
                           </TableCell>
                           <TableCell>

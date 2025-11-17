@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Wallet, Plus, IndianRupee, Euro, Loader2 } from 'lucide-react';
+import { useUserCurrency } from '@/hooks/useUserCurrency';
 import { UserProfile } from '@/types/supabase/user';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -194,8 +195,7 @@ const WalletBalanceCard: React.FC<WalletBalanceCardProps> = ({ user, onBalanceUp
     };
   }, []);
 
-  const currency = user?.currency || 'INR';
-  const symbol = currency === 'INR' ? '₹' : '€';
+  const { code: currency, symbol, name: currencyName } = useUserCurrency();
   const CurrencyIcon = currency === 'INR' ? IndianRupee : Euro;
 
   const [showAddCreditsDialog, setShowAddCreditsDialog] = useState(false);

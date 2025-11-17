@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 
 interface RazorpayPaymentData {
   amount: number;
-  currency: 'INR' | 'USD' | 'EUR';
+  currency: 'INR' | 'EUR';
   description: string;
   itemId?: string; // for program_id, session_id, etc.
   itemType?: 'program' | 'session' | 'consultation';

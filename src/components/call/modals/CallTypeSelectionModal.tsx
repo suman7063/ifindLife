@@ -10,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Video, Phone, Clock, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { useUserCurrency } from '@/hooks/useUserCurrency';
 
 interface CallTypeSelectionModalProps {
   isOpen: boolean;
@@ -31,6 +32,7 @@ const CallTypeSelectionModal: React.FC<CallTypeSelectionModalProps> = ({
   walletLoading = false
 }) => {
   const navigate = useNavigate();
+  const { symbol } = useUserCurrency();
   const [callType, setCallType] = useState<'audio' | 'video'>('video');
   const [duration, setDuration] = useState(15); // minutes
 
@@ -47,7 +49,7 @@ const CallTypeSelectionModal: React.FC<CallTypeSelectionModalProps> = ({
     // Check wallet balance first
     if (!hasSufficientBalance) {
       toast.error('Insufficient wallet balance', {
-        description: `You need ₹${balanceShortfall.toFixed(2)} more. Please recharge your wallet first.`,
+        description: `You need ${symbol}${balanceShortfall.toFixed(2)} more. Please recharge your wallet first.`,
         action: {
           label: 'Add Credits',
           onClick: () => {
@@ -147,7 +149,7 @@ const CallTypeSelectionModal: React.FC<CallTypeSelectionModalProps> = ({
           <div className="bg-muted p-4 rounded-lg space-y-2">
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Estimated Cost:</span>
-              <span className="text-lg font-semibold">₹{estimatedCost.toFixed(2)}</span>
+              <span className="text-lg font-semibold">{symbol}{estimatedCost.toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-center text-xs">
               <span className="text-muted-foreground">Wallet Balance:</span>
@@ -158,18 +160,18 @@ const CallTypeSelectionModal: React.FC<CallTypeSelectionModalProps> = ({
                 </div>
               ) : (
                 <span className={hasSufficientBalance ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
-                  ₹{safeWalletBalance.toFixed(2)}
+                  {symbol}{safeWalletBalance.toFixed(2)}
                 </span>
               )}
             </div>
             {!walletLoading && !hasSufficientBalance && (
               <div className="text-xs text-red-600 bg-red-50 p-2 rounded">
-                Insufficient balance. Need ₹{balanceShortfall.toFixed(2)} more. Please recharge your wallet.
+                Insufficient balance. Need {symbol}{balanceShortfall.toFixed(2)} more. Please recharge your wallet.
               </div>
             )}
             {!walletLoading && hasSufficientBalance && (
               <div className="text-xs text-muted-foreground">
-                ₹{estimatedCost.toFixed(2)} will be deducted from your wallet before the call starts
+                {symbol}{estimatedCost.toFixed(2)} will be deducted from your wallet before the call starts
               </div>
             )}
           </div>

@@ -414,7 +414,7 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
         await processPayment(
           {
             amount: totalCost, // Amount in INR/EUR, edge function will convert to smallest unit
-            currency: userCurrency as 'INR' | 'USD',
+            currency: userCurrency as 'INR' | 'EUR',
             description: `Booking ${selectedSlots.length} session(s) with ${expertName}`,
             expertId: expert.auth_id
           },

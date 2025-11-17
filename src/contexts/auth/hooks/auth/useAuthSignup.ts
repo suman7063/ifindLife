@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { UserProfile } from '@/types/database/unified';
+import { getCurrencyFromCountry } from '@/hooks/useUserCurrency';
 
 export const useAuthSignup = (onActionComplete: () => void) => {
   const signup = useCallback(async (
@@ -26,11 +27,15 @@ export const useAuthSignup = (onActionComplete: () => void) => {
       }
 
       if (data.user) {
+        // Determine currency based on country
+        const currency = getCurrencyFromCountry(userData.country || null);
+        
         // Create user profile with additional data
         const profileData = {
           ...userData,
           id: data.user.id,
           email,
+          currency: currency, // Set currency based on country
           referred_by: null,
           referral_code: Math.random().toString(36).substring(2, 8).toUpperCase(),
         };

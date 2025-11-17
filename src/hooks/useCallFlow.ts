@@ -395,7 +395,7 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
     expertId: string,
     expertAuthId: string,
     estimatedCost?: number,
-    currency?: 'INR' | 'USD' | 'EUR'
+    currency?: 'INR' | 'EUR'
   ) => {
     if (!isAuthenticated || !user) {
       toast.error('Please log in to start a call');

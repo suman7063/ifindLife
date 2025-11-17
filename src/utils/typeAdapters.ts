@@ -69,7 +69,7 @@ export function createUserProfileWithDefaults(profile: any): UserProfile {
     phone: profile?.phone || '',
     country: profile?.country || '',
     city: profile?.city || '',
-    currency: profile?.currency || 'USD',
+    currency: profile?.currency || 'EUR',
     profile_picture: profile?.profile_picture || '',
     wallet_balance: profile?.wallet_balance || 0,
     created_at: profile?.created_at || new Date().toISOString(),

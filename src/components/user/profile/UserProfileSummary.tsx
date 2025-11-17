@@ -56,7 +56,7 @@ const UserProfileSummary: React.FC<UserProfileSummaryProps> = ({ profile }) => {
             
             <div>
               <p className="text-sm font-medium text-muted-foreground">Currency</p>
-              <p>{profile.currency || 'USD'}</p>
+              <p>{profile.currency || 'EUR'}</p>
             </div>
             
             <div>

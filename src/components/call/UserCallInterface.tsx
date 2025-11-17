@@ -7,6 +7,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useCallFlow } from '@/hooks/useCallFlow';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { useWallet } from '@/hooks/useWallet';
+import { useUserCurrency } from '@/hooks/useUserCurrency';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import CallTypeSelectionModal from './modals/CallTypeSelectionModal';
@@ -46,6 +47,7 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
   const { user } = useSimpleAuth();
   const navigate = useNavigate();
   const { balance: walletBalance, loading: walletLoading, deductCredits, checkBalance, fetchBalance } = useWallet();
+  const { symbol: currencySymbol } = useUserCurrency();
   const [modalState, setModalState] = useState<'selection' | 'connecting' | 'waiting' | 'incall'>('selection');
   const [callType, setCallType] = useState<'audio' | 'video'>('video');
   const [selectedDuration, setSelectedDuration] = useState<number>(15);
@@ -105,10 +107,9 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
     
     if (currentBalance < estimatedCost) {
       const shortfall = estimatedCost - currentBalance;
-      const symbol = '₹'; // You can make this dynamic based on user currency
       
       toast.error('Insufficient wallet balance', {
-        description: `You need ${symbol}${shortfall.toFixed(2)} more. Please recharge your wallet.`,
+        description: `You need ${currencySymbol}${shortfall.toFixed(2)} more. Please recharge your wallet.`,
         action: {
           label: 'Add Credits',
           onClick: () => {

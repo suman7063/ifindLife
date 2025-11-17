@@ -16,7 +16,7 @@ const UserProfilePreferences: React.FC<UserProfilePreferencesProps> = ({ profile
   const { updateProfile } = useAuth();
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [smsNotifications, setSmsNotifications] = useState(true);
-  const [currency, setCurrency] = useState(profile.currency || 'USD');
+  const [currency, setCurrency] = useState(profile.currency || 'EUR');
   const [isUpdating, setIsUpdating] = useState(false);
   
   const handleUpdatePreferences = async () => {
@@ -92,13 +92,8 @@ const UserProfilePreferences: React.FC<UserProfilePreferencesProps> = ({ profile
               <SelectValue placeholder="Select currency" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="USD">US Dollar (USD)</SelectItem>
-              <SelectItem value="CAD">Canadian Dollar (CAD)</SelectItem>
-              <SelectItem value="GBP">British Pound (GBP)</SelectItem>
               <SelectItem value="EUR">Euro (EUR)</SelectItem>
               <SelectItem value="INR">Indian Rupee (INR)</SelectItem>
-              <SelectItem value="SGD">Singapore Dollar (SGD)</SelectItem>
-              <SelectItem value="AED">UAE Dirham (AED)</SelectItem>
             </SelectContent>
           </Select>
           <p className="text-sm text-muted-foreground">

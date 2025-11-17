@@ -20,7 +20,7 @@ export function useEnrollmentHandler(program: Program, currentUser: UserProfile)
       await processPayment(
         {
           amount: program.price * 100, // Convert to paise for Razorpay
-          currency: currentUser.currency === 'USD' ? 'USD' : 'INR',
+          currency: currentUser.currency === 'EUR' ? 'EUR' : 'INR',
           description: `Enrollment in ${program.title}`,
           itemId: program.id.toString(),
           itemType: 'program'
