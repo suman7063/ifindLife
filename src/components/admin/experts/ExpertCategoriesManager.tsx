@@ -53,6 +53,7 @@ const ExpertCategoriesManager: React.FC = () => {
   const [isServiceDialogOpen, setIsServiceDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<ExpertCategory | null>(null);
   const [selectedCategoryForServices, setSelectedCategoryForServices] = useState<string | null>(null);
+  const [selectedCategoryName, setSelectedCategoryName] = useState<string | null>(null);
   const [selectedServiceIds, setSelectedServiceIds] = useState<number[]>([]);
 
   // Form state
@@ -205,36 +206,45 @@ const ExpertCategoriesManager: React.FC = () => {
     setIsDialogOpen(true);
   };
 
-  const handleManageServices = (category: ExpertCategory) => {
+  const handleManageServices = async (category: ExpertCategory) => {
     setSelectedCategoryForServices(category.id);
-    const categoryServiceList = categoryServices[category.id] || [];
-    setSelectedServiceIds(categoryServiceList);
+    setSelectedCategoryName(category.name);
     setIsServiceDialogOpen(true);
+    
+    // Fetch the latest service assignments for this category from expert_category_services table
+    try {
+      const { data: categoryServicesData, error } = await supabase
+        .from('expert_category_services')
+        .select('service_id')
+        .eq('category_id', category.id);
+
+      if (error) {
+        console.error('Error fetching category services:', error);
+        // Fallback to cached data
+        const categoryServiceList = categoryServices[category.id] || [];
+        setSelectedServiceIds(categoryServiceList);
+      } else {
+        // Extract service IDs from the fetched data
+        const serviceIds = categoryServicesData?.map(item => item.service_id) || [];
+        setSelectedServiceIds(serviceIds);
+        // Also update the cached categoryServices map for consistency
+        setCategoryServices(prev => ({
+          ...prev,
+          [category.id]: serviceIds
+        }));
+      }
+    } catch (error) {
+      console.error('Error in handleManageServices:', error);
+      // Fallback to cached data
+      const categoryServiceList = categoryServices[category.id] || [];
+      setSelectedServiceIds(categoryServiceList);
+    }
   };
 
   const handleSaveServices = async () => {
     if (!selectedCategoryForServices) return;
 
     try {
-      // Check current user authentication
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError || !user) {
-        toast.error('Authentication required. Please log in as an admin.');
-        return;
-      }
-
-      // Check if user is admin
-      const { data: adminCheck, error: adminError } = await supabase
-        .from('admin_users')
-        .select('id')
-        .eq('id', user.id)
-        .single();
-
-      if (adminError || !adminCheck) {
-        toast.error('Admin privileges required to manage service assignments.');
-        return;
-      }
-
       // First, delete existing assignments for this category
       const { error: deleteError } = await supabase
         .from('expert_category_services')
@@ -265,10 +275,12 @@ const ExpertCategoriesManager: React.FC = () => {
 
       toast.success('Service assignments updated successfully');
       setIsServiceDialogOpen(false);
+      setSelectedCategoryName(null);
       fetchCategories(); // Refresh to show updated assignments
     } catch (error) {
       console.error('Error saving service assignments:', error);
-      toast.error(`Failed to save service assignments: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      toast.error(`Failed to save service assignments: ${errorMessage}`);
     }
   };
 
@@ -481,16 +493,38 @@ const ExpertCategoriesManager: React.FC = () => {
       </Card>
 
       {/* Service Assignment Dialog */}
-      <Dialog open={isServiceDialogOpen} onOpenChange={setIsServiceDialogOpen}>
+      <Dialog 
+        open={isServiceDialogOpen} 
+        onOpenChange={(open) => {
+          setIsServiceDialogOpen(open);
+          if (!open) {
+            setSelectedCategoryName(null);
+          }
+        }}
+      >
         <DialogContent className="max-w-md max-h-[80vh] flex flex-col p-0">
           <DialogHeader className="px-6 pt-6 pb-4 border-b flex-shrink-0">
-            <DialogTitle>Assign Services to Category</DialogTitle>
+            <DialogTitle>
+              Assign Services to Category
+              {selectedCategoryName && (
+                <span className="block text-sm font-normal text-muted-foreground mt-1">
+                  {selectedCategoryName}
+                </span>
+              )}
+            </DialogTitle>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto px-6 py-4">
             <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Select services that experts in this category can offer:
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Select services that experts in this category can offer:
+                </p>
+                {selectedServiceIds.length > 0 && (
+                  <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
+                    {selectedServiceIds.length} selected
+                  </span>
+                )}
+              </div>
               <div className="space-y-3">
                 {services.map((service) => (
                   <div key={service.id} className="flex items-start space-x-3">
