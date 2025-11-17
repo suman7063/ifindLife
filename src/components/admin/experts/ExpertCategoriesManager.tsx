@@ -70,13 +70,17 @@ const ExpertCategoriesManager: React.FC = () => {
   const fetchCategories = async () => {
     setLoading(true);
     try {
-      // Fetch categories in the correct order
+      // Fetch all categories first
       const { data: categoriesData, error: categoriesError } = await supabase
         .from('expert_categories')
-        .select('*')
-        .in('id', CATEGORY_ORDER);
+        .select('*');
 
-      if (categoriesError) throw categoriesError;
+      if (categoriesError) {
+        console.error('Categories fetch error:', categoriesError);
+        throw categoriesError;
+      }
+
+      console.log('Fetched categories:', categoriesData);
 
       // Fetch services
       const { data: servicesData, error: servicesError } = await supabase
@@ -84,22 +88,45 @@ const ExpertCategoriesManager: React.FC = () => {
         .select('*')
         .order('name');
 
-      if (servicesError) throw servicesError;
+      if (servicesError) {
+        console.error('Services fetch error:', servicesError);
+        throw servicesError;
+      }
+
+      console.log('Fetched services:', servicesData);
 
       // Fetch category service assignments
       const { data: categoryServicesData, error: categoryServicesError } = await supabase
         .from('expert_category_services')
         .select('category_id, service_id');
 
-      if (categoryServicesError) throw categoryServicesError;
+      if (categoryServicesError) {
+        console.error('Category services fetch error:', categoryServicesError);
+        // Don't throw here - this table might not exist yet, just log the error
+        console.warn('Could not fetch category service assignments:', categoryServicesError.message);
+      }
+
+      console.log('Fetched category services:', categoryServicesData);
 
       // Sort categories in the correct order
+      // Categories in CATEGORY_ORDER come first, then others alphabetically
       const sortedCategories = (categoriesData || []).sort((a, b) => {
         const aIndex = CATEGORY_ORDER.indexOf(a.id);
         const bIndex = CATEGORY_ORDER.indexOf(b.id);
-        return aIndex - bIndex;
+        
+        // If both are in the order array, sort by their position
+        if (aIndex !== -1 && bIndex !== -1) {
+          return aIndex - bIndex;
+        }
+        // If only a is in the order array, it comes first
+        if (aIndex !== -1) return -1;
+        // If only b is in the order array, it comes first
+        if (bIndex !== -1) return 1;
+        // If neither is in the order array, sort alphabetically by name
+        return a.name.localeCompare(b.name);
       });
       
+      console.log('Sorted categories:', sortedCategories);
       setCategories(sortedCategories);
       setServices(servicesData || []);
       
@@ -114,7 +141,14 @@ const ExpertCategoriesManager: React.FC = () => {
       setCategoryServices(categoryServicesMap);
     } catch (error) {
       console.error('Error fetching categories:', error);
-      toast.error('Failed to load categories');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      const errorDetails = error instanceof Error ? {
+        message: error.message,
+        name: error.name,
+        stack: error.stack
+      } : { error };
+      console.error('Full error details:', errorDetails);
+      toast.error(`Failed to load categories: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -448,45 +482,47 @@ const ExpertCategoriesManager: React.FC = () => {
 
       {/* Service Assignment Dialog */}
       <Dialog open={isServiceDialogOpen} onOpenChange={setIsServiceDialogOpen}>
-        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
+        <DialogContent className="max-w-md max-h-[80vh] flex flex-col p-0">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b flex-shrink-0">
             <DialogTitle>Assign Services to Category</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Select services that experts in this category can offer:
-            </p>
-            <div className="space-y-3">
-              {services.map((service) => (
-                <div key={service.id} className="flex items-start space-x-3">
-                  <Checkbox
-                    id={`service-${service.id}`}
-                    checked={selectedServiceIds.includes(service.id)}
-                    onCheckedChange={() => toggleServiceSelection(service.id)}
-                  />
-                  <div className="flex-1">
-                    <Label 
-                      htmlFor={`service-${service.id}`}
-                      className="text-sm font-medium cursor-pointer"
-                    >
-                      {service.name}
-                    </Label>
-                    {service.description && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {service.description}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-            {services.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-4">
-                No services available. Create services first in the Expert Services section.
+          <div className="flex-1 overflow-y-auto px-6 py-4">
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Select services that experts in this category can offer:
               </p>
-            )}
+              <div className="space-y-3">
+                {services.map((service) => (
+                  <div key={service.id} className="flex items-start space-x-3">
+                    <Checkbox
+                      id={`service-${service.id}`}
+                      checked={selectedServiceIds.includes(service.id)}
+                      onCheckedChange={() => toggleServiceSelection(service.id)}
+                    />
+                    <div className="flex-1">
+                      <Label 
+                        htmlFor={`service-${service.id}`}
+                        className="text-sm font-medium cursor-pointer"
+                      >
+                        {service.name}
+                      </Label>
+                      {service.description && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {service.description}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {services.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No services available. Create services first in the Expert Services section.
+                </p>
+              )}
+            </div>
           </div>
-          <div className="flex justify-end space-x-2 pt-4">
+          <div className="flex justify-end space-x-2 px-6 py-4 border-t flex-shrink-0">
             <Button type="button" variant="outline" onClick={() => setIsServiceDialogOpen(false)}>
               Cancel
             </Button>
