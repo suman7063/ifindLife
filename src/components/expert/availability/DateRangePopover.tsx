@@ -62,7 +62,7 @@ export const DateRangePopover: React.FC<DateRangePopoverProps> = ({
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
+      <PopoverContent className="w-auto min-w-[280px] p-0 z-[100] bg-popover" align="start" sideOffset={8}>
         <Calendar
           mode="range"
           selected={range}
