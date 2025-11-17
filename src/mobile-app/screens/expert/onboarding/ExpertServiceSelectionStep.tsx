@@ -23,6 +23,8 @@ export const ExpertServiceSelectionStep: React.FC<ExpertServiceSelectionStepProp
   const [selectedServices, setSelectedServices] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [expertCategory, setExpertCategory] = useState<string>('');
+  const [categoryInfo, setCategoryInfo] = useState<{ name: string; description: string | null } | null>(null);
+  const [pricing, setPricing] = useState<{ duration_minutes: number; price_inr: number; price_eur: number }[]>([]);
 
   useEffect(() => {
     fetchExpertDataAndServices();
@@ -35,6 +37,14 @@ export const ExpertServiceSelectionStep: React.FC<ExpertServiceSelectionStepProp
       // If not authenticated, use mock data for preview
       if (!user) {
         setExpertCategory('listening-volunteer');
+        setCategoryInfo({
+          name: 'Listening Volunteer',
+          description: 'Provide compassionate listening and emotional support to those in need'
+        });
+        setPricing([
+          { duration_minutes: 30, price_inr: 0, price_eur: 0 },
+          { duration_minutes: 60, price_inr: 0, price_eur: 0 }
+        ]);
         setAvailableServices([
           {
             id: 1,
@@ -76,6 +86,28 @@ export const ExpertServiceSelectionStep: React.FC<ExpertServiceSelectionStepProp
       if (!expertData?.category) throw new Error('Expert category not found');
 
       setExpertCategory(expertData.category);
+
+      // Fetch category information and pricing
+      const { data: categoryData, error: categoryInfoError } = await supabase
+        .from('expert_categories')
+        .select('name, description')
+        .eq('id', expertData.category)
+        .single();
+
+      if (!categoryInfoError && categoryData) {
+        setCategoryInfo(categoryData);
+      }
+
+      // Fetch pricing for this category
+      const { data: pricingData, error: pricingError } = await supabase
+        .from('expert_category_duration_pricing')
+        .select('duration_minutes, price_inr, price_eur')
+        .eq('category_id', expertData.category)
+        .order('duration_minutes');
+
+      if (!pricingError && pricingData) {
+        setPricing(pricingData);
+      }
 
       // Check if services are already assigned by admin
       const { data: adminAssignedServices, error: adminError } = await supabase
@@ -202,16 +234,36 @@ export const ExpertServiceSelectionStep: React.FC<ExpertServiceSelectionStepProp
         <p className="text-muted-foreground">
           Choose the services you'll offer to clients. You can update these later.
         </p>
-        {expertCategory && (
-          <div className="flex items-center gap-2 pt-2">
-            <div className="text-sm font-medium text-primary">
-              Category: {expertCategory.split('-').map(word => 
-                word.charAt(0).toUpperCase() + word.slice(1)
-              ).join(' ')}
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* Category and Pricing Card */}
+      {categoryInfo && (
+        <Card className="p-4 bg-primary/5 border-primary/20">
+          <div className="space-y-3">
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">{categoryInfo.name}</h2>
+              {categoryInfo.description && (
+                <p className="text-sm text-muted-foreground mt-1">{categoryInfo.description}</p>
+              )}
+            </div>
+            
+            {pricing.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-foreground">Session Rates:</p>
+                <div className="grid grid-cols-2 gap-3">
+                  {pricing.map((rate) => (
+                    <div key={rate.duration_minutes} className="bg-background rounded-lg p-3 border">
+                      <p className="text-xs text-muted-foreground mb-1">{rate.duration_minutes} min session</p>
+                      <p className="font-semibold text-foreground">₹{rate.price_inr}</p>
+                      <p className="text-xs text-muted-foreground">€{rate.price_eur}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
 
       {/* Services List */}
       <div className="space-y-3">
