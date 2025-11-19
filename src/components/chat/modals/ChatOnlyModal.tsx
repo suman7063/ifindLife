@@ -38,9 +38,9 @@ const ChatOnlyModal: React.FC<ChatOnlyModalProps> = ({
 }) => {
   const { user } = useSimpleAuth();
   const userId = user?.id;
-  const expertAuthId = expert.auth_id || expert.id;
+  const expertAuthId = expert.auth_id;
   const { getExpertPresence } = useExpertPresence();
-  const presence = getExpertPresence(expert.id);
+  const presence = getExpertPresence(expertAuthId);
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');

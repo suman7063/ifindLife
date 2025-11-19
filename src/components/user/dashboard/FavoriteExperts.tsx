@@ -56,9 +56,9 @@ const FavoriteExperts: React.FC<FavoriteExpertsProps> = ({ user }) => {
           <div className="space-y-3">
             {experts.map(expert => (
               <div 
-                key={expert.id} 
+                key={expert.auth_id || `favorite-${expert.email}`} 
                 className="flex items-center justify-between border rounded-md p-3 hover:bg-gray-50 cursor-pointer"
-                onClick={() => navigate(`/experts/${expert.id}`)}
+                onClick={() => navigate(`/experts/${expert.auth_id}`)}
               >
                 <div className="flex items-center gap-3">
                   <Avatar>

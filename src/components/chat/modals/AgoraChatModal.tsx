@@ -43,7 +43,7 @@ const AgoraChatModal: React.FC<AgoraChatModalProps> = ({
     handleToggleMute,
     handleToggleVideo,
     formatTime
-  } = useTestAgoraCall(expert.id, expert.price);
+  } = useTestAgoraCall(expert.auth_id, expert.price);
 
   // Use chat modal state management
   const {

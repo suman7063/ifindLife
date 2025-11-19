@@ -83,7 +83,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
       // Check if user has expert profile
       const { data: expertData, error: expertError } = await supabase
         .from('expert_accounts')
-        .select('id, status')
+        .select('auth_id, status')
         .eq('auth_id', userId)
         .maybeSingle();
 
@@ -306,7 +306,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
       // Test basic query first
       const { data: testData, error: testError } = await supabase
         .from('expert_accounts')
-        .select('id, name, status')
+        .select('auth_id, name, status')
         .limit(1);
       
       
@@ -336,7 +336,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
       
       // Transform the data to match ExpertProfile interface with proper defaults
       const transformedExpert: ExpertProfile = {
-        id: expertData.id,
+        id: expertData.auth_id || userId, // Use auth_id as id for backward compatibility
         auth_id: expertData.auth_id || userId,
         name: expertData.name || '',
         email: expertData.email || '',

@@ -86,7 +86,7 @@ const MessagingInterface: React.FC<MessagingInterfaceProps> = ({
             if (expertData) {
               // Try to find conversation by expert's id or auth_id
               const conv = conversations.find(c => 
-                c.expert_id === expertData.id || 
+                c.expert_id === expertData.auth_id || 
                 c.expert_id === expertData.auth_id || 
                 c.expert_id === initialExpertId
               );

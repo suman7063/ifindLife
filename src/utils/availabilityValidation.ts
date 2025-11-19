@@ -169,7 +169,7 @@ export const validateTimeSlots = (slots: TimeSlot[]): ValidationResult => {
  */
 export const normalizeExpertId = (expert: any): string => {
   // Always prefer auth_id over id for consistency
-  return expert?.auth_id || expert?.id || '';
+  return expert?.auth_id || '';
 };
 
 /**

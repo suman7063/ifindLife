@@ -187,8 +187,8 @@ export const HomeScreen: React.FC = () => {
             <h3 className="font-poppins font-semibold text-ifind-charcoal">Live Experts Available</h3>
             {liveExperts.map((expert) => (
               <div
-                key={expert.id}
-                onClick={() => navigate(`/mobile-app/app/experts/${expert.id}`)}
+                key={expert.auth_id || `mobile-expert-${expert.email}`}
+                onClick={() => navigate(`/mobile-app/app/experts/${expert.auth_id}`)}
                 className="bg-white rounded-xl p-4 border border-border/50 hover:border-ifind-aqua/30 transition-all duration-300 cursor-pointer"
               >
                 <div className="flex items-center space-x-3">
@@ -236,8 +236,8 @@ export const HomeScreen: React.FC = () => {
             <h3 className="font-poppins font-semibold text-ifind-charcoal">Listening Experts</h3>
             {listeningExperts.map((expert) => (
               <div
-                key={expert.id}
-                onClick={() => navigate(`/mobile-app/app/experts/${expert.id}`)}
+                key={expert.auth_id || `mobile-expert-${expert.email}`}
+                onClick={() => navigate(`/mobile-app/app/experts/${expert.auth_id}`)}
                 className="bg-white rounded-xl p-4 border border-border/50 hover:border-ifind-aqua/30 transition-all duration-300 cursor-pointer"
               >
                 <div className="flex items-center space-x-3">
@@ -482,8 +482,8 @@ export const HomeScreen: React.FC = () => {
           <div className="space-y-3">
             {topExperts.map((expert) => (
               <div
-                key={expert.id}
-                onClick={() => navigate(`/mobile-app/app/experts/${expert.id}`)}
+                key={expert.auth_id || `mobile-expert-${expert.email}`}
+                onClick={() => navigate(`/mobile-app/app/experts/${expert.auth_id}`)}
                 className="bg-white rounded-xl p-4 border border-border/50 hover:border-ifind-aqua/30 transition-all duration-300 cursor-pointer"
               >
                 <div className="flex items-center space-x-3">

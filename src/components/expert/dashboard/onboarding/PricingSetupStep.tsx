@@ -101,12 +101,12 @@ export const PricingSetupStep: React.FC<PricingSetupStepProps> = ({
 
   const fetchExistingPricing = async () => {
     try {
-      console.log('🔍 Fetching existing pricing for expert:', expertAccount.id, 'category:', expertAccount.category);
+      console.log('🔍 Fetching existing pricing for expert:', expertAccount.auth_id, 'category:', expertAccount.category);
       
       const { data, error } = await supabase
         .from('expert_pricing_tiers')
         .select('*')
-        .eq('expert_id', expertAccount.id)
+        .eq('expert_id', expertAccount.auth_id)
         .eq('category', expertAccount.category);
 
       console.log('🔍 Existing pricing query result:', data, 'Error:', error);
@@ -139,12 +139,12 @@ export const PricingSetupStep: React.FC<PricingSetupStepProps> = ({
     setLoading(true);
     
     try {
-      console.log('💾 Saving pricing for expert:', expertAccount.id, 'category:', expertAccount.category);
+      console.log('💾 Saving pricing for expert:', expertAccount.auth_id, 'category:', expertAccount.category);
       console.log('💾 Pricing data to save:', pricing);
       
       // Upsert pricing tiers
       const pricingData = {
-        expert_id: expertAccount.id,
+        expert_id: expertAccount.auth_id,
         category: expertAccount.category,
         session_30_inr: pricing.session_30_inr,
         session_30_eur: pricing.session_30_eur,
@@ -170,7 +170,7 @@ export const PricingSetupStep: React.FC<PricingSetupStepProps> = ({
       const { error: eaUpdateError } = await supabase
         .from('expert_accounts')
         .update({ pricing_set: true })
-        .eq('id', expertAccount.id);
+        .eq('auth_id', expertAccount.auth_id);
 
       if (eaUpdateError) {
         console.error('Error updating expert_accounts.pricing_set:', eaUpdateError);
@@ -180,7 +180,7 @@ export const PricingSetupStep: React.FC<PricingSetupStepProps> = ({
       const { data: eaFlags } = await supabase
         .from('expert_accounts')
         .select('selected_services, pricing_set, availability_set, onboarding_completed')
-        .eq('id', expertAccount.id)
+        .eq('auth_id', expertAccount.auth_id)
         .single();
 
       const hasServices = Array.isArray(eaFlags?.selected_services) && eaFlags!.selected_services.length > 0;
@@ -192,7 +192,7 @@ export const PricingSetupStep: React.FC<PricingSetupStepProps> = ({
         await supabase
           .from('expert_accounts')
           .update({ onboarding_completed: true })
-          .eq('id', expertAccount.id);
+          .eq('auth_id', expertAccount.auth_id);
       }
 
       console.log('✅ Pricing saved successfully');

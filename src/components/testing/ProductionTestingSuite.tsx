@@ -86,7 +86,7 @@ const ProductionTestingSuite: React.FC = () => {
       // Test 4: Presence System  
       setCurrentTest('Presence System');
       const onlineExperts = experts.filter(expert => {
-        const presence = getExpertPresence(expert.id);
+        const presence = getExpertPresence(expert.auth_id);
         return presence?.isAvailable || false;
       }).length;
       if (onlineExperts > 0) {
@@ -187,7 +187,7 @@ const ProductionTestingSuite: React.FC = () => {
       // Test API response times
       setCurrentTest('API Response Times');
       const apiStart = performance.now();
-      await supabase.from('expert_accounts').select('id').limit(5);
+      await supabase.from('expert_accounts').select('auth_id').limit(5);
       const apiTime = performance.now() - apiStart;
       
       if (apiTime < 500) {

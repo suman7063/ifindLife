@@ -55,7 +55,7 @@ const StreamlinedBooking: React.FC<StreamlinedBookingProps> = ({
       const { data, error } = await supabase
         .from('expert_accounts')
         .select('*')
-        .eq('id', expertId)
+        .eq('auth_id', expertId)
         .single();
 
       if (error) throw error;

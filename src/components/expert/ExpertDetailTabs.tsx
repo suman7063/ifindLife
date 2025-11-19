@@ -88,7 +88,7 @@ const ExpertDetailTabs: React.FC<ExpertDetailTabsProps> = ({ expert }) => {
       
       <TabsContent value="booking">
         <BookingTab 
-          expertId={expert.auth_id || expert.id} 
+          expertId={expert.auth_id} 
           expertName={expert.name} 
         />
       </TabsContent>

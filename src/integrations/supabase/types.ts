@@ -511,7 +511,7 @@ export type Database = {
       expert_accounts: {
         Row: {
           address: string | null
-          auth_id: string | null
+          auth_id: string
           availability_set: boolean | null
           average_rating: number | null
           bio: string | null
@@ -522,7 +522,6 @@ export type Database = {
           created_at: string | null
           email: string
           experience: string | null
-          id: string
           languages: string[] | null
           name: string
           onboarding_completed: boolean | null
@@ -540,7 +539,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
-          auth_id?: string | null
+          auth_id: string
           availability_set?: boolean | null
           average_rating?: number | null
           bio?: string | null
@@ -551,7 +550,6 @@ export type Database = {
           created_at?: string | null
           email: string
           experience?: string | null
-          id?: string
           languages?: string[] | null
           name: string
           onboarding_completed?: boolean | null
@@ -569,7 +567,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
-          auth_id?: string | null
+          auth_id?: string
           availability_set?: boolean | null
           average_rating?: number | null
           bio?: string | null
@@ -580,7 +578,6 @@ export type Database = {
           created_at?: string | null
           email?: string
           experience?: string | null
-          id?: string
           languages?: string[] | null
           name?: string
           onboarding_completed?: boolean | null

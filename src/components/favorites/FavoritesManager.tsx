@@ -208,7 +208,7 @@ export const FavoritesManager: React.FC = () => {
                     <Button
                       size="sm"
                       className="flex items-center gap-1"
-                      onClick={() => handleBookSession(favorite.expert.id)}
+                      onClick={() => handleBookSession((favorite.expert as any).auth_id)}
                     >
                       <Video className="h-3 w-3" />
                       Book
@@ -217,7 +217,7 @@ export const FavoritesManager: React.FC = () => {
                       size="sm"
                       variant="outline"
                       className="flex items-center gap-1"
-                      onClick={() => handleViewProfile(favorite.expert.id)}
+                      onClick={() => handleViewProfile((favorite.expert as any).auth_id)}
                     >
                       <ExternalLink className="h-3 w-3" />
                       Profile

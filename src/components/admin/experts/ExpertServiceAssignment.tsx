@@ -172,7 +172,7 @@ const ExpertServiceAssignment: React.FC<ExpertServiceAssignmentProps> = ({
           selected_services: [], // Temporarily empty until selected_services is migrated to UUID[]
           pricing_set: true
         })
-        .eq('id', expertId);
+        .eq('auth_id', expertId);
 
       if (eaUpdateError) throw eaUpdateError;
 
@@ -191,7 +191,7 @@ const ExpertServiceAssignment: React.FC<ExpertServiceAssignmentProps> = ({
         await supabase
           .from('expert_accounts')
           .update({ onboarding_completed: true })
-          .eq('id', expertId);
+          .eq('auth_id', expertId);
       }
 
       toast.success('Services and pricing assigned successfully!');

@@ -5,7 +5,7 @@ import { Expert, ExtendedExpert } from '@/types/expert';
 export function convertToExpertFormat(expertData: any[]): ExtendedExpert[] {
   return expertData.map(expert => {
     // Ensure id is always a string
-    const id = expert.id ? String(expert.id) : '';
+    const id = expert.auth_id ? String(expert.auth_id) : '';
     
     return {
       ...expert,

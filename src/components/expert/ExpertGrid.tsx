@@ -31,10 +31,10 @@ const ExpertGrid: React.FC<ExpertGridProps> = ({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {experts.map((expert) => (
-        <div key={expert.id} className="relative">
+        <div key={expert.auth_id || `expert-${expert.email}`} className="relative">
           <ExpertCardSimplified
             expert={{
-              id: expert.id.toString(),
+              id: expert.auth_id?.toString() || '',
               name: expert.name,
               profilePicture: expert.imageUrl,
               specialization: expert.specialization,
@@ -52,7 +52,7 @@ const ExpertGrid: React.FC<ExpertGridProps> = ({
           />
           
           {/* Show protection indicator for selected expert */}
-          {selectedExpert?.id === expert.id && isAuthProtected && (
+          {selectedExpert?.auth_id === expert.auth_id && isAuthProtected && (
             <div className="absolute top-2 right-2">
               <div className="bg-green-100 border border-green-300 rounded-full p-1">
                 <Lock className="h-4 w-4 text-green-600" />

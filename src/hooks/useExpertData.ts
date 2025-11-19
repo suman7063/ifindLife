@@ -23,8 +23,8 @@ export function useExpertData({ serviceId, specialization }: UseExpertDataProps 
 
   // Map database expert to ExpertCardData with pricing
   const mapDbExpertToExpertCard = (dbExpert: any, servicePricing?: any): ExpertCardData => {
-    const expertId = String(dbExpert.id);
     const expertAuthId = dbExpert.auth_id;
+    const expertId = String(expertAuthId); // Use auth_id as id for backward compatibility
     const isApproved = dbExpert.status === 'approved';
     const presence = getExpertPresence(expertAuthId);
     
@@ -110,7 +110,7 @@ export function useExpertData({ serviceId, specialization }: UseExpertDataProps 
   }, [serviceId, specialization]);
 
   const getExpertById = (expertId: string): ExpertCardData | null => {
-    return experts.find(expert => expert.id === expertId || expert.auth_id === expertId) || null;
+    return experts.find(expert => expert.auth_id === expertId) || null;
   };
 
   const getOnlineExperts = (): ExpertCardData[] => {

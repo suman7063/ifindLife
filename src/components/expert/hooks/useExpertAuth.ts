@@ -56,14 +56,14 @@ export const useExpertAuth = (): ExpertAuthReturnType => {
       status: 'pending',
       ...reportData,
       user_id: reportData.user_id,
-      expert_id: expert.id ? parseInt(expert.id.toString(), 10) : 0,
+      expert_id: expert.auth_id,
       userName: reportData.userName // For display compatibility
     };
 
     try {
       const experts = JSON.parse(localStorage.getItem('ifindlife-experts') || '[]');
       const updatedExperts = experts.map((e: ExpertFormData) => {
-        if (e.id === expert.id) {
+        if (e.auth_id === expert.auth_id) {
           return {
             ...e,
             reportedUsers: [...(e.reportedUsers || []), newReport]

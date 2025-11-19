@@ -39,7 +39,7 @@ const UserFavorites: React.FC<UserFavoritesProps> = ({ user }) => {
             {expertFavoriteDetails && expertFavoriteDetails.length > 0 ? (
               <div className="space-y-2">
                 {expertFavoriteDetails.map((expert) => (
-                  <div key={expert.id} className="flex items-center justify-between p-2 bg-muted rounded-md">
+                  <div key={expert.auth_id || `user-favorite-${expert.email}`} className="flex items-center justify-between p-2 bg-muted rounded-md">
                     <span>{expert.name}</span>
                   </div>
                 ))}

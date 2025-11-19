@@ -87,7 +87,7 @@ export const useExpertPricing = (expertId?: string) => {
             if (catPricing && !catErr) {
               const mapped = {
                 id: catPricing.id || 'category',
-                expert_id: expertAccount.id,
+                expert_id: expertAccount.auth_id,
                 category: expertAccount.category,
                 session_30_inr: catPricing.session_30_inr ?? 450,
                 session_30_eur: catPricing.session_30_eur ?? 25,
@@ -112,15 +112,15 @@ export const useExpertPricing = (expertId?: string) => {
       const { data, error: pricingError } = await supabase
         .from('expert_pricing_tiers')
         .select('*')
-        .eq('expert_id', expertAccount.id)
+        .eq('expert_id', expertAccount.auth_id)
         .maybeSingle();
 
       if (pricingError || !data) {
-        console.log('useExpertPricing: No pricing found for expert, using defaults for account:', expertAccount.id);
+        console.log('useExpertPricing: No pricing found for expert, using defaults for account:', expertAccount.auth_id);
         // Set default pricing if none exists - using user specified rates
         const defaultPricing = {
           id: 'default',
-          expert_id: expertAccount.id,
+          expert_id: expertAccount.auth_id,
           category: expertAccount.category || 'standard',
           session_30_inr: 450,  // ₹450 for 30 min (user specified)
           session_30_eur: 25,   // €25 for 30 min (user specified)

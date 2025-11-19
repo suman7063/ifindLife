@@ -33,8 +33,8 @@ const AppointmentList: React.FC = () => {
       try {
         const { data: experts, error } = await supabase
           .from('expert_accounts')
-          .select('id, profile_picture, specialization, average_rating')
-          .in('id', expertIds);
+          .select('auth_id, profile_picture, specialization, average_rating')
+          .in('auth_id', expertIds);
 
         if (error) {
           console.error('Error fetching expert data:', error);
@@ -43,11 +43,14 @@ const AppointmentList: React.FC = () => {
 
         const expertMap: Record<string, ExpertData> = {};
         experts?.forEach(expert => {
-          expertMap[expert.id] = {
-            profile_picture: expert.profile_picture,
-            specialization: expert.specialization,
-            average_rating: expert.average_rating
-          };
+          const expertKey = expert.auth_id;
+          if (expertKey) {
+            expertMap[expertKey] = {
+              profile_picture: expert.profile_picture,
+              specialization: expert.specialization,
+              average_rating: expert.average_rating
+            };
+          }
         });
 
         setExpertDataMap(expertMap);

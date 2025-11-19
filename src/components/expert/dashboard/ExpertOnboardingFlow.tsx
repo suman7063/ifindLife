@@ -115,7 +115,7 @@ export const ExpertOnboardingFlow: React.FC = () => {
       const { data, error } = await supabase
         .from('expert_accounts')
         .select('selected_services, pricing_set, availability_set, profile_completed')
-        .eq('id', account.id)
+        .eq('auth_id', account.auth_id)
         .single();
 
       if (error && error.code !== 'PGRST116') {
@@ -357,7 +357,7 @@ export const ExpertOnboardingFlow: React.FC = () => {
                     const { error: accountError } = await supabase
                       .from('expert_accounts')
                       .update({ onboarding_completed: true })
-                      .eq('id', expertAccount?.id);
+                      .eq('auth_id', expertAccount?.auth_id);
 
                     if (accountError) {
                       console.error('Error updating expert account:', accountError);

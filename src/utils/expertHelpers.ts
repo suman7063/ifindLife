@@ -6,13 +6,21 @@ import { ExpertProfile } from '@/types/supabase/expert';
 
 /**
  * Get the standardized expert ID for presence operations
- * Always prefers auth_id over id for consistency
+ * Database only has auth_id column, so we use auth_id directly
  */
 export const getExpertPresenceKey = (expert: ExpertProfile | any): string => {
   if (!expert) return '';
   
-  // Always prefer auth_id for presence operations
-  return expert.auth_id || expert.id || '';
+  // Database doesn't have id column - only use auth_id
+  return expert.auth_id || '';
+};
+
+/**
+ * Get expert identifier - always use auth_id since database doesn't have id column
+ */
+export const getExpertIdentifier = (expert: ExpertProfile | any): string => {
+  if (!expert) return '';
+  return expert.auth_id || '';
 };
 
 /**

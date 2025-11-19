@@ -42,7 +42,7 @@ const IntegratedBookingSystem: React.FC<IntegratedBookingSystemProps> = ({
 
   const { getExpertPresence } = useExpertPresence();
   
-  const expertPresence = getExpertPresence(expert.auth_id || expert.id);
+  const expertPresence = getExpertPresence(expert.auth_id);
   const expertAvailability = expertPresence?.status === 'available' ? 'available' : 
                             expertPresence?.status === 'away' ? 'away' : 'offline';
   const online = expertPresence?.isAvailable || false;
@@ -88,7 +88,7 @@ const IntegratedBookingSystem: React.FC<IntegratedBookingSystemProps> = ({
           amount: Math.round(totalPrice * 100), // Convert to paise
           currency: 'INR',
           description: `Appointment with ${expert.name} - ${slotIds.length} slots`,
-          expertId: expert.id,
+          expertId: expert.auth_id,
         },
         async (paymentId: string, orderId: string) => {
           // Payment successful, create appointment
@@ -115,7 +115,7 @@ const IntegratedBookingSystem: React.FC<IntegratedBookingSystemProps> = ({
               .from('appointments')
               .insert({
                 user_id: user.id,
-                expert_id: expert.id,
+                expert_id: expert.auth_id,
                 expert_name: expert.name,
                 appointment_date: date,
                 start_time: startTime,
@@ -288,7 +288,7 @@ const IntegratedBookingSystem: React.FC<IntegratedBookingSystemProps> = ({
 
             <TabsContent value="schedule" className="space-y-4">
               <ModernBookingInterface
-                expertId={expert.id}
+                expertId={expert.auth_id}
                 expertName={expert.name}
                 expertAvatar={expert.profile_picture}
                 onBookingConfirm={handleScheduledBooking}
@@ -309,7 +309,7 @@ const IntegratedBookingSystem: React.FC<IntegratedBookingSystemProps> = ({
         isOpen={isCallModalOpen}
         onClose={() => setIsCallModalOpen(false)}
         expert={{
-          id: parseInt(expert.id),
+          id: parseInt(expert.auth_id?.toString() || '0'),
           name: expert.name,
           imageUrl: expert.profile_picture || '',
           price: expert.price || 30

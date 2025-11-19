@@ -48,7 +48,7 @@ export const useExpertMatching = (serviceData: ServiceData | undefined) => {
             );
           })
           .map(expert => ({
-            id: expert.id,
+            id: expert.auth_id,
             name: expert.name,
             specialization: expert.specialization
           }));

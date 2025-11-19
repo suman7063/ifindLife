@@ -60,7 +60,7 @@ const TopTherapistsSection: React.FC<TopTherapistsSectionProps> = ({ experts = [
   const handleExpertCardClick = (expert: ExpertCardData) => {
 
     
-    const expertId = expert.auth_id || expert.id;
+    const expertId = expert.auth_id;
 
     
     if (!expertId) {
@@ -82,7 +82,7 @@ const TopTherapistsSection: React.FC<TopTherapistsSectionProps> = ({ experts = [
 
   const handleBookNow = (expert: ExpertCardData) => { 
     // Navigate to expert's booking page with booking tab active
-    const expertUrl = `/experts/${expert.auth_id || expert.id}?book=true`;
+    const expertUrl = `/experts/${expert.auth_id}?book=true`;
     window.location.href = expertUrl;
   };
 
@@ -115,13 +115,13 @@ const TopTherapistsSection: React.FC<TopTherapistsSectionProps> = ({ experts = [
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {defaultExperts.map((expert) => (
               <ExpertCardSimplified
-                key={expert.id.toString()}
+                key={expert.auth_id?.toString() || ''}
                 expert={expert}
                 onClick={() => handleExpertCardClick(expert)}
                 onConnectNow={(type) => handleConnectNow(expert, type)}
                 onBookNow={() => handleBookNow(expert)}
-                showConnectOptions={expertConnectOptions[expert.id.toString()] || false}
-                onShowConnectOptions={(show) => handleShowConnectOptions(expert.id.toString(), show)}
+                showConnectOptions={expertConnectOptions[expert.auth_id?.toString() || ''] || false}
+                onShowConnectOptions={(show) => handleShowConnectOptions(expert.auth_id?.toString() || '', show)}
                 className="h-full"
               />
             ))}

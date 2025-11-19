@@ -162,7 +162,7 @@ const AuthTestSuite: React.FC = () => {
               <strong>Expert Profile:</strong>
               <pre className="text-xs bg-gray-100 p-2 rounded mt-1">
                 {JSON.stringify({
-                  id: expert.id,
+                  id: expert.auth_id,
                   name: expert.name,
                   email: expert.email,
                   status: expert.status

@@ -25,11 +25,11 @@ const BookingCalendar: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-  const { availabilities, getAvailableSlots, isAvailableOnDate } = useExpertAvailability(expert?.id);
+  const { availabilities, getAvailableSlots, isAvailableOnDate } = useExpertAvailability(expert?.auth_id);
 
   // Fetch appointments for the current month
   useEffect(() => {
-    if (!expert?.id) return;
+    if (!expert?.auth_id) return;
 
     const fetchAppointments = async () => {
       const startDate = format(startOfMonth(currentDate), 'yyyy-MM-dd');
@@ -38,7 +38,7 @@ const BookingCalendar: React.FC = () => {
       const { data, error } = await supabase
         .from('appointments')
         .select('*')
-        .eq('expert_id', expert.id)
+        .eq('expert_id', expert.auth_id)
         .gte('appointment_date', startDate)
         .lte('appointment_date', endDate);
 
@@ -51,7 +51,7 @@ const BookingCalendar: React.FC = () => {
     };
 
     fetchAppointments();
-  }, [expert?.id, currentDate]);
+  }, [expert?.auth_id, currentDate]);
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);

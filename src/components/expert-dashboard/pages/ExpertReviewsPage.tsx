@@ -17,7 +17,7 @@ const ExpertReviewsPage: React.FC = () => {
   });
 
   useEffect(() => {
-    if (expert?.id) {
+    if (expert?.auth_id) {
       fetchReviews();
     }
   }, [expert]);
@@ -28,7 +28,7 @@ const ExpertReviewsPage: React.FC = () => {
       const { data, error } = await supabase
         .from('user_reviews')
         .select('*')
-        .eq('expert_id', expert?.id || '')
+        .eq('expert_id', expert?.auth_id || '')
         .order('date', { ascending: false });
 
       if (error) throw error;

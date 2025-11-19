@@ -99,9 +99,9 @@ const ServiceExperts: React.FC<ServiceExpertsProps> = ({ serviceId, serviceData 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {experts.slice(0, 4).map((expert) => (
             <div
-              key={expert.id}
+              key={expert.auth_id || `expert-${expert.email}`}
               className="border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => handleExpertClick(expert.id)}
+              onClick={() => handleExpertClick(expert.auth_id)}
             >
               <div className="flex items-start space-x-4">
                 <div className="relative">
@@ -153,7 +153,7 @@ const ServiceExperts: React.FC<ServiceExpertsProps> = ({ serviceId, serviceData 
                     <Button
                       size="sm"
                       className={`${serviceData.buttonColor} text-white`}
-                      onClick={(e) => handleConnectClick(expert.id, e)}
+                      onClick={(e) => handleConnectClick(expert.auth_id, e)}
                     >
                       <MessageCircle className="h-4 w-4 mr-1" />
                       Connect

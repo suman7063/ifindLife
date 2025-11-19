@@ -237,7 +237,7 @@ export const SchedulingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const { data, error } = await supabase
         .from('appointments')
         .select('*')
-        .eq('expert_id', expertProfile.id)
+        .eq('expert_id', expertProfile.auth_id)
         .order('appointment_date', { ascending: false });
 
       if (error) {

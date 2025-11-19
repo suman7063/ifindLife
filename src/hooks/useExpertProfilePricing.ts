@@ -25,7 +25,7 @@ export const useExpertProfilePricing = (expertId?: string) => {
         const { data: expertData, error: expertError } = await supabase
           .from('expert_accounts')
           .select('category')
-          .eq('id', expertId)
+          .eq('auth_id', expertId)
           .single();
 
         if (expertError) {

@@ -204,13 +204,13 @@ const ExpertSelectionModal: React.FC<ExpertSelectionModalProps> = ({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {onlineExperts.map((expert) => (
                         <ExpertCardSimplified
-                          key={expert.id}
+                          key={expert.auth_id || `expert-${expert.email}`}
                           expert={expert}
                           onClick={() => handleExpertCardClick(expert)}
                           onConnectNow={(type) => handleConnectNow(expert, type)}
                           onBookNow={() => handleBookNow(expert)}
-                          showConnectOptions={expertConnectOptions[String(expert.id)] || false}
-                          onShowConnectOptions={(show) => handleShowConnectOptions(String(expert.id), show)}
+                          showConnectOptions={expertConnectOptions[String(expert.auth_id)] || false}
+                          onShowConnectOptions={(show) => handleShowConnectOptions(String(expert.auth_id), show)}
                           className="h-full"
                         />
                       ))}
@@ -230,13 +230,13 @@ const ExpertSelectionModal: React.FC<ExpertSelectionModalProps> = ({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {offlineExperts.map((expert) => (
                         <ExpertCardSimplified
-                          key={expert.id}
+                          key={expert.auth_id || `expert-${expert.email}`}
                           expert={expert}
                           onClick={() => handleExpertCardClick(expert)}
                           onConnectNow={(type) => handleConnectNow(expert, type)}
                           onBookNow={() => handleBookNow(expert)}
-                          showConnectOptions={expertConnectOptions[String(expert.id)] || false}
-                          onShowConnectOptions={(show) => handleShowConnectOptions(String(expert.id), show)}
+                          showConnectOptions={expertConnectOptions[String(expert.auth_id)] || false}
+                          onShowConnectOptions={(show) => handleShowConnectOptions(String(expert.auth_id), show)}
                           className="h-full"
                         />
                       ))}

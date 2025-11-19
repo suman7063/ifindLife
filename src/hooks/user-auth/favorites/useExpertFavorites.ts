@@ -21,7 +21,7 @@ export const useExpertFavorites = (
         .from('user_favorites')
         .insert({
           user_id: userId,
-          expert_id: String(expert.id)
+          expert_id: String(expert.auth_id)
         });
         
       if (error) throw error;
@@ -45,7 +45,7 @@ export const useExpertFavorites = (
     }
     
     try {
-      const expertIdStr = String(expert.id);
+      const expertIdStr = String(expert.auth_id);
       
       const { error } = await supabase
         .from('user_favorites')
@@ -73,7 +73,7 @@ export const useExpertFavorites = (
   };
   
   const toggleExpertFavorite = async (expert: Expert): Promise<boolean> => {
-    const expertIdStr = String(expert.id);
+    const expertIdStr = String(expert.auth_id);
     const isFavorite = favoriteExperts.some(fav => String(fav.expert_id) === expertIdStr);
     
     if (isFavorite) {

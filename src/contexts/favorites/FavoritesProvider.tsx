@@ -51,14 +51,14 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (expertIds.length > 0) {
         const { data: expertsDetails, error: expertsDetailsError } = await supabase
           .from('expert_accounts')
-          .select('id, name')
-          .in('id', expertIds);
+          .select('auth_id, name')
+          .in('auth_id', expertIds);
           
         if (expertsDetailsError) throw expertsDetailsError;
         
         // IDs are already strings (UUIDs)
         setExpertFavoriteDetails(expertsDetails.map(expert => ({
-          id: expert.id,
+          id: expert.auth_id,
           name: expert.name
         })));
       }
@@ -120,7 +120,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         
       if (!expertError && expertData) {
         setExpertFavoriteDetails(prev => [...prev, {
-          id: expertData.id,
+          id: expertData.auth_id,
           name: expertData.name
         }]);
       }

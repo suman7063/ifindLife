@@ -6,7 +6,7 @@ import { ExpertActionsProps } from './types';
 const ExpertActions: React.FC<ExpertActionsProps> = ({ expert, onClick }) => {
   const handleClick = () => {
     if (onClick) {
-      onClick(expert.id);
+      onClick(expert.auth_id);
     }
   };
 

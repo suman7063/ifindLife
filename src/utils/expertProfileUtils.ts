@@ -10,11 +10,11 @@ export const updateExpertProfile = async (
   updates: Partial<ExpertProfile>
 ): Promise<boolean> => {
   try {
-    // First check which table has the expert's profile
+    // Check if expert exists in expert_accounts
     const { data: expertData } = await supabase
       .from('expert_accounts')
-      .select('id')
-      .eq('id', expertId)
+      .select('auth_id')
+      .eq('auth_id', expertId)
       .maybeSingle();
 
     const table = expertData ? 'expert_accounts' : 'experts';
@@ -29,7 +29,7 @@ export const updateExpertProfile = async (
     const { error } = await supabase
       .from(table)
       .update(processedUpdates)
-      .eq('id', expertId);
+      .eq(expertData ? 'auth_id' : 'id', expertId);
       
     return !error;
   } catch (error) {

@@ -25,13 +25,13 @@ const GoogleCalendarIntegration: React.FC = () => {
   };
 
   const handleSyncAvailability = async () => {
-    if (!accessToken || !selectedCalendar || !expert?.id) {
+    if (!accessToken || !selectedCalendar || !expert?.auth_id) {
       toast.error('Please connect your calendar and select a calendar first');
       return;
     }
 
     try {
-      await syncAvailability(accessToken, expert.id, selectedCalendar);
+      await syncAvailability(accessToken, expert.auth_id, selectedCalendar);
       toast.success('Availability synced successfully with Google Calendar');
     } catch (err) {
       toast.error('Failed to sync availability');

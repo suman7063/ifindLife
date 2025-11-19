@@ -52,12 +52,12 @@ export const AvailabilitySetupStep: React.FC<AvailabilitySetupStepProps> = ({
 
   const fetchExistingAvailability = async () => {
     try {
-      console.log('🔍 Fetching existing availability for expert:', expertAccount.id);
+      console.log('🔍 Fetching existing availability for expert:', expertAccount.auth_id);
       
       const { data, error } = await supabase
         .from('expert_availabilities')
         .select('*')
-        .eq('expert_id', expertAccount.id);
+        .eq('expert_id', expertAccount.auth_id);
 
       console.log('🔍 Availability query result:', data, 'Error:', error);
 
@@ -156,13 +156,13 @@ export const AvailabilitySetupStep: React.FC<AvailabilitySetupStepProps> = ({
     setLoading(true);
     
     try {
-      console.log('💾 Saving availability for expert:', expertAccount.id);
+      console.log('💾 Saving availability for expert:', expertAccount.auth_id);
       
       // Delete existing availability
       const { error: deleteError } = await supabase
         .from('expert_availabilities')
         .delete()
-        .eq('expert_id', expertAccount.id);
+        .eq('expert_id', expertAccount.auth_id);
 
       if (deleteError) {
         console.error('Error deleting existing availability:', deleteError);
@@ -179,7 +179,7 @@ export const AvailabilitySetupStep: React.FC<AvailabilitySetupStepProps> = ({
           
           day.timeSlots.forEach(slot => {
             availabilityRecords.push({
-              expert_id: expertAccount.id,
+              expert_id: expertAccount.auth_id,
               day_of_week: dayIndex,
               start_time: slot.start_time,
               end_time: slot.end_time,
@@ -207,7 +207,7 @@ export const AvailabilitySetupStep: React.FC<AvailabilitySetupStepProps> = ({
       const { error: eaUpdateError } = await supabase
         .from('expert_accounts')
         .update({ availability_set: true })
-        .eq('id', expertAccount.id);
+        .eq('auth_id', expertAccount.auth_id);
 
       if (eaUpdateError) {
         console.error('Error updating expert_accounts.availability_set:', eaUpdateError);
@@ -217,7 +217,7 @@ export const AvailabilitySetupStep: React.FC<AvailabilitySetupStepProps> = ({
       const { data: eaFlags } = await supabase
         .from('expert_accounts')
         .select('selected_services, pricing_set, availability_set, onboarding_completed')
-        .eq('id', expertAccount.id)
+        .eq('auth_id', expertAccount.auth_id)
         .single();
 
       const hasServices = Array.isArray(eaFlags?.selected_services) && eaFlags!.selected_services.length > 0;
@@ -229,7 +229,7 @@ export const AvailabilitySetupStep: React.FC<AvailabilitySetupStepProps> = ({
         await supabase
           .from('expert_accounts')
           .update({ onboarding_completed: true })
-          .eq('id', expertAccount.id);
+          .eq('auth_id', expertAccount.auth_id);
       }
 
       console.log('✅ Availability saved successfully');

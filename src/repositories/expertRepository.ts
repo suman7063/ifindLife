@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase';
 import { ExpertProfile } from '@/types/database/unified';
 
 export interface ExpertCreateData {
+  auth_id: string; // Required: auth_id is now the primary key
   name: string;
   email: string;
   phone?: string;
@@ -23,6 +24,7 @@ export class ExpertRepository {
     try {
       // Ensure required fields are present
       const insertData = {
+        auth_id: expertData.auth_id, // Required: auth_id is now the primary key
         name: expertData.name,
         email: expertData.email,
         phone: expertData.phone || null,
@@ -53,8 +55,8 @@ export class ExpertRepository {
 
       // Convert to ExpertProfile format
       return {
-        id: data.id,
-        auth_id: '',
+        id: data.auth_id || '', // Use auth_id as id for backward compatibility
+        auth_id: data.auth_id || '',
         name: data.name,
         email: data.email,
         phone: data.phone,
@@ -84,12 +86,12 @@ export class ExpertRepository {
     }
   }
 
-  static async findById(id: string): Promise<ExpertProfile | null> {
+  static async findById(authId: string): Promise<ExpertProfile | null> {
     try {
       const { data, error } = await supabase
         .from('expert_accounts')
         .select('*')
-        .eq('id', id)
+        .eq('auth_id', authId)
         .single();
 
       if (error || !data) {
@@ -97,8 +99,8 @@ export class ExpertRepository {
       }
 
       return {
-        id: data.id,
-        auth_id: '',
+        id: data.auth_id, // Use auth_id as id for backward compatibility
+        auth_id: data.auth_id,
         name: data.name,
         email: data.email,
         phone: data.phone,
@@ -123,7 +125,7 @@ export class ExpertRepository {
         verified: false
       };
     } catch (error) {
-      console.error('Error finding expert by ID:', error);
+      console.error('Error finding expert by auth ID:', error);
       return null;
     }
   }
@@ -152,7 +154,7 @@ export class ExpertRepository {
       
       // Transform to ExpertProfile format
       return {
-        id: expertData.id,
+        id: expertData.auth_id, // Use auth_id as id for backward compatibility
         auth_id: expertData.auth_id,
         name: expertData.name,
         email: expertData.email,
@@ -171,7 +173,7 @@ export class ExpertRepository {
         country: expertData.country,
         specialization: expertData.specialization,
         experience: expertData.experience,
-        certificate_urls: (expertData as any).certificate_urls || [],
+        certificate_urls: (expertData as { certificate_urls?: string[] }).certificate_urls || [],
         selected_services: expertData.selected_services,
         average_rating: expertData.average_rating,
         reviews_count: expertData.reviews_count,
@@ -183,12 +185,12 @@ export class ExpertRepository {
     }
   }
 
-  static async update(id: string, expertData: Partial<ExpertCreateData>): Promise<ExpertProfile | null> {
+  static async update(authId: string, expertData: Partial<ExpertCreateData>): Promise<ExpertProfile | null> {
     try {
       const { data, error } = await supabase
         .from('expert_accounts')
         .update(expertData)
-        .eq('id', id)
+        .eq('auth_id', authId)
         .select()
         .single();
 
@@ -198,8 +200,8 @@ export class ExpertRepository {
       }
 
       return {
-        id: data.id,
-        auth_id: '',
+        id: data.auth_id, // Use auth_id as id for backward compatibility
+        auth_id: data.auth_id,
         name: data.name,
         email: data.email,
         phone: data.phone,

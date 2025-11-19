@@ -31,13 +31,13 @@ const FavoritesSection: React.FC = () => {
         const { data, error } = await supabase
           .from('expert_accounts')
           .select('*')
-          .in('id', expertIds);
+          .in('auth_id', expertIds);
           
         if (error) throw error;
         
         // Transform data to match ExpertProfile interface
         const transformedData: ExpertProfile[] = (data || []).map((expert: any) => ({
-          id: expert.id,
+          id: expert.auth_id, // Database doesn't have id column, use auth_id
           auth_id: expert.auth_id || '',
           name: expert.name,
           email: expert.email,
@@ -93,7 +93,7 @@ const FavoritesSection: React.FC = () => {
         ) : favoriteExperts.length > 0 ? (
           <div className="space-y-4">
             {favoriteExperts.map((expert) => (
-              <div key={expert.id} className="flex items-center justify-between">
+              <div key={expert.auth_id || `favorite-${expert.email}`} className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Avatar>
                     <AvatarImage src={expert.profile_picture} alt={expert.name} />
@@ -107,7 +107,7 @@ const FavoritesSection: React.FC = () => {
                 <Button 
                   variant="outline" 
                   size="sm"
-                  onClick={() => navigate(`/expert/${expert.id}`)}
+                  onClick={() => navigate(`/expert/${expert.auth_id}`)}
                 >
                   View
                 </Button>

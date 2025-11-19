@@ -53,7 +53,7 @@ const Navbar = () => {
     if (userType === 'expert' && expert) {
       // For experts, create a UserProfile-compatible object from expert data
       return {
-        id: expert.id,
+        id: expert.auth_id,
         name: expert.name || '',
         email: expert.email || '',
         phone: expert.phone || '',

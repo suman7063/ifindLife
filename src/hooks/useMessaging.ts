@@ -93,15 +93,10 @@ export const useMessaging = (userId?: string) => {
       // Note: The other participant could be an expert OR a user
       const participantIds = Array.from(conversationsMap.keys());
       if (participantIds.length > 0) {
-        // Try to find experts first
-        const { data: expertsData } = await supabase
-          .from('expert_accounts')
-          .select('id, auth_id, name, profile_picture')
-          .in('id', participantIds);
-        
+        // Try to find experts by auth_id
         const { data: expertsByAuthId } = await supabase
           .from('expert_accounts')
-          .select('id, auth_id, name, profile_picture')
+          .select('auth_id, name, profile_picture')
           .in('auth_id', participantIds);
         
         // Also check users table (in case the other participant is a user, not an expert)
@@ -110,8 +105,8 @@ export const useMessaging = (userId?: string) => {
           .select('id, name, profile_picture')
           .in('id', participantIds);
 
-        // Combine all experts
-        const allExperts = [...(expertsData || []), ...(expertsByAuthId || [])];
+        // Use experts found by auth_id
+        const allExperts = expertsByAuthId || [];
         const uniqueExperts = Array.from(
           new Map(allExperts.map(e => [e.id, e])).values()
         );
@@ -129,7 +124,7 @@ export const useMessaging = (userId?: string) => {
         conversationsMap.forEach((conv, participantId) => {
           // First try to find as expert
           const expertInfo = uniqueExperts.find(
-            expert => expert.id === participantId || expert.auth_id === participantId
+            expert => expert.auth_id === participantId
           );
           
           // If not found as expert, try as user
@@ -138,9 +133,9 @@ export const useMessaging = (userId?: string) => {
           if (expertInfo) {
             // This is an expert conversation
             // Use auth_id for expert_id to match messages (messages use auth.users.id)
-            const expertAuthId = expertInfo.auth_id || expertInfo.id;
+            const expertAuthId = expertInfo.auth_id;
             const presence = presenceData?.find(
-              p => p.expert_id === expertInfo.id
+              p => p.expert_id === expertInfo.auth_id
             );
             
             conversationsList.push({
@@ -298,44 +293,31 @@ export const useMessaging = (userId?: string) => {
       let byAuthId = null;
       let errByAuthId = null;
       
-      // Try by id first (use maybeSingle to handle not found gracefully)
-      const { data: byIdResult, error: errByIdResult } = await supabase
+      // Try by auth_id (id column no longer exists)
+      const { data: byAuthIdResult, error: errByAuthIdResult } = await supabase
         .from('expert_accounts')
-        .select('id, auth_id, name, profile_picture')
-        .eq('id', expertId)
+        .select('auth_id, name, profile_picture')
+        .eq('auth_id', expertId)
         .maybeSingle();
-      byId = byIdResult;
-      errById = errByIdResult;
+      byAuthId = byAuthIdResult;
+      errByAuthId = errByAuthIdResult;
 
-      if (!errById && byId) {
-        expertData = byId;
+      if (!errByAuthId && byAuthId) {
+        expertData = byAuthId;
       } else {
-        // Try by auth_id
-        const { data: byAuthIdResult, error: errByAuthIdResult } = await supabase
-          .from('expert_accounts')
-          .select('id, auth_id, name, profile_picture')
-          .eq('auth_id', expertId)
+        // If expert not found, it might be a user ID - check users table
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('id, name, profile_picture')
+          .eq('id', expertId)
           .maybeSingle();
-        byAuthId = byAuthIdResult;
-        errByAuthId = errByAuthIdResult;
-
-        if (!errByAuthId && byAuthId) {
-          expertData = byAuthId;
+        
+        if (!userError && userData) {
+          // This is actually a user, not an expert - this shouldn't happen in normal flow
+          console.warn('Expert ID points to a user instead:', expertId);
+          expertError = new Error('Invalid expert ID');
         } else {
-          // If expert not found, it might be a user ID - check users table
-          const { data: userData, error: userError } = await supabase
-            .from('users')
-            .select('id, name, profile_picture')
-            .eq('id', expertId)
-            .maybeSingle();
-          
-          if (!userError && userData) {
-            // This is actually a user, not an expert - this shouldn't happen in normal flow
-            console.warn('Expert ID points to a user instead:', expertId);
-            expertError = new Error('Invalid expert ID');
-          } else {
-            expertError = errByAuthId || errById;
-          }
+          expertError = errByAuthId;
         }
       }
 
@@ -343,9 +325,7 @@ export const useMessaging = (userId?: string) => {
         console.error('Expert not found:', {
           expertId,
           error: expertError,
-          byIdError: errById,
           byAuthIdError: errByAuthId,
-          byIdData: byId,
           byAuthIdData: byAuthId
         });
         // Don't show error toast - just log it, as the expert might not exist yet
@@ -356,20 +336,18 @@ export const useMessaging = (userId?: string) => {
 
       // Use the expert's auth_id for the conversation (since messages use auth_id)
       // This ensures consistency - messages use auth.users.id, so conversations should too
-      const conversationExpertId = expertData.auth_id || expertData.id;
+      const conversationExpertId = expertData.auth_id;
       console.log('Creating conversation with expert:', {
         expertId,
-        expertDataId: expertData.id,
         expertDataAuthId: expertData.auth_id,
         conversationExpertId,
         expertName: expertData.name
       });
 
       // Add to conversations if not already there
-      // Check by both auth_id and id to handle any existing conversations
+      // Check by auth_id to handle any existing conversations
       const existingConv = conversations.find(
         c => c.expert_id === conversationExpertId || 
-             c.expert_id === expertData.id || 
              c.expert_id === expertId ||
              (expertData.auth_id && c.expert_id === expertData.auth_id)
       );

@@ -28,7 +28,7 @@ const EnhancedExpertSelectionModal: React.FC<EnhancedExpertSelectionModalProps> 
 
   // Convert real expert data to mock format for compatibility with existing ExpertGrid
   const adaptedExperts: Expert[] = realExperts.map(expert => ({
-    id: parseInt(expert.id),
+    id: parseInt(expert.auth_id?.toString() || '0'),
     name: expert.name,
     imageUrl: expert.profilePicture,
     price: expert.price,

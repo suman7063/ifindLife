@@ -166,8 +166,8 @@ export const ServiceDetailScreen: React.FC = () => {
           <div className="space-y-3">
             {mockExperts.slice(0, 2).map((expert) => (
               <div
-                key={expert.id}
-                onClick={() => navigate(`/mobile-app/app/experts/${expert.id}`)}
+                key={expert.auth_id || `mobile-expert-${expert.email}`}
+                onClick={() => navigate(`/mobile-app/app/experts/${expert.auth_id}`)}
                 className="bg-white rounded-xl p-4 border border-border/50 hover:border-ifind-aqua/30 transition-all duration-300 cursor-pointer"
               >
                 <div className="flex items-center space-x-3">

@@ -73,8 +73,16 @@ const ExpertApprovals = () => {
       }
       
       
+      // Ensure all experts have auth_id
+      const expertsWithAuthId = (data || []).map((expert: any) => ({
+        ...expert,
+        auth_id: expert.auth_id || expert.id || null
+      }));
       
-      setExperts(data as ExpertProfileWithStatus[] || []);
+      console.log('ExpertApprovals: Fetched experts:', expertsWithAuthId.length);
+      console.log('ExpertApprovals: Sample expert:', expertsWithAuthId[0]);
+      
+      setExperts(expertsWithAuthId as ExpertProfileWithStatus[]);
       
     } catch (error) {
       console.error('ExpertApprovals: Error fetching experts:', error);
@@ -104,16 +112,39 @@ const ExpertApprovals = () => {
   // Update expert status with better error handling
   const updateExpertStatus = async () => {
     if (!selectedExpert) return;
+    
+    // Validate that we have auth_id
+    if (!selectedExpert.auth_id) {
+      console.error('ExpertApprovals: No auth_id found for expert:', selectedExpert);
+      toast.error('Invalid expert data: missing auth_id');
+      return;
+    }
+    
     try {
+      console.log('ExpertApprovals: Updating expert status:', {
+        auth_id: selectedExpert.auth_id,
+        status: selectedStatus,
+        expert: selectedExpert
+      });
 
       // Call edge function (runs with service role) to update status
       const { data: fnData, error: fnError } = await supabase.functions.invoke('admin-update-expert', {
-        body: { id: String(selectedExpert.id), status: selectedStatus }
+        body: { id: String(selectedExpert.auth_id), status: selectedStatus }
       });
 
-      if (fnError || !fnData?.success) {
-        console.error('ExpertApprovals: Edge function error:', fnError || fnData?.error);
-        throw new Error(fnError?.message || fnData?.error || 'Failed to update');
+      if (fnError) {
+        console.error('ExpertApprovals: Edge function error:', fnError);
+        console.error('ExpertApprovals: Error details:', {
+          message: fnError.message,
+          status: fnError.status,
+          context: fnError.context
+        });
+        throw new Error(fnError.message || 'Failed to update expert status');
+      }
+
+      if (!fnData?.success) {
+        console.error('ExpertApprovals: Edge function returned error:', fnData?.error);
+        throw new Error(fnData?.error || 'Failed to update expert status');
       }
 
 
@@ -234,8 +265,8 @@ const ExpertApprovals = () => {
                 Pending Applications ({pendingExperts.length})
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {pendingExperts.map(expert => (
-                  <Card key={expert.id}>
+                {pendingExperts.map((expert, index) => (
+                  <Card key={expert.auth_id || `pending-${expert.email}-${index}`}>
                     <CardHeader>
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-lg">{expert.name}</CardTitle>
@@ -260,7 +291,7 @@ const ExpertApprovals = () => {
                     <CardFooter className="flex gap-2">
                       <Button 
                         onClick={() => {
-                          setSelectedExpertId(expert.id);
+                          setSelectedExpertId(expert.auth_id);
                           setDetailDialogOpen(true);
                         }}
                         variant="outline"
@@ -291,8 +322,8 @@ const ExpertApprovals = () => {
                 Approved Experts ({approvedExperts.length})
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {approvedExperts.map(expert => (
-                  <Card key={expert.id}>
+                {approvedExperts.map((expert, index) => (
+                  <Card key={expert.auth_id || `approved-${expert.email}-${index}`}>
                     <CardHeader>
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-lg">{expert.name}</CardTitle>
@@ -330,8 +361,8 @@ const ExpertApprovals = () => {
                 Disapproved Applications ({disapprovedExperts.length})
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {disapprovedExperts.map(expert => (
-                  <Card key={expert.id}>
+                {disapprovedExperts.map((expert, index) => (
+                  <Card key={expert.auth_id || `disapproved-${expert.email}-${index}`}>
                     <CardHeader>
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-lg">{expert.name}</CardTitle>

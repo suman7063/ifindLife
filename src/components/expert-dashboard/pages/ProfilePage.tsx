@@ -53,7 +53,7 @@ const ProfilePage: React.FC = () => {
       const profilePictureUrl = urlData.publicUrl;
 
       // Update expert profile
-      const result = await ExpertRepository.update(expertProfile.id, {
+      const result = await ExpertRepository.update(expertProfile.auth_id, {
         profile_picture: profilePictureUrl
       });
 
@@ -73,11 +73,11 @@ const ProfilePage: React.FC = () => {
   };
 
   const handleSaveProfile = async () => {
-    if (!expertProfile?.id) return;
+    if (!expertProfile?.auth_id) return;
 
     setLoading(true);
     try {
-      const result = await ExpertRepository.update(expertProfile.id, formData);
+      const result = await ExpertRepository.update(expertProfile.auth_id, formData);
       if (result) {
         toast.success('Profile updated successfully');
         setEditMode(false);

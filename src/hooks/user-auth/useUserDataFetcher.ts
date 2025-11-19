@@ -55,7 +55,7 @@ export const useUserDataFetcher = () => {
             const { data: expertData } = await supabase
               .from('expert_accounts')
               .select('*')
-              .in('id', expertIdStrings);
+              .in('auth_id', expertIdStrings);
               
             if (expertData) {
               setFavorites(expertData as ExpertProfile[]);

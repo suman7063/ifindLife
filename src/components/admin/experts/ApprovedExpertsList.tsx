@@ -39,7 +39,7 @@ const ApprovedExpertsList: React.FC<ApprovedExpertsListProps> = ({
         ) : (
           <div className="space-y-4">
             {approvedExperts.map((expert, index) => (
-              <div key={expert.id || index} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+              <div key={expert.auth_id || `approved-${index}`} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
                 <div className="flex items-center space-x-4 flex-1">
                   <Avatar className="h-12 w-12">
                     <AvatarImage src={expert.imageUrl} alt={expert.name} />

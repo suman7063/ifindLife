@@ -22,10 +22,13 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const { id, status } = body;
 
+    console.log('admin-update-expert: Received request:', { id, status, body });
+
     if (!id || !status) {
+      console.error('admin-update-expert: Missing required fields:', { id, status });
       return new Response(JSON.stringify({
         success: false,
-        error: 'id and status are required'
+        error: `id and status are required. Received: id=${id}, status=${status}`
       }), {
         status: 400,
         headers: corsHeaders
@@ -42,23 +45,38 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Update by either expert_accounts.id (primary) or auth_id (fallback)
+    // Update by auth_id (primary key)
+    console.log('admin-update-expert: Updating expert_accounts with auth_id:', id);
     const { data, error } = await supabase
       .from('expert_accounts')
       .update({ status })
-      .or(`id.eq.${id},auth_id.eq.${id}`)
-      .select('id, auth_id, status')
+      .eq('auth_id', id)
+      .select('auth_id, status')
       .limit(1);
 
-    if (error || !data || data.length === 0) {
+    if (error) {
+      console.error('admin-update-expert: Database error:', error);
       return new Response(JSON.stringify({
         success: false,
-        error: error?.message || 'No matching expert found'
+        error: `Database error: ${error.message}`
       }), {
         status: 400,
         headers: corsHeaders
       });
     }
+
+    if (!data || data.length === 0) {
+      console.error('admin-update-expert: No expert found with auth_id:', id);
+      return new Response(JSON.stringify({
+        success: false,
+        error: `No expert found with auth_id: ${id}`
+      }), {
+        status: 400,
+        headers: corsHeaders
+      });
+    }
+
+    console.log('admin-update-expert: Successfully updated expert:', data[0]);
 
     return new Response(JSON.stringify({
       success: true,

@@ -36,17 +36,17 @@ const ExpertProfile: React.FC<ExpertProfileProps> = ({
 }) => {
   const { requireAuthForExpert, requireAuthForCall, isAuthenticated } = useAuthRedirectSystem();
   const { isExpertFavorite, toggleExpertFavorite } = useFavorites();
-  const { getPrice30, getPrice60, formatPrice, loading: pricingLoading } = useExpertProfilePricing(expert.id.toString());
+  const { getPrice30, getPrice60, formatPrice, loading: pricingLoading } = useExpertProfilePricing(expert.auth_id?.toString() || '');
 
   const handleCallClick = () => {
-    if (!requireAuthForCall(expert.id.toString(), expert.name, 'video')) {
+    if (!requireAuthForCall(expert.auth_id?.toString() || '', expert.name, 'video')) {
       return; // User will be redirected to login
     }
     onCallClick();
   };
 
   const handleBookClick = () => {
-    if (!requireAuthForExpert(expert.id.toString(), expert.name, 'book')) {
+    if (!requireAuthForExpert(expert.auth_id?.toString() || '', expert.name, 'book')) {
       return; // User will be redirected to login
     }
     onBookClick();
@@ -61,7 +61,7 @@ const ExpertProfile: React.FC<ExpertProfileProps> = ({
     }
     
     try {
-      await toggleExpertFavorite(expert.id.toString());
+      await toggleExpertFavorite(expert.auth_id?.toString() || '');
     } catch (error) {
       console.error('Error toggling favorite:', error);
     }
@@ -100,11 +100,11 @@ const ExpertProfile: React.FC<ExpertProfileProps> = ({
           {/* Favorite Button */}
           <div className="absolute top-4 left-4">
             <FavoriteButton
-              isFavorite={isExpertFavorite(expert.id.toString())}
+              isFavorite={isExpertFavorite(expert.auth_id?.toString() || '')}
               onClick={handleFavoriteClick}
-              expertId={expert.id.toString()}
+              expertId={expert.auth_id?.toString() || ''}
               expertName={expert.name}
-              tooltipText={isExpertFavorite(expert.id.toString()) ? 'Remove from favorites' : 'Add to favorites'}
+              tooltipText={isExpertFavorite(expert.auth_id?.toString() || '') ? 'Remove from favorites' : 'Add to favorites'}
               className="backdrop-blur-sm bg-white/20 hover:bg-white/30 border border-white/30"
             />
           </div>

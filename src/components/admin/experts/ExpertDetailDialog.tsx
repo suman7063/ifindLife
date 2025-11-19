@@ -104,7 +104,7 @@ const ExpertDetailDialog: React.FC<ExpertDetailDialogProps> = ({
           status: 'approved',
           category: selectedCategory
         })
-        .eq('id', expert.id);
+        .eq('auth_id', expert.auth_id);
 
       if (error) throw error;
       
@@ -127,7 +127,7 @@ const ExpertDetailDialog: React.FC<ExpertDetailDialogProps> = ({
       const { error } = await supabase
         .from('expert_accounts')
         .update({ status: 'disapproved' })
-        .eq('id', expert.id);
+        .eq('auth_id', expert.auth_id);
 
       if (error) throw error;
       
@@ -155,7 +155,7 @@ const ExpertDetailDialog: React.FC<ExpertDetailDialogProps> = ({
       const { error } = await supabase
         .from('expert_accounts')
         .delete()
-        .eq('id', expert.id);
+        .eq('auth_id', expert.auth_id);
 
       if (error) throw error;
       

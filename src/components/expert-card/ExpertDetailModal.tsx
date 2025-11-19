@@ -116,7 +116,7 @@ const ExpertDetailModal: React.FC<ExpertDetailModalProps> = ({
     }
     
     // Navigate to expert's booking page with booking tab active
-    const expertUrl = `/experts/${expert.auth_id || expert.id}?book=true`;
+    const expertUrl = `/experts/${expert.auth_id}?book=true`;
     window.location.href = expertUrl;
     
     // Close the modal since we're navigating away
@@ -159,7 +159,7 @@ const ExpertDetailModal: React.FC<ExpertDetailModalProps> = ({
           </DialogHeader>
           <IntegratedBookingSystem
             expert={{
-              id: expert.id,
+              id: expert.auth_id,
               name: expertName,
               profile_picture: expert.profilePicture,
               specialization: expert.specialization,

@@ -139,7 +139,7 @@ const CallManagementPage: React.FC = () => {
           const { data: messages, error: messagesError } = await supabase
             .from('expert_away_messages')
             .select('*')
-            .eq('expert_id', expert.id)
+            .eq('expert_id', expert.auth_id)
             .eq('is_read', false)
             .order('sent_at', { ascending: false });
 
@@ -278,7 +278,7 @@ const CallManagementPage: React.FC = () => {
             event: 'INSERT',
             schema: 'public',
             table: 'expert_away_messages',
-            filter: `expert_id=eq.${expert.id}`
+            filter: `expert_id=eq.${expert.auth_id}`
           },
           (payload) => {
             const newMessage = payload.new as OfflineMessage;
@@ -409,7 +409,7 @@ const CallManagementPage: React.FC = () => {
       await supabase
         .from('messages')
         .insert({
-          sender_id: expert.id,
+          sender_id: expert.auth_id,
           receiver_id: missedCall.user_id,
           content: `Hi! I noticed you tried to call me earlier. I'm calling you back now.`
         });

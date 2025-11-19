@@ -54,14 +54,14 @@ const ExpertsGrid: React.FC<ExpertsGridProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {displayExperts.map((expert) => (
             <ExpertCardSimplified
-              key={expert.id.toString()}
+              key={expert.auth_id?.toString() || ''}
               expert={expert}
               onClick={() => handleExpertCardClick(expert)}
               onConnectNow={(type) => handleConnectNow(expert, type)}
               onBookNow={() => handleBookNow(expert)}
               onChat={() => handleChat(expert)}
-              showConnectOptions={state.expertConnectOptions[expert.id.toString()] || false}
-              onShowConnectOptions={(show) => handleShowConnectOptions(expert.id.toString(), show)}
+              showConnectOptions={state.expertConnectOptions[expert.auth_id?.toString() || ''] || false}
+              onShowConnectOptions={(show) => handleShowConnectOptions(expert.auth_id?.toString() || '', show)}
               className="h-full"
             />
           ))}

@@ -33,13 +33,13 @@ const DashboardHome: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (expert?.id) {
+    if (expert?.auth_id) {
       loadDashboardStats();
     }
-  }, [expert?.id]);
+  }, [expert?.auth_id]);
 
   const loadDashboardStats = async () => {
-    if (!expert?.id) return;
+    if (!expert?.auth_id) return;
 
     try {
       // Load basic stats - you can expand this with real data queries

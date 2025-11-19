@@ -374,7 +374,7 @@ export const UserDashboard: React.FC = () => {
                   <div
                     key={index}
                     className="p-4 border rounded-lg cursor-pointer hover:shadow-md transition-shadow"
-                    onClick={() => navigate(`/expert/${expert.id}`)}
+                    onClick={() => navigate(`/expert/${expert.auth_id}`)}
                   >
                     <div className="text-center">
                       <Avatar className="mx-auto mb-2">

@@ -22,7 +22,7 @@ const ExpertsOnlineSection: React.FC = () => {
     const online: typeof approvedExperts = [];
     const offline: typeof approvedExperts = [];
     for (const e of approvedExperts) {
-      const presence = getExpertPresence(String(e.id));
+      const presence = getExpertPresence(String(e.auth_id));
       const isOnline = presence?.status === 'available' && presence?.acceptingCalls === true;
       if (isOnline) online.push(e); else offline.push(e);
     }
@@ -33,16 +33,16 @@ const ExpertsOnlineSection: React.FC = () => {
 
   useEffect(() => {
     if (displayExperts.length === 0) return;
-    const ids = displayExperts.map(e => String(e.id));
+    const ids = displayExperts.map(e => String(e.auth_id));
     bulkCheckPresence(ids);
-  }, [displayExperts.map(e => e.id).join(','), bulkCheckPresence]);
+  }, [displayExperts.map(e => e.auth_id).join(','), bulkCheckPresence]);
 
   useEffect(() => {
     const channel = supabase
       .channel('home-presence-refresh')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'expert_presence' }, async () => {
         if (displayExperts.length === 0) return;
-        const ids = displayExperts.map(e => String(e.id));
+        const ids = displayExperts.map(e => String(e.auth_id));
         await bulkCheckPresence(ids);
       })
       .subscribe();
@@ -50,12 +50,12 @@ const ExpertsOnlineSection: React.FC = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [displayExperts.map(e => e.id).join(','), bulkCheckPresence]);
+  }, [displayExperts.map(e => e.auth_id).join(','), bulkCheckPresence]);
 
   useEffect(() => {
     if (!ENABLE_POLLING) return;
     if (displayExperts.length === 0) return;
-    const ids = displayExperts.map(e => String(e.id));
+    const ids = displayExperts.map(e => String(e.auth_id));
 
     const onFocus = () => bulkCheckPresence(ids);
     const onVisibility = () => { if (!document.hidden) bulkCheckPresence(ids); };
@@ -70,7 +70,7 @@ const ExpertsOnlineSection: React.FC = () => {
       document.removeEventListener('visibilitychange', onVisibility);
       clearInterval(intervalId);
     };
-  }, [displayExperts.map(e => e.id).join(','), bulkCheckPresence]);
+  }, [displayExperts.map(e => e.auth_id).join(','), bulkCheckPresence]);
 
   return (
     <UnifiedExpertConnection serviceTitle="Expert Consultation" serviceId="consultation">
@@ -110,15 +110,15 @@ const ExpertsOnlineSection: React.FC = () => {
             ) : displayExperts.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {displayExperts.map(expert => (
-                  <div key={expert.id} className="flex">
+                  <div key={expert.auth_id || `expert-${expert.email}`} className="flex">
                     <ExpertCardSimplified
                       expert={expert}
                       onClick={() => handleExpertCardClick(expert)}
                       onConnectNow={(type) => handleConnectNow(expert, type)}
                       onBookNow={() => handleBookNow(expert)}
                       onChat={() => handleChat(expert)}
-                      showConnectOptions={state.expertConnectOptions[expert.id.toString()] || false}
-                      onShowConnectOptions={(show) => handleShowConnectOptions(expert.id.toString(), show)}
+                      showConnectOptions={state.expertConnectOptions[expert.auth_id?.toString() || ''] || false}
+                      onShowConnectOptions={(show) => handleShowConnectOptions(expert.auth_id?.toString() || '', show)}
                       className="w-full"
                     />
                   </div>

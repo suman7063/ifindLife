@@ -45,7 +45,7 @@ export const useAdminContentData = () => {
           if (expertData) {
             // Transform Supabase expert data to match admin Expert type
             const transformedExperts: Expert[] = expertData.map(expert => ({
-              id: expert.id,
+              id: expert.auth_id, // Database doesn't have id column, use auth_id
               name: expert.name,
               experience: parseInt(expert.experience) || 5, // Convert to number
               specialties: expert.specialization ? [expert.specialization] : [],

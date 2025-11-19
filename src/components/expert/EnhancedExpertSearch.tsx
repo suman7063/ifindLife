@@ -96,7 +96,7 @@ export const EnhancedExpertSearch: React.FC = () => {
       const { data, error } = await supabase
         .from('expert_accounts')
         .select(`
-          id,
+          auth_id,
           name,
           email,
           profile_picture,
@@ -440,10 +440,10 @@ export const EnhancedExpertSearch: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredExperts.map(expert => (
-              <div key={expert.id} className="relative">
+              <div key={expert.auth_id || `expert-${expert.email}`} className="relative">
                 <ExpertCardSimplified
                   expert={{
-                    id: expert.id,
+                    id: expert.auth_id,
                     name: expert.name,
                     profilePicture: expert.profile_picture,
                     specialization: expert.specialization || 'Wellness Expert',
@@ -472,12 +472,12 @@ export const EnhancedExpertSearch: React.FC = () => {
                   className="absolute top-2 right-2 bg-white/80 hover:bg-white"
                   onClick={(e) => {
                     e.stopPropagation();
-                    toggleFavorite(expert.id);
+                    toggleFavorite(expert.auth_id);
                   }}
                 >
                   <Heart 
                     className={`h-4 w-4 ${
-                      favorites.includes(expert.id) 
+                      favorites.includes(expert.auth_id) 
                         ? 'text-red-500 fill-current' 
                         : 'text-gray-500'
                     }`} 

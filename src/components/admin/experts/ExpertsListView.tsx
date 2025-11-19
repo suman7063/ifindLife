@@ -134,7 +134,7 @@ const ExpertsListView: React.FC<ExpertsListViewProps> = ({
         ) : (
           <div className="space-y-4">
             {experts.map((expert) => (
-              <div key={expert.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+              <div key={expert.auth_id || `expert-${expert.email}`} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
                 <div className="flex items-center space-x-4 flex-1">
                   <Avatar className="h-12 w-12">
                     <AvatarImage src={expert.profile_picture || undefined} alt={expert.name} />

@@ -42,7 +42,7 @@ const ServiceSelectionStep: React.FC<ServiceSelectionStepProps> = ({
       const { data: adminAssignedServices, error: adminError } = await supabase
         .from('expert_services')
         .select('*')
-        .eq('expert_id', expertAccount.id)
+        .eq('expert_id', expertAccount.auth_id)
         .eq('is_active', true);
 
       console.log('🔍 Admin assigned services:', adminAssignedServices, 'Error:', adminError);
@@ -125,11 +125,11 @@ const ServiceSelectionStep: React.FC<ServiceSelectionStepProps> = ({
         setAvailableServices(data || []);
 
         // Check existing specializations
-        console.log('🔍 Checking existing specializations for expert:', expertAccount.id);
+        console.log('🔍 Checking existing specializations for expert:', expertAccount.auth_id);
         const { data: existingServices, error: existingError } = await supabase
           .from('expert_service_specializations')
           .select('service_id')
-          .eq('expert_id', expertAccount.id);
+          .eq('expert_id', expertAccount.auth_id);
 
         console.log('🔍 Existing specializations query result:', existingServices, 'Error:', existingError);
 
@@ -170,14 +170,14 @@ const ServiceSelectionStep: React.FC<ServiceSelectionStepProps> = ({
 
     setSaving(true);
     try {
-      console.log('💾 Saving services for expert:', expertAccount.id, 'Selected services:', selectedServices);
+      console.log('💾 Saving services for expert:', expertAccount.auth_id, 'Selected services:', selectedServices);
       
       // Delete existing specializations
       console.log('🗑️ Deleting existing specializations...');
       const { error: deleteError } = await supabase
         .from('expert_service_specializations')
         .delete()
-        .eq('expert_id', expertAccount.id);
+        .eq('expert_id', expertAccount.auth_id);
 
       if (deleteError) {
         console.error('Error deleting existing specializations:', deleteError);
@@ -186,7 +186,7 @@ const ServiceSelectionStep: React.FC<ServiceSelectionStepProps> = ({
 
       // Insert new specializations
       const specializations = selectedServices.map((serviceId, index) => ({
-        expert_id: expertAccount.id,
+        expert_id: expertAccount.auth_id,
         service_id: serviceId,
         is_available: true,
         is_primary_service: index === 0, // First service is primary
@@ -212,7 +212,7 @@ const ServiceSelectionStep: React.FC<ServiceSelectionStepProps> = ({
       const { error: updateError } = await supabase
         .from('expert_accounts')
         .update({ selected_services: selectedServices })
-        .eq('id', expertAccount.id);
+        .eq('auth_id', expertAccount.auth_id);
 
       if (updateError) {
         console.error('Error updating expert account:', updateError);
@@ -224,7 +224,7 @@ const ServiceSelectionStep: React.FC<ServiceSelectionStepProps> = ({
       const { data: eaFlags } = await supabase
         .from('expert_accounts')
         .select('selected_services, pricing_set, availability_set, onboarding_completed')
-        .eq('id', expertAccount.id)
+        .eq('auth_id', expertAccount.auth_id)
         .single();
 
       const hasServices = Array.isArray(eaFlags?.selected_services) && eaFlags!.selected_services.length > 0;
@@ -236,7 +236,7 @@ const ServiceSelectionStep: React.FC<ServiceSelectionStepProps> = ({
         await supabase
           .from('expert_accounts')
           .update({ onboarding_completed: true })
-          .eq('id', expertAccount.id);
+          .eq('auth_id', expertAccount.auth_id);
       }
 
       console.log('✅ Services saved successfully');

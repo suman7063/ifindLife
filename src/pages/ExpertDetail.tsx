@@ -92,7 +92,7 @@ const ExpertDetail = () => {
           
           // Transform database expert to component format with real presence data
           const transformedExpert = {
-            id: expertData.id || id,
+            id: expertData.auth_id || id,
             auth_id: expertData.auth_id,
             name: expertData.name || "Expert",
             experience: parseInt(expertData.experience || "0"),
@@ -239,8 +239,8 @@ const ExpertDetail = () => {
       <UserCallInterface 
         isOpen={isCallModalOpen}
         onClose={() => setIsCallModalOpen(false)}
-        expertId={expert.id}
-        expertAuthId={expert.auth_id || expert.id}
+        expertId={expert.auth_id}
+        expertAuthId={expert.auth_id}
         expertName={expert.name}
         expertAvatar={expert.imageUrl}
         expertPrice={expert.price}

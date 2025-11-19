@@ -33,10 +33,10 @@ const SessionScheduleCard: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (expert?.id) {
+    if (expert?.auth_id) {
       loadSessions();
     }
-  }, [expert?.id]);
+  }, [expert?.auth_id]);
 
   const loadSessions = async () => {
     try {

@@ -138,7 +138,7 @@ export const ExpertApprovalWorkflow: React.FC = () => {
       const { error } = await supabase
         .from('expert_accounts')
         .update(updateData)
-        .eq('id', applicationId);
+        .eq('auth_id', applicationId);
 
       if (error) throw error;
 
@@ -260,7 +260,7 @@ export const ExpertApprovalWorkflow: React.FC = () => {
       const { error } = await supabase
         .from('expert_accounts')
         .delete()
-        .eq('id', expertId);
+        .eq('auth_id', expertId);
 
       if (error) throw error;
 
@@ -280,7 +280,7 @@ export const ExpertApprovalWorkflow: React.FC = () => {
   const initiateDelete = (expert: ExpertApplication) => {
     setDeleteConfirmation({
       open: true,
-      expertId: expert.id,
+      expertId: expert.auth_id,
       expertName: expert.name
     });
     setDeleteInput('');

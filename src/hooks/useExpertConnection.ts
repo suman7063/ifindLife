@@ -51,10 +51,10 @@ export function useExpertConnection() {
 
   const handleExpertCardClick = (expert: ExpertCardData) => {
     console.log('Expert card clicked:', expert);
-    console.log('Expert ID:', expert.id);
+    console.log('Expert auth_id:', expert.auth_id);
     console.log('Expert auth_id:', expert.auth_id);
     
-    const expertId = expert.auth_id || expert.id;
+    const expertId = expert.auth_id;
     console.log('Using expertId for navigation:', expertId);
     
     if (!expertId) {
@@ -106,7 +106,7 @@ export function useExpertConnection() {
     console.log('🔗 Redirecting to expert booking page for:', expert.name);
     
     // Navigate to expert's booking page with booking tab active
-    const expertUrl = `/experts/${expert.auth_id || expert.id}?book=true`;
+    const expertUrl = `/experts/${expert.auth_id}?book=true`;
     console.log('🌐 Navigating to:', expertUrl);
     window.location.href = expertUrl;
 

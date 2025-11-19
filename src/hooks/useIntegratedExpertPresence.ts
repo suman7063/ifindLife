@@ -16,7 +16,7 @@ export function useIntegratedExpertPresence() {
   useEffect(() => {
     if (userType === 'expert' && expert && !isAuthenticated) {
       // Expert logged out - set them as offline
-      const expertAuthId = expert.auth_id || expert.id;
+      const expertAuthId = expert.auth_id;
       if (expertAuthId) {
         console.log('🔴 Expert logged out, would set offline:', expertAuthId);
         // Temporarily disabled to prevent network errors during authentication
@@ -29,7 +29,7 @@ export function useIntegratedExpertPresence() {
   useEffect(() => {
     if (userType !== 'expert' || !expert) return;
     
-    const expertAuthId = expert.auth_id || expert.id;
+    const expertAuthId = expert.auth_id;
     if (!expertAuthId) return;
 
     // Track this tab

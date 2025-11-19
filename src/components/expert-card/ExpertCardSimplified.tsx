@@ -37,16 +37,16 @@ const ExpertCardSimplified: React.FC<ExpertCardSimplifiedProps> = memo(({
   const { requireAuthForExpert } = useAuthRedirectSystem();
   const { isExpertFavorite, toggleExpertFavorite } = useFavorites();
   const { getExpertPresence, version } = useExpertPresence();
-  const { getPrice30, getPrice60, formatPrice, loading: pricingLoading } = useExpertProfilePricing(expert.id);
+  const { getPrice30, getPrice60, formatPrice, loading: pricingLoading } = useExpertProfilePricing(expert.auth_id);
   
   // Get real-time presence status
   const presence = useMemo(() => {
-    const pres = getExpertPresence(expert.id);
+    const pres = getExpertPresence(expert.auth_id);
     return {
       status: (pres?.status ?? 'offline') as 'available' | 'busy' | 'away' | 'offline',
       isAvailable: pres?.status === 'available' && pres?.acceptingCalls === true,
     };
-  }, [expert.id, version, getExpertPresence]);
+  }, [expert.auth_id, version, getExpertPresence]);
 
   const expertData = useMemo(() => ({
     name: expert.name || 'Unnamed Expert',
@@ -64,7 +64,7 @@ const ExpertCardSimplified: React.FC<ExpertCardSimplifiedProps> = memo(({
     e.stopPropagation();
     e.preventDefault();
     
-    if (!requireAuthForExpert(expert.id, expertData.name, 'connect')) return;
+    if (!requireAuthForExpert(expert.auth_id, expertData.name, 'connect')) return;
 
     // Available → Direct call
     if (presence.isAvailable && onConnectNow) {
@@ -95,7 +95,7 @@ const ExpertCardSimplified: React.FC<ExpertCardSimplifiedProps> = memo(({
     e.stopPropagation();
     e.preventDefault();
     
-    if (!requireAuthForExpert(expert.id, expertData.name, 'book')) return;
+    if (!requireAuthForExpert(expert.auth_id, expertData.name, 'book')) return;
     if (onBookNow) onBookNow();
   };
 
@@ -104,13 +104,13 @@ const ExpertCardSimplified: React.FC<ExpertCardSimplifiedProps> = memo(({
     e.stopPropagation();
     e.preventDefault();
     
-    if (!requireAuthForExpert(expert.id, expertData.name, 'connect')) return;
+    if (!requireAuthForExpert(expert.auth_id, expertData.name, 'connect')) return;
     if (onChat) onChat();
   };
 
   // Handle Connect Option (Video/Voice selection)
   const handleConnectOption = (type: 'video' | 'voice') => {
-    if (!requireAuthForExpert(expert.id, expertData.name, 'connect')) return;
+    if (!requireAuthForExpert(expert.auth_id, expertData.name, 'connect')) return;
     if (onConnectNow) onConnectNow(type);
     if (onShowConnectOptions) onShowConnectOptions(false);
   };
@@ -219,12 +219,12 @@ const ExpertCardSimplified: React.FC<ExpertCardSimplifiedProps> = memo(({
             <div className="flex items-center justify-between mb-1">
               <h3 className="font-semibold text-lg truncate">{expertData.name}</h3>
               <FavoriteButton
-                isFavorite={isExpertFavorite(expert.id)}
+                isFavorite={isExpertFavorite(expert.auth_id)}
                 onClick={(e) => {
                   e.stopPropagation();
-                  toggleExpertFavorite(expert.id);
+                  toggleExpertFavorite(expert.auth_id);
                 }}
-                expertId={expert.id}
+                expertId={expert.auth_id}
                 expertName={expertData.name}
                 size="sm"
               />

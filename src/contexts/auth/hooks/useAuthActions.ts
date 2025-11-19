@@ -122,7 +122,7 @@ export const useAuthActions = (authState: AuthState, refreshCallback: () => void
     try {
       if (!authState.expertProfile) return false;
       
-      const updated = await ExpertRepository.update(authState.expertProfile.id, data);
+      const updated = await ExpertRepository.update(authState.expertProfile.auth_id, data);
       if (updated) {
         toast.success('Expert profile updated successfully');
         refreshCallback();

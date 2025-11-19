@@ -81,7 +81,7 @@ export const ProfileCompletionStep: React.FC<ProfileCompletionStepProps> = ({
       };
 
       console.log('Updating expert account:', {
-        expertAccountId: expertAccount.id,
+        expertAccountId: expertAccount.auth_id,
         authId: expertAccount.auth_id,
         updateData
       });
@@ -89,7 +89,7 @@ export const ProfileCompletionStep: React.FC<ProfileCompletionStepProps> = ({
       const { error, data } = await supabase
         .from('expert_accounts')
         .update(updateData)
-        .eq('auth_id', expertAccount.auth_id || expertAccount.id) // Try auth_id first, fallback to id
+        .eq('auth_id', expertAccount.auth_id)
         .select();
 
       if (error) {
@@ -100,7 +100,7 @@ export const ProfileCompletionStep: React.FC<ProfileCompletionStepProps> = ({
         const { error: error2, data: data2 } = await supabase
           .from('expert_accounts')
           .update(updateData)
-          .eq('id', expertAccount.id)
+          .eq('auth_id', expertAccount.auth_id)
           .select();
         
         if (error2) {

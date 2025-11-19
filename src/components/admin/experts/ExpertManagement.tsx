@@ -151,7 +151,7 @@ const ExpertManagement: React.FC = () => {
       const { error } = await supabase
         .from('expert_accounts')
         .update({ status: newStatus })
-        .eq('id', expertId);
+        .eq('auth_id', expertId);
 
       if (error) throw error;
 
@@ -168,7 +168,7 @@ const ExpertManagement: React.FC = () => {
       const { error } = await supabase
         .from('expert_accounts')
         .delete()
-        .eq('id', expertId);
+        .eq('auth_id', expertId);
 
       if (error) throw error;
 
@@ -284,7 +284,7 @@ const ExpertManagement: React.FC = () => {
               </TableHeader>
               <TableBody>
                 {filteredExperts.map((expert) => (
-                  <TableRow key={expert.id}>
+                  <TableRow key={expert.auth_id || `expert-${expert.email}`}>
                     <TableCell>
                       <div className="flex items-center space-x-3">
                         <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
@@ -370,7 +370,7 @@ const ExpertManagement: React.FC = () => {
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                                 <AlertDialogAction
-                                  onClick={() => handleStatusUpdate(expert.id, 'suspended')}
+                                  onClick={() => handleStatusUpdate(expert.auth_id, 'suspended')}
                                 >
                                   Suspend
                                 </AlertDialogAction>
@@ -383,7 +383,7 @@ const ExpertManagement: React.FC = () => {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleStatusUpdate(expert.id, 'approved')}
+                            onClick={() => handleStatusUpdate(expert.auth_id, 'approved')}
                           >
                             Reactivate
                           </Button>
@@ -405,7 +405,7 @@ const ExpertManagement: React.FC = () => {
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
                               <AlertDialogAction
-                                onClick={() => handleDeleteExpert(expert.id)}
+                                onClick={() => handleDeleteExpert(expert.auth_id)}
                                 className="bg-red-600 hover:bg-red-700"
                               >
                                 Delete Permanently
