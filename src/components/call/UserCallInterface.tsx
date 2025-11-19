@@ -391,15 +391,17 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
   }
 
   return (
-    <CallTypeSelectionModal
-      isOpen={true}
-      onClose={onClose}
-      expertName={expertName}
-      expertPrice={expertPrice}
-      onStartCall={handleStartCall}
-      walletBalance={walletBalance}
-      walletLoading={walletLoading}
-    />
+        <CallTypeSelectionModal
+          isOpen={true}
+          onClose={onClose}
+          expertName={expertName}
+          expertId={expertId}
+          expertAuthId={expertAuthId}
+          expertPrice={expertPrice}
+          onStartCall={handleStartCall}
+          walletBalance={walletBalance}
+          walletLoading={walletLoading}
+        />
   );
 };
 
