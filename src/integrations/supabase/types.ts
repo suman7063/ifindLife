@@ -172,7 +172,7 @@ export type Database = {
           payment_status: string | null
           razorpay_payment_id: string | null
           reminder_sent: boolean | null
-          service_id: number | null
+          service_id: string | null
           start_time: string | null
           status: string
           time_slot_id: string | null
@@ -264,7 +264,7 @@ export type Database = {
           payment_status: string | null
           requested_date: string
           requested_time: string
-          service_id: number | null
+          service_id: string | null
           special_requirements: string | null
           status: string | null
           updated_at: string | null
@@ -799,19 +799,19 @@ export type Database = {
           category_id: string
           created_at: string
           id: string
-          service_id: number
+          service_id: string
         }
         Insert: {
           category_id: string
           created_at?: string
           id?: string
-          service_id: number
+          service_id: string
         }
         Update: {
           category_id?: string
           created_at?: string
           id?: string
-          service_id?: number
+          service_id?: string
         }
         Relationships: [
           {
@@ -1034,7 +1034,7 @@ export type Database = {
           is_available: boolean | null
           is_primary_service: boolean | null
           proficiency_level: string | null
-          service_id: number | null
+          service_id: string | null
           updated_at: string | null
           years_experience: number | null
         }
@@ -1095,7 +1095,7 @@ export type Database = {
           expert_id: string
           id: string
           is_active: boolean | null
-          service_id: number
+          service_id: string
           updated_at: string | null
         }
         Insert: {
@@ -1107,7 +1107,7 @@ export type Database = {
           expert_id: string
           id?: string
           is_active?: boolean | null
-          service_id: number
+          service_id: string
           updated_at?: string | null
         }
         Update: {
@@ -1119,7 +1119,7 @@ export type Database = {
           expert_id?: string
           id?: string
           is_active?: boolean | null
-          service_id?: number
+          service_id?: string
           updated_at?: string | null
         }
         Relationships: []
@@ -1741,7 +1741,7 @@ export type Database = {
           maximum_session_duration: number | null
           minimum_session_duration: number | null
           peak_hour_multiplier: number | null
-          service_id: number | null
+          service_id: string | null
           updated_at: string | null
         }
         Insert: {
@@ -1799,7 +1799,7 @@ export type Database = {
           description: string | null
           duration: number | null
           featured: boolean | null
-          id: number
+          id: string
           name: string
           rate_eur: number | null
           rate_inr: number
@@ -1810,7 +1810,7 @@ export type Database = {
           description?: string | null
           duration?: number | null
           featured?: boolean | null
-          id?: number
+          id?: string
           name: string
           rate_eur?: number | null
           rate_inr: number
@@ -1821,7 +1821,7 @@ export type Database = {
           description?: string | null
           duration?: number | null
           featured?: boolean | null
-          id?: number
+          id?: string
           name?: string
           rate_eur?: number | null
           rate_inr?: number

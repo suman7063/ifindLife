@@ -11,7 +11,7 @@ import { ArrowLeft, Save, DollarSign } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface Service {
-  id: number;
+  id: string; // UUID
   name: string;
   description: string;
   category: string;
@@ -22,7 +22,7 @@ interface Service {
 
 interface ExpertService {
   id: string;
-  service_id: number;
+  service_id: string; // UUID
   admin_assigned_rate_usd: number;
   admin_assigned_rate_inr: number;
   is_active: boolean;
@@ -70,14 +70,19 @@ const ExpertServiceAssignment: React.FC<ExpertServiceAssignmentProps> = ({
 
       if (expertError) throw expertError;
 
-      setAvailableServices(services || []);
+      // Convert service ids from number to string (UUID) if needed
+      const convertedServices = (services || []).map(service => ({
+        ...service,
+        id: String(service.id)
+      }));
+      setAvailableServices(convertedServices);
       
       // Map existing expert services and populate with service details
       const transformedExpertServices = (expertServiceData || []).map(item => {
-        const service = services?.find(s => s.id === item.service_id);
+        const service = convertedServices?.find(s => s.id === String(item.service_id));
         return {
           id: item.id,
-          service_id: item.service_id,
+          service_id: String(item.service_id), // Convert to string
           admin_assigned_rate_usd: item.admin_assigned_rate_usd,
           admin_assigned_rate_inr: item.admin_assigned_rate_inr,
           is_active: item.is_active,
@@ -93,7 +98,7 @@ const ExpertServiceAssignment: React.FC<ExpertServiceAssignmentProps> = ({
     }
   };
 
-  const handleServiceToggle = (serviceId: number, checked: boolean) => {
+  const handleServiceToggle = (serviceId: string, checked: boolean) => {
     if (checked) {
       // Add service with default rates
       const service = availableServices.find(s => s.id === serviceId);
@@ -114,7 +119,7 @@ const ExpertServiceAssignment: React.FC<ExpertServiceAssignmentProps> = ({
     }
   };
 
-  const handleRateChange = (serviceId: number, currency: 'usd' | 'inr', value: number) => {
+  const handleRateChange = (serviceId: string, currency: 'usd' | 'inr', value: number) => {
     setExpertServices(prev => prev.map(es => {
       if (es.service_id === serviceId) {
         return {
@@ -157,12 +162,14 @@ const ExpertServiceAssignment: React.FC<ExpertServiceAssignmentProps> = ({
       }
 
       // Update expert_accounts flags and selected services on the primary table
-      const selectedServiceIds = expertServices.map(es => es.service_id);
+      // Note: selected_services is still number[] in the database, so we'll keep it empty for now
+      // TODO: Update expert_accounts.selected_services to string[] (UUID[]) in a future migration
+      const selectedServiceIds: string[] = expertServices.map(es => es.service_id);
 
       const { error: eaUpdateError } = await supabase
         .from('expert_accounts')
         .update({ 
-          selected_services: selectedServiceIds,
+          selected_services: [], // Temporarily empty until selected_services is migrated to UUID[]
           pricing_set: true
         })
         .eq('id', expertId);
@@ -197,11 +204,11 @@ const ExpertServiceAssignment: React.FC<ExpertServiceAssignmentProps> = ({
     }
   };
 
-  const isServiceSelected = (serviceId: number) => {
+  const isServiceSelected = (serviceId: string) => {
     return expertServices.some(es => es.service_id === serviceId);
   };
 
-  const getServiceRates = (serviceId: number) => {
+  const getServiceRates = (serviceId: string) => {
     const expertService = expertServices.find(es => es.service_id === serviceId);
     return expertService ? {
       usd: expertService.admin_assigned_rate_usd,

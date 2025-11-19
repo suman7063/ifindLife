@@ -31,7 +31,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 
 interface Service {
-  id: number;
+  id: string; // UUID
   name: string;
   description?: string;
   category?: string;
@@ -57,6 +57,9 @@ const ExpertServicesManager: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
+    duration: '' as string | number,
+    rate_inr: '' as string | number,
+    rate_eur: '' as string | number,
   });
 
   useEffect(() => {
@@ -74,7 +77,13 @@ const ExpertServicesManager: React.FC = () => {
 
       if (servicesError) throw servicesError;
 
-      setServices(servicesData || []);
+      // Convert id from number to string (UUID) if needed
+      const convertedServices = (servicesData || []).map(service => ({
+        ...service,
+        id: String(service.id)
+      }));
+      
+      setServices(convertedServices);
     } catch (error) {
       console.error('Error fetching data:', error);
       toast.error('Failed to load data');
@@ -90,8 +99,9 @@ const ExpertServicesManager: React.FC = () => {
       const serviceData = {
         name: formData.name,
         description: formData.description,
-        rate_inr: 0, // Default value - rates managed by categories
-        rate_eur: 0, // Default value - rates managed by categories
+        duration: formData.duration === '' ? 60 : Number(formData.duration) || 60,
+        rate_inr: formData.rate_inr === '' ? 0 : Number(formData.rate_inr) || 0,
+        rate_eur: formData.rate_eur === '' ? 0 : Number(formData.rate_eur) || 0,
         rate_usd: 0, // Default value - removed but still required by types
       };
 
@@ -128,11 +138,14 @@ const ExpertServicesManager: React.FC = () => {
     setFormData({
       name: service.name,
       description: service.description || '',
+      duration: service.duration ?? '',
+      rate_inr: service.rate_inr ?? '',
+      rate_eur: service.rate_eur ?? '',
     });
     setIsDialogOpen(true);
   };
 
-  const handleDelete = async (serviceId: number) => {
+  const handleDelete = async (serviceId: string) => {
     if (!confirm('Are you sure you want to delete this service? This action cannot be undone.')) {
       return;
     }
@@ -157,6 +170,9 @@ const ExpertServicesManager: React.FC = () => {
     setFormData({
       name: '',
       description: '',
+      duration: '',
+      rate_inr: '',
+      rate_eur: '',
     });
     setEditingService(null);
   };
@@ -217,6 +233,55 @@ const ExpertServicesManager: React.FC = () => {
                     />
                   </div>
 
+                  <div>
+                    <Label htmlFor="duration">Duration (minutes)</Label>
+                    <Input
+                      id="duration"
+                      type="number"
+                      min="1"
+                      value={formData.duration}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setFormData({ ...formData, duration: value === '' ? '' : (isNaN(parseInt(value)) ? '' : parseInt(value)) });
+                      }}
+                      placeholder="e.g. 30, 60"
+                      required
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="rate_inr">Rate INR (₹)</Label>
+                      <Input
+                        id="rate_inr"
+                        type="number"
+                        step="0.01"
+                        value={formData.rate_inr}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setFormData({ ...formData, rate_inr: value === '' ? '' : (isNaN(parseFloat(value)) ? '' : parseFloat(value)) });
+                        }}
+                        placeholder="0.00"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="rate_eur">Rate EUR (€)</Label>
+                      <Input
+                        id="rate_eur"
+                        type="number"
+                        step="0.01"
+                        value={formData.rate_eur}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setFormData({ ...formData, rate_eur: value === '' ? '' : (isNaN(parseFloat(value)) ? '' : parseFloat(value)) });
+                        }}
+                        placeholder="0.00"
+                        required
+                      />
+                    </div>
+                  </div>
+
                   <div className="flex justify-end space-x-2 pt-4">
                     <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                       Cancel
@@ -237,6 +302,8 @@ const ExpertServicesManager: React.FC = () => {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Description</TableHead>
+                <TableHead>Duration</TableHead>
+                <TableHead>Rates</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -247,6 +314,17 @@ const ExpertServicesManager: React.FC = () => {
                   <TableCell>
                     <div className="max-w-md" title={service.description}>
                       {service.description || 'N/A'}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm">
+                      {service.duration || 60} min
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm">
+                      <div>₹{service.rate_inr || 0}</div>
+                      <div className="text-muted-foreground">€{service.rate_eur || 0}</div>
                     </div>
                   </TableCell>
                   <TableCell className="text-right">

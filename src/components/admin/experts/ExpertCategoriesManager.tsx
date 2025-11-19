@@ -36,7 +36,7 @@ interface ExpertCategory {
 }
 
 interface Service {
-  id: number;
+  id: string; // UUID
   name: string;
   description?: string;
   rate_inr: number;
@@ -49,14 +49,14 @@ const CATEGORY_ORDER = ['listening-volunteer', 'listening-expert', 'mindfulness-
 const ExpertCategoriesManager: React.FC = () => {
   const [categories, setCategories] = useState<ExpertCategory[]>([]);
   const [services, setServices] = useState<Service[]>([]);
-  const [categoryServices, setCategoryServices] = useState<Record<string, number[]>>({});
+  const [categoryServices, setCategoryServices] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isServiceDialogOpen, setIsServiceDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<ExpertCategory | null>(null);
   const [selectedCategoryForServices, setSelectedCategoryForServices] = useState<string | null>(null);
   const [selectedCategoryName, setSelectedCategoryName] = useState<string | null>(null);
-  const [selectedServiceIds, setSelectedServiceIds] = useState<number[]>([]);
+  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -133,15 +133,21 @@ const ExpertCategoriesManager: React.FC = () => {
       
       console.log('Sorted categories:', sortedCategories);
       setCategories(sortedCategories);
-      setServices(servicesData || []);
+      
+      // Convert service ids from number to string (UUID) if needed
+      const convertedServices = (servicesData || []).map(service => ({
+        ...service,
+        id: String(service.id)
+      }));
+      setServices(convertedServices);
       
       // Group services by category
-      const categoryServicesMap: Record<string, number[]> = {};
+      const categoryServicesMap: Record<string, string[]> = {};
       categoryServicesData?.forEach(({ category_id, service_id }) => {
         if (!categoryServicesMap[category_id]) {
           categoryServicesMap[category_id] = [];
         }
-        categoryServicesMap[category_id].push(service_id);
+        categoryServicesMap[category_id].push(String(service_id));
       });
       setCategoryServices(categoryServicesMap);
     } catch (error) {
@@ -229,11 +235,11 @@ const ExpertCategoriesManager: React.FC = () => {
       if (error) {
         console.error('Error fetching category services:', error);
         // Fallback to cached data
-        const categoryServiceList = categoryServices[category.id] || [];
+        const categoryServiceList = (categoryServices[category.id] || []).map(id => String(id));
         setSelectedServiceIds(categoryServiceList);
       } else {
         // Extract service IDs from the fetched data
-        const serviceIds = categoryServicesData?.map(item => item.service_id) || [];
+        const serviceIds = categoryServicesData?.map(item => String(item.service_id)) || [];
         setSelectedServiceIds(serviceIds);
         // Also update the cached categoryServices map for consistency
         setCategoryServices(prev => ({
@@ -325,7 +331,7 @@ const ExpertCategoriesManager: React.FC = () => {
     setEditingCategory(null);
   };
 
-  const toggleServiceSelection = (serviceId: number) => {
+  const toggleServiceSelection = (serviceId: string) => {
     setSelectedServiceIds(prev => 
       prev.includes(serviceId) 
         ? prev.filter(id => id !== serviceId)
