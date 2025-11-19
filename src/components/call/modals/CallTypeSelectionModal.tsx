@@ -333,8 +333,12 @@ const CallTypeSelectionModal: React.FC<CallTypeSelectionModalProps> = ({
                     }`}>
                       {dur}
                       <span className="text-xs text-muted-foreground ml-1">Minutes</span>
-                      </div>
-                    
+                    </div>
+                    <div className={`text-sm mt-1 ${
+                      duration === dur ? 'text-primary font-semibold' : 'text-muted-foreground'
+                    }`}>
+                      {symbol}{(pricing[dur] || ((dur * expertPrice) / 60)).toFixed(2)}
+                    </div>
                   </button>
                 ))}
               </div>

@@ -11,6 +11,7 @@ import FavoriteButton from '@/components/favorites/FavoriteButton';
 import { useFavorites } from '@/contexts/favorites/FavoritesContext';
 import { getInitials } from '@/utils/getInitials';
 import { toast } from 'sonner';
+import { useExpertProfilePricing } from '@/hooks/useExpertProfilePricing';
 
 export interface ExpertCardSimplifiedProps {
   expert: ExpertCardData;
@@ -36,6 +37,7 @@ const ExpertCardSimplified: React.FC<ExpertCardSimplifiedProps> = memo(({
   const { requireAuthForExpert } = useAuthRedirectSystem();
   const { isExpertFavorite, toggleExpertFavorite } = useFavorites();
   const { getExpertPresence, version } = useExpertPresence();
+  const { getPrice30, getPrice60, formatPrice, loading: pricingLoading } = useExpertProfilePricing(expert.id);
   
   // Get real-time presence status
   const presence = useMemo(() => {
@@ -243,7 +245,14 @@ const ExpertCardSimplified: React.FC<ExpertCardSimplifiedProps> = memo(({
               </div>
               <div>
                 <p className="text-muted-foreground">Price</p>
-                <p className="font-medium">₹{expertData.price}/session</p>
+                {pricingLoading ? (
+                  <p className="font-medium">...</p>
+                ) : (
+                  <div className="space-y-0.5">
+                    <p className="font-medium">{formatPrice(getPrice30())}/30 mins</p>
+                    <p className="font-medium text-muted-foreground">{formatPrice(getPrice60())}/60 mins</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
