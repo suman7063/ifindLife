@@ -66,10 +66,46 @@ const ExpertLogin: React.FC = () => {
       if (result.success) {
         toast.success('Login successful!');
         
-        // Wait for auth state to update, then redirect to expert dashboard
-        setTimeout(() => {
-          navigate('/expert-dashboard', { replace: true });
-        }, 1000);
+        // Wait for auth state to update and expert profile to load, then redirect
+        // Check if expert is approved before redirecting
+        const checkAndRedirect = () => {
+          let attempts = 0;
+          const maxAttempts = 25; // 5 seconds max (25 * 200ms)
+          
+          const checkInterval = setInterval(() => {
+            attempts++;
+            
+            // Check if expert profile is loaded and approved
+            if (simpleAuth.expert && simpleAuth.expert.status === 'approved') {
+              clearInterval(checkInterval);
+              console.log('✅ Expert approved, redirecting to dashboard');
+              navigate('/expert-dashboard', { replace: true });
+            } else if (simpleAuth.isLoading === false && simpleAuth.expert) {
+              // Profile loaded but status check
+              if (simpleAuth.expert.status !== 'approved') {
+                clearInterval(checkInterval);
+                console.error('❌ Expert profile loaded but status is not approved:', simpleAuth.expert.status);
+                // Don't redirect - error will be shown by validation
+                return;
+              }
+            }
+            
+            // Timeout after max attempts
+            if (attempts >= maxAttempts) {
+              clearInterval(checkInterval);
+              // If still loading or expert not loaded, redirect anyway (dashboard will handle it)
+              if (simpleAuth.isLoading || !simpleAuth.expert) {
+                console.log('⏳ Profile still loading, redirecting to dashboard (will load there)');
+                navigate('/expert-dashboard', { replace: true });
+              } else if (simpleAuth.expert.status === 'approved') {
+                console.log('✅ Expert approved (timeout check), redirecting');
+                navigate('/expert-dashboard', { replace: true });
+              }
+            }
+          }, 200);
+        };
+        
+        checkAndRedirect();
         
         return true;
       } else {
@@ -78,10 +114,8 @@ const ExpertLogin: React.FC = () => {
         console.log('ExpertLogin: Login failed with error:', errorMsg);
         setLoginError(errorMsg);
         
-        // Only show toast for non-approval errors to avoid duplicate messages
-        if (!errorMsg.includes('pending') && !errorMsg.includes('disapproved') && !errorMsg.includes('suspended') && !errorMsg.includes('not approved')) {
-          toast.error(errorMsg, { duration: 3000 });
-        }
+        // Show toast for all errors including approval errors
+        toast.error(errorMsg, { duration: 5000 });
         
         return false;
       }
@@ -90,10 +124,8 @@ const ExpertLogin: React.FC = () => {
       const errorMsg = error instanceof Error ? error.message : 'An error occurred during login. Please try again.';
       setLoginError(errorMsg);
       
-      // Only show toast for non-approval errors
-      if (!errorMsg.includes('pending') && !errorMsg.includes('disapproved') && !errorMsg.includes('suspended') && !errorMsg.includes('not approved')) {
-        toast.error(errorMsg);
-      }
+      // Show toast for all errors including approval errors
+      toast.error(errorMsg, { duration: 5000 });
       
       return false;
     } finally {

@@ -79,7 +79,7 @@ const ExpertDetailDialog: React.FC<ExpertDetailDialogProps> = ({
       const { data, error } = await supabase
         .from('expert_accounts')
         .select('*')
-        .eq('id', expertId)
+        .eq('auth_id', expertId)
         .single();
 
       if (error) throw error;

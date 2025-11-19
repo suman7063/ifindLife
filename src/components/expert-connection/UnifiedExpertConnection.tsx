@@ -54,7 +54,7 @@ const UnifiedExpertConnection: React.FC<UnifiedExpertConnectionProps> = ({
         <UserCallInterface
           isOpen={state.isCallModalOpen}
           onClose={closeCallModal}
-          expertId={state.selectedExpert.id}
+          expertId={state.selectedExpert.auth_id || state.selectedExpert.id}
           expertAuthId={state.selectedExpert.auth_id || state.selectedExpert.id}
           expertName={state.selectedExpert.name}
           expertAvatar={state.selectedExpert.profilePicture}

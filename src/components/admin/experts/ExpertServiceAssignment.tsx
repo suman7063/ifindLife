@@ -161,15 +161,12 @@ const ExpertServiceAssignment: React.FC<ExpertServiceAssignmentProps> = ({
         if (error) throw error;
       }
 
-      // Update expert_accounts flags and selected services on the primary table
-      // Note: selected_services is still number[] in the database, so we'll keep it empty for now
-      // TODO: Update expert_accounts.selected_services to string[] (UUID[]) in a future migration
-      const selectedServiceIds: string[] = expertServices.map(es => es.service_id);
-
+      // Update expert_accounts flags
+      // Note: selected_services is INTEGER[] but services use UUID, so we don't update it
+      // Services are stored in expert_services table instead
       const { error: eaUpdateError } = await supabase
         .from('expert_accounts')
         .update({ 
-          selected_services: [], // Temporarily empty until selected_services is migrated to UUID[]
           pricing_set: true
         })
         .eq('auth_id', expertId);
@@ -180,10 +177,17 @@ const ExpertServiceAssignment: React.FC<ExpertServiceAssignmentProps> = ({
       const { data: eaFlags } = await supabase
         .from('expert_accounts')
         .select('selected_services, pricing_set, availability_set, onboarding_completed')
-        .eq('id', expertId)
+        .eq('auth_id', expertId)
         .single();
 
-      const hasServices = Array.isArray(eaFlags?.selected_services) && eaFlags!.selected_services.length > 0;
+      // Check if services exist in expert_services table instead of selected_services
+      const { data: servicesCheck } = await supabase
+        .from('expert_services')
+        .select('id')
+        .eq('expert_id', expertId)
+        .limit(1);
+      
+      const hasServices = (servicesCheck?.length || 0) > 0;
       const hasPricing = !!eaFlags?.pricing_set;
       const hasAvailability = !!eaFlags?.availability_set;
 

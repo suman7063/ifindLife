@@ -103,7 +103,7 @@ export const useAppointmentManagement = (currentUser: any, expertId?: string) =>
       const expertResult = await supabase
         .from('expert_accounts')
         .select('name')
-        .eq('id', expertId)
+        .eq('auth_id', expertId)
         .single();
       
       if (expertResult.error) {

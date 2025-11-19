@@ -114,8 +114,8 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       // Fetch the expert details to update the details array
       const { data: expertData, error: expertError } = await supabase
         .from('expert_accounts')
-        .select('id, name')
-        .eq('id', expertId)
+        .select('auth_id, name')
+        .eq('auth_id', expertId)
         .single();
         
       if (!expertError && expertData) {

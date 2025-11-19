@@ -116,7 +116,7 @@ CREATE TABLE IF NOT EXISTS public.expert_accounts (
 -- Expert Presence Table
 CREATE TABLE IF NOT EXISTS public.expert_presence (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    expert_id UUID NOT NULL REFERENCES public.expert_accounts(id),
+    expert_id UUID NOT NULL REFERENCES public.expert_accounts(auth_id),
     status TEXT NOT NULL CHECK (status = ANY (ARRAY['available', 'busy', 'away', 'offline'])),
     accepting_calls BOOLEAN NOT NULL DEFAULT true,
     last_activity TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -127,7 +127,7 @@ CREATE TABLE IF NOT EXISTS public.expert_presence (
 -- Expert Availabilities Table
 CREATE TABLE IF NOT EXISTS public.expert_availabilities (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    expert_id UUID NOT NULL REFERENCES public.expert_accounts(id),
+    expert_id UUID NOT NULL REFERENCES public.expert_accounts(auth_id),
     day_of_week INTEGER NOT NULL CHECK (day_of_week >= 0 AND day_of_week <= 6),
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
@@ -140,7 +140,7 @@ CREATE TABLE IF NOT EXISTS public.expert_availabilities (
 -- Expert Pricing Tiers Table
 CREATE TABLE IF NOT EXISTS public.expert_pricing_tiers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    expert_id UUID NOT NULL REFERENCES public.expert_accounts(id),
+    expert_id UUID NOT NULL REFERENCES public.expert_accounts(auth_id),
     category TEXT NOT NULL,
     session_30_inr NUMERIC DEFAULT 0,
     session_30_eur NUMERIC DEFAULT 0,
@@ -153,7 +153,7 @@ CREATE TABLE IF NOT EXISTS public.expert_pricing_tiers (
 -- Expert Services Table
 CREATE TABLE IF NOT EXISTS public.expert_services (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    expert_id UUID NOT NULL REFERENCES public.expert_accounts(id),
+    expert_id UUID NOT NULL REFERENCES public.expert_accounts(auth_id),
     service_id INTEGER NOT NULL REFERENCES public.services(id),
     admin_assigned_rate_inr NUMERIC,
     admin_assigned_rate_usd NUMERIC,
@@ -167,7 +167,7 @@ CREATE TABLE IF NOT EXISTS public.expert_services (
 -- Expert Service Specializations Table
 CREATE TABLE IF NOT EXISTS public.expert_service_specializations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    expert_id UUID NOT NULL REFERENCES public.expert_accounts(id),
+    expert_id UUID NOT NULL REFERENCES public.expert_accounts(auth_id),
     service_id INTEGER NOT NULL REFERENCES public.services(id),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     is_available BOOLEAN DEFAULT true,
@@ -252,7 +252,7 @@ CREATE TABLE IF NOT EXISTS public.programs (
 CREATE TABLE IF NOT EXISTS public.appointments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id),
-    expert_id UUID NOT NULL REFERENCES public.expert_accounts(id),
+    expert_id UUID NOT NULL REFERENCES public.expert_accounts(auth_id),
     expert_name TEXT NOT NULL,
     appointment_date DATE NOT NULL,
     duration INTEGER NOT NULL,
@@ -276,7 +276,7 @@ CREATE TABLE IF NOT EXISTS public.appointments (
 -- Call Sessions Table
 CREATE TABLE IF NOT EXISTS public.call_sessions (
     id TEXT PRIMARY KEY,
-    expert_id UUID NOT NULL REFERENCES public.expert_accounts(id),
+    expert_id UUID NOT NULL REFERENCES public.expert_accounts(auth_id),
     user_id UUID NOT NULL REFERENCES auth.users(id),
     channel_name TEXT NOT NULL,
     call_type TEXT CHECK (call_type = ANY (ARRAY['audio', 'video'])),
@@ -413,7 +413,7 @@ CREATE TABLE IF NOT EXISTS public.testimonials (
 CREATE TABLE IF NOT EXISTS public.user_expert_services (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES public.users(id),
-    expert_id UUID NOT NULL REFERENCES public.expert_accounts(id),
+    expert_id UUID NOT NULL REFERENCES public.expert_accounts(auth_id),
     service_id INTEGER NOT NULL REFERENCES public.services(id),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -430,7 +430,7 @@ CREATE TABLE IF NOT EXISTS public.user_favorite_programs (
 CREATE TABLE IF NOT EXISTS public.user_favorites (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES public.users(id),
-    expert_id UUID NOT NULL REFERENCES public.expert_accounts(id)
+    expert_id UUID NOT NULL REFERENCES public.expert_accounts(auth_id)
 );
 
 -- User Reviews Table
@@ -441,7 +441,7 @@ CREATE TABLE IF NOT EXISTS public.user_reviews (
     comment TEXT,
     date TEXT NOT NULL,
     verified BOOLEAN DEFAULT false,
-    expert_id UUID REFERENCES public.expert_accounts(id),
+    expert_id UUID REFERENCES public.expert_accounts(auth_id),
     expert_name TEXT,
     user_name TEXT
 );
@@ -575,8 +575,7 @@ $$;
 -- Expert Functions
 CREATE OR REPLACE FUNCTION public.get_approved_experts()
 RETURNS TABLE(
-  id uuid,
-  auth_id uuid,
+    auth_id uuid,
   name text,
   profile_picture text,
   specialization text,
@@ -586,7 +585,7 @@ RETURNS TABLE(
   verified boolean,
   category text,
   languages text[],
-  selected_services integer[],
+    selected_services uuid[],
   status text,
   profile_completed boolean
 )
@@ -598,7 +597,6 @@ AS $$
 BEGIN
   RETURN QUERY
   SELECT 
-    ea.id,
     ea.auth_id,
     ea.name,
     ea.profile_picture,
@@ -629,7 +627,7 @@ SET search_path TO 'public'
 AS $$
   SELECT ep.expert_id, ep.status, ep.accepting_calls, ep.last_activity
   FROM public.expert_presence ep
-  JOIN public.expert_accounts ea ON ea.id = ep.expert_id
+  JOIN public.expert_accounts ea ON ea.auth_id = ep.expert_id
   WHERE ea.status = 'approved' AND ep.expert_id = ANY(expert_auth_ids)
 $$;
 
@@ -822,7 +820,7 @@ CREATE POLICY "expert upsert own presence (insert)" ON public.expert_presence
     WITH CHECK (EXISTS (
         SELECT 1
         FROM expert_accounts ea
-        WHERE ea.id = expert_presence.expert_id 
+        WHERE ea.auth_id = expert_presence.expert_id 
         AND ea.auth_id = auth.uid() 
         AND ea.status = 'approved'
     ));
@@ -834,14 +832,14 @@ CREATE POLICY "expert upsert own presence (update)" ON public.expert_presence
     USING (EXISTS (
         SELECT 1
         FROM expert_accounts ea
-        WHERE ea.id = expert_presence.expert_id 
+        WHERE ea.auth_id = expert_presence.expert_id 
         AND ea.auth_id = auth.uid() 
         AND ea.status = 'approved'
     ))
     WITH CHECK (EXISTS (
         SELECT 1
         FROM expert_accounts ea
-        WHERE ea.id = expert_presence.expert_id 
+        WHERE ea.auth_id = expert_presence.expert_id 
         AND ea.auth_id = auth.uid() 
         AND ea.status = 'approved'
     ));

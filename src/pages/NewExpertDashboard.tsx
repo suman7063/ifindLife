@@ -151,6 +151,24 @@ const NewExpertDashboard: React.FC = () => {
     return <DashboardLoader />;
   }
 
+  // Check if expert is approved - if not, redirect to login with appropriate message
+  if (isAuthenticated && userType === 'expert' && expert && expert.status !== 'approved') {
+    console.error('Expert not approved, redirecting to login', {
+      status: expert.status,
+      expert: expert
+    });
+    
+    if (expert.status === 'pending') {
+      toast.error('Your expert account is pending approval by admin. Please wait for approval.');
+    } else if (expert.status === 'disapproved') {
+      toast.error('Your expert account has been disapproved by admin.');
+    } else {
+      toast.error('Your expert account is not approved by admin.');
+    }
+    
+    return <Navigate to="/expert-login" replace />;
+  }
+
   return (
     <ExpertDashboardLayout>
       {/* Global Incoming Call Dialog - shows popup when call request arrives */}

@@ -69,7 +69,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
   // Reduced logging for performance
 
   // Function to validate credentials against intended role
-  const validateCredentialsForRole = async (userId: string, intendedRole: 'user' | 'expert'): Promise<{ isValid: boolean; actualRole?: 'user' | 'expert' | 'both' }> => {
+  const validateCredentialsForRole = async (userId: string, intendedRole: 'user' | 'expert'): Promise<{ isValid: boolean; actualRole?: 'user' | 'expert' | 'both'; expertStatus?: string }> => {
     try {
       // Validate credentials for role
       
@@ -89,24 +89,25 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
 
       const hasUserProfile = userProfileData && !userError;
       const hasExpertProfile = expertData && !expertError;
+      const expertStatus = expertData?.status;
 
       // Profile validation results processed
 
       if (hasUserProfile && hasExpertProfile) {
         // User has both profiles
         if (intendedRole === 'expert' && expertData?.status === 'approved') {
-          return { isValid: true, actualRole: 'both' };
+          return { isValid: true, actualRole: 'both', expertStatus };
         } else if (intendedRole === 'user') {
-          return { isValid: true, actualRole: 'both' };
+          return { isValid: true, actualRole: 'both', expertStatus };
         } else {
-          return { isValid: false, actualRole: 'both' };
+          return { isValid: false, actualRole: 'both', expertStatus };
         }
       } else if (hasExpertProfile) {
         // Only expert profile exists
         if (intendedRole === 'expert' && expertData?.status === 'approved') {
-          return { isValid: true, actualRole: 'expert' };
+          return { isValid: true, actualRole: 'expert', expertStatus };
         } else {
-          return { isValid: false, actualRole: 'expert' };
+          return { isValid: false, actualRole: 'expert', expertStatus };
         }
       } else if (hasUserProfile) {
         // Only user profile exists
@@ -496,7 +497,8 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
       if (!validation.isValid) {
         console.error('❌ Credential validation failed:', {
           intendedRole,
-          actualRole: validation.actualRole
+          actualRole: validation.actualRole,
+          expertStatus: validation.expertStatus
         });
         
         // Sign out the user since they used wrong credentials
@@ -507,8 +509,19 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
           errorMessage = 'These are expert credentials. Please use the expert login.';
         } else if (validation.actualRole === 'user' && intendedRole === 'expert') {
           errorMessage = 'These are user credentials. Please use the user login.';
-        } else if (validation.actualRole === 'expert' && intendedRole === 'expert') {
-          errorMessage = 'You are not approved by admin.';
+        } else if ((validation.actualRole === 'expert' || validation.actualRole === 'both') && intendedRole === 'expert') {
+          // Show specific error message based on expert status
+          if (validation.expertStatus === 'pending') {
+            errorMessage = 'Your expert account is pending approval by admin. Please wait for approval before logging in.';
+          } else if (validation.expertStatus === 'disapproved') {
+            errorMessage = 'Your expert account has been disapproved by admin. Please contact support for more information.';
+          } else if (validation.expertStatus === 'suspended') {
+            errorMessage = 'Your expert account has been suspended by admin. Please contact support for more information.';
+          } else if (validation.expertStatus) {
+            errorMessage = 'Your expert account is not approved by admin. Please contact support for assistance.';
+          } else {
+            errorMessage = 'Your expert account is not approved by admin. Please contact support for assistance.';
+          }
         }
         
         return { success: false, error: errorMessage };
@@ -523,7 +536,9 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         localStorage.setItem('preferredRole', 'user');
       }
 
-
+      // Refresh profiles to load latest data (especially important after approval)
+      console.log('🔄 Refreshing profiles after successful login...');
+      await refreshProfiles(data.user.id);
       
       // Return success with determined user type
       return { 

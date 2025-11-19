@@ -240,9 +240,9 @@ export const ExpertPresenceProvider: React.FC<{ children: React.ReactNode }> = (
       // First, check if expert_presence record exists
       const { data: existingPresence, error: checkError } = await supabase
         .from('expert_presence')
-        .select('id')
+        .select('id, expert_id')
         .eq('expert_id', expertId)
-        .single();
+        .maybeSingle();
 
       if (checkError && checkError.code !== 'PGRST116') {
         console.error('❌ Error checking existing presence:', checkError);

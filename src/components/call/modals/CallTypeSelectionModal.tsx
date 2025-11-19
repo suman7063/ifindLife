@@ -73,12 +73,12 @@ const CallTypeSelectionModal: React.FC<CallTypeSelectionModalProps> = ({
           }
         }
 
-        // If RPC didn't work, try direct query with expertId
+        // If RPC didn't work, try direct query with expertId (which should be auth_id)
         if (!expertAccount && expertId) {
           const { data, error } = await supabase
             .from('expert_accounts')
             .select('category')
-            .eq('id', expertId)
+            .eq('auth_id', expertId)
             .maybeSingle();
           
           if (error) {

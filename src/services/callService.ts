@@ -47,7 +47,7 @@ export async function initiateCall(params: InitiateCallParams): Promise<CallRequ
 
     // Generate unique channel name and UIDs
     const timestamp = Date.now();
-    const shortExpertId = expertId.replace(/-/g, '').substring(0, 8);
+    const shortExpertId = expertAuthId.replace(/-/g, '').substring(0, 8);
     const shortUserId = userId.replace(/-/g, '').substring(0, 8);
     const channelName = `call_${shortExpertId}_${shortUserId}_${timestamp}`;
     const userUid = Math.floor(Math.random() * 1000000);
@@ -93,13 +93,13 @@ export async function initiateCall(params: InitiateCallParams): Promise<CallRequ
     console.log('✅ Agora token generated for expert (UID:', expertUid, ')');
 
     // Create call session
-    const callSessionId = `session_${expertId}_${userId}_${timestamp}`;
+    const callSessionId = `session_${expertAuthId}_${userId}_${timestamp}`;
     
     const { data: sessionData, error: sessionError } = await supabase
       .from('call_sessions')
       .insert({
         id: callSessionId,
-        expert_id: expertId,
+        expert_id: expertAuthId, // Use auth_id since foreign key references expert_accounts(auth_id)
         user_id: userId,
         channel_name: channelName,
         agora_channel_name: channelName,

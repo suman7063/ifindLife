@@ -67,7 +67,7 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({ user }) => {
         .from('appointments')
         .select(`
           *,
-          expert:expert_accounts!inner(id, name, profile_picture)
+          expert:expert_accounts!inner(auth_id, name, profile_picture)
         `)
         .eq('user_id', user.id)
         .eq('status', 'completed')

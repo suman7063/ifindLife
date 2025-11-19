@@ -39,10 +39,10 @@ export const useExpertPricing = (expertId?: string) => {
       
       console.log('useExpertPricing: Fetching pricing for auth_id:', authId);
 
-      // First get the actual expert account ID and category from auth_id
+      // First get the expert account category from auth_id
       const { data: expertAccount, error: expertError } = await supabase
         .from('expert_accounts')
-        .select('id, category')
+        .select('auth_id, category')
         .eq('auth_id', authId)
         .maybeSingle();
 

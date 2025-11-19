@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
 interface Service {
-  id: number;
+  id: string; // UUID
   name: string;
   description: string;
   category: string;
@@ -26,7 +26,7 @@ const ServiceSelectionStep: React.FC<ServiceSelectionStepProps> = ({
   onComplete
 }) => {
   const [availableServices, setAvailableServices] = useState<Service[]>([]);
-  const [selectedServices, setSelectedServices] = useState<number[]>([]);
+  const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -61,9 +61,9 @@ const ServiceSelectionStep: React.FC<ServiceSelectionStepProps> = ({
 
         // Admin has already assigned services - combine with rates
         const combinedServices = adminAssignedServices.map(assignedService => {
-          const serviceDetails = servicesData?.find(s => s.id === assignedService.service_id);
+          const serviceDetails = servicesData?.find(s => String(s.id) === String(assignedService.service_id));
           return {
-            id: assignedService.service_id,
+            id: String(assignedService.service_id),
             name: serviceDetails?.name || 'Unknown Service',
             description: serviceDetails?.description || '',
             category: serviceDetails?.category || '',
@@ -73,7 +73,7 @@ const ServiceSelectionStep: React.FC<ServiceSelectionStepProps> = ({
           };
         });
         setAvailableServices(combinedServices);
-        setSelectedServices(combinedServices.map(s => s.id));
+        setSelectedServices(combinedServices.map(s => String(s.id)));
       } else {
         // Fetch services mapped to this category from expert_category_services table
         console.log('🔍 Fetching services for category from expert_category_services:', expertAccount.category);
@@ -88,26 +88,29 @@ const ServiceSelectionStep: React.FC<ServiceSelectionStepProps> = ({
           throw categoryServicesError;
         }
 
-        let serviceIds: number[] = [];
+        let serviceIds: string[] = [];
         
         if (categoryServicesData && categoryServicesData.length > 0) {
           // Use services mapped to the category
-          serviceIds = categoryServicesData.map(item => item.service_id);
+          serviceIds = categoryServicesData.map(item => String(item.service_id));
           console.log('🔍 Found mapped services for category:', serviceIds);
         } else {
-          // Fallback to hardcoded list if no mappings exist
-          console.log('🔍 No category mappings found, using fallback system for category:', expertAccount.category);
+          // Fallback: Fetch all services if no category mappings exist
+          console.log('🔍 No category mappings found, fetching all services for category:', expertAccount.category);
           
-          const categoryServices: Record<string, number[]> = {
-            'listening-volunteer': [1, 2, 3, 4, 6, 7],  // Basic listening + mindfulness
-            'listening-expert': [1, 2, 3, 4, 5, 6, 7, 8],  // All listening + basic mindfulness
-            'listening-coach': [1, 2, 3, 4, 5, 6, 7, 8, 9],  // All listening + mindfulness
-            'mindfulness-expert': [6, 7, 8, 9, 1, 2],  // All mindfulness + basic listening
-            'anxiety-expert': [10, 6, 7, 8, 1, 2],  // Anxiety + mindfulness + basic listening
-            'default': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]  // All services as fallback
-          };
-
-          serviceIds = categoryServices[expertAccount.category] || categoryServices['default'] || [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+          // Fetch all services as fallback
+          const { data: allServices, error: allServicesError } = await supabase
+            .from('services')
+            .select('id')
+            .order('name');
+          
+          if (allServicesError) {
+            console.error('Error fetching all services:', allServicesError);
+            throw allServicesError;
+          }
+          
+          serviceIds = allServices?.map(s => s.id) || [];
+          console.log('🔍 Using all available services as fallback:', serviceIds);
         }
 
         console.log('🔍 Service IDs for category:', serviceIds);
@@ -122,7 +125,12 @@ const ServiceSelectionStep: React.FC<ServiceSelectionStepProps> = ({
 
         if (error) throw error;
 
-        setAvailableServices(data || []);
+        // Ensure all service IDs are strings (UUIDs)
+        const normalizedServices = (data || []).map(service => ({
+          ...service,
+          id: String(service.id)
+        }));
+        setAvailableServices(normalizedServices);
 
         // Check existing specializations
         console.log('🔍 Checking existing specializations for expert:', expertAccount.auth_id);
@@ -138,7 +146,7 @@ const ServiceSelectionStep: React.FC<ServiceSelectionStepProps> = ({
           throw existingError;
         }
 
-        const existing = existingServices?.map(s => s.service_id) || [];
+        const existing = existingServices?.map(s => String(s.service_id)) || [];
         console.log('🔍 Existing service IDs:', existing);
         setSelectedServices(existing);
 
@@ -154,7 +162,7 @@ const ServiceSelectionStep: React.FC<ServiceSelectionStepProps> = ({
     }
   };
 
-  const toggleService = (serviceId: number) => {
+  const toggleService = (serviceId: string) => {
     setSelectedServices(prev => 
       prev.includes(serviceId)
         ? prev.filter(id => id !== serviceId)
@@ -187,7 +195,7 @@ const ServiceSelectionStep: React.FC<ServiceSelectionStepProps> = ({
       // Insert new specializations
       const specializations = selectedServices.map((serviceId, index) => ({
         expert_id: expertAccount.auth_id,
-        service_id: serviceId,
+        service_id: String(serviceId), // Ensure it's a string UUID
         is_available: true,
         is_primary_service: index === 0, // First service is primary
         proficiency_level: expertAccount.category.includes('expert') ? 'expert' : 
@@ -208,10 +216,13 @@ const ServiceSelectionStep: React.FC<ServiceSelectionStepProps> = ({
       }
 
       // Update expert account to reflect service selection completion
+      // Save selected service UUIDs to selected_services column (now UUID[])
       console.log('💾 Updating expert account with selected services...');
       const { error: updateError } = await supabase
         .from('expert_accounts')
-        .update({ selected_services: selectedServices })
+        .update({ 
+          selected_services: selectedServices // Array of service UUIDs
+        })
         .eq('auth_id', expertAccount.auth_id);
 
       if (updateError) {
@@ -219,15 +230,21 @@ const ServiceSelectionStep: React.FC<ServiceSelectionStepProps> = ({
         throw updateError;
       }
 
-      // Set services flag consistency on expert_accounts (selected_services already updated)
-      // When services exist, we may also flip onboarding_completed if all flags are true
+      // Check if all onboarding flags are satisfied
+      // Check expert_service_specializations to verify services are saved
+      const { data: specializationsCheck } = await supabase
+        .from('expert_service_specializations')
+        .select('id')
+        .eq('expert_id', expertAccount.auth_id)
+        .limit(1);
+
       const { data: eaFlags } = await supabase
         .from('expert_accounts')
-        .select('selected_services, pricing_set, availability_set, onboarding_completed')
+        .select('pricing_set, availability_set, onboarding_completed')
         .eq('auth_id', expertAccount.auth_id)
         .single();
 
-      const hasServices = Array.isArray(eaFlags?.selected_services) && eaFlags!.selected_services.length > 0;
+      const hasServices = (specializationsCheck?.length || 0) > 0;
       const hasPricing = !!eaFlags?.pricing_set;
       const hasAvailability = !!eaFlags?.availability_set;
 
@@ -274,16 +291,17 @@ const ServiceSelectionStep: React.FC<ServiceSelectionStepProps> = ({
 
       <div className="grid gap-4">
         {availableServices.map((service) => {
-          const isSelected = selectedServices.includes(service.id);
+          const serviceId = String(service.id);
+          const isSelected = selectedServices.includes(serviceId);
           return (
             <Card 
-              key={service.id}
+              key={serviceId}
               className={`cursor-pointer transition-all ${
                 isSelected 
                   ? 'ring-2 ring-primary bg-blue-50' 
                   : 'hover:shadow-md'
               }`}
-              onClick={() => toggleService(service.id)}
+              onClick={() => toggleService(serviceId)}
             >
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">

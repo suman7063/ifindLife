@@ -22,14 +22,14 @@ export const useExpertProfile = (
     try {
       setUpdating(true);
       
-      // Ensure ID is treated as a string
-      const expertId = String(currentExpert.id);
+      // Use auth_id for updates
+      const expertId = String(currentExpert.auth_id || currentExpert.id);
       
       // Update the expert_accounts table
       const { error } = await supabase
         .from('expert_accounts')
         .update(profileData)
-        .eq('id', expertId);
+        .eq('auth_id', expertId);
       
       if (error) {
         console.error('Profile update error:', error);
@@ -67,8 +67,8 @@ export const useExpertProfile = (
     try {
       setUpdating(true);
       
-      // Ensure ID is treated as a string
-      const expertId = String(currentExpert.id);
+      // Use auth_id for expert operations
+      const expertId = String(currentExpert.auth_id || currentExpert.id);
       
       // First, delete all existing availability entries for this expert
       const { error: deleteError } = await supabase
@@ -126,14 +126,18 @@ export const useExpertProfile = (
     try {
       setUpdating(true);
       
-      // Ensure ID is treated as a string
-      const expertId = String(currentExpert.id);
+      // Use auth_id for expert operations
+      const expertId = String(currentExpert.auth_id || currentExpert.id);
       
       // Update the selected_services field in the expert_accounts table
+      // Note: selected_services is INTEGER[] but services use UUID, so we skip updating it
+      // Services are stored in expert_service_specializations table instead
       const { error } = await supabase
         .from('expert_accounts')
-        .update({ selected_services: serviceIds })
-        .eq('id', expertId);
+        .update({ 
+          // selected_services: serviceIds, // Skip - INTEGER[] vs UUID mismatch
+        })
+        .eq('auth_id', expertId);
       
       if (error) {
         console.error('Services update error:', error);

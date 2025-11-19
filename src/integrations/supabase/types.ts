@@ -381,7 +381,7 @@ export type Database = {
           end_time: string | null
           expert_auth_id: string | null
           expert_category: string | null
-          expert_id: number
+          expert_id: string
           failure_reason: string | null
           id: string
           missed_call: boolean | null
@@ -416,7 +416,7 @@ export type Database = {
           end_time?: string | null
           expert_auth_id?: string | null
           expert_category?: string | null
-          expert_id: number
+          expert_id: string
           failure_reason?: string | null
           id: string
           missed_call?: boolean | null
@@ -1905,7 +1905,7 @@ export type Database = {
         Row: {
           completed: boolean | null
           enrollment_date: string
-          expert_id: number
+          expert_id: string
           expert_name: string
           id: string
           progress: number | null
@@ -1915,7 +1915,7 @@ export type Database = {
         Insert: {
           completed?: boolean | null
           enrollment_date: string
-          expert_id: number
+          expert_id: string
           expert_name: string
           id?: string
           progress?: number | null
@@ -2691,7 +2691,7 @@ export type Database = {
         Returns: {
           comment: string
           date: string
-          expert_id: number
+          expert_id: string
           expert_name: string
           rating: number
           review_id: string
