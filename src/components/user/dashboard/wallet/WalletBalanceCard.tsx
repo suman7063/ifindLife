@@ -25,13 +25,19 @@ const WalletBalanceCard: React.FC<WalletBalanceCardProps> = ({ user, onBalanceUp
 
   const fetchBalance = async () => {
     try {
+      // Add timestamp to prevent caching
+      const timestamp = Date.now();
       const { data, error } = await supabase.functions.invoke('wallet-operations', {
-        body: { action: 'get_balance' }
+        body: { 
+          action: 'get_balance',
+          _timestamp: timestamp // Cache buster
+        }
       });
 
       if (error) throw error;
 
       const newBalance = data?.balance || 0;
+      console.log('💰 Fetched wallet balance from wallet_transactions:', newBalance);
       setBalance(newBalance);
       if (onBalanceUpdate) {
         onBalanceUpdate(newBalance);
@@ -39,9 +45,13 @@ const WalletBalanceCard: React.FC<WalletBalanceCardProps> = ({ user, onBalanceUp
       return newBalance;
     } catch (error) {
       console.error('Error fetching wallet balance:', error);
-      // Fallback to user profile balance
-      const fallbackBalance = user?.wallet_balance || 0;
+      // Don't use users.wallet_balance as fallback - it may be stale
+      // If wallet_transactions table is empty, balance should be 0
+      const fallbackBalance = 0;
       setBalance(fallbackBalance);
+      if (onBalanceUpdate) {
+        onBalanceUpdate(fallbackBalance);
+      }
       return fallbackBalance;
     } finally {
       setLoading(false);
@@ -93,6 +103,9 @@ const WalletBalanceCard: React.FC<WalletBalanceCardProps> = ({ user, onBalanceUp
       .subscribe();
 
     // Subscribe to users table UPDATE events for wallet_balance
+    // NOTE: We don't use users.wallet_balance as source of truth anymore
+    // Wallet balance is calculated from wallet_transactions table
+    // This subscription is kept for backward compatibility but should not override calculated balance
     const usersChannel = supabase
       .channel(`user_wallet_balance_${user.id}`)
       .on(
@@ -103,32 +116,17 @@ const WalletBalanceCard: React.FC<WalletBalanceCardProps> = ({ user, onBalanceUp
           table: 'users',
           filter: `id=eq.${user.id}`
         },
-        (payload) => {
-          const newBalance = (payload.new as { wallet_balance?: number })?.wallet_balance;
-          if (newBalance !== undefined) {
-            console.log('💰 Wallet balance updated via real-time (users table):', newBalance);
-            // Clear any polling since real-time caught it
-            if (fallbackTimeoutRef.current) {
-              clearTimeout(fallbackTimeoutRef.current);
-              fallbackTimeoutRef.current = null;
-            }
-            setBalance((prevBalance) => {
-              if (newBalance !== prevBalance) {
-                if (onBalanceUpdate) {
-                  onBalanceUpdate(newBalance);
-                }
-                setUpdatingBalance((prev) => {
-                  if (prev) {
-                    toast.success('Wallet balance updated!');
-                    return false;
-                  }
-                  return prev;
-                });
-                return newBalance;
-              }
-              return prevBalance;
-            });
+        async (payload) => {
+          // Don't use users.wallet_balance as source of truth
+          // Instead, refetch balance from wallet_transactions table
+          console.log('💰 Users table updated, refetching balance from wallet_transactions...');
+          // Clear any polling since we're refetching
+          if (fallbackTimeoutRef.current) {
+            clearTimeout(fallbackTimeoutRef.current);
+            fallbackTimeoutRef.current = null;
           }
+          // Refetch balance from wallet_transactions (source of truth)
+          await fetchBalance();
         }
       )
       .subscribe();

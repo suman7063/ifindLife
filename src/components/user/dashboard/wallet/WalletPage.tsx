@@ -13,7 +13,8 @@ interface Props {
 const WalletPage: React.FC<Props> = (props) => {
   const { userProfile } = useAuth();
   const user = props.user || userProfile;
-  const [balance, setBalance] = useState<number>(user?.wallet_balance || 0);
+  // Don't use users.wallet_balance as initial state - balance is calculated from wallet_transactions
+  const [balance, setBalance] = useState<number>(0);
   
   return (
     <div className="space-y-6">

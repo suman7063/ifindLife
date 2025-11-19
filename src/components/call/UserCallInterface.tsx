@@ -52,6 +52,7 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
   const [callType, setCallType] = useState<'audio' | 'video'>('video');
   const [selectedDuration, setSelectedDuration] = useState<number>(15);
   const connectingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pendingTransactionIdRef = useRef<string | null>(null);
 
   const {
     isConnecting,
@@ -137,6 +138,11 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
       setModalState('selection');
       return;
     }
+
+    // Store transaction ID to update later with call session ID
+    if (deductResult.transaction?.id) {
+      pendingTransactionIdRef.current = deductResult.transaction.id;
+    }
     
     // Start the call (this will create the call session)
     const success = await startCall(
@@ -153,6 +159,7 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
       // Note: In production, you'd want to add automatic refund here
       toast.error('Failed to start call. Please contact support for refund.');
       setModalState('selection');
+      pendingTransactionIdRef.current = null; // Clear pending transaction
       return;
     }
 
@@ -162,9 +169,6 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
       setModalState('waiting');
       connectingTimeoutRef.current = null;
     }, 1500); // 1.5 seconds delay
-
-    // Note: callSessionId will be available in the flowState after call initiation
-    // The wallet transaction reference_id can be updated later if needed
   };
 
   const handleRejoin = async () => {
@@ -176,6 +180,40 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
     sessionStorage.removeItem('user_call_session');
     sessionStorage.removeItem('user_call_data');
   };
+
+  // Update wallet transaction with call session ID when call session is created
+  useEffect(() => {
+    if (callSessionId && pendingTransactionIdRef.current) {
+      const updateTransaction = async () => {
+        try {
+          const { supabase: supabaseClient } = await import('@/integrations/supabase/client');
+          // wallet_transactions table exists but may not be in TypeScript types
+          // Using type assertion to access wallet_transactions table
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const supabaseAny = supabaseClient as any;
+          const { error: updateError } = await supabaseAny
+            .from('wallet_transactions')
+            .update({ 
+              reference_id: callSessionId,
+              reference_type: 'call_session'
+            })
+            .eq('id', pendingTransactionIdRef.current);
+
+          if (updateError) {
+            console.error('Failed to update wallet transaction with call session ID:', updateError);
+            // Don't show error to user as transaction was already created successfully
+          } else {
+            console.log('✅ Wallet transaction updated with call session ID:', callSessionId);
+            pendingTransactionIdRef.current = null; // Clear after successful update
+          }
+        } catch (error) {
+          console.error('Error updating wallet transaction:', error);
+        }
+      };
+
+      updateTransaction();
+    }
+  }, [callSessionId]);
 
   // Update modal state based on call state
   useEffect(() => {

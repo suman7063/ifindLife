@@ -101,15 +101,30 @@ serve(async (req) => {
 async function getWalletBalance(supabase: any, userId: string, corsHeaders: any) {
   try {
     // Use the database function to calculate balance
+    // Force fresh calculation by adding timestamp to prevent caching
     const { data, error } = await supabase.rpc('get_wallet_balance', {
       p_user_id: userId
     })
 
     if (error) throw error
 
+    // Add cache-control headers to prevent caching
+    const cacheHeaders = {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    }
+
     return new Response(
       JSON.stringify({ balance: parseFloat(data || 0) }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { 
+        status: 200, 
+        headers: { 
+          ...corsHeaders, 
+          ...cacheHeaders,
+          'Content-Type': 'application/json' 
+        } 
+      }
     )
   } catch (error) {
     console.error('Error getting wallet balance:', error)
@@ -141,9 +156,23 @@ async function getWalletTransactions(supabase: any, userId: string, params: any,
 
     if (error) throw error
 
+    // Add cache-control headers to prevent caching
+    const cacheHeaders = {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    }
+
     return new Response(
       JSON.stringify({ transactions: data || [] }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { 
+        status: 200, 
+        headers: { 
+          ...corsHeaders, 
+          ...cacheHeaders,
+          'Content-Type': 'application/json' 
+        } 
+      }
     )
   } catch (error) {
     console.error('Error getting wallet transactions:', error)

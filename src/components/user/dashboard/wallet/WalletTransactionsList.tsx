@@ -30,25 +30,45 @@ const WalletTransactionsList: React.FC<WalletTransactionsListProps> = ({ user })
 
   useEffect(() => {
     if (user?.id) {
+      // Clear transactions when user changes to prevent stale data
+      setTransactions([]);
       fetchTransactions();
+    } else {
+      // Clear transactions if no user
+      setTransactions([]);
+      setLoading(false);
     }
   }, [user?.id]);
 
   const fetchTransactions = async () => {
     try {
       setLoading(true);
+      // Clear existing transactions first to ensure fresh data
+      setTransactions([]);
+      
+      // Add timestamp to prevent caching
+      const timestamp = Date.now();
       const { data, error } = await supabase.functions.invoke('wallet-operations', {
         body: { 
           action: 'get_transactions',
-          limit: 50
+          limit: 50,
+          _timestamp: timestamp // Cache buster
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching wallet transactions:', error);
+        setTransactions([]); // Ensure empty array on error
+        return;
+      }
 
-      setTransactions(data?.transactions || []);
+      // Explicitly set to empty array if no transactions
+      const transactions = data?.transactions || [];
+      console.log('💰 Fetched wallet transactions from database:', transactions.length, 'transactions');
+      setTransactions(transactions);
     } catch (error) {
       console.error('Error fetching wallet transactions:', error);
+      setTransactions([]); // Ensure empty array on error
     } finally {
       setLoading(false);
     }
