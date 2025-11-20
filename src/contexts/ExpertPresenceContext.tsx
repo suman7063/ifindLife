@@ -173,16 +173,36 @@ export const ExpertPresenceProvider: React.FC<{ children: React.ReactNode }> = (
       });
       
       if (expertsToCheck.length === 0) {
+        setIsLoading(false);
         return;
       }
 
       console.log('📡 Fetching fresh presence data for:', expertsToCheck.length, 'experts');
 
-      // Use the new RPC to get presence for approved experts
-      const { data: presenceDataArray } = await supabase
-        .rpc('get_approved_expert_presence', { expert_auth_ids: expertsToCheck });
+      // Validate UUIDs before calling RPC
+      const validExpertIds = expertsToCheck.filter(id => {
+        // Basic UUID validation (8-4-4-4-12 format)
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        return uuidRegex.test(id);
+      });
 
-      expertsToCheck.forEach(expertId => {
+      if (validExpertIds.length === 0) {
+        console.warn('⚠️ No valid UUIDs to check presence for');
+        setIsLoading(false);
+        return;
+      }
+
+      // Use the new RPC to get presence for approved experts
+      const { data: presenceDataArray, error: rpcError } = await supabase
+        .rpc('get_approved_expert_presence', { expert_auth_ids: validExpertIds });
+
+      if (rpcError) {
+        console.error('❌ Error fetching expert presence:', rpcError);
+        setIsLoading(false);
+        return;
+      }
+
+      validExpertIds.forEach(expertId => {
         const presenceData = presenceDataArray?.find(p => p.expert_id === expertId);
         
         let presence: ExpertPresence;

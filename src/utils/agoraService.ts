@@ -213,7 +213,15 @@ export const leaveCall = async (
     // Stop and close local tracks
     if (localAudioTrack) {
       try {
+        // Stop the track first
         localAudioTrack.stop();
+        // Get the underlying MediaStream and stop all tracks
+        const audioStream = localAudioTrack.getMediaStreamTrack();
+        if (audioStream) {
+          audioStream.stop();
+          console.log('✅ Stopped audio MediaStreamTrack');
+        }
+        // Close the track
         localAudioTrack.close();
         console.log('✅ Stopped and closed audio track');
       } catch (audioError) {
@@ -223,26 +231,64 @@ export const leaveCall = async (
     
     if (localVideoTrack) {
       try {
+        // Stop the track first
         localVideoTrack.stop();
+        // Get the underlying MediaStream and stop all tracks
+        const videoStream = localVideoTrack.getMediaStreamTrack();
+        if (videoStream) {
+          videoStream.stop();
+          console.log('✅ Stopped video MediaStreamTrack (camera off)');
+        }
+        // Close the track
         localVideoTrack.close();
         console.log('✅ Stopped and closed video track');
       } catch (videoError) {
         console.warn('⚠️ Error stopping video track:', videoError);
+        // Try to stop the MediaStreamTrack directly as fallback
+        try {
+          const videoStream = localVideoTrack.getMediaStreamTrack();
+          if (videoStream) {
+            videoStream.stop();
+            console.log('✅ Fallback: Stopped video MediaStreamTrack');
+          }
+        } catch (fallbackError) {
+          console.warn('⚠️ Fallback video stop also failed:', fallbackError);
+        }
       }
     }
     
-    // Leave the channel
+    // Leave the channel - ensure this always happens
     try {
       await client.leave();
       console.log('✅ Left Agora channel successfully');
     } catch (leaveError) {
       console.error('❌ Error leaving channel:', leaveError);
-      throw leaveError;
+      // Try force leave even if normal leave fails
+      try {
+        await client.leave();
+      } catch (forceLeaveError) {
+        console.error('❌ Force leave also failed:', forceLeaveError);
+      }
+    }
+    
+    // Ensure client is fully cleaned up
+    try {
+      // Remove all event listeners
+      client.removeAllListeners();
+      console.log('✅ Removed all event listeners');
+    } catch (listenerError) {
+      console.warn('⚠️ Error removing listeners:', listenerError);
     }
     
     console.log('✅ Call cleanup completed');
   } catch (error) {
     console.error('❌ Error in leaveCall:', error);
+    // Still try to leave channel even if other cleanup failed
+    try {
+      await client.leave();
+    } catch (finalLeaveError) {
+      console.error('❌ Final leave attempt failed:', finalLeaveError);
+    }
     throw error;
   }
 };

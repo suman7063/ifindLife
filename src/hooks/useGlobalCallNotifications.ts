@@ -3,7 +3,7 @@
  * Listens for incoming calls across the entire expert dashboard
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
@@ -23,6 +23,18 @@ interface CallRequest {
 export function useGlobalCallNotifications(expertAuthId: string | undefined) {
   const navigate = useNavigate();
   const [incomingCall, setIncomingCall] = useState<CallRequest | null>(null);
+  const pendingCallsQueueRef = useRef<CallRequest[]>([]);
+
+  // Show next call from queue when current dialog closes
+  const showNextCall = useCallback(() => {
+    if (pendingCallsQueueRef.current.length > 0) {
+      const nextCall = pendingCallsQueueRef.current[0];
+      pendingCallsQueueRef.current = pendingCallsQueueRef.current.slice(1);
+      setIncomingCall(nextCall);
+    } else {
+      setIncomingCall(null);
+    }
+  }, []);
 
   useEffect(() => {
     if (!expertAuthId) {
@@ -55,8 +67,19 @@ export function useGlobalCallNotifications(expertAuthId: string | undefined) {
           
           // Only process pending calls
           if (newCall.status === 'pending') {
-            // Set incoming call for dialog
-            setIncomingCall(newCall);
+            // Check if dialog is already open
+            setIncomingCall(current => {
+              if (current) {
+                // Dialog is open, add to queue (avoid duplicates)
+                if (!pendingCallsQueueRef.current.some(call => call.id === newCall.id)) {
+                  pendingCallsQueueRef.current = [...pendingCallsQueueRef.current, newCall];
+                }
+                return current; // Keep current dialog open
+              } else {
+                // No dialog open, show this one
+                return newCall;
+              }
+            });
             
             const userName = newCall.user_metadata?.name || 'A user';
             const callType = newCall.call_type === 'video' ? 'Video' : 'Audio';
@@ -95,9 +118,16 @@ export function useGlobalCallNotifications(expertAuthId: string | undefined) {
         }
       )
       .subscribe((status, err) => {
-       
+        console.log('📡 Calls channel status:', status);
         if (status === 'CHANNEL_ERROR') {
           console.error('❌ Channel error:', err);
+          // Auto-reconnect after a delay
+          setTimeout(() => {
+            console.log('🔄 Attempting to reconnect calls channel...');
+            callsChannel.subscribe();
+          }, 3000);
+        } else if (status === 'SUBSCRIBED') {
+          console.log('✅ Calls channel subscribed successfully');
         }
       });
 
@@ -157,8 +187,16 @@ export function useGlobalCallNotifications(expertAuthId: string | undefined) {
         }
       )
       .subscribe((status, err) => {
-       if (status === 'CHANNEL_ERROR') {
+        console.log('📡 Notifications channel status:', status);
+        if (status === 'CHANNEL_ERROR') {
           console.error('❌ Channel error:', err);
+          // Auto-reconnect after a delay
+          setTimeout(() => {
+            console.log('🔄 Attempting to reconnect notifications channel...');
+            notificationsChannel.subscribe();
+          }, 3000);
+        } else if (status === 'SUBSCRIBED') {
+          console.log('✅ Notifications channel subscribed successfully');
         }
       });
 
@@ -168,7 +206,21 @@ export function useGlobalCallNotifications(expertAuthId: string | undefined) {
     };
   }, [expertAuthId, navigate]);
 
-  // Return incoming call for global dialog (if needed)
-  return { incomingCall, setIncomingCall };
+  // Custom setter that shows next call when closing
+  const setIncomingCallWithQueue = useCallback((call: CallRequest | null) => {
+    setIncomingCall(call);
+    // If closing dialog, show next call from queue after a short delay
+    if (!call) {
+      setTimeout(() => {
+        showNextCall();
+      }, 200);
+    }
+  }, [showNextCall]);
+
+  // Return incoming call for global dialog and function to show next call
+  return { 
+    incomingCall, 
+    setIncomingCall: setIncomingCallWithQueue
+  };
 }
 

@@ -82,6 +82,7 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
   const [callDuration, setCallDuration] = useState(0);
   const [callStartTime, setCallStartTime] = useState<Date | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [wasDisconnected, setWasDisconnected] = useState(false);
   
   const clientRef = useRef<IAgoraRTCClient | null>(null);
   const localVideoRef = useRef<HTMLDivElement>(null);
@@ -164,6 +165,19 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
 
       const client = createClient();
       clientRef.current = client;
+
+      // Track connection state changes for network disconnection detection
+      let hasBeenConnected = false;
+      client.on('connection-state-change', (curState, revState) => {
+        console.log('📡 Expert connection state changed:', curState, revState);
+        if (curState === 'CONNECTED') {
+          hasBeenConnected = true;
+          setWasDisconnected(false);
+        } else if ((curState === 'DISCONNECTED' || curState === 'RECONNECTING') && hasBeenConnected) {
+          setWasDisconnected(true);
+          console.log('⚠️ Network disconnection detected');
+        }
+      });
 
       // Set up event listeners
       client.on('user-published', async (user, mediaType) => {
@@ -430,7 +444,9 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
       if (currentSessionIdRef.current) {
         try {
           console.log('🔴 Step 7: Updating database...');
-          const result = await endCall(currentSessionIdRef.current, finalDuration, 'expert');
+          // Determine disconnection reason: check if there was a network disconnection
+          const disconnectionReason = wasDisconnected ? 'network_error' : 'expert_ended';
+          const result = await endCall(currentSessionIdRef.current, finalDuration, 'expert', disconnectionReason);
           console.log('🔴 Step 8: Database update result:', result);
           if (!result) {
             console.error('❌ Database update returned false!');

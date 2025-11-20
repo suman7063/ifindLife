@@ -20,7 +20,8 @@ import type { IAgoraRTCClient } from 'agora-rtc-sdk-ng';
 export interface UseCallFlowOptions {
   expertId?: string;
   expertAuthId?: string;
-  onCallStarted?: () => void;
+  onExpertAccepted?: () => void; // Called when expert accepts the call
+  onCallStarted?: () => void; // Called when call actually connects
   onCallEnded?: () => void;
 }
 
@@ -459,6 +460,16 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
             
             if (updatedRequest.status === 'accepted') {
               console.log('✅ Expert accepted via real-time, joining call...');
+              
+              // Call onExpertAccepted callback when expert accepts (before joining call)
+              if (options.onExpertAccepted) {
+                try {
+                  await options.onExpertAccepted();
+                } catch (error) {
+                  console.error('❌ Error in onExpertAccepted callback:', error);
+                }
+              }
+              
               hasJoinedCall = true;
               await joinAgoraCall(callData);
             } else if (updatedRequest.status === 'declined') {
@@ -505,6 +516,16 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
 
           if (currentRequest?.status === 'accepted' && !hasJoinedCall) {
             console.log('✅ Expert accepted (via polling), joining call...');
+            
+            // Call onExpertAccepted callback when expert accepts (before joining call)
+            if (options.onExpertAccepted) {
+              try {
+                await options.onExpertAccepted();
+              } catch (error) {
+                console.error('❌ Error in onExpertAccepted callback:', error);
+              }
+            }
+            
             hasJoinedCall = true;
             clearInterval(pollInterval);
             await joinAgoraCall(callData);
@@ -547,7 +568,7 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
       }));
       return false;
     }
-  }, [isAuthenticated, user, userProfile?.name, userProfile?.profile_picture, joinAgoraCall]);
+  }, [isAuthenticated, user, userProfile?.name, userProfile?.profile_picture, joinAgoraCall, options]);
 
   // End call
   const stopCall = useCallback(async () => {
@@ -580,7 +601,9 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
       // Update database
       if (flowState.callSessionId) {
         try {
-          await endCall(flowState.callSessionId, finalDuration, 'user');
+          // Determine disconnection reason: if wasDisconnected is true, it's a network error
+          const disconnectionReason = flowState.wasDisconnected ? 'network_error' : 'user_ended';
+          await endCall(flowState.callSessionId, finalDuration, 'user', disconnectionReason);
           console.log('✅ Call session updated in database');
         } catch (dbError) {
           console.error('❌ Error updating call session:', dbError);
@@ -603,17 +626,73 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
         });
       }
 
-      // Leave Agora channel
-      if (clientRef.current && flowState.callState?.localAudioTrack) {
+      // Stop local video track explicitly before leaving (ensures camera is off)
+      if (flowState.callState?.localVideoTrack) {
+        try {
+          console.log('📹 Stopping local video track to turn off camera...');
+          // Disable the track first
+          flowState.callState.localVideoTrack.setEnabled(false);
+          // Stop the track
+          flowState.callState.localVideoTrack.stop();
+          // Get the underlying MediaStreamTrack and stop it
+          const videoStream = flowState.callState.localVideoTrack.getMediaStreamTrack();
+          if (videoStream) {
+            videoStream.stop();
+            console.log('✅ Camera MediaStreamTrack stopped');
+          }
+          // Close the track
+          flowState.callState.localVideoTrack.close();
+          console.log('✅ Camera fully turned off');
+        } catch (videoStopError) {
+          console.warn('⚠️ Error stopping video track:', videoStopError);
+          // Fallback: try to stop MediaStreamTrack directly
+          try {
+            const videoStream = flowState.callState.localVideoTrack.getMediaStreamTrack();
+            if (videoStream) {
+              videoStream.stop();
+              console.log('✅ Fallback: Camera stopped');
+            }
+          } catch (fallbackError) {
+            console.error('❌ Fallback camera stop failed:', fallbackError);
+          }
+        }
+      }
+
+      // Stop local audio track explicitly
+      if (flowState.callState?.localAudioTrack) {
+        try {
+          flowState.callState.localAudioTrack.setEnabled(false);
+          flowState.callState.localAudioTrack.stop();
+          const audioStream = flowState.callState.localAudioTrack.getMediaStreamTrack();
+          if (audioStream) {
+            audioStream.stop();
+          }
+          flowState.callState.localAudioTrack.close();
+          console.log('✅ Audio track stopped');
+        } catch (audioStopError) {
+          console.warn('⚠️ Error stopping audio track:', audioStopError);
+        }
+      }
+
+
+      // Leave Agora channel - ensure cleanup happens even if tracks are missing
+      if (clientRef.current) {
         try {
           await leaveCall(
             clientRef.current,
-            flowState.callState.localAudioTrack,
-            flowState.callState.localVideoTrack
+            flowState.callState?.localAudioTrack || null,
+            flowState.callState?.localVideoTrack || null
           );
           console.log('✅ Successfully left Agora channel');
         } catch (agoraError) {
           console.error('❌ Error leaving Agora call:', agoraError);
+          // Force leave as fallback
+          try {
+            await clientRef.current.leave();
+            clientRef.current.removeAllListeners();
+          } catch (forceLeaveError) {
+            console.error('❌ Force leave failed:', forceLeaveError);
+          }
         }
       }
 

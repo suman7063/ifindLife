@@ -67,7 +67,8 @@ serve(async (req) => {
           params.reference_id,
           params.reference_type || 'razorpay_payment',
           params.description,
-          corsHeaders
+          corsHeaders,
+          params.currency || 'INR'
         )
 
       case 'deduct_credits':
@@ -80,7 +81,8 @@ serve(async (req) => {
           params.reference_id,
           params.reference_type || 'appointment',
           params.description,
-          corsHeaders
+          corsHeaders,
+          params.currency || 'INR'
         )
 
       default:
@@ -191,7 +193,8 @@ async function addCredits(
   referenceId: string | null,
   referenceType: string | null,
   description: string | null,
-  corsHeaders: any
+  corsHeaders: any,
+  currency: string = 'INR'
 ) {
   try {
     // Validate amount
@@ -201,6 +204,9 @@ async function addCredits(
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
+    // Validate currency
+    const validCurrency = currency === 'EUR' ? 'EUR' : 'INR'
 
     // Calculate expiry (12 months from now)
     const expiresAt = new Date()
@@ -216,6 +222,7 @@ async function addCredits(
         user_id: userId,
         type: 'credit',
         amount: amount,
+        currency: validCurrency,
         reason: reason,
         reference_id: isUUID ? referenceId : null, // Only set if it's a valid UUID
         reference_type: referenceType,
@@ -264,7 +271,8 @@ async function deductCredits(
   referenceId: string | null,
   referenceType: string | null,
   description: string | null,
-  corsHeaders: any
+  corsHeaders: any,
+  currency: string = 'INR'
 ) {
   try {
     // Validate amount
@@ -274,6 +282,9 @@ async function deductCredits(
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
+    // Validate currency
+    const validCurrency = currency === 'EUR' ? 'EUR' : 'INR'
 
     // Check balance first
     const currentBalance = await getWalletBalanceValue(supabase, userId)
@@ -295,6 +306,7 @@ async function deductCredits(
         user_id: userId,
         type: 'debit',
         amount: amount,
+        currency: validCurrency,
         reason: reason,
         reference_id: referenceId,
         reference_type: referenceType,

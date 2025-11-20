@@ -369,7 +369,8 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
           'booking',
           appointmentData?.[0]?.id || null,
           'appointment',
-          `Booking ${selectedSlots.length} session(s) with ${expertName}`
+          `Booking ${selectedSlots.length} session(s) with ${expertName}`,
+          (userCurrency || 'INR') as 'INR' | 'EUR'
         );
 
         if (!result.success) {

@@ -187,6 +187,9 @@ serve(async (req) => {
     // Check if callSessionId is a valid UUID
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(callSessionId)
 
+    // Validate currency from call session
+    const validCurrency = callSession.currency === 'EUR' ? 'EUR' : 'INR'
+    
     // Create credit transaction
     const { data: transactionData, error: transactionError } = await supabaseAdmin
       .from('wallet_transactions')
@@ -194,6 +197,7 @@ serve(async (req) => {
         user_id: callSession.user_id,
         type: 'credit',
         amount: roundedRefund,
+        currency: validCurrency,
         reason: 'refund',
         reference_id: isUUID ? callSessionId : null,
         reference_type: 'call_session',

@@ -10,7 +10,47 @@ import { useWallet } from '@/hooks/useWallet';
 import { useUserCurrency } from '@/hooks/useUserCurrency';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 import CallTypeSelectionModal from './modals/CallTypeSelectionModal';
+
+// Component to detect when Razorpay modal appears
+const RazorpayDetector: React.FC<{ onRazorpayDetected: () => void }> = ({ onRazorpayDetected }) => {
+  useEffect(() => {
+    const checkRazorpay = () => {
+      const razorpayElements = document.querySelectorAll(
+        'iframe[src*="razorpay"], iframe[src*="checkout.razorpay"], [id*="razorpay-checkout"], [class*="razorpay-checkout"], [id*="razorpay"], [class*="razorpay"]'
+      );
+      if (razorpayElements.length > 0) {
+        onRazorpayDetected();
+        return true;
+      }
+      return false;
+    };
+    
+    // Check immediately
+    if (checkRazorpay()) {
+      return;
+    }
+    
+    // Poll for Razorpay modal appearance (check every 100ms for up to 10 seconds)
+    let checkCount = 0;
+    const maxChecks = 100; // 10 seconds max
+    const checkInterval = setInterval(() => {
+      checkCount++;
+      if (checkRazorpay() || checkCount >= maxChecks) {
+        clearInterval(checkInterval);
+        if (checkCount >= maxChecks) {
+          console.warn('⚠️ Razorpay modal not detected after 10 seconds, hiding loader anyway');
+          onRazorpayDetected();
+        }
+      }
+    }, 100);
+    
+    return () => clearInterval(checkInterval);
+  }, [onRazorpayDetected]);
+  
+  return null;
+};
 import ConnectingModal from './modals/ConnectingModal';
 import WaitingForExpertModal from './modals/WaitingForExpertModal';
 import InCallModal from './modals/InCallModal';
@@ -51,6 +91,8 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
   const [modalState, setModalState] = useState<'selection' | 'connecting' | 'waiting' | 'incall'>('selection');
   const [callType, setCallType] = useState<'audio' | 'video'>('video');
   const [selectedDuration, setSelectedDuration] = useState<number>(15);
+  const [pendingCallCost, setPendingCallCost] = useState<{ amount: number; currency: 'INR' | 'EUR' } | null>(null);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const connectingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pendingTransactionIdRef = useRef<string | null>(null);
 
@@ -76,7 +118,55 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
     remoteVideoRef,
     callSessionId
   } = useCallFlow({
-    onCallStarted: () => {
+    onExpertAccepted: async () => {
+      // Deduct credits IMMEDIATELY when expert accepts (not when call connects)
+      // This ensures full session price is deducted as soon as expert accepts
+      if (pendingCallCost && callSessionId) {
+        try {
+          console.log('💰 Expert accepted - Deducting session price immediately:', {
+            amount: pendingCallCost.amount,
+            currency: pendingCallCost.currency,
+            callSessionId,
+            duration: selectedDuration,
+            expertName,
+            note: 'Full session price deducted on expert acceptance'
+          });
+          
+          const deductResult = await deductCredits(
+            pendingCallCost.amount,
+            'booking',
+            callSessionId,
+            'call_session',
+            `Call with ${expertName} - ${selectedDuration} minutes`,
+            pendingCallCost.currency
+          );
+          
+          console.log('💰 Deduct result:', deductResult);
+
+          if (!deductResult.success) {
+            console.error('❌ Failed to deduct credits:', deductResult.error);
+            toast.error('Failed to deduct credits. Call may be disconnected.');
+            // Don't disconnect the call, but log the error
+          } else {
+            console.log('✅ Credits deducted successfully on expert acceptance:', pendingCallCost.amount);
+            // Store transaction ID to update later if needed
+            if (deductResult.transaction?.id) {
+              pendingTransactionIdRef.current = deductResult.transaction.id;
+            }
+          }
+          
+          // Clear pending cost after deduction attempt
+          setPendingCallCost(null);
+        } catch (error) {
+          console.error('❌ Error deducting credits on expert acceptance:', error);
+          toast.error('Failed to deduct credits');
+          setPendingCallCost(null);
+        }
+      } else {
+        console.warn('⚠️ No pending call cost or call session ID when expert accepted');
+      }
+    },
+    onCallStarted: async () => {
       console.log('✅ Call started - setting modal to incall');
       setModalState('incall');
       toast.success('Call started!');
@@ -84,30 +174,69 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
     onCallEnded: () => {
       console.log('🔴 Call ended - resetting to selection');
       setModalState('selection');
+      setPendingCallCost(null); // Clear pending cost if call ends before connecting
       onClose();
     }
   });
 
-  const handleStartCall = async (selectedCallType: 'audio' | 'video', duration: number) => {
-    // Set modal to connecting state IMMEDIATELY for instant feedback
-    // Use setTimeout to ensure UI updates in next tick, allowing immediate visual feedback
+  const handleStartCall = async (
+    selectedCallType: 'audio' | 'video', 
+    duration: number, 
+    estimatedCost: number,
+    currency: 'INR' | 'EUR'
+  ) => {
+    console.log('📞 handleStartCall called in UserCallInterface:', {
+      selectedCallType,
+      duration,
+      estimatedCost,
+      currency,
+      currentModalState: modalState,
+      isOpen: isOpen
+    });
+    
+    // IMPORTANT: Set modal to connecting state IMMEDIATELY for instant feedback
+    // This ensures the modal state updates even if CallTypeSelectionModal was closed
     setModalState('connecting');
     
     // Use setTimeout(0) to ensure state update renders before async operations
     await new Promise(resolve => setTimeout(resolve, 0));
     
+    console.log('✅ Modal state updated to connecting, proceeding with call setup...');
+    
     setCallType(selectedCallType);
     setSelectedDuration(duration);
     
-    // Calculate estimated cost
-    const estimatedCost = (duration * expertPrice) / 60;
+    // Use the actual session price passed from the modal (not per-minute calculation)
+    console.log('💰 UserCallInterface - Using session price:', {
+      estimatedCost,
+      duration,
+      currency,
+      willBeDeducted: 'on call connect'
+    });
     
-    // Use the already-fetched wallet balance (fetched when modal opens)
-    // No need to fetch again as the modal already validated the balance
+    // Store the cost to deduct when call connects (not now)
+    setPendingCallCost({ amount: estimatedCost, currency });
+    
+    // Refresh wallet balance to get latest balance after payment
+    // This ensures we have the updated balance from the payment
+    console.log('💰 Refreshing wallet balance before starting call...');
+    await fetchBalance();
+    
+    // Wait a moment for balance to update
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    // Use the refreshed wallet balance
     const currentBalance = walletBalance || 0;
+    
+    console.log('💰 Wallet balance check:', {
+      currentBalance,
+      estimatedCost,
+      sufficient: currentBalance >= estimatedCost
+    });
     
     if (currentBalance < estimatedCost) {
       const shortfall = estimatedCost - currentBalance;
+      console.warn('⚠️ Still insufficient balance after payment:', shortfall);
       
       toast.error('Insufficient wallet balance', {
         description: `You need ${currencySymbol}${shortfall.toFixed(2)} more. Please recharge your wallet.`,
@@ -121,47 +250,42 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
         duration: 5000
       });
       setModalState('selection');
+      setPendingCallCost(null);
       return;
-    }
-    
-    // Deduct credits from wallet BEFORE starting call
-    const deductResult = await deductCredits(
-      estimatedCost,
-      'booking',
-      null, // Will be updated with call session ID after call is created
-      'call_session',
-      `Call with ${expertName} - ${duration} minutes`
-    );
-
-    if (!deductResult.success) {
-      toast.error(deductResult.error || 'Failed to deduct credits from wallet');
-      setModalState('selection');
-      return;
-    }
-
-    // Store transaction ID to update later with call session ID
-    if (deductResult.transaction?.id) {
-      pendingTransactionIdRef.current = deductResult.transaction.id;
     }
     
     // Start the call (this will create the call session)
+    // Pass currency correctly (INR or EUR)
+    console.log('📞 Calling startCall function with:', {
+      selectedCallType,
+      duration,
+      expertId,
+      expertAuthId,
+      estimatedCost,
+      currency
+    });
+    
     const success = await startCall(
       selectedCallType,
       duration,
       expertId,
       expertAuthId,
       estimatedCost,
-      'INR'
+      currency
     );
 
+    console.log('📞 startCall returned:', success);
+
     if (!success) {
-      // If call fails, we should refund the credits
-      // Note: In production, you'd want to add automatic refund here
-      toast.error('Failed to start call. Please contact support for refund.');
+      // If call fails, clear pending cost (no deduction happened)
+      console.error('❌ startCall returned false - call failed to start');
+      toast.error('Failed to start call. Please try again.');
       setModalState('selection');
-      pendingTransactionIdRef.current = null; // Clear pending transaction
+      setPendingCallCost(null);
       return;
     }
+    
+    console.log('✅ startCall succeeded - call session created, waiting for expert...');
 
     // After a brief delay, transition to waiting state
     // This gives time for the connecting modal to be visible
@@ -234,9 +358,10 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
         connectingTimeoutRef.current = null;
       }
     } else {
-      // Refresh wallet balance when modal opens (silently handle errors)
+      // Reset to selection when modal opens
+      setModalState('selection');
+      // Refresh wallet balance when modal opens
       fetchBalance().catch(err => {
-        // Silently handle errors - they're already logged in useWallet
         console.warn('Could not fetch wallet balance on modal open:', err);
       });
     }
@@ -258,6 +383,8 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
+
+  // This useEffect is now handled in the isOpen useEffect above
 
   if (!isOpen) {
     return null;
@@ -333,6 +460,7 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
               <AlertDialogFooter>
                 <AlertDialogAction
                   onClick={async () => {
+                    setPendingCallCost(null); // Clear pending cost since call was declined
                     await confirmExpertDeclinedCall();
                   }}
                   className="w-full sm:w-auto"
@@ -428,18 +556,50 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
     );
   }
 
+  // Default: Show CallTypeSelectionModal when isOpen is true
   return (
-        <CallTypeSelectionModal
-          isOpen={true}
-          onClose={onClose}
-          expertName={expertName}
-          expertId={expertId}
-          expertAuthId={expertAuthId}
-          expertPrice={expertPrice}
-          onStartCall={handleStartCall}
-          walletBalance={walletBalance}
-          walletLoading={walletLoading}
+    <>
+      <CallTypeSelectionModal
+        isOpen={isOpen}
+        onClose={onClose}
+        expertName={expertName}
+        expertId={expertId}
+        expertAuthId={expertAuthId}
+        expertPrice={expertPrice}
+        onStartCall={handleStartCall}
+        walletBalance={walletBalance}
+        walletLoading={walletLoading}
+        isProcessingPayment={isProcessingPayment}
+        setIsProcessingPayment={setIsProcessingPayment}
+      />
+      
+      {/* Processing Payment Loader - shown outside modal so it persists after modal closes */}
+      {isProcessingPayment && (
+        <div className="fixed inset-0 z-[999998] bg-black/80 backdrop-blur-sm flex items-center justify-center">
+          <div className="bg-background rounded-lg p-8 max-w-sm mx-4 shadow-xl">
+            <div className="flex flex-col items-center space-y-4">
+              <Loader2 className="h-12 w-12 animate-spin text-primary" />
+              <div className="text-center space-y-2">
+                <h3 className="text-lg font-semibold">Processing Payment</h3>
+                <p className="text-sm text-muted-foreground">
+                  Please wait while we process your payment...
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Monitor for Razorpay modal and hide loader when it appears */}
+      {isProcessingPayment && (
+        <RazorpayDetector 
+          onRazorpayDetected={() => {
+            console.log('✅ Razorpay modal detected, hiding processing loader');
+            setIsProcessingPayment(false);
+          }}
         />
+      )}
+    </>
   );
 };
 

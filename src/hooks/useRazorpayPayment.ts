@@ -40,7 +40,7 @@ export const useRazorpayPayment = () => {
 
   const processPayment = async (
     paymentDetails: PaymentDetails,
-    onSuccess: (paymentId: string, orderId: string) => void,
+    onSuccess: (paymentId: string, orderId: string, newBalance?: number) => void,
     onFailure: (error: any) => void,
     onPaymentReceived?: () => void // Callback called immediately when payment is received (before verification)
   ): Promise<void> => {
@@ -187,10 +187,28 @@ export const useRazorpayPayment = () => {
       };
 
       // Close dialogs before opening Razorpay
+      console.log('🔒 Closing all dialogs before opening Razorpay...');
       closeAllDialogs();
       
-      // Small delay to ensure dialogs are closed and animations complete before Razorpay opens
-      await new Promise(resolve => setTimeout(resolve, 150));
+      // Longer delay to ensure dialogs are closed and animations complete before Razorpay opens
+      await new Promise(resolve => setTimeout(resolve, 400));
+      
+      // Double-check: Force close any remaining dialogs
+      const remainingDialogs = document.querySelectorAll('[data-radix-dialog-overlay][data-state="open"], [data-radix-alert-dialog-overlay][data-state="open"]');
+      if (remainingDialogs.length > 0) {
+        console.log(`⚠️ Found ${remainingDialogs.length} remaining dialogs, force closing...`);
+        remainingDialogs.forEach((dialog) => {
+          const closeBtn = dialog.querySelector('[data-radix-dialog-close], [data-radix-alert-dialog-close]');
+          if (closeBtn) {
+            (closeBtn as HTMLElement).click();
+          }
+          // Also try clicking the overlay itself
+          (dialog as HTMLElement).click();
+        });
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+      
+      console.log('✅ All dialogs closed, opening Razorpay...');
 
       // Show currency conversion notice if user currency is not INR
       if (paymentDetails.currency === 'EUR') {
@@ -373,7 +391,9 @@ export const useRazorpayPayment = () => {
 
             if (verifyData?.success) {
               console.log('✅ Payment verified successfully:', verifyData);
-              onSuccess(response.razorpay_payment_id, response.razorpay_order_id);
+              // Pass newBalance from database response if available
+              const newBalance = verifyData?.newBalance;
+              onSuccess(response.razorpay_payment_id, response.razorpay_order_id, newBalance);
               toast.success('Payment successful!');
             } else {
               console.error('❌ Payment verification failed - no success flag:', verifyData);

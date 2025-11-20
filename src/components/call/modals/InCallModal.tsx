@@ -126,7 +126,36 @@ const InCallModal: React.FC<InCallModalProps> = ({
         setTimeout(playVideo, 50);
       });
       
-      return () => cancelAnimationFrame(rafId);
+      return () => {
+        cancelAnimationFrame(rafId);
+        // Cleanup: Stop all video elements when component unmounts or call ends
+        if (localVideoRef.current) {
+          const videoElements = localVideoRef.current.querySelectorAll('video');
+          videoElements.forEach(video => {
+            try {
+              video.pause();
+              video.srcObject = null;
+              video.load();
+              console.log('✅ Stopped and cleared local video element');
+            } catch (cleanupError) {
+              console.warn('⚠️ Error cleaning up video element:', cleanupError);
+            }
+          });
+        }
+      };
+    } else if (!callState?.localVideoTrack && localVideoRef.current) {
+      // If video track is removed, clean up video elements immediately
+      const videoElements = localVideoRef.current.querySelectorAll('video');
+      videoElements.forEach(video => {
+        try {
+          video.pause();
+          video.srcObject = null;
+          video.load();
+          console.log('✅ Cleaned up video element (track removed)');
+        } catch (cleanupError) {
+          console.warn('⚠️ Error cleaning up video element:', cleanupError);
+        }
+      });
     }
   }, [callType, callState?.localVideoTrack, callState?.isVideoEnabled, localVideoRef, isOpen]);
 

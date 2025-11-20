@@ -11,6 +11,7 @@ interface WalletTransaction {
   id: string;
   type: 'credit' | 'debit';
   amount: number;
+  currency: 'INR' | 'EUR';
   reason: string;
   description: string | null;
   reference_id: string | null;
@@ -118,7 +119,12 @@ const WalletTransactionsList: React.FC<WalletTransactionsListProps> = ({ user })
     return labels[reason] || reason;
   };
 
-  const { code: currency, symbol } = useUserCurrency();
+  const { symbol: defaultSymbol } = useUserCurrency();
+  
+  const getCurrencySymbol = (currency: 'INR' | 'EUR' | undefined) => {
+    if (!currency) return defaultSymbol;
+    return currency === 'INR' ? '₹' : '€';
+  };
 
   if (loading) {
     return (
@@ -205,7 +211,7 @@ const WalletTransactionsList: React.FC<WalletTransactionsListProps> = ({ user })
                 <div className={`text-right ${getTransactionColor(transaction.type)}`}>
                   <p className="font-bold">
                     {transaction.type === 'credit' ? '+' : '-'}
-                    {symbol}{transaction.amount.toFixed(2)}
+                    {getCurrencySymbol(transaction.currency)}{transaction.amount.toFixed(2)}
                   </p>
                   <p className="text-xs">
                     {transaction.type === 'credit' ? 'Credited' : 'Debited'}

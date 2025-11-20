@@ -23,12 +23,10 @@ import {
  } from 'lucide-react';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { useExpertPresence } from '@/contexts/ExpertPresenceContext';
-// TODO: Re-implement currency hook or remove dependency
-// import { useUserCurrency } from '@/hooks/call/useUserCurrency';
+import { useUserCurrency } from '@/hooks/useUserCurrency';
 import { supabase } from '@/lib/supabase';
 import AgoraCallInterface from '@/components/expert-dashboard/call/AgoraCallInterface';
 import { acceptCall, declineCall } from '@/services/callService';
-import IncomingCallDialog from '@/components/expert-dashboard/call/IncomingCallDialog';
 import ExpertInCallModal from '@/components/expert-dashboard/call/ExpertInCallModal';
 import { toast } from 'sonner';
 
@@ -63,16 +61,13 @@ const CallManagementPage: React.FC = () => {
   const { expert } = useSimpleAuth();
   const { getExpertPresence } = useExpertPresence();
   const location = useLocation();
-  // TODO: Re-implement currency logic
-  const currency = 'INR'; // Default currency
-  const currencySymbol = '₹';
+  const { code: currency, symbol: currencySymbol } = useUserCurrency();
   
   const [autoAcceptCalls, setAutoAcceptCalls] = useState(false);
   const [incomingCalls, setIncomingCalls] = useState<CallRequest[]>([]);
   const [missedCalls, setMissedCalls] = useState<CallRequest[]>([]);
   const [offlineMessages, setOfflineMessages] = useState<OfflineMessage[]>([]);
   const [currentCall, setCurrentCall] = useState<CallRequest | null>(null);
-  const [incomingCallDialog, setIncomingCallDialog] = useState<CallRequest | null>(null);
   const [callStats, setCallStats] = useState({
     todaysCalls: 0,
     totalDuration: 0,
@@ -205,8 +200,8 @@ const CallManagementPage: React.FC = () => {
               return [newCall, ...prev];
             });
             
-            // Show incoming call dialog popup
-            setIncomingCallDialog(newCall);
+            // Don't show dialog here - the global dialog in NewExpertDashboard handles it
+            // Just update the list for display purposes
             
             // Show toast notification as backup
             const userName = newCall.user_metadata?.name || 'A user';
@@ -225,10 +220,9 @@ const CallManagementPage: React.FC = () => {
                   badge: '/favicon.ico'
                 });
 
-                // Handle notification click
+                // Handle notification click - navigate to calls page
                 notification.onclick = () => {
                   window.focus();
-                  setIncomingCallDialog(newCall);
                   notification.close();
                 };
               } catch (err) {
@@ -248,7 +242,6 @@ const CallManagementPage: React.FC = () => {
 
                     notification.onclick = () => {
                       window.focus();
-                      setIncomingCallDialog(newCall);
                       notification.close();
                     };
                   } catch (err) {
@@ -371,7 +364,6 @@ const CallManagementPage: React.FC = () => {
       
       // Remove from incoming calls list
       setIncomingCalls(prev => prev.filter(c => c.id !== callId));
-      setIncomingCallDialog(null); // Close dialog
     } catch (error) {
       console.error('Error accepting call:', error);
       toast.error('Failed to accept call');
@@ -387,8 +379,10 @@ const CallManagementPage: React.FC = () => {
         return;
       }
 
+      // Remove from incoming calls list and close current dialog
+      // Remove from incoming calls list
       setIncomingCalls(prev => prev.filter(c => c.id !== callId));
-      setIncomingCallDialog(null); // Close dialog
+      
       toast.info('Call declined');
     } catch (error) {
       console.error('Error declining call:', error);
@@ -584,7 +578,13 @@ const CallManagementPage: React.FC = () => {
                               {call.user_metadata?.name || 'Anonymous User'}
                             </h3>
                              <p className="text-sm text-gray-600">
-                               {call.call_type} call • {call.estimated_cost_inr ? `₹${call.estimated_cost_inr}` : call.estimated_cost_eur ? `€${call.estimated_cost_eur}` : `$${call.estimated_cost_usd || 0}`}
+                               {call.call_type} call • {
+                                 call.estimated_cost_inr && currency === 'INR' ? `₹${call.estimated_cost_inr}` : 
+                                 call.estimated_cost_eur && currency === 'EUR' ? `€${call.estimated_cost_eur}` :
+                                 call.estimated_cost_inr ? `₹${call.estimated_cost_inr}` : 
+                                 call.estimated_cost_eur ? `€${call.estimated_cost_eur}` : 
+                                 `$${call.estimated_cost_usd || 0}`
+                               }
                              </p>
                             <p className="text-xs text-gray-500">
                               Requested at {formatTime(call.created_at)}
@@ -645,7 +645,13 @@ const CallManagementPage: React.FC = () => {
                               {call.user_metadata?.name || 'Anonymous User'}
                             </h3>
                              <p className="text-sm text-gray-600">
-                               {call.call_type} call • {call.estimated_cost_inr ? `₹${call.estimated_cost_inr}` : call.estimated_cost_eur ? `€${call.estimated_cost_eur}` : `$${call.estimated_cost_usd || 0}`}
+                               {call.call_type} call • {
+                                 call.estimated_cost_inr && currency === 'INR' ? `₹${call.estimated_cost_inr}` : 
+                                 call.estimated_cost_eur && currency === 'EUR' ? `€${call.estimated_cost_eur}` :
+                                 call.estimated_cost_inr ? `₹${call.estimated_cost_inr}` : 
+                                 call.estimated_cost_eur ? `€${call.estimated_cost_eur}` : 
+                                 `$${call.estimated_cost_usd || 0}`
+                               }
                              </p>
                             <p className="text-xs text-gray-500">
                               Missed at {formatTime(call.created_at)}
@@ -802,14 +808,7 @@ const CallManagementPage: React.FC = () => {
         />
       )}
 
-      {/* Incoming Call Dialog */}
-      <IncomingCallDialog
-        callRequest={incomingCallDialog}
-        isOpen={!!incomingCallDialog}
-        onAccept={handleAcceptCall}
-        onDecline={handleDeclineCall}
-        onClose={() => setIncomingCallDialog(null)}
-      />
+      {/* Incoming Call Dialog is handled globally by NewExpertDashboard */}
     </div>
   );
 };

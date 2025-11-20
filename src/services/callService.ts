@@ -350,8 +350,17 @@ export async function declineCall(callRequestId: string): Promise<boolean> {
 
 /**
  * End a call and update session
+ * @param callSessionId - The call session ID
+ * @param duration - Call duration in seconds
+ * @param endedBy - Who ended the call ('user' or 'expert')
+ * @param disconnectionReason - Reason for disconnection ('network_error' | 'normal' | 'user_ended' | 'expert_ended')
  */
-export async function endCall(callSessionId: string, duration?: number, endedBy?: 'user' | 'expert'): Promise<boolean> {
+export async function endCall(
+  callSessionId: string, 
+  duration?: number, 
+  endedBy?: 'user' | 'expert',
+  disconnectionReason: 'network_error' | 'normal' | 'user_ended' | 'expert_ended' = 'normal'
+): Promise<boolean> {
   try {
     const endTime = new Date().toISOString();
     
@@ -412,8 +421,15 @@ export async function endCall(callSessionId: string, duration?: number, endedBy?
     console.log('✅ Call session status updated to ended - real-time subscription should trigger now');
 
     // Now process refund asynchronously (don't block the status update)
-    // Calculate and process refund if expert ended the call
-    if (endedBy === 'expert' && callSession?.user_id && callSession?.cost && callSession?.selected_duration && duration !== undefined) {
+    // IMPORTANT: Only refund if there was a network problem, not for normal call endings
+    // Calculate and process refund ONLY if disconnection was due to network error
+    const shouldRefund = disconnectionReason === 'network_error' && 
+                         callSession?.user_id && 
+                         callSession?.cost && 
+                         callSession?.selected_duration && 
+                         duration !== undefined;
+    
+    if (shouldRefund) {
       try {
         // Calculate refund: refund = cost - (remaining_minutes * per_minute_rate)
         // Per-minute rate = cost / selected_duration
@@ -429,13 +445,14 @@ export async function endCall(callSessionId: string, duration?: number, endedBy?
         const roundedRefund = Math.round(refundAmount * 100) / 100;
         
         if (roundedRefund > 0) {
-          console.log('💰 Calculating refund:', {
+          console.log('💰 Calculating refund due to network error:', {
             cost: callSession.cost,
             selected_duration: callSession.selected_duration,
             actual_duration_minutes: actualDurationMinutes,
             remaining_minutes: remainingMinutes,
             per_minute_rate: perMinuteRate,
-            refund_amount: roundedRefund
+            refund_amount: roundedRefund,
+            disconnection_reason: disconnectionReason
           });
 
           // Process refund using dedicated edge function (works for both expert and user ending call)
