@@ -42,6 +42,7 @@ import type { IAgoraRTCClient } from 'agora-rtc-sdk-ng';
 import { toast } from 'sonner';
 import { endCall } from '@/services/callService';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
+import CallInterruptionModal from '@/components/call/modals/CallInterruptionModal';
 
 interface UserMetadata {
   name?: string;
@@ -83,6 +84,7 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
   const [callStartTime, setCallStartTime] = useState<Date | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [wasDisconnected, setWasDisconnected] = useState(false);
+  const [showInterruptionModal, setShowInterruptionModal] = useState(false);
   
   const clientRef = useRef<IAgoraRTCClient | null>(null);
   const localVideoRef = useRef<HTMLDivElement>(null);
@@ -93,6 +95,7 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
   const [showEndCallConfirm, setShowEndCallConfirm] = useState(false);
   const [showUserEndCallConfirmation, setShowUserEndCallConfirmation] = useState(false);
   const [showChat, setShowChat] = useState(false);
+  const hasBeenConnectedRef = useRef<boolean>(false);
   const { expert } = useSimpleAuth();
   const expertName = expert?.name || 'Expert';
 
@@ -128,6 +131,23 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
   // Join the Agora call
   const handleJoinCall = async () => {
     try {
+      // Prevent duplicate joins - check if we're already in the process of joining
+      if (clientRef.current) {
+        const connectionState = clientRef.current.connectionState;
+        if (connectionState === 'CONNECTING' || connectionState === 'CONNECTED') {
+          console.log('⚠️ Expert: Client already exists and is connecting/connected, skipping duplicate join');
+          return;
+        }
+        // If client exists but is disconnected, clean it up first
+        console.log('🧹 Expert: Cleaning up existing disconnected client before creating new one');
+        try {
+          await clientRef.current.leave();
+        } catch (leaveError) {
+          console.warn('⚠️ Expert: Error leaving existing client:', leaveError);
+        }
+        clientRef.current = null;
+      }
+
       setIsConnecting(true);
       console.log('🔗 Expert joining Agora call...', {
         channel_name: callRequest.channel_name,
@@ -167,15 +187,23 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
       clientRef.current = client;
 
       // Track connection state changes for network disconnection detection
-      let hasBeenConnected = false;
       client.on('connection-state-change', (curState, revState) => {
         console.log('📡 Expert connection state changed:', curState, revState);
         if (curState === 'CONNECTED') {
-          hasBeenConnected = true;
+          hasBeenConnectedRef.current = true;
           setWasDisconnected(false);
-        } else if ((curState === 'DISCONNECTED' || curState === 'RECONNECTING') && hasBeenConnected) {
-          setWasDisconnected(true);
+          setShowInterruptionModal(false);
+        } else if (curState === 'RECONNECTING' && hasBeenConnectedRef.current) {
+          // RECONNECTING is normal - Agora is trying to reconnect automatically
+          // Only show interruption modal if it's been reconnecting for a while
+          console.log('🔄 Agora is automatically reconnecting...');
+          // Don't show modal immediately - let Agora try to reconnect first
+        } else if (curState === 'DISCONNECTED' && hasBeenConnectedRef.current) {
+          // Only show interruption modal if we were previously connected
+          // and Agora has given up on automatic reconnection
           console.log('⚠️ Network disconnection detected');
+          setWasDisconnected(true);
+          setShowInterruptionModal(true);
         }
       });
 
@@ -525,6 +553,8 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
       currentSessionIdRef.current = null;
       setCallStartTime(null);
       setCallDuration(0);
+      setShowInterruptionModal(false);
+      hasBeenConnectedRef.current = false;
       console.log('🧹 All refs cleared');
 
       console.log('🔴 Step 10: All cleanup done, showing toast and calling onCallEnd');
@@ -610,6 +640,68 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
     }));
   };
 
+  // Rejoin call (expert side)
+  const handleRejoinCall = useCallback(async () => {
+    try {
+      if (!callRequest.call_session_id) {
+        toast.error('No call session found to rejoin');
+        setShowInterruptionModal(false);
+        return;
+      }
+
+      // Verify session is still active
+      const { data: session } = await supabase
+        .from('call_sessions')
+        .select('status, start_time, selected_duration')
+        .eq('id', callRequest.call_session_id)
+        .single();
+
+      if (!session || session.status !== 'active') {
+        toast.error('Call session has ended');
+        setShowInterruptionModal(false);
+        return;
+      }
+
+      // Check 10-minute grace window
+      if (session.start_time) {
+        const callStartTime = new Date(session.start_time);
+        const now = new Date();
+        const timeDiff = now.getTime() - callStartTime.getTime();
+        const minutesDiff = timeDiff / (1000 * 60);
+        
+        // Check if more than 10 minutes have passed since call start
+        if (minutesDiff > 10) {
+          toast.error('The grace window for rejoining has expired. The call session has ended.');
+          setShowInterruptionModal(false);
+          return;
+        }
+      }
+
+      // Restore call start time if available
+      if (session.start_time) {
+        setCallStartTime(new Date(session.start_time));
+        startDurationTimer(new Date(session.start_time));
+      }
+
+      // Rejoin the call
+      await handleJoinCall();
+      setShowInterruptionModal(false);
+      toast.success('Rejoined call successfully!');
+    } catch (error) {
+      console.error('❌ Error rejoining call:', error);
+      toast.error('Failed to rejoin call');
+      setShowInterruptionModal(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [callRequest.call_session_id, startDurationTimer]);
+
+  // Handle interruption end call
+  const handleInterruptionEndCall = useCallback(async () => {
+    setShowInterruptionModal(false);
+    await handleLeaveCall();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Handle user end call confirmation - cleanup after expert confirms
   const confirmUserEndCall = useCallback(async () => {
     console.log('✅ Expert confirmed user ended call, cleaning up...');
@@ -673,6 +765,15 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
 
   // Auto-join on mount if not already joined
   useEffect(() => {
+    // Prevent duplicate joins - check if client already exists and is connecting/connected
+    if (clientRef.current) {
+      const connectionState = clientRef.current.connectionState;
+      if (connectionState === 'CONNECTING' || connectionState === 'CONNECTED') {
+        console.log('⚠️ Expert: Auto-join skipped - client already connecting/connected');
+        return;
+      }
+    }
+
     if (!callState.isJoined && !isConnecting && callRequest.channel_name) {
       console.log('🚀 Auto-joining call on mount...', {
         channel_name: callRequest.channel_name,
@@ -962,6 +1063,14 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
                 End Call
               </Button>
         </div>
+
+      {/* Call Interruption Modal */}
+      <CallInterruptionModal
+        isOpen={showInterruptionModal}
+        onRejoin={handleRejoinCall}
+        onEndCall={handleInterruptionEndCall}
+        isUser={false}
+      />
 
       {/* Expert End Call Confirmation */}
       <AlertDialog open={showEndCallConfirm} onOpenChange={setShowEndCallConfirm}>

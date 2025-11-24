@@ -92,8 +92,9 @@ export async function initiateCall(params: InitiateCallParams): Promise<CallRequ
     const expertAgoraToken = expertTokenData?.token || null;
     console.log('✅ Agora token generated for expert (UID:', expertUid, ')');
 
-    // Create call session
-    const callSessionId = `session_${expertAuthId}_${userId}_${timestamp}`;
+    // Create call session with UUID
+    // Use crypto.randomUUID() for proper UUID format that can be stored in reference_id
+    const callSessionId = crypto.randomUUID();
     
     const { data: sessionData, error: sessionError } = await supabase
       .from('call_sessions')

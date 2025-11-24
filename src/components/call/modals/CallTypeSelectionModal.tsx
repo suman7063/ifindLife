@@ -154,8 +154,9 @@ const CallTypeSelectionModal: React.FC<CallTypeSelectionModalProps> = ({
           ? categoryData.base_price_60_inr
           : categoryData.base_price_60_eur;
         
-        const price30 = price30Raw != null ? Number(price30Raw) : 0;
-        const price60 = price60Raw != null ? Number(price60Raw) : 0;
+        // Convert to numbers - handle string values from database
+        const price30 = price30Raw != null ? parseFloat(String(price30Raw)) : 0;
+        const price60 = price60Raw != null ? parseFloat(String(price60Raw)) : 0;
 
         console.log('📊 Fetched pricing from database:', {
           category: expertAccount.category,
@@ -164,22 +165,28 @@ const CallTypeSelectionModal: React.FC<CallTypeSelectionModalProps> = ({
           price60,
           price30Raw,
           price60Raw,
+          price30Type: typeof price30Raw,
+          price60Type: typeof price60Raw,
           categoryData
         });
 
         // Only set pricing if we got valid values from database
+        // IMPORTANT: Check if price is > 0, not just truthy (to handle 0 values correctly)
         if (price30 > 0 || price60 > 0) {
-        // Calculate pricing for durations
-        // 30m and 60m use direct database values
-        const calculatedPricing: { [key: number]: number } = {
-          30: price30,
-          60: price60
-        };
+          // Calculate pricing for durations
+          // 30m and 60m use direct database values
+          const calculatedPricing: { [key: number]: number } = {
+            30: price30,
+            60: price60
+          };
 
-          console.log('✅ Setting pricing from database:', calculatedPricing);
-        setPricing(calculatedPricing);
+          console.log('✅ Setting pricing from database:', calculatedPricing, {
+            note: 'These are the actual session prices, not per-minute rates'
+          });
+          setPricing(calculatedPricing);
         } else {
           console.warn('⚠️ Database prices are 0 or invalid, using fallback');
+          console.warn('⚠️ This will cause incorrect pricing - check database values!');
           calculateFallbackPricing();
         }
       } catch (error) {
@@ -209,10 +216,16 @@ const CallTypeSelectionModal: React.FC<CallTypeSelectionModalProps> = ({
 
   // Get estimated cost for current duration
   // IMPORTANT: Use pricing from database if available (should be the actual session price)
-  // Only use fallback if pricing[duration] is undefined, null, or 0
+  // Only use fallback if pricing[duration] is undefined or null (not if it's 0, as 0 is a valid price)
   const pricingFromDB = pricing[duration];
   const fallbackCost = (duration * expertPrice) / 60;
-  const estimatedCost = (pricingFromDB && pricingFromDB > 0) ? pricingFromDB : fallbackCost;
+  
+  // CRITICAL: Check if pricingFromDB exists (not undefined/null)
+  // If pricingFromDB is 0, that's a valid price, so we should use it
+  // Only use fallback if pricingFromDB is undefined or null
+  const estimatedCost = (pricingFromDB !== undefined && pricingFromDB !== null) 
+    ? pricingFromDB 
+    : fallbackCost;
   
   // Log pricing for debugging
   console.log('💰 CallTypeSelectionModal - Pricing calculation:', {
@@ -221,11 +234,25 @@ const CallTypeSelectionModal: React.FC<CallTypeSelectionModalProps> = ({
     expertPrice,
     estimatedCost,
     pricingFromDB,
-    usingDatabasePrice: (pricingFromDB && pricingFromDB > 0),
+    pricingFromDBType: typeof pricingFromDB,
+    usingDatabasePrice: (pricingFromDB !== undefined && pricingFromDB !== null),
     fallbackCalculation: fallbackCost,
     currency,
-    warning: (pricingFromDB === 0 || !pricingFromDB) ? '⚠️ Using fallback - database price not available!' : '✅ Using database price'
+    warning: (pricingFromDB === undefined || pricingFromDB === null) 
+      ? '⚠️ Using fallback - database price not available!' 
+      : '✅ Using database price'
   });
+  
+  // Additional warning if using fallback when database price should be available
+  if (pricingFromDB === undefined || pricingFromDB === null) {
+    console.warn('⚠️ WARNING: Using fallback pricing calculation!', {
+      duration,
+      pricing,
+      expectedPrice: 'Should be from database',
+      fallbackPrice: fallbackCost,
+      issue: 'Database pricing not loaded or duration not in pricing object'
+    });
+  }
   
   const safeWalletBalance = typeof walletBalance === 'number' && !isNaN(walletBalance) ? walletBalance : 0;
   // Don't show insufficient message while loading
@@ -355,25 +382,23 @@ const CallTypeSelectionModal: React.FC<CallTypeSelectionModalProps> = ({
         modalIsOpen: isOpen
       });
       
-      // IMPORTANT: Call onStartCall BEFORE closing modal
-      // This ensures UserCallInterface receives the call start request
-      // onStartCall will trigger handleStartCall in UserCallInterface
-      // which will update modal state to 'connecting' and start the call
+      // IMPORTANT: Call onStartCall which will update modalState to 'connecting' in UserCallInterface
+      // This ensures the connecting modal shows before we close this modal
       console.log('📞 About to call onStartCall...');
       onStartCall(callType, duration, estimatedCost, currency);
       console.log('✅ onStartCall called - UserCallInterface should handle the call now');
       
-      // Don't close modal immediately - let UserCallInterface handle the state transition
-      // The modal will close when UserCallInterface changes modalState to 'connecting'
-      // Small delay to ensure onStartCall is processed
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Wait for UserCallInterface to update modalState to 'connecting'
+      // This ensures the connecting modal is ready before we close this modal
+      await new Promise(resolve => setTimeout(resolve, 300));
       
-      // Now close this modal - UserCallInterface modal state should be 'connecting' by now
-      onClose();
-      
+      // IMPORTANT: Don't call onClose() here - it will unmount the entire UserCallInterface
+      // Instead, just close this modal by setting isOpen to false
+      // The parent will keep UserCallInterface mounted because modalState is 'connecting'
+      // We'll handle this by not rendering CallTypeSelectionModal when modalState !== 'selection'
       setIsProcessingPayment(false);
       
-      console.log('✅ Modal closed after onStartCall - call flow should continue in UserCallInterface');
+      console.log('✅ Call started - CallTypeSelectionModal will hide, ConnectingModal should be visible now');
     } catch (error) {
       const err = error as Error & { name?: string };
       setIsProcessingPayment(false);

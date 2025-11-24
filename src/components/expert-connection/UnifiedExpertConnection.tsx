@@ -50,7 +50,8 @@ const UnifiedExpertConnection: React.FC<UnifiedExpertConnectionProps> = ({
       {/* Expert Detail Modal removed - now using dedicated pages */}
 
       {/* Call Modal */}
-      {state.isCallModalOpen && state.selectedExpert && (
+      {/* Keep UserCallInterface mounted if call is in progress, even if isCallModalOpen is false */}
+      {(state.isCallModalOpen || state.selectedExpert) && state.selectedExpert && (
         <UserCallInterface
           isOpen={state.isCallModalOpen}
           onClose={closeCallModal}

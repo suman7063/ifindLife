@@ -300,6 +300,27 @@ async function deductCredits(
     }
 
     // Create debit transaction
+    // Note: reference_id is UUID type - if referenceId is not a valid UUID, store it in metadata
+    const isUUID = referenceId && typeof referenceId === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(referenceId)
+    
+    console.log('💰 Creating debit transaction:', {
+      userId,
+      amount,
+      currency: validCurrency,
+      reason,
+      referenceId,
+      referenceIdType: typeof referenceId,
+      referenceType,
+      isUUID,
+      willStoreInMetadata: !isUUID && referenceId
+    })
+    
+    // Prepare metadata - store referenceId in metadata if it's not a UUID
+    const transactionMetadata: Record<string, any> = {};
+    if (referenceId && !isUUID) {
+      transactionMetadata.reference_id = referenceId;
+    }
+    
     const { data, error } = await supabase
       .from('wallet_transactions')
       .insert({
@@ -308,15 +329,25 @@ async function deductCredits(
         amount: amount,
         currency: validCurrency,
         reason: reason,
-        reference_id: referenceId,
+        reference_id: isUUID ? referenceId : null, // Only set if it's a valid UUID
         reference_type: referenceType,
         description: description || `Credits deducted: ${reason}`,
-        metadata: {}
+        metadata: transactionMetadata // Store non-UUID reference in metadata, or empty object if UUID
       })
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error('❌ Error inserting wallet transaction:', error)
+      throw error
+    }
+    
+    console.log('✅ Wallet transaction created successfully:', {
+      transactionId: data?.id,
+      amount: data?.amount,
+      referenceId: data?.reference_id,
+      metadata: data?.metadata
+    })
 
     // Update user's wallet_balance (for backward compatibility)
     const { error: updateError } = await supabase

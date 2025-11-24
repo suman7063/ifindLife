@@ -20,7 +20,7 @@ import type { IAgoraRTCClient } from 'agora-rtc-sdk-ng';
 export interface UseCallFlowOptions {
   expertId?: string;
   expertAuthId?: string;
-  onExpertAccepted?: () => void; // Called when expert accepts the call
+  onExpertAccepted?: (callSessionId: string) => void; // Called when expert accepts the call, with callSessionId
   onCallStarted?: () => void; // Called when call actually connects
   onCallEnded?: () => void;
 }
@@ -39,6 +39,7 @@ export interface CallFlowState {
   error: string | null;
   showRejoin: boolean;
   wasDisconnected: boolean;
+  showInterruptionModal: boolean;
   expertEndedCall: boolean;
   showExpertEndCallConfirmation: boolean;
   expertDeclinedCall: boolean;
@@ -61,6 +62,7 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
     error: null,
     showRejoin: false,
     wasDisconnected: false,
+    showInterruptionModal: false,
     expertEndedCall: false,
     showExpertEndCallConfirmation: false,
     expertDeclinedCall: false,
@@ -107,6 +109,23 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
       return;
     }
     
+    // Prevent duplicate joins - check if we're already in the process of joining
+    if (clientRef.current) {
+      const connectionState = clientRef.current.connectionState;
+      if (connectionState === 'CONNECTING' || connectionState === 'CONNECTED') {
+        console.log('⚠️ Client already exists and is connecting/connected, skipping duplicate join');
+        return;
+      }
+      // If client exists but is disconnected, clean it up first
+      console.log('🧹 Cleaning up existing disconnected client before creating new one');
+      try {
+        await clientRef.current.leave();
+      } catch (leaveError) {
+        console.warn('⚠️ Error leaving existing client:', leaveError);
+      }
+      clientRef.current = null;
+    }
+    
     try {
       console.log('🔗 Joining Agora call...');
       
@@ -117,20 +136,30 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
       client.on('connection-state-change', (curState, revState) => {
         console.log('📡 Connection state changed:', curState, revState);
         
-          if (curState === 'CONNECTED') {
-            hasBeenConnectedRef.current = true;
-      setFlowState(prev => ({
-        ...prev,
-              showRejoin: false,
-              wasDisconnected: false
-            }));
-        } else if ((curState === 'DISCONNECTED' || curState === 'RECONNECTING') && hasBeenConnectedRef.current) {
-              setFlowState(prev => ({
-                ...prev,
-                  showRejoin: true,
-                  wasDisconnected: true
-              }));
-            }
+        if (curState === 'CONNECTED') {
+          hasBeenConnectedRef.current = true;
+          setFlowState(prev => ({
+            ...prev,
+            showRejoin: false,
+            wasDisconnected: false,
+            showInterruptionModal: false
+          }));
+        } else if (curState === 'RECONNECTING' && hasBeenConnectedRef.current) {
+          // RECONNECTING is normal - Agora is trying to reconnect automatically
+          // Only show interruption modal if it's been reconnecting for a while
+          console.log('🔄 Agora is automatically reconnecting...');
+          // Don't show modal immediately - let Agora try to reconnect first
+        } else if (curState === 'DISCONNECTED' && hasBeenConnectedRef.current) {
+          // Only show interruption modal if we were previously connected
+          // and Agora has given up on automatic reconnection
+          console.log('⚠️ Connection disconnected after being connected');
+          setFlowState(prev => ({
+            ...prev,
+            showRejoin: true,
+            wasDisconnected: true,
+            showInterruptionModal: true
+          }));
+        }
       });
 
       // Set up event listeners
@@ -462,9 +491,11 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
               console.log('✅ Expert accepted via real-time, joining call...');
               
               // Call onExpertAccepted callback when expert accepts (before joining call)
+              // Pass callSessionId directly from callData to ensure it's available
               if (options.onExpertAccepted) {
                 try {
-                  await options.onExpertAccepted();
+                  console.log('💰 Calling onExpertAccepted with callSessionId:', callData.callSessionId);
+                  await options.onExpertAccepted(callData.callSessionId);
                 } catch (error) {
                   console.error('❌ Error in onExpertAccepted callback:', error);
                 }
@@ -518,9 +549,11 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
             console.log('✅ Expert accepted (via polling), joining call...');
             
             // Call onExpertAccepted callback when expert accepts (before joining call)
+            // Pass callSessionId directly from callData to ensure it's available
             if (options.onExpertAccepted) {
               try {
-                await options.onExpertAccepted();
+                console.log('💰 Calling onExpertAccepted with callSessionId (polling):', callData.callSessionId);
+                await options.onExpertAccepted(callData.callSessionId);
               } catch (error) {
                 console.error('❌ Error in onExpertAccepted callback:', error);
               }
@@ -712,6 +745,7 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
         error: null,
       showRejoin: false,
       wasDisconnected: false,
+      showInterruptionModal: false,
       expertEndedCall: false,
       showExpertEndCallConfirmation: false,
       expertDeclinedCall: false,
@@ -831,7 +865,8 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
         setFlowState(prev => ({
           ...prev,
           showRejoin: false,
-          wasDisconnected: false
+          wasDisconnected: false,
+          showInterruptionModal: false
         }));
         return false;
       }
@@ -852,9 +887,32 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
         setFlowState(prev => ({
           ...prev,
           showRejoin: false,
-          wasDisconnected: false
+          wasDisconnected: false,
+          showInterruptionModal: false
         }));
         return false;
+      }
+
+      // Check 10-minute grace window
+      if (callData.callStartTime) {
+        const callStartTime = new Date(callData.callStartTime);
+        const now = new Date();
+        const timeDiff = now.getTime() - callStartTime.getTime();
+        const minutesDiff = timeDiff / (1000 * 60);
+        
+        // Check if more than 10 minutes have passed since call start
+        if (minutesDiff > 10) {
+          toast.error('The grace window for rejoining has expired. The call session has ended.');
+          sessionStorage.removeItem('user_call_session');
+          sessionStorage.removeItem('user_call_data');
+          setFlowState(prev => ({
+            ...prev,
+            showRejoin: false,
+            wasDisconnected: false,
+            showInterruptionModal: false
+          }));
+          return false;
+        }
       }
 
       // Restore call start time
@@ -865,6 +923,12 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
       // Join Agora call
       await joinAgoraCall(callData);
 
+      // Hide interruption modal on successful rejoin
+      setFlowState(prev => ({
+        ...prev,
+        showInterruptionModal: false
+      }));
+
       toast.success('Rejoined call successfully!');
       return true;
     } catch (error) {
@@ -873,7 +937,8 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
       setFlowState(prev => ({
         ...prev,
         showRejoin: false,
-        wasDisconnected: false
+        wasDisconnected: false,
+        showInterruptionModal: false
       }));
       return false;
     }
@@ -980,6 +1045,7 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
             error: null,
             showRejoin: false,
             wasDisconnected: false,
+            showInterruptionModal: false,
             expertEndedCall: true,
             showExpertEndCallConfirmation: false,
             expertDeclinedCall: false,
@@ -1054,6 +1120,7 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
       error: null,
       showRejoin: false,
       wasDisconnected: false,
+      showInterruptionModal: false,
       expertEndedCall: false,
       showExpertEndCallConfirmation: false,
       expertDeclinedCall: true,
@@ -1127,6 +1194,7 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
       error: null,
       showRejoin: false,
       wasDisconnected: false,
+      showInterruptionModal: false,
       expertEndedCall: true,
       showExpertEndCallConfirmation: false,
       expertDeclinedCall: false,
