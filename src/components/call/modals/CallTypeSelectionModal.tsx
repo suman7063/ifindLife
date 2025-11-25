@@ -22,7 +22,7 @@ interface CallTypeSelectionModalProps {
   expertId?: string;
   expertAuthId?: string;
   expertPrice?: number; // Fallback if expertId not provided
-  onStartCall: (callType: 'audio' | 'video', duration: number, estimatedCost: number, currency: 'INR' | 'EUR') => void;
+  onStartCall: (callType: 'audio' | 'video', duration: number, estimatedCost: number, currency: 'INR' | 'EUR', paymentResponseReceived?: boolean) => void;
   walletBalance?: number;
   walletLoading?: boolean; // Loading state for wallet balance
   isProcessingPayment?: boolean; // Processing payment state from parent
@@ -302,27 +302,48 @@ const CallTypeSelectionModal: React.FC<CallTypeSelectionModalProps> = ({
               console.log('ℹ️ Balance not in response, but database has updated it - proceeding with call');
             }
             
-            // Small delay to ensure database transaction is committed and Razorpay modal is fully closed
-            await new Promise(resolve => setTimeout(resolve, 500));
-            
-            // Now proceed with the call - database has already handled everything
-            console.log('✅ Proceeding with call after successful payment (database handled)');
+            // Hide payment processing state
             setIsProcessingPayment(false);
             
-            // IMPORTANT: Call proceedWithCall which will call onStartCall
-            // onStartCall will handle closing this modal and starting the call in UserCallInterface
-            // Make sure modal stays open until onStartCall is called
+            // Connecting modal is already showing (from onPaymentReceived callback)
+            // Now just complete the permission check and call setup in background
+            console.log('✅ Payment verified - completing call setup (connecting modal already showing)');
+            
+            // Permission check and call setup (connecting modal is already visible)
             try {
-              await proceedWithCall();
-            } catch (callError) {
-              console.error('❌ Error proceeding with call after payment:', callError);
-              toast.error('Payment successful but failed to start call. Please try again.');
+              if (callType === 'video') {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                stream.getTracks().forEach(track => track.stop());
+              } else {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                stream.getTracks().forEach(track => track.stop());
+              }
+              console.log('✅ Permissions granted - call setup complete');
+            } catch (error) {
+              const err = error as Error & { name?: string };
+              console.error('❌ Permission error after payment:', err);
+              if (err.name === 'NotAllowedError') {
+                toast.error('Please allow camera/microphone access to start the call');
+              } else if (err.name === 'NotFoundError') {
+                toast.error('No camera/microphone found. Please connect a device.');
+              } else {
+                toast.error('Unable to access camera/microphone. Please check your device settings.');
+              }
             }
           },
           (error: Error) => {
             console.error('❌ Payment failed:', error);
             setIsProcessingPayment(false);
             toast.error('Payment failed. Please try again.');
+          },
+          // onPaymentReceived callback - called immediately when payment response is received
+          () => {
+            console.log('📞 Razorpay payment response received - showing connecting modal immediately');
+            // Show connecting modal IMMEDIATELY when payment response is received
+            // This gives instant feedback before payment verification completes
+            // Pass a flag to indicate payment response was received
+            onStartCall(callType, duration, estimatedCost, currency, true);
+            setIsProcessingPayment(false);
           }
         );
         } catch (error: unknown) {

@@ -208,6 +208,8 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
   const pendingTransactionIdRef = useRef<string | null>(null);
   // Use ref to ensure pendingCallCost is always available in callbacks (even if state is stale)
   const pendingCallCostRef = useRef<{ amount: number; currency: 'INR' | 'EUR' } | null>(null);
+  // Track if payment response was received - skip balance check if true
+  const paymentResponseReceivedRef = useRef<boolean>(false);
 
   const {
     isConnecting,
@@ -378,27 +380,16 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
     selectedCallType: 'audio' | 'video', 
     duration: number, 
     estimatedCost: number,
-    currency: 'INR' | 'EUR'
+    currency: 'INR' | 'EUR',
+    paymentResponseReceived?: boolean // Flag to indicate payment response was received
   ) => {
-    console.log('📞 handleStartCall called in UserCallInterface:', {
-      selectedCallType,
-      duration,
-      estimatedCost,
-      currency,
-      currentModalState: modalState,
-      isOpen: isOpen
-    });
-    
-    // IMPORTANT: Set modal to connecting state IMMEDIATELY for instant feedback
-    // This ensures the modal state updates even if CallTypeSelectionModal was closed
-    console.log('🔄 Setting modalState to connecting...');
+    // Set flag if payment response was received
+    if (paymentResponseReceived) {
+      paymentResponseReceivedRef.current = true;
+      console.log('💰 Payment response received flag set - will skip balance check');
+    }
+console.log('🔄 Setting modalState to connecting...');
     setModalState('connecting');
-    
-    // IMPORTANT: Don't call onClose here - let the modal stay mounted
-    // The parent component should keep isCallModalOpen=true during call flow
-    // We'll handle closing CallTypeSelectionModal by setting its isOpen to false
-    
-    // Force React to flush the state update
     await new Promise(resolve => {
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -429,45 +420,64 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
     setPendingCallCost(costData);
     pendingCallCostRef.current = costData; // Also store in ref for callback access
     
-    // Refresh wallet balance to get latest balance after payment
-    // This ensures we have the updated balance from the payment
-    console.log('💰 Refreshing wallet balance before starting call...');
-    const refreshedBalance = await fetchBalance();
-    
-    // Wait a moment for balance to update in state (for UI consistency)
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    // Use the refreshed wallet balance from the function return value
-    // This is more reliable than state which updates asynchronously
-    const currentBalance = refreshedBalance || walletBalance || 0;
-    
-    console.log('💰 Wallet balance check:', {
-      currentBalance,
-      estimatedCost,
-      sufficient: currentBalance >= estimatedCost,
-      refreshedBalance,
-      walletBalanceState: walletBalance
-    });
-    
-    if (currentBalance < estimatedCost) {
-      const shortfall = estimatedCost - currentBalance;
-      console.warn('⚠️ Still insufficient balance after payment:', shortfall);
+    // If payment response was received, skip balance check (payment is being verified)
+    // Connecting modal is already showing, so don't close it
+    if (paymentResponseReceivedRef.current) {
+      console.log('💰 Payment response received - skipping balance check, payment verification in progress');
+      // Reset the flag after a delay to allow payment verification to complete
+      setTimeout(() => {
+        paymentResponseReceivedRef.current = false;
+      }, 5000);
       
-      toast.error('Insufficient wallet balance', {
-        description: `You need ${currencySymbol}${shortfall.toFixed(2)} more. Please recharge your wallet.`,
-        action: {
-          label: 'Add Credits',
-          onClick: () => {
-            onClose();
-            navigate('/user-dashboard/wallet');
-          }
-        },
-        duration: 5000
+      // Refresh balance in background but don't block
+      fetchBalance().then(refreshedBalance => {
+        console.log('✅ Wallet balance refreshed after payment:', refreshedBalance);
+      }).catch(err => {
+        console.warn('⚠️ Could not refresh wallet balance:', err);
       });
-      setModalState('selection');
-      setPendingCallCost(null);
-      pendingCallCostRef.current = null;
-      return;
+      
+      // Continue with call setup - balance will be checked when payment verification completes
+      // Don't return here - let the call proceed
+    } else {
+      // Normal flow: check balance before starting call
+      console.log('💰 Refreshing wallet balance before starting call...');
+      const refreshedBalance = await fetchBalance();
+      
+      // Wait a moment for balance to update in state (for UI consistency)
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Use the refreshed wallet balance from the function return value
+      // This is more reliable than state which updates asynchronously
+      const currentBalance = refreshedBalance || walletBalance || 0;
+      
+      console.log('💰 Wallet balance check:', {
+        currentBalance,
+        estimatedCost,
+        sufficient: currentBalance >= estimatedCost,
+        refreshedBalance,
+        walletBalanceState: walletBalance
+      });
+      
+      if (currentBalance < estimatedCost) {
+        const shortfall = estimatedCost - currentBalance;
+        console.warn('⚠️ Still insufficient balance after payment:', shortfall);
+        
+        toast.error('Insufficient wallet balance', {
+          description: `You need ${currencySymbol}${shortfall.toFixed(2)} more. Please recharge your wallet.`,
+          action: {
+            label: 'Add Credits',
+            onClick: () => {
+              onClose();
+              navigate('/user-dashboard/wallet');
+            }
+          },
+          duration: 5000
+        });
+        setModalState('selection');
+        setPendingCallCost(null);
+        pendingCallCostRef.current = null;
+        return;
+      }
     }
     
     // Start the call (this will create the call session)
