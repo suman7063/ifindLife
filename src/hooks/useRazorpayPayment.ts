@@ -190,25 +190,28 @@ export const useRazorpayPayment = () => {
       console.log('🔒 Closing all dialogs before opening Razorpay...');
       closeAllDialogs();
       
-      // Longer delay to ensure dialogs are closed and animations complete before Razorpay opens
-      await new Promise(resolve => setTimeout(resolve, 400));
-      
-      // Double-check: Force close any remaining dialogs
-      const remainingDialogs = document.querySelectorAll('[data-radix-dialog-overlay][data-state="open"], [data-radix-alert-dialog-overlay][data-state="open"]');
-      if (remainingDialogs.length > 0) {
-        console.log(`⚠️ Found ${remainingDialogs.length} remaining dialogs, force closing...`);
-        remainingDialogs.forEach((dialog) => {
-          const closeBtn = dialog.querySelector('[data-radix-dialog-close], [data-radix-alert-dialog-close]');
-          if (closeBtn) {
-            (closeBtn as HTMLElement).click();
+      // Minimal delay - just enough for dialog close event to propagate
+      // Use requestAnimationFrame for instant visual update, then open Razorpay
+      await new Promise(resolve => {
+        requestAnimationFrame(() => {
+          // Double-check: Force close any remaining dialogs
+          const remainingDialogs = document.querySelectorAll('[data-radix-dialog-overlay][data-state="open"], [data-radix-alert-dialog-overlay][data-state="open"]');
+          if (remainingDialogs.length > 0) {
+            console.log(`⚠️ Found ${remainingDialogs.length} remaining dialogs, force closing...`);
+            remainingDialogs.forEach((dialog) => {
+              const closeBtn = dialog.querySelector('[data-radix-dialog-close], [data-radix-alert-dialog-close]');
+              if (closeBtn) {
+                (closeBtn as HTMLElement).click();
+              }
+              // Also try clicking the overlay itself
+              (dialog as HTMLElement).click();
+            });
           }
-          // Also try clicking the overlay itself
-          (dialog as HTMLElement).click();
+          resolve(undefined);
         });
-        await new Promise(resolve => setTimeout(resolve, 200));
-      }
+      });
       
-      console.log('✅ All dialogs closed, opening Razorpay...');
+      console.log('✅ Opening Razorpay immediately...');
 
       // Show currency conversion notice if user currency is not INR
       if (paymentDetails.currency === 'EUR') {
@@ -223,18 +226,7 @@ export const useRazorpayPayment = () => {
         );
       }
 
-      // Configure Razorpay options
-      // IMPORTANT: Always use INR currency for Razorpay (Indian payment gateway)
-      console.log('🔧 Razorpay Options:', {
-        key: orderData.razorpayKeyId,
-        amount: orderData.amount,
-        currency: 'INR',
-        order_id: orderData.id,
-        amountInPaise: orderData.amount,
-        amountInRupees: orderData.amount / 100,
-        originalAmount: paymentDetails.amount,
-        originalCurrency: paymentDetails.currency,
-      });
+
 
       // Customize description - Razorpay will show the currency from the order
       // If order is in EUR, Razorpay modal will show EUR

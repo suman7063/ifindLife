@@ -268,31 +268,17 @@ const CallTypeSelectionModal: React.FC<CallTypeSelectionModalProps> = ({
       // Set processing state first so button shows "Processing Payment..."
       setIsProcessingPayment(true);
       
-      // IMPORTANT: Force React to flush state update and re-render
-      // Use multiple requestAnimationFrame calls to ensure DOM updates
-      await new Promise(resolve => {
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              resolve(undefined);
-            });
-          });
-        });
-      });
-      
-      // Additional delay to ensure user sees the "Processing Payment..." state in button
-      // This gives time for the button text to change from "Pay & Start Call" to "Processing Payment..."
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Now close modal before opening Razorpay to prevent override
+      // Close modal immediately - no delay needed
       // Processing state will persist in parent (UserCallInterface) loader overlay
       onClose();
-      await new Promise(resolve => setTimeout(resolve, 200));
       
-      try {
-        // Open Razorpay payment for the shortfall amount
-        // Keep processing state true until Razorpay actually opens
-        await processPayment(
+      // Use single requestAnimationFrame to ensure state update is visible
+      // Then immediately proceed to open Razorpay
+      requestAnimationFrame(async () => {
+        try {
+          // Open Razorpay payment for the shortfall amount
+          // Keep processing state true until Razorpay actually opens
+          await processPayment(
           {
             amount: balanceShortfall, // Amount needed
             currency: currency,
@@ -339,12 +325,13 @@ const CallTypeSelectionModal: React.FC<CallTypeSelectionModalProps> = ({
             toast.error('Payment failed. Please try again.');
           }
         );
-      } catch (error: unknown) {
-        console.error('❌ Error processing payment:', error);
-        setIsProcessingPayment(false);
-        const errorMessage = error instanceof Error ? error.message : 'Failed to process payment';
-        toast.error(errorMessage);
-      }
+        } catch (error: unknown) {
+          console.error('❌ Error processing payment:', error);
+          setIsProcessingPayment(false);
+          const errorMessage = error instanceof Error ? error.message : 'Failed to process payment';
+          toast.error(errorMessage);
+        }
+      });
       return;
     }
 
@@ -619,6 +606,20 @@ const CallTypeSelectionModal: React.FC<CallTypeSelectionModalProps> = ({
         </div>
       </DialogContent>
     </Dialog>
+    
+    {/* Full-screen loader overlay that stays visible until Razorpay modal opens */}
+    {/* Same loader as AddCreditsDialog - shown when processing payment */}
+    {(isPaymentLoading || isProcessingPayment) && (
+      <div className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-center justify-center">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-8 shadow-xl flex flex-col items-center gap-4">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          <div className="text-center">
+            <p className="text-lg font-semibold">Opening Payment Gateway</p>
+            <p className="text-sm text-muted-foreground mt-1">Please wait while we connect to Razorpay...</p>
+          </div>
+        </div>
+      </div>
+    )}
     </>
   );
 };

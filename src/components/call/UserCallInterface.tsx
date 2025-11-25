@@ -15,40 +15,149 @@ import { supabase } from '@/lib/supabase';
 import CallTypeSelectionModal from './modals/CallTypeSelectionModal';
 import CallInterruptionModal from './modals/CallInterruptionModal';
 
-// Component to detect when Razorpay modal appears
+// Component to detect when Razorpay modal is fully loaded and visible
 const RazorpayDetector: React.FC<{ onRazorpayDetected: () => void }> = ({ onRazorpayDetected }) => {
   useEffect(() => {
-    const checkRazorpay = () => {
-      const razorpayElements = document.querySelectorAll(
-        'iframe[src*="razorpay"], iframe[src*="checkout.razorpay"], [id*="razorpay-checkout"], [class*="razorpay-checkout"], [id*="razorpay"], [class*="razorpay"]'
+    let checkInterval: NodeJS.Timeout | null = null;
+    let iframeLoadHandler: (() => void) | null = null;
+    
+    const checkRazorpayFullyLoaded = (): boolean => {
+      // Check for Razorpay iframe
+      const razorpayIframes = document.querySelectorAll(
+        'iframe[src*="razorpay"], iframe[src*="checkout.razorpay"]'
       );
-      if (razorpayElements.length > 0) {
+      
+      // Check for Razorpay container elements
+      const razorpayContainers = document.querySelectorAll(
+        '[id*="razorpay-checkout"], [class*="razorpay-checkout"], [id*="razorpay"], [class*="razorpay"]'
+      );
+      
+      // Check if iframe is loaded and visible
+      let iframeLoaded = false;
+      razorpayIframes.forEach((iframe) => {
+        const htmlIframe = iframe as HTMLIFrameElement;
+        // Check if iframe has loaded content (not just created)
+        if (htmlIframe.contentWindow && htmlIframe.contentDocument) {
+          // Check if iframe is visible (not hidden)
+          const rect = iframe.getBoundingClientRect();
+          const isVisible = rect.width > 0 && rect.height > 0 && 
+                          window.getComputedStyle(iframe).display !== 'none' &&
+                          window.getComputedStyle(iframe).visibility !== 'hidden' &&
+                          window.getComputedStyle(iframe).opacity !== '0';
+          
+          if (isVisible) {
+            iframeLoaded = true;
+          }
+        }
+      });
+      
+      // Check if containers are visible
+      let containerVisible = false;
+      razorpayContainers.forEach((container) => {
+        const rect = container.getBoundingClientRect();
+        const isVisible = rect.width > 0 && rect.height > 0 && 
+                        window.getComputedStyle(container).display !== 'none' &&
+                        window.getComputedStyle(container).visibility !== 'hidden' &&
+                        window.getComputedStyle(container).opacity !== '0';
+        
+        if (isVisible) {
+          containerVisible = true;
+        }
+      });
+      
+      // Razorpay is fully loaded if we have visible iframe or visible container
+      return iframeLoaded || containerVisible;
+    };
+    
+    const handleRazorpayDetected = () => {
+      // Small delay to ensure Razorpay is fully rendered and visible
+      setTimeout(() => {
+        console.log('✅ Razorpay modal fully loaded and visible, hiding processing loader');
         onRazorpayDetected();
-        return true;
-      }
-      return false;
+      }, 300); // 300ms delay to ensure full render
+    };
+    
+    // Check for iframe load events
+    const setupIframeLoadListeners = () => {
+      const razorpayIframes = document.querySelectorAll(
+        'iframe[src*="razorpay"], iframe[src*="checkout.razorpay"]'
+      );
+      
+      razorpayIframes.forEach((iframe) => {
+        const htmlIframe = iframe as HTMLIFrameElement;
+        if (htmlIframe.contentWindow) {
+          // If iframe is already loaded, check immediately
+          if (htmlIframe.contentDocument?.readyState === 'complete') {
+            if (checkRazorpayFullyLoaded()) {
+              handleRazorpayDetected();
+              return;
+            }
+          }
+          
+          // Listen for iframe load event
+          iframeLoadHandler = () => {
+            // Wait a bit for Razorpay to render inside iframe
+            setTimeout(() => {
+              if (checkRazorpayFullyLoaded()) {
+                handleRazorpayDetected();
+              }
+            }, 200);
+          };
+          
+          htmlIframe.addEventListener('load', iframeLoadHandler);
+        }
+      });
     };
     
     // Check immediately
-    if (checkRazorpay()) {
+    if (checkRazorpayFullyLoaded()) {
+      handleRazorpayDetected();
       return;
     }
     
-    // Poll for Razorpay modal appearance (check every 100ms for up to 10 seconds)
+    // Setup iframe load listeners
+    setupIframeLoadListeners();
+    
+    // Poll for Razorpay modal appearance (check every 100ms for up to 15 seconds)
     let checkCount = 0;
-    const maxChecks = 100; // 10 seconds max
-    const checkInterval = setInterval(() => {
+    const maxChecks = 150; // 15 seconds max
+    checkInterval = setInterval(() => {
       checkCount++;
-      if (checkRazorpay() || checkCount >= maxChecks) {
-        clearInterval(checkInterval);
-        if (checkCount >= maxChecks) {
-          console.warn('⚠️ Razorpay modal not detected after 10 seconds, hiding loader anyway');
-          onRazorpayDetected();
+      
+      // Re-setup listeners in case new iframes are added
+      if (checkCount % 10 === 0) { // Every 1 second
+        setupIframeLoadListeners();
+      }
+      
+      if (checkRazorpayFullyLoaded()) {
+        if (checkInterval) {
+          clearInterval(checkInterval);
         }
+        handleRazorpayDetected();
+      } else if (checkCount >= maxChecks) {
+        if (checkInterval) {
+          clearInterval(checkInterval);
+        }
+        console.warn('⚠️ Razorpay modal not fully loaded after 15 seconds, hiding loader anyway');
+        onRazorpayDetected();
       }
     }, 100);
     
-    return () => clearInterval(checkInterval);
+    return () => {
+      if (checkInterval) {
+        clearInterval(checkInterval);
+      }
+      // Remove iframe load listeners
+      const razorpayIframes = document.querySelectorAll(
+        'iframe[src*="razorpay"], iframe[src*="checkout.razorpay"]'
+      );
+      razorpayIframes.forEach((iframe) => {
+        const htmlIframe = iframe as HTMLIFrameElement;
+        if (iframeLoadHandler && htmlIframe.contentWindow) {
+          htmlIframe.removeEventListener('load', iframeLoadHandler);
+        }
+      });
+    };
   }, [onRazorpayDetected]);
   
   return null;
@@ -711,17 +820,15 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
       />
       
       {/* Processing Payment Loader - shown outside modal so it persists after modal closes */}
+      {/* Same loader as AddCreditsDialog - shown when processing payment */}
+      {/* z-index is 9999 to be above modals but below Razorpay (which is 999999) */}
       {isProcessingPayment && (
-        <div className="fixed inset-0 z-[999998] bg-black/80 backdrop-blur-sm flex items-center justify-center">
-          <div className="bg-background rounded-lg p-8 max-w-sm mx-4 shadow-xl">
-            <div className="flex flex-col items-center space-y-4">
-              <Loader2 className="h-12 w-12 animate-spin text-primary" />
-              <div className="text-center space-y-2">
-                <h3 className="text-lg font-semibold">Processing Payment</h3>
-                <p className="text-sm text-muted-foreground">
-                  Please wait while we process your payment...
-                </p>
-              </div>
+        <div className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-center justify-center">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-8 shadow-xl flex flex-col items-center gap-4">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <div className="text-center">
+              <p className="text-lg font-semibold">Opening Payment Gateway</p>
+              <p className="text-sm text-muted-foreground mt-1">Please wait while we connect to Razorpay...</p>
             </div>
           </div>
         </div>
