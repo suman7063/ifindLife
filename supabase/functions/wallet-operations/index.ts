@@ -67,7 +67,8 @@ serve(async (req) => {
           params.reference_id,
           params.reference_type || 'razorpay_payment',
           params.description,
-          corsHeaders
+          corsHeaders,
+          params.currency || 'INR'
         )
 
       case 'deduct_credits':
@@ -80,7 +81,8 @@ serve(async (req) => {
           params.reference_id,
           params.reference_type || 'appointment',
           params.description,
-          corsHeaders
+          corsHeaders,
+          params.currency || 'INR'
         )
 
       default:
@@ -101,15 +103,30 @@ serve(async (req) => {
 async function getWalletBalance(supabase: any, userId: string, corsHeaders: any) {
   try {
     // Use the database function to calculate balance
+    // Force fresh calculation by adding timestamp to prevent caching
     const { data, error } = await supabase.rpc('get_wallet_balance', {
       p_user_id: userId
     })
 
     if (error) throw error
 
+    // Add cache-control headers to prevent caching
+    const cacheHeaders = {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    }
+
     return new Response(
       JSON.stringify({ balance: parseFloat(data || 0) }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { 
+        status: 200, 
+        headers: { 
+          ...corsHeaders, 
+          ...cacheHeaders,
+          'Content-Type': 'application/json' 
+        } 
+      }
     )
   } catch (error) {
     console.error('Error getting wallet balance:', error)
@@ -141,9 +158,23 @@ async function getWalletTransactions(supabase: any, userId: string, params: any,
 
     if (error) throw error
 
+    // Add cache-control headers to prevent caching
+    const cacheHeaders = {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    }
+
     return new Response(
       JSON.stringify({ transactions: data || [] }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { 
+        status: 200, 
+        headers: { 
+          ...corsHeaders, 
+          ...cacheHeaders,
+          'Content-Type': 'application/json' 
+        } 
+      }
     )
   } catch (error) {
     console.error('Error getting wallet transactions:', error)
@@ -162,7 +193,8 @@ async function addCredits(
   referenceId: string | null,
   referenceType: string | null,
   description: string | null,
-  corsHeaders: any
+  corsHeaders: any,
+  currency: string = 'INR'
 ) {
   try {
     // Validate amount
@@ -172,6 +204,9 @@ async function addCredits(
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
+    // Validate currency
+    const validCurrency = currency === 'EUR' ? 'EUR' : 'INR'
 
     // Calculate expiry (12 months from now)
     const expiresAt = new Date()
@@ -187,6 +222,7 @@ async function addCredits(
         user_id: userId,
         type: 'credit',
         amount: amount,
+        currency: validCurrency,
         reason: reason,
         reference_id: isUUID ? referenceId : null, // Only set if it's a valid UUID
         reference_type: referenceType,
@@ -235,7 +271,8 @@ async function deductCredits(
   referenceId: string | null,
   referenceType: string | null,
   description: string | null,
-  corsHeaders: any
+  corsHeaders: any,
+  currency: string = 'INR'
 ) {
   try {
     // Validate amount
@@ -245,6 +282,9 @@ async function deductCredits(
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
+    // Validate currency
+    const validCurrency = currency === 'EUR' ? 'EUR' : 'INR'
 
     // Check balance first
     const currentBalance = await getWalletBalanceValue(supabase, userId)
@@ -260,22 +300,54 @@ async function deductCredits(
     }
 
     // Create debit transaction
+    // Note: reference_id is UUID type - if referenceId is not a valid UUID, store it in metadata
+    const isUUID = referenceId && typeof referenceId === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(referenceId)
+    
+    console.log('💰 Creating debit transaction:', {
+      userId,
+      amount,
+      currency: validCurrency,
+      reason,
+      referenceId,
+      referenceIdType: typeof referenceId,
+      referenceType,
+      isUUID,
+      willStoreInMetadata: !isUUID && referenceId
+    })
+    
+    // Prepare metadata - store referenceId in metadata if it's not a UUID
+    const transactionMetadata: Record<string, any> = {};
+    if (referenceId && !isUUID) {
+      transactionMetadata.reference_id = referenceId;
+    }
+    
     const { data, error } = await supabase
       .from('wallet_transactions')
       .insert({
         user_id: userId,
         type: 'debit',
         amount: amount,
+        currency: validCurrency,
         reason: reason,
-        reference_id: referenceId,
+        reference_id: isUUID ? referenceId : null, // Only set if it's a valid UUID
         reference_type: referenceType,
         description: description || `Credits deducted: ${reason}`,
-        metadata: {}
+        metadata: transactionMetadata // Store non-UUID reference in metadata, or empty object if UUID
       })
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error('❌ Error inserting wallet transaction:', error)
+      throw error
+    }
+    
+    console.log('✅ Wallet transaction created successfully:', {
+      transactionId: data?.id,
+      amount: data?.amount,
+      referenceId: data?.reference_id,
+      metadata: data?.metadata
+    })
 
     // Update user's wallet_balance (for backward compatibility)
     const { error: updateError } = await supabase

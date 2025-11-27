@@ -208,21 +208,71 @@
   .razorpay-checkout-frame,
   .razorpay-container,
   iframe[src*="razorpay"],
+  iframe[src*="checkout.razorpay"],
   [id^="razorpay-checkout"],
-  [class*="razorpay"] {
-    z-index: 9999 !important;
+  [id*="razorpay-checkout"],
+  [class*="razorpay"],
+  [class*="razorpay-checkout"],
+  div[id*="razorpay"],
+  div[class*="razorpay"] {
+    z-index: 999999 !important;
+    position: fixed !important;
   }
   
   /* Ensure Razorpay overlay is above everything */
   .razorpay-checkout-overlay,
-  [class*="razorpay"][class*="overlay"] {
-    z-index: 9998 !important;
+  [class*="razorpay"][class*="overlay"],
+  [id*="razorpay"][class*="overlay"],
+  div[class*="razorpay"][class*="overlay"] {
+    z-index: 99998 !important;
+    position: fixed !important;
   }
   
-  /* When Razorpay is open, reduce z-index of other dialogs */
+  /* When Razorpay is open, hide or reduce z-index of ALL other dialogs */
+  /* Use visibility instead of display to prevent page visibility detection issues */
   body:has(.razorpay-checkout-frame) [data-radix-dialog-overlay],
   body:has(.razorpay-container) [data-radix-dialog-overlay],
-  body:has(iframe[src*="razorpay"]) [data-radix-dialog-overlay] {
-    z-index: 40 !important;
+  body:has(iframe[src*="razorpay"]) [data-radix-dialog-overlay],
+  body:has(iframe[src*="checkout.razorpay"]) [data-radix-dialog-overlay],
+  body:has([id*="razorpay-checkout"]) [data-radix-dialog-overlay],
+  body:has([class*="razorpay-checkout"]) [data-radix-dialog-overlay],
+  body:has(div[id*="razorpay"]) [data-radix-dialog-overlay] {
+    z-index: 1 !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+  }
+  
+  /* Hide ALL dialog content when Razorpay is open - including call selection modal */
+  body:has(.razorpay-checkout-frame) [data-radix-dialog-content],
+  body:has(.razorpay-container) [data-radix-dialog-content],
+  body:has(iframe[src*="razorpay"]) [data-radix-dialog-content],
+  body:has(iframe[src*="checkout.razorpay"]) [data-radix-dialog-content],
+  body:has([id*="razorpay-checkout"]) [data-radix-dialog-content],
+  body:has([class*="razorpay-checkout"]) [data-radix-dialog-content],
+  body:has(div[id*="razorpay"]) [data-radix-dialog-content] {
+    z-index: 1 !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    display: none !important;
+  }
+  
+  /* Also hide AlertDialog overlays when Razorpay is open */
+  body:has(.razorpay-checkout-frame) [data-radix-alert-dialog-overlay],
+  body:has(.razorpay-container) [data-radix-alert-dialog-overlay],
+  body:has(iframe[src*="razorpay"]) [data-radix-alert-dialog-overlay],
+  body:has([id*="razorpay-checkout"]) [data-radix-alert-dialog-overlay] {
+    z-index: 1 !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
+    display: none !important;
+  }
+  
+  /* Force all Radix dialogs to lower z-index when Razorpay elements exist */
+  body:has(iframe[src*="razorpay"]) [data-radix-dialog-root],
+  body:has([id*="razorpay-checkout"]) [data-radix-dialog-root],
+  body:has([class*="razorpay-checkout"]) [data-radix-dialog-root] {
+    z-index: 1 !important;
   }
 }

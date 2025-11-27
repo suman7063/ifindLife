@@ -14,8 +14,6 @@ import {
   VideoOff,
   Mic,
   MicOff,
-  WifiOff,
-  RotateCcw,
   MessageSquare,
   MessageSquareOff
 } from 'lucide-react';
@@ -126,7 +124,36 @@ const InCallModal: React.FC<InCallModalProps> = ({
         setTimeout(playVideo, 50);
       });
       
-      return () => cancelAnimationFrame(rafId);
+      return () => {
+        cancelAnimationFrame(rafId);
+        // Cleanup: Stop all video elements when component unmounts or call ends
+        if (localVideoRef.current) {
+          const videoElements = localVideoRef.current.querySelectorAll('video');
+          videoElements.forEach(video => {
+            try {
+              video.pause();
+              video.srcObject = null;
+              video.load();
+              console.log('✅ Stopped and cleared local video element');
+            } catch (cleanupError) {
+              console.warn('⚠️ Error cleaning up video element:', cleanupError);
+            }
+          });
+        }
+      };
+    } else if (!callState?.localVideoTrack && localVideoRef.current) {
+      // If video track is removed, clean up video elements immediately
+      const videoElements = localVideoRef.current.querySelectorAll('video');
+      videoElements.forEach(video => {
+        try {
+          video.pause();
+          video.srcObject = null;
+          video.load();
+          console.log('✅ Cleaned up video element (track removed)');
+        } catch (cleanupError) {
+          console.warn('⚠️ Error cleaning up video element:', cleanupError);
+        }
+      });
     }
   }, [callType, callState?.localVideoTrack, callState?.isVideoEnabled, localVideoRef, isOpen]);
 
@@ -162,31 +189,8 @@ const InCallModal: React.FC<InCallModalProps> = ({
           </div>
 
         <div className="flex-1 overflow-hidden min-h-0 flex flex-col">
-          {/* Connection Lost / Rejoin */}
-          {showRejoin && (
-            <Card className="border-orange-200 bg-orange-50 m-6">
-              <CardContent className="p-6">
-                <div className="flex flex-col items-center text-center space-y-4">
-                  <WifiOff className="h-12 w-12 text-orange-500" />
-                  <div>
-                    <h3 className="font-semibold text-lg mb-2">Connection Lost</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Your connection was interrupted. You can rejoin the call or end it.
-                    </p>
-                  </div>
-                  <div className="flex gap-3">
-                    <Button variant="outline" onClick={onEndCallFromRejoin}>
-                      End Call
-                    </Button>
-                    <Button onClick={onRejoin}>
-                      <RotateCcw className="h-4 w-4 mr-2" />
-                      Rejoin Call
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          {/* Connection Lost / Rejoin - Deprecated: Now using CallInterruptionModal */}
+          {/* Keeping this for backward compatibility but it should not show when interruption modal is active */}
 
           {/* Video Display */}
           {callType === 'video' && (

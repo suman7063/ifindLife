@@ -95,7 +95,8 @@ export const useWallet = () => {
     reason: string,
     referenceId: string | null,
     referenceType: string = 'appointment',
-    description?: string
+    description?: string,
+    currency: 'INR' | 'EUR' = 'INR'
   ) => {
     try {
       const { data, error } = await supabase.functions.invoke('wallet-operations', {
@@ -105,7 +106,8 @@ export const useWallet = () => {
           reason,
           reference_id: referenceId,
           reference_type: referenceType,
-          description
+          description,
+          currency
         }
       });
 
@@ -129,7 +131,8 @@ export const useWallet = () => {
     reason: string = 'purchase',
     referenceId: string | null = null,
     referenceType: string = 'razorpay_payment',
-    description?: string
+    description?: string,
+    currency: 'INR' | 'EUR' = 'INR'
   ) => {
     try {
       const { data, error } = await supabase.functions.invoke('wallet-operations', {
@@ -139,7 +142,8 @@ export const useWallet = () => {
           reason,
           reference_id: referenceId,
           reference_type: referenceType,
-          description
+          description,
+          currency
         }
       });
 

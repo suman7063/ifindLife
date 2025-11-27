@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { UserProfile } from '@/types/supabase/user';
 import { supabase } from '@/lib/supabase';
@@ -11,6 +11,7 @@ interface WalletTransaction {
   id: string;
   type: 'credit' | 'debit';
   amount: number;
+  currency: 'INR' | 'EUR';
   reason: string;
   description: string | null;
   reference_id: string | null;
@@ -27,28 +28,125 @@ interface WalletTransactionsListProps {
 const WalletTransactionsList: React.FC<WalletTransactionsListProps> = ({ user }) => {
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const subscriptionRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   useEffect(() => {
     if (user?.id) {
+      // Clear transactions when user changes to prevent stale data
+      setTransactions([]);
       fetchTransactions();
+    } else {
+      // Clear transactions if no user
+      setTransactions([]);
+      setLoading(false);
     }
+  }, [user?.id]);
+
+  // Removed refreshTrigger - real-time subscription handles all updates
+  // This prevents duplicate refreshes from multiple sources
+
+  // Set up real-time subscription for wallet transactions
+  useEffect(() => {
+    if (!user?.id) return;
+
+    console.log('🔔 Setting up real-time wallet transactions subscription for user:', user.id);
+
+    // Subscribe to wallet_transactions INSERT events for this user
+    const transactionsChannel = supabase
+      .channel(`wallet_transactions_list_${user.id}_${Date.now()}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'wallet_transactions',
+          filter: `user_id=eq.${user.id}`
+        },
+        async (payload) => {
+          console.log('💰 New wallet transaction detected via real-time:', {
+            transactionId: payload.new?.id,
+            type: payload.new?.type,
+            amount: payload.new?.amount,
+            reason: payload.new?.reason
+          });
+          
+          // Fetch updated transactions list immediately (same pattern as wallet balance)
+          await fetchTransactions();
+        }
+      )
+      .subscribe((status) => {
+        console.log('📡 Wallet transactions subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Real-time wallet transactions subscription active');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Wallet transactions channel error - will retry subscription');
+          // Retry subscription after a delay
+          if (retryTimeoutRef.current) {
+            clearTimeout(retryTimeoutRef.current);
+          }
+          retryTimeoutRef.current = setTimeout(() => {
+            console.log('🔄 Retrying wallet transactions subscription...');
+            // Force re-render to retry subscription
+            fetchTransactions();
+          }, 3000);
+        } else if (status === 'TIMED_OUT') {
+          console.warn('⚠️ Wallet transactions subscription timed out');
+        } else if (status === 'CLOSED') {
+          console.warn('⚠️ Wallet transactions subscription closed');
+        }
+      });
+
+    subscriptionRef.current = transactionsChannel;
+
+    return () => {
+      console.log('🔔 Cleaning up wallet transactions subscription');
+      if (subscriptionRef.current) {
+        supabase.removeChannel(subscriptionRef.current);
+        subscriptionRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   const fetchTransactions = async () => {
     try {
       setLoading(true);
+      
+      // Add timestamp to prevent caching
+      const timestamp = Date.now();
       const { data, error } = await supabase.functions.invoke('wallet-operations', {
         body: { 
           action: 'get_transactions',
-          limit: 50
+          limit: 50,
+          _timestamp: timestamp // Cache buster
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error fetching wallet transactions:', error);
+        // Don't clear transactions on error - keep existing ones
+        return;
+      }
 
-      setTransactions(data?.transactions || []);
+      // Explicitly set to empty array if no transactions
+      const transactions = data?.transactions || [];
+      console.log('💰 Fetched wallet transactions from database:', transactions.length, 'transactions');
+      
+      // Update transactions state
+      setTransactions(transactions);
+      
+      // Log if we got new transactions
+      if (transactions.length > 0) {
+        console.log('✅ Transaction list updated:', {
+          count: transactions.length,
+          latest: transactions[0]?.description,
+          latestAmount: transactions[0]?.amount,
+          latestType: transactions[0]?.type
+        });
+      }
     } catch (error) {
-      console.error('Error fetching wallet transactions:', error);
+      console.error('❌ Error fetching wallet transactions:', error);
+      // Don't clear transactions on error - keep existing ones
     } finally {
       setLoading(false);
     }
@@ -98,7 +196,12 @@ const WalletTransactionsList: React.FC<WalletTransactionsListProps> = ({ user })
     return labels[reason] || reason;
   };
 
-  const { code: currency, symbol } = useUserCurrency();
+  const { symbol: defaultSymbol } = useUserCurrency();
+  
+  const getCurrencySymbol = (currency: 'INR' | 'EUR' | undefined) => {
+    if (!currency) return defaultSymbol;
+    return currency === 'INR' ? '₹' : '€';
+  };
 
   if (loading) {
     return (
@@ -185,7 +288,7 @@ const WalletTransactionsList: React.FC<WalletTransactionsListProps> = ({ user })
                 <div className={`text-right ${getTransactionColor(transaction.type)}`}>
                   <p className="font-bold">
                     {transaction.type === 'credit' ? '+' : '-'}
-                    {symbol}{transaction.amount.toFixed(2)}
+                    {getCurrencySymbol(transaction.currency)}{transaction.amount.toFixed(2)}
                   </p>
                   <p className="text-xs">
                     {transaction.type === 'credit' ? 'Credited' : 'Debited'}

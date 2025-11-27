@@ -180,9 +180,11 @@ export function useExpertConnection() {
   };
 
   const closeCallModal = () => {
+    // Don't clear selectedExpert immediately - let UserCallInterface handle cleanup
+    // This ensures the component stays mounted during call flow
     updateState({
-      isCallModalOpen: false,
-      selectedExpert: null
+      isCallModalOpen: false
+      // Keep selectedExpert until call is fully ended
     });
   };
 

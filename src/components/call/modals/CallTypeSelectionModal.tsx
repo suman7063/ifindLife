@@ -12,6 +12,8 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { useUserCurrency } from '@/hooks/useUserCurrency';
 import { supabase } from '@/lib/supabase';
+import { useRazorpayPayment } from '@/hooks/useRazorpayPayment';
+import { useWallet } from '@/hooks/useWallet';
 
 interface CallTypeSelectionModalProps {
   isOpen: boolean;
@@ -20,9 +22,11 @@ interface CallTypeSelectionModalProps {
   expertId?: string;
   expertAuthId?: string;
   expertPrice?: number; // Fallback if expertId not provided
-  onStartCall: (callType: 'audio' | 'video', duration: number) => void;
+  onStartCall: (callType: 'audio' | 'video', duration: number, estimatedCost: number, currency: 'INR' | 'EUR', paymentResponseReceived?: boolean) => void;
   walletBalance?: number;
   walletLoading?: boolean; // Loading state for wallet balance
+  isProcessingPayment?: boolean; // Processing payment state from parent
+  setIsProcessingPayment?: (value: boolean) => void; // Set processing payment state
 }
 
 const DURATIONS = [30, 60];
@@ -36,14 +40,23 @@ const CallTypeSelectionModal: React.FC<CallTypeSelectionModalProps> = ({
   expertPrice = 30,
   onStartCall,
   walletBalance = 0,
-  walletLoading = false
+  walletLoading = false,
+  isProcessingPayment: isProcessingPaymentProp,
+  setIsProcessingPayment: setIsProcessingPaymentProp
 }) => {
   const navigate = useNavigate();
   const { symbol, code: currency } = useUserCurrency();
+  const { processPayment, isLoading: isPaymentLoading } = useRazorpayPayment();
+  const { fetchBalance } = useWallet();
   const [callType, setCallType] = useState<'audio' | 'video'>('video');
   const [duration, setDuration] = useState(30); // minutes
   const [pricing, setPricing] = useState<{ [key: number]: number }>({});
   const [pricingLoading, setPricingLoading] = useState(false);
+  const [isProcessingPaymentLocal, setIsProcessingPaymentLocal] = useState(false);
+  
+  // Use prop if provided, otherwise use local state
+  const isProcessingPayment = isProcessingPaymentProp !== undefined ? isProcessingPaymentProp : isProcessingPaymentLocal;
+  const setIsProcessingPayment = setIsProcessingPaymentProp || setIsProcessingPaymentLocal;
 
   // Fetch pricing from database
   useEffect(() => {
@@ -141,25 +154,41 @@ const CallTypeSelectionModal: React.FC<CallTypeSelectionModalProps> = ({
           ? categoryData.base_price_60_inr
           : categoryData.base_price_60_eur;
         
-        const price30 = price30Raw != null ? Number(price30Raw) : 0;
-        const price60 = price60Raw != null ? Number(price60Raw) : 0;
+        // Convert to numbers - handle string values from database
+        const price30 = price30Raw != null ? parseFloat(String(price30Raw)) : 0;
+        const price60 = price60Raw != null ? parseFloat(String(price60Raw)) : 0;
 
         console.log('📊 Fetched pricing from database:', {
           category: expertAccount.category,
           currency,
           price30,
           price60,
+          price30Raw,
+          price60Raw,
+          price30Type: typeof price30Raw,
+          price60Type: typeof price60Raw,
           categoryData
         });
 
-        // Calculate pricing for durations
-        // 30m and 60m use direct database values
-        const calculatedPricing: { [key: number]: number } = {
-          30: price30,
-          60: price60
-        };
+        // Only set pricing if we got valid values from database
+        // IMPORTANT: Check if price is > 0, not just truthy (to handle 0 values correctly)
+        if (price30 > 0 || price60 > 0) {
+          // Calculate pricing for durations
+          // 30m and 60m use direct database values
+          const calculatedPricing: { [key: number]: number } = {
+            30: price30,
+            60: price60
+          };
 
-        setPricing(calculatedPricing);
+          console.log('✅ Setting pricing from database:', calculatedPricing, {
+            note: 'These are the actual session prices, not per-minute rates'
+          });
+          setPricing(calculatedPricing);
+        } else {
+          console.warn('⚠️ Database prices are 0 or invalid, using fallback');
+          console.warn('⚠️ This will cause incorrect pricing - check database values!');
+          calculateFallbackPricing();
+        }
       } catch (error) {
         console.error('❌ Error fetching pricing from database:', error);
         console.warn('⚠️ Using fallback pricing calculation');
@@ -186,7 +215,45 @@ const CallTypeSelectionModal: React.FC<CallTypeSelectionModalProps> = ({
 
 
   // Get estimated cost for current duration
-  const estimatedCost = pricing[duration] || ((duration * expertPrice) / 60);
+  // IMPORTANT: Use pricing from database if available (should be the actual session price)
+  // Only use fallback if pricing[duration] is undefined or null (not if it's 0, as 0 is a valid price)
+  const pricingFromDB = pricing[duration];
+  const fallbackCost = (duration * expertPrice) / 60;
+  
+  // CRITICAL: Check if pricingFromDB exists (not undefined/null)
+  // If pricingFromDB is 0, that's a valid price, so we should use it
+  // Only use fallback if pricingFromDB is undefined or null
+  const estimatedCost = (pricingFromDB !== undefined && pricingFromDB !== null) 
+    ? pricingFromDB 
+    : fallbackCost;
+  
+  // Log pricing for debugging
+  console.log('💰 CallTypeSelectionModal - Pricing calculation:', {
+    duration,
+    pricing,
+    expertPrice,
+    estimatedCost,
+    pricingFromDB,
+    pricingFromDBType: typeof pricingFromDB,
+    usingDatabasePrice: (pricingFromDB !== undefined && pricingFromDB !== null),
+    fallbackCalculation: fallbackCost,
+    currency,
+    warning: (pricingFromDB === undefined || pricingFromDB === null) 
+      ? '⚠️ Using fallback - database price not available!' 
+      : '✅ Using database price'
+  });
+  
+  // Additional warning if using fallback when database price should be available
+  if (pricingFromDB === undefined || pricingFromDB === null) {
+    console.warn('⚠️ WARNING: Using fallback pricing calculation!', {
+      duration,
+      pricing,
+      expectedPrice: 'Should be from database',
+      fallbackPrice: fallbackCost,
+      issue: 'Database pricing not loaded or duration not in pricing object'
+    });
+  }
+  
   const safeWalletBalance = typeof walletBalance === 'number' && !isNaN(walletBalance) ? walletBalance : 0;
   // Don't show insufficient message while loading
   const hasSufficientBalance = walletLoading ? true : safeWalletBalance >= estimatedCost;
@@ -195,19 +262,106 @@ const CallTypeSelectionModal: React.FC<CallTypeSelectionModalProps> = ({
   const handleStart = async () => {
     // Check wallet balance first
     if (!hasSufficientBalance) {
-      toast.error('Insufficient wallet balance', {
-        description: `You need ${symbol}${balanceShortfall.toFixed(2)} more. Please recharge your wallet first.`,
-        action: {
-          label: 'Add Credits',
-          onClick: () => {
-            onClose();
-            navigate('/user-dashboard/wallet');
+      // Instead of showing error, directly open Razorpay payment
+      console.log('💰 Insufficient balance - Opening Razorpay payment directly');
+      
+      // Set processing state first so button shows "Processing Payment..."
+      setIsProcessingPayment(true);
+      
+      // Close modal immediately - no delay needed
+      // Processing state will persist in parent (UserCallInterface) loader overlay
+      onClose();
+      
+      // Use single requestAnimationFrame to ensure state update is visible
+      // Then immediately proceed to open Razorpay
+      requestAnimationFrame(async () => {
+        try {
+          // Open Razorpay payment for the shortfall amount
+          // Keep processing state true until Razorpay actually opens
+          await processPayment(
+          {
+            amount: balanceShortfall, // Amount needed
+            currency: currency,
+            description: `Add ${symbol}${balanceShortfall.toFixed(2)} to wallet for call`,
+          },
+          async (paymentId: string, orderId: string, newBalance?: number) => {
+            // Payment successful - database already updated wallet balance directly
+            console.log('✅ Payment successful - wallet balance updated in database:', {
+              paymentId,
+              orderId,
+              newBalance,
+              note: 'Database handled payment and wallet update automatically'
+            });
+            
+            // Database has already updated the wallet balance, so we can proceed immediately
+            // If newBalance is provided, we know the exact balance
+            // Otherwise, we trust the database update and proceed (balance will be checked again in proceedWithCall)
+            if (newBalance !== undefined && newBalance !== null) {
+              console.log('✅ Using balance from payment response:', newBalance);
+            } else {
+              console.log('ℹ️ Balance not in response, but database has updated it - proceeding with call');
+            }
+            
+            // Hide payment processing state
+            setIsProcessingPayment(false);
+            
+            // Connecting modal is already showing (from onPaymentReceived callback)
+            // Now just complete the permission check and call setup in background
+            console.log('✅ Payment verified - completing call setup (connecting modal already showing)');
+            
+            // Permission check and call setup (connecting modal is already visible)
+            try {
+              if (callType === 'video') {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                stream.getTracks().forEach(track => track.stop());
+              } else {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                stream.getTracks().forEach(track => track.stop());
+              }
+              console.log('✅ Permissions granted - call setup complete');
+            } catch (error) {
+              const err = error as Error & { name?: string };
+              console.error('❌ Permission error after payment:', err);
+              if (err.name === 'NotAllowedError') {
+                toast.error('Please allow camera/microphone access to start the call');
+              } else if (err.name === 'NotFoundError') {
+                toast.error('No camera/microphone found. Please connect a device.');
+              } else {
+                toast.error('Unable to access camera/microphone. Please check your device settings.');
+              }
+            }
+          },
+          (error: Error) => {
+            console.error('❌ Payment failed:', error);
+            setIsProcessingPayment(false);
+            toast.error('Payment failed. Please try again.');
+          },
+          // onPaymentReceived callback - called immediately when payment response is received
+          () => {
+            console.log('📞 Razorpay payment response received - showing connecting modal immediately');
+            // Show connecting modal IMMEDIATELY when payment response is received
+            // This gives instant feedback before payment verification completes
+            // Pass a flag to indicate payment response was received
+            onStartCall(callType, duration, estimatedCost, currency, true);
+            setIsProcessingPayment(false);
           }
-        },
-        duration: 5000
+        );
+        } catch (error: unknown) {
+          console.error('❌ Error processing payment:', error);
+          setIsProcessingPayment(false);
+          const errorMessage = error instanceof Error ? error.message : 'Failed to process payment';
+          toast.error(errorMessage);
+        }
       });
       return;
     }
+
+    // If balance is sufficient, proceed directly
+    await proceedWithCall();
+  };
+
+  const proceedWithCall = async () => {
+    console.log('🚀 proceedWithCall called - checking permissions and starting call');
 
     // Check browser permissions
     try {
@@ -219,9 +373,44 @@ const CallTypeSelectionModal: React.FC<CallTypeSelectionModalProps> = ({
         stream.getTracks().forEach(track => track.stop());
       }
       
-      onStartCall(callType, duration);
+      console.log('✅ Permissions granted - calling onStartCall with:', {
+        callType,
+        duration,
+        estimatedCost,
+        currency
+      });
+      
+      // Pass the actual session price and currency
+      // onStartCall will handle closing this modal and starting the call
+      console.log('📞 Calling onStartCall to start the call:', {
+        callType,
+        duration,
+        estimatedCost,
+        currency,
+        modalIsOpen: isOpen
+      });
+      
+      // IMPORTANT: Call onStartCall which will update modalState to 'connecting' in UserCallInterface
+      // This ensures the connecting modal shows before we close this modal
+      console.log('📞 About to call onStartCall...');
+      onStartCall(callType, duration, estimatedCost, currency);
+      console.log('✅ onStartCall called - UserCallInterface should handle the call now');
+      
+      // Wait for UserCallInterface to update modalState to 'connecting'
+      // This ensures the connecting modal is ready before we close this modal
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // IMPORTANT: Don't call onClose() here - it will unmount the entire UserCallInterface
+      // Instead, just close this modal by setting isOpen to false
+      // The parent will keep UserCallInterface mounted because modalState is 'connecting'
+      // We'll handle this by not rendering CallTypeSelectionModal when modalState !== 'selection'
+      setIsProcessingPayment(false);
+      
+      console.log('✅ Call started - CallTypeSelectionModal will hide, ConnectingModal should be visible now');
     } catch (error) {
       const err = error as Error & { name?: string };
+      setIsProcessingPayment(false);
+      console.error('❌ Permission error:', err);
       if (err.name === 'NotAllowedError') {
         alert('Please allow camera/microphone access to start the call');
       } else if (err.name === 'NotFoundError') {
@@ -232,9 +421,18 @@ const CallTypeSelectionModal: React.FC<CallTypeSelectionModalProps> = ({
     }
   };
 
+  if (!isOpen) {
+    return null;
+  }
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+    <>
+      <Dialog open={isOpen} onOpenChange={(open) => {
+        if (!open) {
+          onClose();
+        }
+      }}>
+        <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Start Call with {expertName}</DialogTitle>
           <DialogDescription>
@@ -373,7 +571,7 @@ const CallTypeSelectionModal: React.FC<CallTypeSelectionModalProps> = ({
             </div>
             {!walletLoading && !hasSufficientBalance && (
               <div className="text-xs text-red-600 bg-red-50 p-2 rounded">
-                Insufficient balance. Need {symbol}{balanceShortfall.toFixed(2)} more. Please recharge your wallet.
+                Insufficient balance. Need {symbol}{balanceShortfall.toFixed(2)} more. Payment gateway will open automatically.
               </div>
             )}
             {!walletLoading && !pricingLoading && hasSufficientBalance && (
@@ -385,7 +583,12 @@ const CallTypeSelectionModal: React.FC<CallTypeSelectionModalProps> = ({
 
           {/* Actions */}
           <div className="flex gap-3">
-            <Button variant="outline" onClick={onClose} className="flex-1" disabled={walletLoading}>
+            <Button 
+              variant="outline" 
+              onClick={onClose} 
+              className="flex-1" 
+              disabled={walletLoading || isProcessingPayment || isPaymentLoading}
+            >
               Cancel
             </Button>
             {(walletLoading || pricingLoading) ? (
@@ -396,15 +599,20 @@ const CallTypeSelectionModal: React.FC<CallTypeSelectionModalProps> = ({
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 Loading...
               </Button>
+            ) : isProcessingPayment || isPaymentLoading ? (
+              <Button 
+                disabled
+                className="flex-1"
+              >
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Processing Payment...
+              </Button>
             ) : !hasSufficientBalance ? (
               <Button 
-                onClick={() => {
-                  onClose();
-                  navigate('/user-dashboard/wallet');
-                }}
+                onClick={handleStart}
                 className="flex-1 bg-primary hover:bg-primary/90"
               >
-                Recharge Wallet
+                Pay & Start Call
               </Button>
             ) : (
               <Button 
@@ -419,6 +627,21 @@ const CallTypeSelectionModal: React.FC<CallTypeSelectionModalProps> = ({
         </div>
       </DialogContent>
     </Dialog>
+    
+    {/* Full-screen loader overlay that stays visible until Razorpay modal opens */}
+    {/* Same loader as AddCreditsDialog - shown when processing payment */}
+    {(isPaymentLoading || isProcessingPayment) && (
+      <div className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-center justify-center">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-8 shadow-xl flex flex-col items-center gap-4">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          <div className="text-center">
+            <p className="text-lg font-semibold">Opening Payment Gateway</p>
+            <p className="text-sm text-muted-foreground mt-1">Please wait while we connect to Razorpay...</p>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 };
 

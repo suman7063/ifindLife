@@ -78,7 +78,7 @@ const NavbarUserMenu: React.FC<NavbarUserMenuProps> = ({
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+        <Button variant="ghost" className="relative h-8 w-8 rounded-full hover:text-green-600">
           <Avatar className="h-8 w-8">
             <AvatarImage src={profilePicture} alt={userName || 'User'} />
             <AvatarFallback>{userName ? getInitials(userName) : 'U'}</AvatarFallback>

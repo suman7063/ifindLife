@@ -225,12 +225,16 @@ serve(async (req) => {
         // Create credit transaction
         // Note: reference_id is UUID type, but Razorpay payment IDs are strings
         // Store payment ID in metadata instead
+        // Validate currency
+        const validCurrency = currency === 'EUR' ? 'EUR' : 'INR'
+        
         const { data: transactionData, error: transactionError } = await supabaseClient
           .from('wallet_transactions')
           .insert({
             user_id: userId,
             type: 'credit',
             amount: amount,
+            currency: validCurrency,
             reason: 'purchase',
             reference_id: null, // UUID type - Razorpay payment IDs are strings, so store in metadata
             reference_type: 'razorpay_payment',

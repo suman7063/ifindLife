@@ -13,6 +13,7 @@ import Footer from '@/components/Footer';
 const UserLogin: React.FC = () => {
   const navigate = useNavigate();
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [loginJustFailed, setLoginJustFailed] = useState(false);
   
   const simpleAuth = useSimpleAuth();
   const { isAuthenticated, userType, user, isLoading, login } = simpleAuth;
@@ -28,7 +29,21 @@ const UserLogin: React.FC = () => {
 
   // Redirect authenticated users to appropriate dashboard
   useEffect(() => {
-    if (!isLoading && isAuthenticated && user && userType !== 'none') {
+    // Don't redirect if login just failed
+    if (loginJustFailed) {
+      setLoginJustFailed(false);
+      return;
+    }
+    
+    // IMPORTANT: Don't redirect if userType is 'expert' when on user login page
+    // This means they tried to login as user but are actually an expert
+    // The error message should be shown instead
+    if (userType === 'expert' && !isLoading) {
+      console.log('UserLogin: User is expert but on user login page - not redirecting, error should be shown');
+      return;
+    }
+    
+    if (!isLoading && isAuthenticated && user && userType !== 'none' && userType !== 'expert') {
       console.log('UserLogin: User authenticated, checking for redirect data');
       
       // Check for intended action first
@@ -45,21 +60,17 @@ const UserLogin: React.FC = () => {
       
       // Otherwise, redirect to appropriate dashboard based on userType
       setTimeout(() => {
-        if (userType === 'expert') {
-          console.log('UserLogin: Redirecting to expert dashboard');
-          navigate('/expert-dashboard', { replace: true });
-        } else {
-          console.log('UserLogin: Redirecting to home page instead of dashboard');
-          navigate('/', { replace: true });
-        }
+        console.log('UserLogin: Redirecting to home page instead of dashboard');
+        navigate('/', { replace: true });
       }, 500);
     }
-  }, [isLoading, isAuthenticated, user, userType, navigate, executeIntendedAction]);
+  }, [isLoading, isAuthenticated, user, userType, navigate, executeIntendedAction, loginJustFailed]);
 
-  const handleLogin = async (email: string, password: string): Promise<boolean> => {
+  const handleLogin = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     if (!email || !password) {
-      toast.error('Please enter both email and password', { duration: 2000 });
-      return false;
+      const errorMsg = 'Please enter both email and password';
+      toast.error(errorMsg, { duration: 2000 });
+      return { success: false, error: errorMsg };
     }
     
     setIsLoggingIn(true);
@@ -74,16 +85,21 @@ const UserLogin: React.FC = () => {
         toast.success('Login successful!', { duration: 2000 });
         
         // Navigation will be handled by the useEffect after auth state updates
-        return true;
+        return { success: true };
       } else {
         console.error('UserLogin: Login failed:', result.error);
+        // Mark that login just failed to prevent redirect
+        setLoginJustFailed(true);
+        // Show toast but also return error for component to display
         toast.error(result.error || 'Login failed', { duration: 3000 });
-        return false;
+        return { success: false, error: result.error || 'Login failed' };
       }
     } catch (error: any) {
       console.error('UserLogin: Login error:', error);
-      toast.error('An unexpected error occurred', { duration: 2000 });
-      return false;
+      const errorMsg = 'An unexpected error occurred';
+      setLoginJustFailed(true);
+      toast.error(errorMsg, { duration: 2000 });
+      return { success: false, error: errorMsg };
     } finally {
       setIsLoggingIn(false);
     }

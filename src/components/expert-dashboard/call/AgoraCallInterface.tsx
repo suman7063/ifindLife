@@ -18,6 +18,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { 
   Phone, 
   PhoneOff, 
@@ -42,6 +50,7 @@ import type { IAgoraRTCClient } from 'agora-rtc-sdk-ng';
 import { toast } from 'sonner';
 import { endCall } from '@/services/callService';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
+import CallInterruptionModal from '@/components/call/modals/CallInterruptionModal';
 
 interface UserMetadata {
   name?: string;
@@ -82,6 +91,8 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
   const [callDuration, setCallDuration] = useState(0);
   const [callStartTime, setCallStartTime] = useState<Date | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [wasDisconnected, setWasDisconnected] = useState(false);
+  const [showInterruptionModal, setShowInterruptionModal] = useState(false);
   
   const clientRef = useRef<IAgoraRTCClient | null>(null);
   const localVideoRef = useRef<HTMLDivElement>(null);
@@ -90,8 +101,20 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
   const durationTimerRef = useRef<NodeJS.Timeout | null>(null);
   const sessionChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const [showEndCallConfirm, setShowEndCallConfirm] = useState(false);
+  const [showEndCallReasonConfirm, setShowEndCallReasonConfirm] = useState(false);
+  const [disconnectionReason, setDisconnectionReason] = useState<string>('');
   const [showUserEndCallConfirmation, setShowUserEndCallConfirmation] = useState(false);
   const [showChat, setShowChat] = useState(false);
+  const hasBeenConnectedRef = useRef<boolean>(false);
+  const reconnectingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const userDisconnectedRef = useRef<boolean>(false);
+  const userActivityCheckRef = useRef<NodeJS.Timeout | null>(null);
+  const lastUserActivityRef = useRef<Date | null>(null);
+  const wasDisconnectedWhenOfflineRef = useRef<boolean>(false);
+  const isRejoiningRef = useRef<boolean>(false); // Track if we're in the process of rejoining
+  const modalShownRef = useRef<boolean>(false); // Track if modal was already shown to prevent duplicates
+  const lastModalTriggerTimeRef = useRef<number>(0); // Track last time modal was triggered
+  const callActiveStartTimeRef = useRef<number>(0); // Track when call became active (to prevent showing on first connection)
   const { expert } = useSimpleAuth();
   const expertName = expert?.name || 'Expert';
 
@@ -127,6 +150,23 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
   // Join the Agora call
   const handleJoinCall = async () => {
     try {
+      // Prevent duplicate joins - check if we're already in the process of joining
+      if (clientRef.current) {
+        const connectionState = clientRef.current.connectionState;
+        if (connectionState === 'CONNECTING' || connectionState === 'CONNECTED') {
+          console.log('⚠️ Expert: Client already exists and is connecting/connected, skipping duplicate join');
+          return;
+        }
+        // If client exists but is disconnected, clean it up first
+        console.log('🧹 Expert: Cleaning up existing disconnected client before creating new one');
+        try {
+          await clientRef.current.leave();
+        } catch (leaveError) {
+          console.warn('⚠️ Expert: Error leaving existing client:', leaveError);
+        }
+        clientRef.current = null;
+      }
+
       setIsConnecting(true);
       console.log('🔗 Expert joining Agora call...', {
         channel_name: callRequest.channel_name,
@@ -165,16 +205,224 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
       const client = createClient();
       clientRef.current = client;
 
+      // Track connection state changes for network disconnection detection
+      client.on('connection-state-change', (curState, revState) => {
+        console.log('📡 Expert connection state changed:', curState, revState);
+        if (curState === 'CONNECTED') {
+          hasBeenConnectedRef.current = true;
+          
+          // IMPORTANT: Track when call becomes active (for first time connection detection)
+          if (callState.isJoined) {
+            if (callActiveStartTimeRef.current === 0) {
+              callActiveStartTimeRef.current = Date.now();
+              console.log('✅ Expert call became active - tracking start time:', callActiveStartTimeRef.current);
+            }
+          } else {
+            // Reset if call is not active
+            if (callActiveStartTimeRef.current > 0) {
+              console.log('🔄 Expert call no longer active - resetting start time');
+              callActiveStartTimeRef.current = 0;
+            }
+          }
+          
+          // Clear any reconnecting timeout when connected
+          if (reconnectingTimeoutRef.current) {
+            clearTimeout(reconnectingTimeoutRef.current);
+            reconnectingTimeoutRef.current = null;
+          }
+          
+          // IMPORTANT: If we're rejoining, close modal and reset flags
+          if (isRejoiningRef.current) {
+            console.log('✅ Expert rejoin successful - closing modal and resetting flags');
+            isRejoiningRef.current = false;
+            modalShownRef.current = false; // Reset modal shown flag
+            setWasDisconnected(false);
+            setShowInterruptionModal(false);
+          } else if (showInterruptionModal && wasDisconnected) {
+            // Don't auto-close - let expert manually close via rejoin button
+            // Modal will close when expert clicks "Yes, Rejoin Call"
+            console.log('✅ Expert connection restored but keeping modal open - expert must click Rejoin');
+          } else {
+            // Normal connection (not from disconnection) - clear immediately
+            setWasDisconnected(false);
+            setShowInterruptionModal(false);
+          }
+        } else if (curState === 'RECONNECTING' && hasBeenConnectedRef.current) {
+          // IMPORTANT: Don't show modal if we're in the process of rejoining
+          if (isRejoiningRef.current) {
+            console.log('🔄 Expert reconnecting during rejoin process - ignoring (modal already closed)');
+            return;
+          }
+          
+          // IMPORTANT: Only show modal if expert's call was actually active
+          // Check if call was actually active before showing interruption
+          if (!callState.isJoined) {
+            console.log('🔄 Reconnecting but call not fully active yet - ignoring');
+            return;
+          }
+          
+          // RECONNECTING is normal - Agora is trying to reconnect automatically
+          // Mark as disconnected but don't show modal yet - wait for network to come back
+          console.log('🔄 Expert connection reconnecting (call was active)...');
+          wasDisconnectedWhenOfflineRef.current = true;
+          
+          // Clear any existing timeout
+          if (reconnectingTimeoutRef.current) {
+            clearTimeout(reconnectingTimeoutRef.current);
+          }
+          
+          // Set timeout to show modal if still reconnecting after 5 seconds
+          // But only if network is online AND call was active AND not rejoining AND modal not already shown
+          // IMPORTANT: Only show if call was active for at least 1 second (prevents showing on first connection)
+          reconnectingTimeoutRef.current = setTimeout(() => {
+            const now = Date.now();
+            const timeSinceLastTrigger = now - lastModalTriggerTimeRef.current;
+            const callActiveDuration = callActiveStartTimeRef.current > 0 ? now - callActiveStartTimeRef.current : 0;
+            
+            if (navigator.onLine && callState.isJoined && !isRejoiningRef.current && 
+                !modalShownRef.current && timeSinceLastTrigger > 2000 && callActiveDuration > 1000) {
+              console.log('⚠️ Expert still reconnecting after 5 seconds (network online, call was active) - showing interruption modal', {
+                callActiveDuration,
+                timeSinceLastTrigger,
+                allConditions: {
+                  isOnline: navigator.onLine,
+                  isJoined: callState.isJoined,
+                  isRejoining: isRejoiningRef.current,
+                  modalShown: modalShownRef.current
+                }
+              });
+              modalShownRef.current = true;
+              lastModalTriggerTimeRef.current = now;
+              setWasDisconnected(true);
+              setShowInterruptionModal(true);
+            } else {
+              console.log('⚠️ Expert still reconnecting but conditions not met - skipping modal', {
+                isOnline: navigator.onLine,
+                isJoined: callState.isJoined,
+                isRejoining: isRejoiningRef.current,
+                modalShown: modalShownRef.current,
+                timeSinceLastTrigger,
+                callActiveDuration,
+                needsMoreTime: callActiveDuration <= 1000,
+                needsDebounce: timeSinceLastTrigger <= 2000
+              });
+              wasDisconnectedWhenOfflineRef.current = true;
+            }
+            reconnectingTimeoutRef.current = null;
+          }, 5000); // 5 seconds timeout
+        } else if (curState === 'DISCONNECTED' && hasBeenConnectedRef.current) {
+          // IMPORTANT: Don't show modal if we're in the process of rejoining
+          if (isRejoiningRef.current) {
+            console.log('⚠️ Expert disconnected during rejoin process - ignoring (modal already closed)');
+            return;
+          }
+          
+          // IMPORTANT: Only show modal if expert's call was actually active
+          // Check if call was actually active before showing interruption
+          if (!callState.isJoined) {
+            console.log('⚠️ Expert disconnected but call not fully active yet - ignoring', {
+              isJoined: callState.isJoined
+            });
+            return;
+          }
+          
+          // IMPORTANT: If callActiveStartTimeRef is 0, set it now (fallback for edge cases)
+          if (callActiveStartTimeRef.current === 0) {
+            callActiveStartTimeRef.current = Date.now() - 5000; // Assume call was active for at least 5 seconds
+            console.log('⚠️ Expert callActiveStartTimeRef was 0, setting fallback value');
+          }
+          
+          // Clear reconnecting timeout if we reach DISCONNECTED
+          if (reconnectingTimeoutRef.current) {
+            clearTimeout(reconnectingTimeoutRef.current);
+            reconnectingTimeoutRef.current = null;
+          }
+          
+          // IMPORTANT: Prevent auto-reconnect by leaving the channel
+          // Expert must manually click "Rejoin" button
+          console.log('🚫 Preventing auto-reconnect - expert must manually rejoin');
+          if (clientRef.current) {
+            // Leave channel to prevent auto-reconnect (fire and forget)
+            clientRef.current.leave().then(() => {
+              console.log('✅ Left channel to prevent auto-reconnect');
+            }).catch((leaveError) => {
+              console.warn('⚠️ Error leaving channel:', leaveError);
+            });
+          }
+          
+          // Mark as disconnected
+          wasDisconnectedWhenOfflineRef.current = true;
+          
+          // Only show modal if network is online AND call was active AND not already rejoining AND modal not already shown
+          // IMPORTANT: Only show if call was active for at least 1 second (prevents showing on first connection)
+          // If network is offline, modal will show when network comes back
+          const now = Date.now();
+          const timeSinceLastTrigger = now - lastModalTriggerTimeRef.current;
+          const callActiveDuration = callActiveStartTimeRef.current > 0 ? now - callActiveStartTimeRef.current : 0;
+          
+          if (navigator.onLine && callState.isJoined && !isRejoiningRef.current && 
+              !modalShownRef.current && timeSinceLastTrigger > 2000 && callActiveDuration > 1000) {
+            console.log('⚠️ Expert connection disconnected (network online, call was active) - SHOWING MODAL IMMEDIATELY', {
+              callActiveDuration,
+              timeSinceLastTrigger,
+              allConditions: {
+                isOnline: navigator.onLine,
+                isJoined: callState.isJoined,
+                isRejoining: isRejoiningRef.current,
+                modalShown: modalShownRef.current
+              }
+            });
+            modalShownRef.current = true;
+            lastModalTriggerTimeRef.current = now;
+            setWasDisconnected(true);
+            setShowInterruptionModal(true);
+          } else {
+            console.log('⚠️ Expert connection disconnected but conditions not met - skipping modal', {
+              isOnline: navigator.onLine,
+              isJoined: callState.isJoined,
+              isRejoining: isRejoiningRef.current,
+              modalShown: modalShownRef.current,
+              timeSinceLastTrigger,
+              callActiveDuration,
+              needsMoreTime: callActiveDuration <= 1000,
+              needsDebounce: timeSinceLastTrigger <= 2000
+            });
+            setWasDisconnected(true);
+          }
+        }
+      });
+
       // Set up event listeners
       client.on('user-published', async (user, mediaType) => {
         console.log('👤 User published:', user.uid, mediaType);
         
+        // Update last activity time
+        lastUserActivityRef.current = new Date();
+        
+        // If user republishes after disconnection, clear the interruption modal
+        if (userDisconnectedRef.current) {
+          console.log('✅ User republished - clearing interruption modal');
+          userDisconnectedRef.current = false;
+          setWasDisconnected(false);
+          setShowInterruptionModal(false);
+        }
+        
         await client.subscribe(user, mediaType);
         
-        setCallState(prev => ({
-          ...prev,
-          remoteUsers: [...prev.remoteUsers.filter(u => u.uid !== user.uid), user]
-        }));
+        setCallState(prev => {
+          const hasUser = prev.remoteUsers.find(u => u.uid === user.uid);
+          if (!hasUser) {
+            console.log('✅ User joined/republished - clearing any interruption modal');
+            userDisconnectedRef.current = false;
+            setWasDisconnected(false);
+            setShowInterruptionModal(false);
+          }
+          
+          return {
+            ...prev,
+            remoteUsers: [...prev.remoteUsers.filter(u => u.uid !== user.uid), user]
+          };
+        });
 
         // Play remote video if video call
         if (mediaType === 'video' && remoteVideoRef.current && user.videoTrack) {
@@ -230,8 +478,31 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
 
       client.on('user-unpublished', (user) => {
         console.log('👤 User unpublished:', user.uid);
+        
+        // IMPORTANT: Don't show popup to expert when user unpublishes
+        // But show info message if user doesn't republish within 5 seconds
+        // Expert's connection is fine, so expert doesn't need to rejoin
+        // User will handle their own rejoin on their side
+        
+        // Set timeout to show info message if user doesn't republish
+        if (hasBeenConnectedRef.current && callState.isJoined) {
+          setTimeout(() => {
+            setCallState(currentState => {
+              const stillNotPublished = !currentState.remoteUsers.find(u => u.uid === user.uid);
+              if (stillNotPublished && hasBeenConnectedRef.current && currentState.isJoined) {
+                console.log('⚠️ User unpublished and not republished - showing info to expert');
+                toast.info('User network issue detected', {
+                  description: 'The user is experiencing network problems. They will rejoin automatically when their connection is restored.',
+                  duration: 5000
+                });
+              }
+              return currentState;
+            });
+          }, 5000); // 5 seconds timeout
+        }
+        
         setCallState(prev => ({
-              ...prev,
+          ...prev,
           remoteUsers: prev.remoteUsers.filter(u => u.uid !== user.uid)
         }));
         
@@ -245,8 +516,22 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
 
       client.on('user-left', (user) => {
         console.log('👤 User left:', user.uid);
+        
+        // IMPORTANT: Don't show popup to expert when user leaves
+        // But show info message that user has network problem
+        // Expert's connection is fine, so expert doesn't need to rejoin
+        // User will handle their own rejoin on their side
+        
+        // Show info message to expert
+        if (hasBeenConnectedRef.current && callState.isJoined) {
+          toast.info('User network issue detected', {
+            description: 'The user is experiencing network problems. They will rejoin automatically when their connection is restored.',
+            duration: 5000
+          });
+        }
+        
         setCallState(prev => ({
-            ...prev,
+          ...prev,
           remoteUsers: prev.remoteUsers.filter(u => u.uid !== user.uid)
         }));
         
@@ -430,7 +715,15 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
       if (currentSessionIdRef.current) {
         try {
           console.log('🔴 Step 7: Updating database...');
-          const result = await endCall(currentSessionIdRef.current, finalDuration, 'expert');
+          // Use the selected disconnection reason, or default to 'expert_ended' if network error
+          const finalDisconnectionReason = wasDisconnected 
+            ? 'network_error' 
+            : (disconnectionReason === 'user_misbehaving' 
+                ? 'user_misbehaving' 
+                : disconnectionReason === 'expert_emergency' 
+                  ? 'expert_emergency' 
+                  : 'expert_ended');
+          const result = await endCall(currentSessionIdRef.current, finalDuration, 'expert', finalDisconnectionReason as any);
           console.log('🔴 Step 8: Database update result:', result);
           if (!result) {
             console.error('❌ Database update returned false!');
@@ -509,6 +802,9 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
       currentSessionIdRef.current = null;
       setCallStartTime(null);
       setCallDuration(0);
+      setShowInterruptionModal(false);
+      setDisconnectionReason(''); // Reset disconnection reason
+      hasBeenConnectedRef.current = false;
       console.log('🧹 All refs cleared');
 
       console.log('🔴 Step 10: All cleanup done, showing toast and calling onCallEnd');
@@ -594,6 +890,78 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
     }));
   };
 
+  // Rejoin call (expert side)
+  const handleRejoinCall = useCallback(async () => {
+    try {
+      if (!callRequest.call_session_id) {
+        toast.error('No call session found to rejoin');
+        setShowInterruptionModal(false);
+        return;
+      }
+
+      // Verify session is still active
+      const { data: session } = await supabase
+        .from('call_sessions')
+        .select('status, start_time, selected_duration')
+        .eq('id', callRequest.call_session_id)
+        .single();
+
+      if (!session || session.status !== 'active') {
+        toast.error('Call session has ended');
+        setShowInterruptionModal(false);
+        return;
+      }
+
+      // Check 10-minute grace window
+      if (session.start_time) {
+        const callStartTime = new Date(session.start_time);
+        const now = new Date();
+        const timeDiff = now.getTime() - callStartTime.getTime();
+        const minutesDiff = timeDiff / (1000 * 60);
+        
+        // Check if more than 10 minutes have passed since call start
+        if (minutesDiff > 10) {
+          toast.error('The grace window for rejoining has expired. The call session has ended.');
+          setShowInterruptionModal(false);
+          return;
+        }
+      }
+
+      // Restore call start time if available
+      if (session.start_time) {
+        setCallStartTime(new Date(session.start_time));
+        startDurationTimer(new Date(session.start_time));
+      }
+
+      // Set rejoining flag to prevent duplicate modals
+      isRejoiningRef.current = true;
+      modalShownRef.current = false; // Reset modal shown flag when rejoining
+      console.log('🔄 Expert starting rejoin process - setting isRejoining flag and resetting modalShown');
+      
+      // Close modal immediately to prevent duplicate
+      setShowInterruptionModal(false);
+      setWasDisconnected(false);
+      
+      // Rejoin the call
+      await handleJoinCall();
+      
+      // Flag will be reset when CONNECTED state is reached
+      toast.success('Rejoining call...');
+    } catch (error) {
+      console.error('❌ Error rejoining call:', error);
+      toast.error('Failed to rejoin call');
+      setShowInterruptionModal(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [callRequest.call_session_id, startDurationTimer]);
+
+  // Handle interruption end call
+  const handleInterruptionEndCall = useCallback(async () => {
+    setShowInterruptionModal(false);
+    await handleLeaveCall();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Handle user end call confirmation - cleanup after expert confirms
   const confirmUserEndCall = useCallback(async () => {
     console.log('✅ Expert confirmed user ended call, cleaning up...');
@@ -655,8 +1023,111 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
     onCallEnd();
   }, [callState, onCallEnd]);
 
+  // REMOVED: Remote user activity monitoring for expert
+  // Expert should only see popup when THEIR OWN connection has issues
+  // Not when user's connection has issues (user will handle their own rejoin)
+
+  // Listen for browser online/offline events
+  // IMPORTANT: Show popup when network comes back ONLINE (not when it goes offline)
+  useEffect(() => {
+    if (!callState.isJoined) {
+      return;
+    }
+
+    const handleOnline = () => {
+      console.log('🌐 Browser came back online (expert side)');
+      
+      // IMPORTANT: Only show modal if expert's call was actually active
+      // If we were disconnected when offline, show modal now that network is back
+      // IMPORTANT: Only show if call was active for at least 1 second (prevents showing on first connection)
+      const now = Date.now();
+      const timeSinceLastTrigger = now - lastModalTriggerTimeRef.current;
+      const callActiveDuration = callActiveStartTimeRef.current > 0 ? now - callActiveStartTimeRef.current : 0;
+      
+      if ((wasDisconnectedWhenOfflineRef.current || wasDisconnected) && callState.isJoined && 
+          !isRejoiningRef.current && !modalShownRef.current && timeSinceLastTrigger > 2000 &&
+          callActiveDuration > 1000) {
+        console.log('✅ Network back online (expert call was active) - showing interruption modal so expert can rejoin', {
+          callActiveDuration,
+          timeSinceLastTrigger,
+          allConditions: {
+            wasDisconnectedWhenOffline: wasDisconnectedWhenOfflineRef.current,
+            wasDisconnected,
+            isJoined: callState.isJoined,
+            isRejoining: isRejoiningRef.current,
+            modalShown: modalShownRef.current
+          }
+        });
+        
+        // IMPORTANT: Ensure client is left to prevent auto-reconnect
+        if (clientRef.current) {
+          const currentState = clientRef.current.connectionState;
+          if (currentState !== 'DISCONNECTED') {
+            console.log('🚫 Leaving channel to prevent auto-reconnect');
+            clientRef.current.leave().then(() => {
+              console.log('✅ Left channel to prevent auto-reconnect on online');
+            }).catch((leaveError) => {
+              console.warn('⚠️ Error leaving channel on online:', leaveError);
+            });
+          }
+        }
+        
+        modalShownRef.current = true;
+        lastModalTriggerTimeRef.current = now;
+        setWasDisconnected(true);
+        setShowInterruptionModal(true);
+        wasDisconnectedWhenOfflineRef.current = false; // Reset flag
+      } else {
+        console.log('⚠️ Network back online but expert call not active - not showing modal', {
+          wasDisconnectedWhenOffline: wasDisconnectedWhenOfflineRef.current,
+          wasDisconnected,
+          isJoined: callState.isJoined
+        });
+      }
+    };
+
+    const handleOffline = () => {
+      console.log('🌐 Browser went offline (expert side) - marking as disconnected');
+      // Just mark that we were disconnected, don't show modal yet
+      // Modal will show when network comes back online
+      wasDisconnectedWhenOfflineRef.current = true;
+      setWasDisconnected(true);
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [callState.isJoined, wasDisconnected]);
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (reconnectingTimeoutRef.current) {
+        clearTimeout(reconnectingTimeoutRef.current);
+        reconnectingTimeoutRef.current = null;
+      }
+      if (userActivityCheckRef.current) {
+        clearInterval(userActivityCheckRef.current);
+        userActivityCheckRef.current = null;
+      }
+    };
+  }, []);
+
   // Auto-join on mount if not already joined
   useEffect(() => {
+    // Prevent duplicate joins - check if client already exists and is connecting/connected
+    if (clientRef.current) {
+      const connectionState = clientRef.current.connectionState;
+      if (connectionState === 'CONNECTING' || connectionState === 'CONNECTED') {
+        console.log('⚠️ Expert: Auto-join skipped - client already connecting/connected');
+        return;
+      }
+    }
+
     if (!callState.isJoined && !isConnecting && callRequest.channel_name) {
       console.log('🚀 Auto-joining call on mount...', {
         channel_name: callRequest.channel_name,
@@ -947,33 +1418,128 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
               </Button>
         </div>
 
-      {/* Expert End Call Confirmation */}
+      {/* Call Interruption Modal */}
+      <CallInterruptionModal
+        isOpen={showInterruptionModal}
+        onRejoin={handleRejoinCall}
+        onEndCall={handleInterruptionEndCall}
+        isUser={false}
+      />
+      
+      {/* Debug Info - Remove in production */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="fixed bottom-4 left-4 bg-black/80 text-white p-2 text-xs rounded z-50">
+          <div>Modal: {showInterruptionModal ? 'OPEN' : 'CLOSED'}</div>
+          <div>Remote Users: {callState.remoteUsers.length}</div>
+          <div>Joined: {callState.isJoined ? 'YES' : 'NO'}</div>
+          <div>User Disconnected: {userDisconnectedRef.current ? 'YES' : 'NO'}</div>
+        </div>
+      )}
+
+      {/* Expert End Call Confirmation - First Dialog */}
       <AlertDialog open={showEndCallConfirm} onOpenChange={setShowEndCallConfirm}>
-        <AlertDialogContent>
+        <AlertDialogContent className="sm:max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle>End Call?</AlertDialogTitle>
-            <AlertDialogDescription>
-                Are you sure you want to end this call? Duration: {formatDuration(callDuration)}
+            <AlertDialogDescription className="space-y-4 pt-2">
+              <p>
+                If the call is complete, ask the user to end the call to mark it as complete.
+              </p>
+              <p>
+                If there is any issue, you may disconnect the call with a reason.
+              </p>
+              <div className="space-y-2 pt-2">
+                <Label htmlFor="disconnection-reason">Reason for disconnection (if applicable):</Label>
+                <Select
+                  value={disconnectionReason}
+                  onValueChange={setDisconnectionReason}
+                >
+                  <SelectTrigger id="disconnection-reason" className="w-full">
+                    <SelectValue placeholder="Select a reason (optional)" />
+                  </SelectTrigger>
+                  <SelectContent className="z-[10001]" position="popper" sideOffset={5}>
+                    <SelectItem value="user_misbehaving">User is misbehaving</SelectItem>
+                    <SelectItem value="expert_emergency">I have an emergency</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => {
               console.log('❌ Cancel clicked - keeping call active');
               setShowEndCallConfirm(false);
+              setDisconnectionReason('');
             }}>
               Cancel
             </AlertDialogCancel>
-              <AlertDialogAction 
-                onClick={async (e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.log('🔘 End Call confirmed in AlertDialog - calling handleLeaveCall');
-                  await handleLeaveCall();
-                }}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                End Call
-              </AlertDialogAction>
+            <AlertDialogAction 
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🔘 End Call first confirmation - showing reason confirmation');
+                setShowEndCallConfirm(false);
+                setShowEndCallReasonConfirm(true);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Expert End Call Confirmation - Second Dialog (Double Confirmation) */}
+      <AlertDialog open={showEndCallReasonConfirm} onOpenChange={setShowEndCallReasonConfirm}>
+        <AlertDialogContent className="sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm End Call</AlertDialogTitle>
+            <AlertDialogDescription className="pt-2">
+              {disconnectionReason ? (
+                <>
+                  <p className="mb-2">
+                    You are ending the call with reason: <strong>
+                      {disconnectionReason === 'user_misbehaving' ? 'User is misbehaving' : 'I have an emergency'}
+                    </strong>
+                  </p>
+                  <p>Duration: <strong>{formatDuration(callDuration)}</strong></p>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Are you sure you want to proceed?
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="mb-2">
+                    Are you sure you want to end this call?
+                  </p>
+                  <p>Duration: <strong>{formatDuration(callDuration)}</strong></p>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Note: If the call is complete, it's better to ask the user to end it.
+                  </p>
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              console.log('❌ Second confirmation cancelled - going back to first dialog');
+              setShowEndCallReasonConfirm(false);
+              setShowEndCallConfirm(true);
+            }}>
+              Go Back
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🔘 End Call confirmed in second dialog - calling handleLeaveCall');
+                setShowEndCallReasonConfirm(false);
+                await handleLeaveCall();
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Yes, End Call
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

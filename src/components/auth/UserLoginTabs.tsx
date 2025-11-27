@@ -5,19 +5,26 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Link } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertTriangle } from 'lucide-react';
 
 interface UserLoginTabsProps {
-  onLogin: (email: string, password: string) => Promise<boolean>;
+  onLogin: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   isLoggingIn: boolean;
 }
 
 const UserLoginTabs: React.FC<UserLoginTabsProps> = ({ onLogin, isLoggingIn }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onLogin(email, password);
+    setLoginError(null);
+    const result = await onLogin(email, password);
+    if (!result.success && result.error) {
+      setLoginError(result.error);
+    }
   };
 
   return (
@@ -27,13 +34,22 @@ const UserLoginTabs: React.FC<UserLoginTabsProps> = ({ onLogin, isLoggingIn }) =
       </TabsList>
       <TabsContent value="login">
         <form onSubmit={handleSubmit} className="space-y-4">
+          {loginError && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>{loginError}</AlertDescription>
+            </Alert>
+          )}
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setLoginError(null);
+              }}
               placeholder="Enter your email"
               disabled={isLoggingIn}
               required
@@ -45,7 +61,10 @@ const UserLoginTabs: React.FC<UserLoginTabsProps> = ({ onLogin, isLoggingIn }) =
               id="password"
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setLoginError(null);
+              }}
               placeholder="Enter your password"
               disabled={isLoggingIn}
               required

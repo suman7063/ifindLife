@@ -3,17 +3,25 @@ import React, { useState } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import WalletBalanceCard from './WalletBalanceCard';
 import WalletTransactionsList from './WalletTransactionsList';
+import { UserProfile } from '@/types/supabase/user';
 
 interface Props {
-  user?: any;
-  currentUser?: any;
-  [key: string]: any;
+  user?: UserProfile | null;
+  currentUser?: UserProfile | null;
+  [key: string]: unknown;
 }
 
 const WalletPage: React.FC<Props> = (props) => {
   const { userProfile } = useAuth();
-  const user = props.user || userProfile;
-  const [balance, setBalance] = useState<number>(user?.wallet_balance || 0);
+  const user = (props.user || userProfile) as UserProfile | null;
+  // Don't use users.wallet_balance as initial state - balance is calculated from wallet_transactions
+  const [balance, setBalance] = useState<number>(0);
+  
+  const handleBalanceUpdate = (newBalance: number) => {
+    setBalance(newBalance);
+    // Don't trigger transaction list refresh here - real-time subscription handles it
+    // This prevents duplicate refreshes
+  };
   
   return (
     <div className="space-y-6">
@@ -25,7 +33,7 @@ const WalletPage: React.FC<Props> = (props) => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <WalletBalanceCard user={user} onBalanceUpdate={setBalance} />
+        <WalletBalanceCard user={user} onBalanceUpdate={handleBalanceUpdate} />
         <div className="lg:col-span-2 space-y-6">
           <WalletTransactionsList user={user} />
         </div>

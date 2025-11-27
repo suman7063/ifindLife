@@ -20,7 +20,8 @@ import type { IAgoraRTCClient } from 'agora-rtc-sdk-ng';
 export interface UseCallFlowOptions {
   expertId?: string;
   expertAuthId?: string;
-  onCallStarted?: () => void;
+  onExpertAccepted?: (callSessionId: string) => void; // Called when expert accepts the call, with callSessionId
+  onCallStarted?: () => void; // Called when call actually connects
   onCallEnded?: () => void;
 }
 
@@ -38,6 +39,7 @@ export interface CallFlowState {
   error: string | null;
   showRejoin: boolean;
   wasDisconnected: boolean;
+  showInterruptionModal: boolean;
   expertEndedCall: boolean;
   showExpertEndCallConfirmation: boolean;
   expertDeclinedCall: boolean;
@@ -60,6 +62,7 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
     error: null,
     showRejoin: false,
     wasDisconnected: false,
+    showInterruptionModal: false,
     expertEndedCall: false,
     showExpertEndCallConfirmation: false,
     expertDeclinedCall: false,
@@ -74,6 +77,12 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
   const subscriptionRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const hasBeenConnectedRef = useRef<boolean>(false);
+  const reconnectingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const paymentProcessedRef = useRef<boolean>(false); // Track if payment already processed
+  const isRejoiningRef = useRef<boolean>(false); // Track if we're in the process of rejoining
+  const modalShownRef = useRef<boolean>(false); // Track if modal was already shown to prevent duplicates
+  const lastModalTriggerTimeRef = useRef<number>(0); // Track last time modal was triggered
+  const callActiveStartTimeRef = useRef<number>(0); // Track when call became active (to prevent showing on first connection)
 
   // Start duration timer
   const startDurationTimer = useCallback(() => {
@@ -101,9 +110,32 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
 
   // Join Agora call (after acceptance)
   const joinAgoraCall = useCallback(async (callData: CallRequestResponse) => {
+    // IMPORTANT: Prevent duplicate joins - check if already in call
     if (flowState.isInCall && flowState.callState?.isJoined) {
       console.log('⚠️ Already joined call, skipping duplicate join');
       return;
+    }
+    
+    // IMPORTANT: If payment already processed, this is a rejoin - don't process payment again
+    if (paymentProcessedRef.current) {
+      console.log('✅ Rejoin detected (payment already processed), joining call without payment callback');
+    }
+    
+    // Prevent duplicate joins - check if we're already in the process of joining
+    if (clientRef.current) {
+      const connectionState = clientRef.current.connectionState;
+      if (connectionState === 'CONNECTING' || connectionState === 'CONNECTED') {
+        console.log('⚠️ Client already exists and is connecting/connected, skipping duplicate join');
+        return;
+      }
+      // If client exists but is disconnected, clean it up first
+      console.log('🧹 Cleaning up existing disconnected client before creating new one');
+      try {
+        await clientRef.current.leave();
+      } catch (leaveError) {
+        console.warn('⚠️ Error leaving existing client:', leaveError);
+      }
+      clientRef.current = null;
     }
     
     try {
@@ -114,22 +146,217 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
 
       // Set up connection state listener
       client.on('connection-state-change', (curState, revState) => {
-        console.log('📡 Connection state changed:', curState, revState);
+        console.log('📡 Connection state changed:', curState, revState, {
+          hasBeenConnected: hasBeenConnectedRef.current,
+          isInCall: flowState.isInCall,
+          isJoined: flowState.callState?.isJoined
+        });
         
-          if (curState === 'CONNECTED') {
-            hasBeenConnectedRef.current = true;
-      setFlowState(prev => ({
-        ...prev,
+        if (curState === 'CONNECTED') {
+          hasBeenConnectedRef.current = true;
+          
+          // IMPORTANT: Track when call becomes active (for first time connection detection)
+          if (flowState.isInCall && flowState.callState?.isJoined) {
+            if (callActiveStartTimeRef.current === 0) {
+              callActiveStartTimeRef.current = Date.now();
+              console.log('✅ Call became active - tracking start time:', callActiveStartTimeRef.current);
+            }
+          } else {
+            // Reset if call is not active
+            if (callActiveStartTimeRef.current > 0) {
+              console.log('🔄 Call no longer active - resetting start time');
+              callActiveStartTimeRef.current = 0;
+            }
+          }
+          
+          // Clear any reconnecting timeout when connected
+          if (reconnectingTimeoutRef.current) {
+            clearTimeout(reconnectingTimeoutRef.current);
+            reconnectingTimeoutRef.current = null;
+          }
+          
+          // IMPORTANT: If we're rejoining, close modal and reset flags
+          if (isRejoiningRef.current) {
+            console.log('✅ Rejoin successful - closing modal and resetting flags');
+            isRejoiningRef.current = false;
+            modalShownRef.current = false; // Reset modal shown flag
+            setFlowState(prev => ({
+              ...prev,
               showRejoin: false,
-              wasDisconnected: false
+              wasDisconnected: false,
+              showInterruptionModal: false
             }));
-        } else if ((curState === 'DISCONNECTED' || curState === 'RECONNECTING') && hasBeenConnectedRef.current) {
+          } else if (flowState.showInterruptionModal && flowState.wasDisconnected) {
+            // Don't auto-close - let user manually close via rejoin button
+            // Modal will close when user clicks "Yes, Rejoin Call"
+            console.log('✅ Connection restored but keeping modal open - user must click Rejoin');
+          } else {
+            // Normal connection (not from disconnection) - clear immediately
+            setFlowState(prev => ({
+              ...prev,
+              showRejoin: false,
+              wasDisconnected: false,
+              showInterruptionModal: false
+            }));
+          }
+          wasDisconnectedWhenOfflineRef.current = false; // Reset flag
+        } else if (curState === 'RECONNECTING' && hasBeenConnectedRef.current) {
+          // IMPORTANT: Don't show modal if we're in the process of rejoining
+          if (isRejoiningRef.current) {
+            console.log('🔄 Reconnecting during rejoin process - ignoring (modal already shown)');
+            return;
+          }
+          
+          // IMPORTANT: Only show modal if we were actually IN a call (not just connecting)
+          // Check if call was actually active before showing interruption
+          if (!flowState.isInCall || !flowState.callState?.isJoined) {
+            console.log('🔄 Reconnecting but call not fully active yet - ignoring');
+            return;
+          }
+          
+          // RECONNECTING is normal - Agora is trying to reconnect automatically
+          // Mark as disconnected but don't show modal yet - wait for network to come back
+          console.log('🔄 Agora is automatically reconnecting (call was active)...');
+          wasDisconnectedWhenOfflineRef.current = true;
+          
+          // Clear any existing timeout
+          if (reconnectingTimeoutRef.current) {
+            clearTimeout(reconnectingTimeoutRef.current);
+          }
+          
+          // Set timeout to show modal if still reconnecting after 5 seconds
+          // But only if network is online (check navigator.onLine)
+          reconnectingTimeoutRef.current = setTimeout(() => {
+            // Double check: Only show if call was actually active and not rejoining and modal not already shown
+            const now = Date.now();
+            const timeSinceLastTrigger = now - lastModalTriggerTimeRef.current;
+            const callActiveDuration = callActiveStartTimeRef.current > 0 ? now - callActiveStartTimeRef.current : 0;
+            
+            // IMPORTANT: Only show modal if call was active for at least 1 second (prevents showing on first connection)
+            // And debounce of 2 seconds to prevent duplicates
+            if (flowState.isInCall && flowState.callState?.isJoined && navigator.onLine && 
+                !isRejoiningRef.current && !modalShownRef.current && timeSinceLastTrigger > 2000 &&
+                callActiveDuration > 1000) {
+              console.log('⚠️ Still reconnecting after 5 seconds (network online, call was active) - showing interruption modal', {
+                callActiveDuration,
+                timeSinceLastTrigger,
+                allConditions: {
+                  isInCall: flowState.isInCall,
+                  isJoined: flowState.callState?.isJoined,
+                  isOnline: navigator.onLine,
+                  isRejoining: isRejoiningRef.current,
+                  modalShown: modalShownRef.current
+                }
+              });
+              modalShownRef.current = true;
+              lastModalTriggerTimeRef.current = now;
               setFlowState(prev => ({
                 ...prev,
-                  showRejoin: true,
-                  wasDisconnected: true
+                showRejoin: true,
+                wasDisconnected: true,
+                showInterruptionModal: true
               }));
+            } else {
+              console.log('⚠️ Still reconnecting but conditions not met - skipping modal', {
+                isInCall: flowState.isInCall,
+                isJoined: flowState.callState?.isJoined,
+                isOnline: navigator.onLine,
+                isRejoining: isRejoiningRef.current,
+                modalShown: modalShownRef.current,
+                timeSinceLastTrigger,
+                callActiveDuration,
+                needsMoreTime: callActiveDuration <= 1000,
+                needsDebounce: timeSinceLastTrigger <= 2000
+              });
+              wasDisconnectedWhenOfflineRef.current = true;
             }
+            reconnectingTimeoutRef.current = null;
+          }, 5000); // 5 seconds timeout
+        } else if (curState === 'DISCONNECTED' && hasBeenConnectedRef.current) {
+          // IMPORTANT: Don't show modal if we're in the process of rejoining
+          if (isRejoiningRef.current) {
+            console.log('⚠️ Disconnected during rejoin process - ignoring (modal already shown)');
+            return;
+          }
+          
+          // IMPORTANT: Only show modal if we were actually IN a call (not just connecting)
+          // Check if call was actually active before showing interruption
+          if (!flowState.isInCall || !flowState.callState?.isJoined) {
+            console.log('⚠️ Disconnected but call not fully active yet - ignoring');
+            return;
+          }
+          
+          // Clear reconnecting timeout if we reach DISCONNECTED
+          if (reconnectingTimeoutRef.current) {
+            clearTimeout(reconnectingTimeoutRef.current);
+            reconnectingTimeoutRef.current = null;
+          }
+          
+          // IMPORTANT: Prevent auto-reconnect by leaving the channel
+          // User must manually click "Rejoin" button
+          console.log('🚫 Preventing auto-reconnect - user must manually rejoin');
+          if (clientRef.current) {
+            // Leave channel to prevent auto-reconnect (fire and forget)
+            clientRef.current.leave().then(() => {
+              console.log('✅ Left channel to prevent auto-reconnect');
+            }).catch((leaveError) => {
+              console.warn('⚠️ Error leaving channel:', leaveError);
+            });
+          }
+          
+          // Mark as disconnected
+          wasDisconnectedWhenOfflineRef.current = true;
+          
+          // Only show modal if network is online AND call was actually active AND not already rejoining AND modal not already shown
+          // IMPORTANT: Only show if call was active for at least 1 second (prevents showing on first connection)
+          // If network is offline, modal will show when network comes back
+          const now = Date.now();
+          const timeSinceLastTrigger = now - lastModalTriggerTimeRef.current;
+          const callActiveDuration = callActiveStartTimeRef.current > 0 ? now - callActiveStartTimeRef.current : 0;
+          
+          if (navigator.onLine && flowState.isInCall && flowState.callState?.isJoined && 
+              !isRejoiningRef.current && !modalShownRef.current && timeSinceLastTrigger > 2000 &&
+              callActiveDuration > 1000) {
+            console.log('⚠️ Connection disconnected (network online, call was active) - SHOWING MODAL IMMEDIATELY', {
+              callActiveDuration,
+              timeSinceLastTrigger,
+              allConditions: {
+                isOnline: navigator.onLine,
+                isInCall: flowState.isInCall,
+                isJoined: flowState.callState?.isJoined,
+                isRejoining: isRejoiningRef.current,
+                modalShown: modalShownRef.current
+              }
+            });
+            modalShownRef.current = true;
+            lastModalTriggerTimeRef.current = now;
+            setFlowState(prev => ({
+              ...prev,
+              showRejoin: true,
+              wasDisconnected: true,
+              showInterruptionModal: true
+            }));
+          } else {
+            console.log('⚠️ Connection disconnected but conditions not met - skipping modal', {
+              isOnline: navigator.onLine,
+              isInCall: flowState.isInCall,
+              isJoined: flowState.callState?.isJoined,
+              isRejoining: isRejoiningRef.current,
+              modalShown: modalShownRef.current,
+              timeSinceLastTrigger,
+              callActiveDuration,
+              needsMoreTime: callActiveDuration <= 1000,
+              needsDebounce: timeSinceLastTrigger <= 2000
+            });
+            setFlowState(prev => ({
+              ...prev,
+              wasDisconnected: true
+            }));
+          }
+        } else if (curState === 'RECONNECTING' && !hasBeenConnectedRef.current) {
+          // If we're reconnecting but never connected, this is initial connection - don't show modal
+          console.log('🔄 Initial connection attempt (not reconnecting)');
+        }
       });
 
       // Set up event listeners
@@ -199,7 +426,29 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
       });
 
       client.on('user-unpublished', (user) => {
-        console.log('👤 User unpublished:', user.uid);
+        console.log('👤 Expert unpublished:', user.uid);
+        
+        // IMPORTANT: Show info message to user if expert doesn't republish within 5 seconds
+        // User's connection is fine, so user doesn't need to rejoin
+        // Expert will handle their own rejoin on their side
+        
+        // Set timeout to show info message if expert doesn't republish
+        if (hasBeenConnectedRef.current && flowState.isInCall && flowState.callState?.isJoined) {
+          setTimeout(() => {
+            setFlowState(currentState => {
+              const stillNotPublished = !currentState.callState?.remoteUsers.find(u => u.uid === user.uid);
+              if (stillNotPublished && hasBeenConnectedRef.current && currentState.isInCall && currentState.callState?.isJoined) {
+                console.log('⚠️ Expert unpublished and not republished - showing info to user');
+                toast.info('Expert network issue detected', {
+                  description: 'The expert is experiencing network problems. They will rejoin automatically when their connection is restored.',
+                  duration: 5000
+                });
+              }
+              return currentState;
+            });
+          }, 5000); // 5 seconds timeout
+        }
+        
         setFlowState(prev => ({
           ...prev,
           callState: prev.callState ? {
@@ -208,16 +457,27 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
           } : null
         }));
         
-        // Cleanup audio element when user unpublishes
+        // Cleanup audio element when expert unpublishes
         const audioElement = document.getElementById(`remote-audio-${user.uid}`);
         if (audioElement) {
           audioElement.remove();
-          console.log('✅ Removed remote audio element for user:', user.uid);
+          console.log('✅ Removed remote audio element for expert:', user.uid);
         }
       });
 
       client.on('user-left', (user) => {
-        console.log('👤 User left:', user.uid);
+        console.log('👤 Expert left:', user.uid);
+        
+        // IMPORTANT: Show info message to user when expert disconnects
+        // User's connection is fine, so user doesn't need to rejoin
+        // Expert will handle their own rejoin on their side
+        if (hasBeenConnectedRef.current && flowState.isInCall && flowState.callState?.isJoined) {
+          toast.info('Expert network issue detected', {
+            description: 'The expert is experiencing network problems. They will rejoin automatically when their connection is restored.',
+            duration: 5000
+          });
+        }
+        
         setFlowState(prev => ({
           ...prev,
           expertEndedCall: prev.isInCall && prev.callState?.isJoined ? true : prev.expertEndedCall,
@@ -227,11 +487,11 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
           } : null
         }));
         
-        // Cleanup audio element when user leaves
+        // Cleanup audio element when expert leaves
         const audioElement = document.getElementById(`remote-audio-${user.uid}`);
         if (audioElement) {
           audioElement.remove();
-          console.log('✅ Removed remote audio element for user:', user.uid);
+          console.log('✅ Removed remote audio element for expert:', user.uid);
         }
       });
 
@@ -328,6 +588,13 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
       // Set call start time
       callStartTimeRef.current = new Date();
       hasBeenConnectedRef.current = true;
+      
+      // IMPORTANT: Mark payment as processed when call successfully connects
+      // This ensures that if network reconnects and subscription fires again, payment won't be processed
+      if (!paymentProcessedRef.current) {
+        console.log('⚠️ Call connected but payment not marked as processed - marking now to prevent duplicates');
+        paymentProcessedRef.current = true;
+      }
 
       setFlowState(prev => ({
         ...prev,
@@ -452,13 +719,35 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
             console.log('📡 Real-time update received:', payload);
             const updatedRequest = payload.new as { status: string };
             
-            if (hasJoinedCall) {
-              console.log('⚠️ Already joined, ignoring duplicate update');
+            // IMPORTANT: Check multiple conditions to prevent duplicate processing
+            // 1. Check if already joined (local variable)
+            // 2. Check if payment already processed (ref)
+            // 3. Check if already in call (state)
+            if (hasJoinedCall || paymentProcessedRef.current || flowState.isInCall) {
+              console.log('⚠️ Already joined/paid/in-call, ignoring duplicate update', {
+                hasJoinedCall,
+                paymentProcessed: paymentProcessedRef.current,
+                isInCall: flowState.isInCall
+              });
               return;
             }
             
             if (updatedRequest.status === 'accepted') {
               console.log('✅ Expert accepted via real-time, joining call...');
+              
+              // IMPORTANT: Only process payment if not already processed (prevent duplicate on rejoin/network reconnect)
+              if (!paymentProcessedRef.current && options.onExpertAccepted) {
+                try {
+                  console.log('💰 Calling onExpertAccepted with callSessionId:', callData.callSessionId);
+                  await options.onExpertAccepted(callData.callSessionId);
+                  paymentProcessedRef.current = true; // Mark payment as processed
+                } catch (error) {
+                  console.error('❌ Error in onExpertAccepted callback:', error);
+                }
+              } else {
+                console.log('⚠️ Payment already processed, skipping onExpertAccepted callback');
+              }
+              
               hasJoinedCall = true;
               await joinAgoraCall(callData);
             } else if (updatedRequest.status === 'declined') {
@@ -492,7 +781,14 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
       // Poll as fallback
       const pollInterval = setInterval(async () => {
         try {
-          if (hasJoinedCall) {
+          // IMPORTANT: Check multiple conditions to prevent duplicate processing
+          // Stop polling if already joined, payment processed, or already in call
+          if (hasJoinedCall || paymentProcessedRef.current || flowState.isInCall) {
+            console.log('⚠️ Polling: Already joined/paid/in-call, stopping poll', {
+              hasJoinedCall,
+              paymentProcessed: paymentProcessedRef.current,
+              isInCall: flowState.isInCall
+            });
             clearInterval(pollInterval);
             return;
           }
@@ -503,8 +799,23 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
             .eq('id', callData.callRequestId)
             .single();
 
-          if (currentRequest?.status === 'accepted' && !hasJoinedCall) {
+          // IMPORTANT: Check again before processing (state might have changed)
+          if (currentRequest?.status === 'accepted' && !hasJoinedCall && !paymentProcessedRef.current && !flowState.isInCall) {
             console.log('✅ Expert accepted (via polling), joining call...');
+            
+            // IMPORTANT: Only process payment if not already processed (prevent duplicate on rejoin/network reconnect)
+            if (!paymentProcessedRef.current && options.onExpertAccepted) {
+              try {
+                console.log('💰 Calling onExpertAccepted with callSessionId (polling):', callData.callSessionId);
+                await options.onExpertAccepted(callData.callSessionId);
+                paymentProcessedRef.current = true; // Mark payment as processed
+              } catch (error) {
+                console.error('❌ Error in onExpertAccepted callback:', error);
+              }
+            } else {
+              console.log('⚠️ Payment already processed, skipping onExpertAccepted callback');
+            }
+            
             hasJoinedCall = true;
             clearInterval(pollInterval);
             await joinAgoraCall(callData);
@@ -547,10 +858,17 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
       }));
       return false;
     }
-  }, [isAuthenticated, user, userProfile?.name, userProfile?.profile_picture, joinAgoraCall]);
+  }, [isAuthenticated, user, userProfile?.name, userProfile?.profile_picture, joinAgoraCall, options]);
 
   // End call
   const stopCall = useCallback(async () => {
+    // Reset all flags when call stops
+    callActiveStartTimeRef.current = 0;
+    modalShownRef.current = false;
+    isRejoiningRef.current = false;
+    lastModalTriggerTimeRef.current = 0;
+    console.log('🛑 Call stopped - resetting all flags');
+    
     try {
       console.log('🔴 User ending call...');
       
@@ -580,7 +898,9 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
       // Update database
       if (flowState.callSessionId) {
         try {
-          await endCall(flowState.callSessionId, finalDuration, 'user');
+          // Determine disconnection reason: if wasDisconnected is true, it's a network error
+          const disconnectionReason = flowState.wasDisconnected ? 'network_error' : 'user_ended';
+          await endCall(flowState.callSessionId, finalDuration, 'user', disconnectionReason);
           console.log('✅ Call session updated in database');
         } catch (dbError) {
           console.error('❌ Error updating call session:', dbError);
@@ -603,22 +923,79 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
         });
       }
 
-      // Leave Agora channel
-      if (clientRef.current && flowState.callState?.localAudioTrack) {
+      // Stop local video track explicitly before leaving (ensures camera is off)
+      if (flowState.callState?.localVideoTrack) {
+        try {
+          console.log('📹 Stopping local video track to turn off camera...');
+          // Disable the track first
+          flowState.callState.localVideoTrack.setEnabled(false);
+          // Stop the track
+          flowState.callState.localVideoTrack.stop();
+          // Get the underlying MediaStreamTrack and stop it
+          const videoStream = flowState.callState.localVideoTrack.getMediaStreamTrack();
+          if (videoStream) {
+            videoStream.stop();
+            console.log('✅ Camera MediaStreamTrack stopped');
+          }
+          // Close the track
+          flowState.callState.localVideoTrack.close();
+          console.log('✅ Camera fully turned off');
+        } catch (videoStopError) {
+          console.warn('⚠️ Error stopping video track:', videoStopError);
+          // Fallback: try to stop MediaStreamTrack directly
+          try {
+            const videoStream = flowState.callState.localVideoTrack.getMediaStreamTrack();
+            if (videoStream) {
+              videoStream.stop();
+              console.log('✅ Fallback: Camera stopped');
+            }
+          } catch (fallbackError) {
+            console.error('❌ Fallback camera stop failed:', fallbackError);
+          }
+        }
+      }
+
+      // Stop local audio track explicitly
+      if (flowState.callState?.localAudioTrack) {
+        try {
+          flowState.callState.localAudioTrack.setEnabled(false);
+          flowState.callState.localAudioTrack.stop();
+          const audioStream = flowState.callState.localAudioTrack.getMediaStreamTrack();
+          if (audioStream) {
+            audioStream.stop();
+          }
+          flowState.callState.localAudioTrack.close();
+          console.log('✅ Audio track stopped');
+        } catch (audioStopError) {
+          console.warn('⚠️ Error stopping audio track:', audioStopError);
+        }
+      }
+
+
+      // Leave Agora channel - ensure cleanup happens even if tracks are missing
+      if (clientRef.current) {
         try {
           await leaveCall(
             clientRef.current,
-            flowState.callState.localAudioTrack,
-            flowState.callState.localVideoTrack
+            flowState.callState?.localAudioTrack || null,
+            flowState.callState?.localVideoTrack || null
           );
           console.log('✅ Successfully left Agora channel');
         } catch (agoraError) {
           console.error('❌ Error leaving Agora call:', agoraError);
+          // Force leave as fallback
+          try {
+            await clientRef.current.leave();
+            clientRef.current.removeAllListeners();
+          } catch (forceLeaveError) {
+            console.error('❌ Force leave failed:', forceLeaveError);
+          }
         }
       }
 
       // Reset state
       hasBeenConnectedRef.current = false;
+      paymentProcessedRef.current = false; // Reset payment flag
       setFlowState({
         isConnecting: false,
         isInCall: false,
@@ -633,6 +1010,7 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
         error: null,
       showRejoin: false,
       wasDisconnected: false,
+      showInterruptionModal: false,
       expertEndedCall: false,
       showExpertEndCallConfirmation: false,
       expertDeclinedCall: false,
@@ -742,6 +1120,9 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
   }, [flowState.callState]);
 
   // Rejoin call
+  // IMPORTANT: This function only reconnects to the existing Agora call session.
+  // It does NOT trigger payment/credit deduction - payment was already processed
+  // when the expert first accepted the call (via onExpertAccepted callback).
   const rejoinCall = useCallback(async () => {
     try {
       const storedSession = sessionStorage.getItem('user_call_session');
@@ -752,7 +1133,8 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
         setFlowState(prev => ({
           ...prev,
           showRejoin: false,
-          wasDisconnected: false
+          wasDisconnected: false,
+          showInterruptionModal: false
         }));
         return false;
       }
@@ -773,9 +1155,32 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
         setFlowState(prev => ({
           ...prev,
           showRejoin: false,
-          wasDisconnected: false
+          wasDisconnected: false,
+          showInterruptionModal: false
         }));
         return false;
+      }
+
+      // Check 10-minute grace window
+      if (callData.callStartTime) {
+        const callStartTime = new Date(callData.callStartTime);
+        const now = new Date();
+        const timeDiff = now.getTime() - callStartTime.getTime();
+        const minutesDiff = timeDiff / (1000 * 60);
+        
+        // Check if more than 10 minutes have passed since call start
+        if (minutesDiff > 10) {
+          toast.error('The grace window for rejoining has expired. The call session has ended.');
+          sessionStorage.removeItem('user_call_session');
+          sessionStorage.removeItem('user_call_data');
+          setFlowState(prev => ({
+            ...prev,
+            showRejoin: false,
+            wasDisconnected: false,
+            showInterruptionModal: false
+          }));
+          return false;
+        }
       }
 
       // Restore call start time
@@ -783,10 +1188,28 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
         callStartTimeRef.current = new Date(callData.callStartTime);
       }
 
-      // Join Agora call
+      // IMPORTANT: Mark payment as already processed for rejoin (prevents duplicate deduction)
+      paymentProcessedRef.current = true;
+      console.log('✅ Rejoin: Payment already processed, skipping payment callback');
+
+      // Set rejoining flag to prevent duplicate modals
+      isRejoiningRef.current = true;
+      modalShownRef.current = false; // Reset modal shown flag when rejoining
+      console.log('🔄 Starting rejoin process - setting isRejoining flag and resetting modalShown');
+
+      // Close modal immediately to prevent duplicate
+      setFlowState(prev => ({
+        ...prev,
+        showRejoin: false,
+        wasDisconnected: false,
+        showInterruptionModal: false
+      }));
+
+      // Join Agora call (this will NOT trigger onExpertAccepted)
       await joinAgoraCall(callData);
 
-      toast.success('Rejoined call successfully!');
+      // Flag will be reset when CONNECTED state is reached
+      toast.success('Rejoining call...');
       return true;
     } catch (error) {
       console.error('❌ Error rejoining call:', error);
@@ -794,7 +1217,8 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
       setFlowState(prev => ({
         ...prev,
         showRejoin: false,
-        wasDisconnected: false
+        wasDisconnected: false,
+        showInterruptionModal: false
       }));
       return false;
     }
@@ -847,6 +1271,131 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
       supabase.removeChannel(sessionChannel);
     };
   }, [flowState.callSessionId, flowState.isInCall, options]);
+
+  // Track if we were disconnected when offline
+  const wasDisconnectedWhenOfflineRef = useRef<boolean>(false);
+
+  // Listen for browser online/offline events
+  // IMPORTANT: Show popup when network comes back ONLINE (not when it goes offline)
+  // Because when offline, user can't do anything anyway. When online, they can rejoin.
+  useEffect(() => {
+    if (!flowState.isInCall || !hasBeenConnectedRef.current) {
+      return;
+    }
+
+    const handleOnline = () => {
+      console.log('🌐 Browser came back online (user side)');
+      
+      // IMPORTANT: Only show modal if we were actually IN a call (not just connecting)
+      // Check if call was actually active before showing interruption
+      // IMPORTANT: Only show if call was active for at least 1 second (prevents showing on first connection)
+      const now = Date.now();
+      const timeSinceLastTrigger = now - lastModalTriggerTimeRef.current;
+      const callActiveDuration = callActiveStartTimeRef.current > 0 ? now - callActiveStartTimeRef.current : 0;
+      
+      if ((wasDisconnectedWhenOfflineRef.current || flowState.wasDisconnected) && 
+          flowState.isInCall && flowState.callState?.isJoined && 
+          !isRejoiningRef.current && !modalShownRef.current && timeSinceLastTrigger > 2000 &&
+          callActiveDuration > 1000) {
+        console.log('✅ Network back online (call was active) - showing interruption modal so user can rejoin', {
+          callActiveDuration,
+          timeSinceLastTrigger,
+          allConditions: {
+            wasDisconnectedWhenOffline: wasDisconnectedWhenOfflineRef.current,
+            wasDisconnected: flowState.wasDisconnected,
+            isInCall: flowState.isInCall,
+            isJoined: flowState.callState?.isJoined,
+            isRejoining: isRejoiningRef.current,
+            modalShown: modalShownRef.current
+          }
+        });
+        
+        // IMPORTANT: Ensure client is left to prevent auto-reconnect
+        if (clientRef.current) {
+          const currentState = clientRef.current.connectionState;
+          if (currentState !== 'DISCONNECTED') {
+            console.log('🚫 Leaving channel to prevent auto-reconnect');
+            clientRef.current.leave().then(() => {
+              console.log('✅ Left channel to prevent auto-reconnect on online');
+            }).catch((leaveError) => {
+              console.warn('⚠️ Error leaving channel on online:', leaveError);
+            });
+          }
+        }
+        
+        modalShownRef.current = true;
+        lastModalTriggerTimeRef.current = now;
+        setFlowState(prev => ({
+          ...prev,
+          showRejoin: true,
+          wasDisconnected: true,
+          showInterruptionModal: true
+        }));
+        wasDisconnectedWhenOfflineRef.current = false; // Reset flag
+      } else {
+        console.log('⚠️ Network back online but call not active - not showing modal', {
+          wasDisconnectedWhenOffline: wasDisconnectedWhenOfflineRef.current,
+          wasDisconnected: flowState.wasDisconnected,
+          isInCall: flowState.isInCall,
+          isJoined: flowState.callState?.isJoined
+        });
+      }
+    };
+
+    const handleOffline = () => {
+      console.log('🌐 Browser went offline (user side) - marking as disconnected');
+      // Just mark that we were disconnected, don't show modal yet
+      // Modal will show when network comes back online
+      wasDisconnectedWhenOfflineRef.current = true;
+      setFlowState(prev => ({
+        ...prev,
+        wasDisconnected: true
+      }));
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [flowState.isInCall, flowState.wasDisconnected]);
+
+  // Monitor connection state periodically - additional check for user side
+  useEffect(() => {
+    if (!flowState.isInCall || !hasBeenConnectedRef.current || !clientRef.current) {
+      return;
+    }
+
+    const checkConnection = setInterval(() => {
+      if (clientRef.current) {
+        const connectionState = clientRef.current.connectionState;
+        console.log('🔍 Periodic connection check (user side):', connectionState);
+        
+        // If disconnected or reconnecting for too long, show modal
+        // IMPORTANT: Only if call was actually active
+        if (connectionState === 'DISCONNECTED' && hasBeenConnectedRef.current && 
+            flowState.isInCall && flowState.callState?.isJoined) {
+          console.log('🚨 Periodic check: DISCONNECTED (call was active) - showing modal');
+          setFlowState(prev => ({
+            ...prev,
+            showRejoin: true,
+            wasDisconnected: true,
+            showInterruptionModal: true
+          }));
+        } else if (connectionState === 'RECONNECTING' && hasBeenConnectedRef.current) {
+          // Check how long we've been reconnecting
+          // This is a fallback if the timeout didn't fire
+          console.log('🔄 Periodic check: Still RECONNECTING');
+        }
+      }
+    }, 2000); // Check every 2 seconds
+
+    return () => {
+      clearInterval(checkConnection);
+    };
+  }, [flowState.isInCall]);
 
   // Check on mount if call session is already ended (for page refresh scenario)
   useEffect(() => {
@@ -901,6 +1450,7 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
             error: null,
             showRejoin: false,
             wasDisconnected: false,
+            showInterruptionModal: false,
             expertEndedCall: true,
             showExpertEndCallConfirmation: false,
             expertDeclinedCall: false,
@@ -937,6 +1487,10 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
       
       if (subscriptionRef.current) {
         supabase.removeChannel(subscriptionRef.current);
+      }
+      
+      if (reconnectingTimeoutRef.current) {
+        clearTimeout(reconnectingTimeoutRef.current);
       }
     };
   }, []);
@@ -975,6 +1529,7 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
       error: null,
       showRejoin: false,
       wasDisconnected: false,
+      showInterruptionModal: false,
       expertEndedCall: false,
       showExpertEndCallConfirmation: false,
       expertDeclinedCall: true,
@@ -1048,6 +1603,7 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
       error: null,
       showRejoin: false,
       wasDisconnected: false,
+      showInterruptionModal: false,
       expertEndedCall: true,
       showExpertEndCallConfirmation: false,
       expertDeclinedCall: false,

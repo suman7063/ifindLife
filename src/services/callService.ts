@@ -92,8 +92,9 @@ export async function initiateCall(params: InitiateCallParams): Promise<CallRequ
     const expertAgoraToken = expertTokenData?.token || null;
     console.log('✅ Agora token generated for expert (UID:', expertUid, ')');
 
-    // Create call session
-    const callSessionId = `session_${expertAuthId}_${userId}_${timestamp}`;
+    // Create call session with UUID
+    // Use crypto.randomUUID() for proper UUID format that can be stored in reference_id
+    const callSessionId = crypto.randomUUID();
     
     const { data: sessionData, error: sessionError } = await supabase
       .from('call_sessions')
@@ -255,6 +256,41 @@ export async function acceptCall(callRequestId: string): Promise<boolean> {
           answered_at: new Date().toISOString()
         })
         .eq('id', callRequest.call_session_id);
+
+      // Send notification to expert confirming call acceptance
+      try {
+        const userName = (callRequest.user_metadata as any)?.name || 'A user';
+        const callType = callRequest.call_type === 'video' ? 'Video' : 'Audio';
+        
+        console.log('📨 Sending acceptance confirmation notification to expert:', callRequest.expert_id);
+        
+        const { error: notificationError } = await supabase.functions.invoke('send-notification', {
+          body: {
+            userId: callRequest.expert_id, // expert_id is the auth_id
+            type: 'call_accepted_by_expert',
+            title: 'Call Accepted',
+            content: `You have accepted the ${callType.toLowerCase()} call from ${userName}. Connecting now...`,
+            referenceId: callRequestId,
+            senderId: callRequest.user_id,
+            data: {
+              callRequestId: callRequestId,
+              callSessionId: callRequest.call_session_id,
+              callType: callRequest.call_type,
+              userName: userName
+            }
+          }
+        });
+
+        if (notificationError) {
+          console.warn('⚠️ Failed to send acceptance notification to expert:', notificationError.message || 'Unknown error');
+          // Don't fail the accept call if notification fails
+        } else {
+          console.log('✅ Acceptance confirmation notification sent to expert successfully');
+        }
+      } catch (notificationErr: any) {
+        console.warn('⚠️ Error sending acceptance notification to expert:', notificationErr?.message || 'Unknown error');
+        // Don't fail the accept call if notification fails
+      }
     }
 
     return true;
@@ -350,8 +386,17 @@ export async function declineCall(callRequestId: string): Promise<boolean> {
 
 /**
  * End a call and update session
+ * @param callSessionId - The call session ID
+ * @param duration - Call duration in seconds
+ * @param endedBy - Who ended the call ('user' or 'expert')
+ * @param disconnectionReason - Reason for disconnection ('network_error' | 'normal' | 'user_ended' | 'expert_ended' | 'user_misbehaving' | 'expert_emergency')
  */
-export async function endCall(callSessionId: string, duration?: number, endedBy?: 'user' | 'expert'): Promise<boolean> {
+export async function endCall(
+  callSessionId: string, 
+  duration?: number, 
+  endedBy?: 'user' | 'expert',
+  disconnectionReason: 'network_error' | 'normal' | 'user_ended' | 'expert_ended' | 'user_misbehaving' | 'expert_emergency' = 'normal'
+): Promise<boolean> {
   try {
     const endTime = new Date().toISOString();
     
@@ -412,8 +457,15 @@ export async function endCall(callSessionId: string, duration?: number, endedBy?
     console.log('✅ Call session status updated to ended - real-time subscription should trigger now');
 
     // Now process refund asynchronously (don't block the status update)
-    // Calculate and process refund if expert ended the call
-    if (endedBy === 'expert' && callSession?.user_id && callSession?.cost && callSession?.selected_duration && duration !== undefined) {
+    // IMPORTANT: Only refund if there was a network problem, not for normal call endings
+    // Calculate and process refund ONLY if disconnection was due to network error
+    const shouldRefund = disconnectionReason === 'network_error' && 
+                         callSession?.user_id && 
+                         callSession?.cost && 
+                         callSession?.selected_duration && 
+                         duration !== undefined;
+    
+    if (shouldRefund) {
       try {
         // Calculate refund: refund = cost - (remaining_minutes * per_minute_rate)
         // Per-minute rate = cost / selected_duration
@@ -429,13 +481,14 @@ export async function endCall(callSessionId: string, duration?: number, endedBy?
         const roundedRefund = Math.round(refundAmount * 100) / 100;
         
         if (roundedRefund > 0) {
-          console.log('💰 Calculating refund:', {
+          console.log('💰 Calculating refund due to network error:', {
             cost: callSession.cost,
             selected_duration: callSession.selected_duration,
             actual_duration_minutes: actualDurationMinutes,
             remaining_minutes: remainingMinutes,
             per_minute_rate: perMinuteRate,
-            refund_amount: roundedRefund
+            refund_amount: roundedRefund,
+            disconnection_reason: disconnectionReason
           });
 
           // Process refund using dedicated edge function (works for both expert and user ending call)
@@ -515,8 +568,24 @@ export async function endCall(callSessionId: string, duration?: number, endedBy?
         };
       }
     } else {
-      // Preserve existing metadata if no refund processing
-      updateData.call_metadata = existingMetadata;
+      // Preserve existing metadata if no refund processing, but add disconnection reason
+      updateData.call_metadata = {
+        ...existingMetadata,
+        disconnection_reason: disconnectionReason,
+        ended_by: endedBy || 'unknown',
+        ended_at: endTime
+      };
+    }
+
+    // IMPORTANT: Always save disconnection reason in metadata (even if refund processing happened)
+    // If refund processing already set metadata, merge disconnection reason into it
+    if (updateData.call_metadata && !updateData.call_metadata.disconnection_reason) {
+      updateData.call_metadata = {
+        ...updateData.call_metadata,
+        disconnection_reason: disconnectionReason,
+        ended_by: endedBy || 'unknown',
+        ended_at: endTime
+      };
     }
 
     // Update metadata separately (status already updated above)
@@ -529,6 +598,51 @@ export async function endCall(callSessionId: string, duration?: number, endedBy?
       if (metadataError) {
         console.warn('⚠️ Failed to update call session metadata:', metadataError);
         // Don't fail the call ending if metadata update fails
+      }
+    }
+
+    // IMPORTANT: If disconnection reason is "user_misbehaving", create a report in expert_user_reports
+    if (disconnectionReason === 'user_misbehaving' && endedBy === 'expert' && callSession?.user_id && callSession?.expert_id) {
+      try {
+        console.log('📝 Creating user report for misbehavior during call:', {
+          callSessionId,
+          expertId: callSession.expert_id,
+          userId: callSession.user_id
+        });
+
+        // Get user email from users table
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('email')
+          .eq('id', callSession.user_id)
+          .single();
+
+        if (userError) {
+          console.warn('⚠️ Could not fetch user email for report:', userError);
+        }
+
+        // Create report in expert_user_reports table
+        const { error: reportError } = await supabase
+          .from('expert_user_reports')
+          .insert({
+            expert_id: callSession.expert_id,
+            reported_user_id: callSession.user_id,
+            reported_user_email: userData?.email || null,
+            reason: 'User is misbehaving',
+            details: `User was reported for misbehavior during call session ${callSessionId}. Call was disconnected by expert.`,
+            call_session_id: callSessionId,
+            status: 'pending'
+          });
+
+        if (reportError) {
+          console.warn('⚠️ Failed to create user report (call still ended):', reportError.message || 'Unknown error');
+          // Don't fail the call ending if report creation fails
+        } else {
+          console.log('✅ User report created successfully for misbehavior');
+        }
+      } catch (reportErr: any) {
+        console.warn('⚠️ Error creating user report (call still ended):', reportErr?.message || 'Unknown error');
+        // Don't fail the call ending if report creation fails
       }
     }
 

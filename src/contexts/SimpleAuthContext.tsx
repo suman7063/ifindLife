@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode, useMemo } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { UserProfile, ExpertProfile } from '@/types/database/unified';
@@ -62,6 +62,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [expert, setExpert] = useState<ExpertProfile | null>(null);
   const [userType, setUserType] = useState<SessionType>('none');
+  const validationFailedRef = React.useRef(false);
 
   // Derive authentication state - CRITICAL: This must be consistent
   const isAuthenticated = Boolean(user && session);
@@ -73,12 +74,21 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
     try {
       // Validate credentials for role
       
-      // Check if user has user profile - use profiles table instead of users table for compatibility
+      // Check if user has user profile - check both profiles and users tables
       const { data: userProfileData, error: userError } = await supabase
         .from('profiles')
         .select('id')
         .eq('id', userId)
         .maybeSingle();
+      
+      // Also check users table as some accounts might only exist there
+      const { data: userData, error: userTableError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', userId)
+        .maybeSingle();
+      
+      const hasUserProfile = (userProfileData && !userError) || (userData && !userTableError);
 
       // Check if user has expert profile
       const { data: expertData, error: expertError } = await supabase
@@ -87,30 +97,22 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         .eq('auth_id', userId)
         .maybeSingle();
 
-      const hasUserProfile = userProfileData && !userError;
       const hasExpertProfile = expertData && !expertError;
       const expertStatus = expertData?.status;
 
       // Profile validation results processed
-
-      if (hasUserProfile && hasExpertProfile) {
-        // User has both profiles
+      // IMPORTANT: If user has an expert profile, they can ONLY login as expert, not as regular user
+      
+      if (hasExpertProfile) {
+        // User has expert profile - they can ONLY login as expert
         if (intendedRole === 'expert' && expertData?.status === 'approved') {
-          return { isValid: true, actualRole: 'both', expertStatus };
-        } else if (intendedRole === 'user') {
-          return { isValid: true, actualRole: 'both', expertStatus };
+          return { isValid: true, actualRole: hasUserProfile ? 'both' : 'expert', expertStatus };
         } else {
-          return { isValid: false, actualRole: 'both', expertStatus };
-        }
-      } else if (hasExpertProfile) {
-        // Only expert profile exists
-        if (intendedRole === 'expert' && expertData?.status === 'approved') {
-          return { isValid: true, actualRole: 'expert', expertStatus };
-        } else {
-          return { isValid: false, actualRole: 'expert', expertStatus };
+          // Expert trying to login as user - NOT ALLOWED
+          return { isValid: false, actualRole: hasUserProfile ? 'both' : 'expert', expertStatus };
         }
       } else if (hasUserProfile) {
-        // Only user profile exists
+        // Only user profile exists - can only login as user
         if (intendedRole === 'user') {
           return { isValid: true, actualRole: 'user' };
         } else {
@@ -373,6 +375,12 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
   };
 
   const refreshProfiles = async (userId?: string): Promise<void> => {
+    // Don't refresh profiles if validation just failed
+    if (validationFailedRef.current) {
+      console.log('⚠️ Skipping profile refresh - validation failed');
+      return;
+    }
+    
     const targetUserId = userId || user?.id;
     if (!targetUserId) {
       console.warn('⚠️ No user ID to refresh profiles', { userId, hasUser: !!user });
@@ -501,12 +509,29 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
           expertStatus: validation.expertStatus
         });
         
+        // Mark that validation failed to prevent profile refresh
+        validationFailedRef.current = true;
+        
+        // Clear profiles and userType BEFORE signing out to prevent redirects
+        setUserProfile(null);
+        setExpert(null);
+        setUserType('none');
+        
         // Sign out the user since they used wrong credentials
         await supabase.auth.signOut();
         
+        // Ensure state is cleared after sign out
+        setUser(null);
+        setSession(null);
+        
+        // Reset the flag after a short delay
+        setTimeout(() => {
+          validationFailedRef.current = false;
+        }, 1000);
+        
         let errorMessage = 'Invalid credentials for this login type.';
-        if (validation.actualRole === 'expert' && intendedRole === 'user') {
-          errorMessage = 'These are expert credentials. Please use the expert login.';
+        if ((validation.actualRole === 'expert' || validation.actualRole === 'both') && intendedRole === 'user') {
+          errorMessage = 'This email is registered as an expert account. Please use the expert login page to access your account.';
         } else if (validation.actualRole === 'user' && intendedRole === 'expert') {
           errorMessage = 'These are user credentials. Please use the user login.';
         } else if ((validation.actualRole === 'expert' || validation.actualRole === 'both') && intendedRole === 'expert') {
@@ -628,8 +653,9 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         
         if (session?.user) {
                 // Immediately refresh profiles with the user ID to prevent race conditions
+          // BUT skip if validation just failed (to prevent redirects)
           setTimeout(async () => {
-            if (mounted) {
+            if (mounted && !validationFailedRef.current) {
               await refreshProfiles(session.user.id);
             }
           }, 100); // Reduced delay to fix race condition in expert login
