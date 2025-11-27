@@ -22,6 +22,17 @@ export const MobileHeader: React.FC = () => {
   const isHomePage = location.pathname === '/mobile-app/app/';
   const hasBackButton = !isHomePage && location.pathname !== '/mobile-app/app/services' && location.pathname !== '/mobile-app/app/experts' && location.pathname !== '/mobile-app/app/profile';
 
+  const handleBackClick = () => {
+    // For specific pages, navigate to their parent page
+    if (location.pathname === '/mobile-app/app/wallet' || 
+        location.pathname === '/mobile-app/app/my-sessions' || 
+        location.pathname === '/mobile-app/app/favorite-experts') {
+      navigate('/mobile-app/app/profile');
+    } else {
+      navigate(-1);
+    }
+  };
+
   const getTitle = () => {
     const path = location.pathname;
     if (path.includes('/services')) return 'Services';
@@ -49,7 +60,7 @@ export const MobileHeader: React.FC = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate(-1)}
+            onClick={handleBackClick}
             className="mr-2 p-1"
             aria-label="Go back"
           >
