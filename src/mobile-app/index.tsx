@@ -14,6 +14,8 @@ const BookingFlow = lazy(() => import('./screens/booking/BookingFlow').then(m =>
 const LiveCallScreen = lazy(() => import('./screens/LiveCallScreen').then(m => ({ default: m.LiveCallScreen })));
 const ChatScreen = lazy(() => import('./screens/ChatScreen').then(m => ({ default: m.ChatScreen })));
 const ProfileScreen = lazy(() => import('./screens/ProfileScreen').then(m => ({ default: m.ProfileScreen })));
+const MySessionsScreen = lazy(() => import('./screens/MySessionsScreen').then(m => ({ default: m.MySessionsScreen })));
+const FavoriteExpertsScreen = lazy(() => import('./screens/FavoriteExpertsScreen').then(m => ({ default: m.FavoriteExpertsScreen })));
 const WalletScreen = lazy(() => import('./screens/WalletScreen').then(m => ({ default: m.WalletScreen })));
 const PaymentScreen = lazy(() => import('./screens/PaymentScreen').then(m => ({ default: m.PaymentScreen })));
 const SettingsScreen = lazy(() => import('./screens/SettingsScreen').then(m => ({ default: m.SettingsScreen })));
@@ -75,6 +77,8 @@ export const MobileAppDemo: React.FC = () => {
                 <Route path="call/:sessionId" element={<LiveCallScreen />} />
                 <Route path="chat/:sessionId" element={<ChatScreen />} />
                 <Route path="profile" element={<ProfileScreen />} />
+                <Route path="my-sessions" element={<MySessionsScreen />} />
+                <Route path="favorite-experts" element={<FavoriteExpertsScreen />} />
                 <Route path="wallet" element={<WalletScreen />} />
                 <Route path="payment" element={<PaymentScreen />} />
                 <Route path="settings" element={<SettingsScreen />} />
