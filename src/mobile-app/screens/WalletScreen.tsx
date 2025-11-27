@@ -3,8 +3,12 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Wallet, Plus, ArrowDownToLine, ArrowUpFromLine, Calendar } from 'lucide-react';
+import { Wallet, Plus, ArrowDownToLine, ArrowUpFromLine, Calendar as CalendarIcon } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 import {
   Dialog,
   DialogContent,
@@ -19,53 +23,90 @@ const MOCK_WALLET_BALANCE = 2500;
 
 const QUICK_RECHARGE_AMOUNTS = [500, 1000, 2000, 5000];
 
-const MOCK_TRANSACTIONS = [
-  {
+// Generate mock transactions with varied dates for proper filtering
+const generateMockTransactions = () => {
+  const now = new Date();
+  const transactions = [];
+  
+  // Recent transactions (within 1 week)
+  transactions.push({
     id: '1',
-    type: 'debit',
+    type: 'debit' as const,
     description: 'Session with Dr. Ananya Sharma',
     amount: 800,
-    date: '2024-01-20',
+    date: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 2 days ago
     status: 'completed'
-  },
-  {
+  });
+  
+  transactions.push({
     id: '2',
-    type: 'credit',
+    type: 'credit' as const,
     description: 'Wallet Recharge',
     amount: 2000,
-    date: '2024-01-18',
+    date: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 4 days ago
     status: 'completed'
-  },
-  {
+  });
+  
+  // Within 1 month
+  transactions.push({
     id: '3',
-    type: 'debit',
+    type: 'debit' as const,
     description: 'Session with Ms. Priya Menon',
     amount: 600,
-    date: '2024-01-15',
+    date: new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 15 days ago
     status: 'completed'
-  },
-  {
+  });
+  
+  transactions.push({
     id: '4',
-    type: 'credit',
+    type: 'credit' as const,
     description: 'Referral Bonus',
     amount: 100,
-    date: '2024-01-10',
+    date: new Date(now.getTime() - 20 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 20 days ago
     status: 'completed'
-  },
-  {
+  });
+  
+  // Within 1 year
+  transactions.push({
     id: '5',
-    type: 'debit',
+    type: 'debit' as const,
     description: 'Session with Dr. Rajesh Kumar',
     amount: 1200,
-    date: '2024-01-08',
+    date: new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 3 months ago
     status: 'completed'
-  },
-];
+  });
+  
+  transactions.push({
+    id: '6',
+    type: 'credit' as const,
+    description: 'Wallet Recharge',
+    amount: 5000,
+    date: new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 6 months ago
+    status: 'completed'
+  });
+  
+  transactions.push({
+    id: '7',
+    type: 'debit' as const,
+    description: 'Session with Dr. Meera Nair',
+    amount: 950,
+    date: new Date(now.getTime() - 270 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 9 months ago
+    status: 'completed'
+  });
+  
+  return transactions;
+};
+
+const MOCK_TRANSACTIONS = generateMockTransactions();
 
 export const WalletScreen: React.FC = () => {
   const [customAmount, setCustomAmount] = useState('');
   const [isStatementOpen, setIsStatementOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState('1week');
+  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
+    from: undefined,
+    to: undefined
+  });
 
   const handleQuickRecharge = (amount: number) => {
     console.log('Quick recharge:', amount);
@@ -102,6 +143,14 @@ export const WalletScreen: React.FC = () => {
           const txDate = new Date(t.date);
           const diff = now.getTime() - txDate.getTime();
           return diff <= 365 * 24 * 60 * 60 * 1000;
+        });
+      case 'custom':
+        if (!dateRange.from || !dateRange.to) {
+          return transactions;
+        }
+        return transactions.filter(t => {
+          const txDate = new Date(t.date);
+          return txDate >= dateRange.from! && txDate <= dateRange.to!;
         });
       default:
         return transactions;
@@ -193,9 +242,75 @@ export const WalletScreen: React.FC = () => {
                   <TabsTrigger value="1month">1 Month</TabsTrigger>
                   <TabsTrigger value="1year">1 Year</TabsTrigger>
                   <TabsTrigger value="custom">
-                    <Calendar className="h-4 w-4" />
+                    <CalendarIcon className="h-4 w-4" />
                   </TabsTrigger>
                 </TabsList>
+                
+                {/* Date Range Picker for Custom Tab */}
+                {selectedFilter === 'custom' && (
+                  <div className="space-y-3 mt-4 pb-4 border-b">
+                    <div className="flex gap-2">
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "flex-1 justify-start text-left font-normal",
+                              !dateRange.from && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {dateRange.from ? format(dateRange.from, "PPP") : <span>From date</span>}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={dateRange.from}
+                            onSelect={(date) => setDateRange(prev => ({ ...prev, from: date }))}
+                            initialFocus
+                            className={cn("p-3 pointer-events-auto")}
+                          />
+                        </PopoverContent>
+                      </Popover>
+
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "flex-1 justify-start text-left font-normal",
+                              !dateRange.to && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {dateRange.to ? format(dateRange.to, "PPP") : <span>To date</span>}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={dateRange.to}
+                            onSelect={(date) => setDateRange(prev => ({ ...prev, to: date }))}
+                            initialFocus
+                            disabled={(date) => dateRange.from ? date < dateRange.from : false}
+                            className={cn("p-3 pointer-events-auto")}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    {dateRange.from && dateRange.to && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setDateRange({ from: undefined, to: undefined })}
+                        className="w-full"
+                      >
+                        Clear dates
+                      </Button>
+                    )}
+                  </div>
+                )}
                 
                 <TabsContent value={selectedFilter} className="space-y-3 mt-4">
                   {getFilteredTransactions().length > 0 ? (
@@ -240,7 +355,9 @@ export const WalletScreen: React.FC = () => {
                     ))
                   ) : (
                     <div className="text-center py-8 text-muted-foreground">
-                      No transactions found for this period
+                      {selectedFilter === 'custom' && (!dateRange.from || !dateRange.to)
+                        ? 'Please select a date range to view transactions'
+                        : 'No transactions found for this period'}
                     </div>
                   )}
                 </TabsContent>
