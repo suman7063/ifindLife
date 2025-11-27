@@ -27,6 +27,8 @@ export const MobileHeader: React.FC = () => {
     if (path.includes('/services')) return 'Services';
     if (path.includes('/experts')) return 'Experts';
     if (path.includes('/profile')) return 'Profile';
+    if (path.includes('/my-sessions')) return 'My Sessions';
+    if (path.includes('/favorite-experts')) return 'Favorite Experts';
     if (path.includes('/settings')) return 'Settings';
     if (path.includes('/notifications')) return 'Notifications';
     if (path.includes('/booking')) return 'Book Session';

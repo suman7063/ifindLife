@@ -21,11 +21,19 @@ export const ProfileScreen: React.FC = () => {
       </div>
 
       <div className="space-y-4">
-        <Button variant="outline" className="w-full justify-start h-14">
+        <Button 
+          variant="outline" 
+          className="w-full justify-start h-14"
+          onClick={() => navigate('/mobile-app/app/my-sessions')}
+        >
           <Calendar className="h-5 w-5 mr-3" />
           My Sessions
         </Button>
-        <Button variant="outline" className="w-full justify-start h-14">
+        <Button 
+          variant="outline" 
+          className="w-full justify-start h-14"
+          onClick={() => navigate('/mobile-app/app/favorite-experts')}
+        >
           <Heart className="h-5 w-5 mr-3" />
           Favorite Experts
         </Button>
@@ -42,7 +50,11 @@ export const ProfileScreen: React.FC = () => {
             ₹{MOCK_WALLET_BALANCE.toLocaleString()}
           </Badge>
         </Button>
-        <Button variant="outline" className="w-full justify-start h-14">
+        <Button 
+          variant="outline" 
+          className="w-full justify-start h-14"
+          onClick={() => navigate('/mobile-app/app/settings')}
+        >
           <Settings className="h-5 w-5 mr-3" />
           Settings
         </Button>
