@@ -153,7 +153,7 @@ export function useGlobalCallNotifications(expertAuthId: string | undefined) {
           };
 
           // Only show call-related notifications here (others might be handled elsewhere)
-          if (notification.type === 'incoming_call_request' || notification.type === 'incoming_call') {
+          if (notification.type === 'incoming_call_request' || notification.type === 'incoming_call' || notification.type === 'call_accepted_by_expert') {
             toast.info(notification.title, {
               description: notification.content || '',
               action: {
@@ -170,7 +170,7 @@ export function useGlobalCallNotifications(expertAuthId: string | undefined) {
                   body: notification.content || '',
                   icon: '/favicon.ico',
                   tag: `notification-${notification.id}`,
-                  requireInteraction: true,
+                  requireInteraction: notification.type === 'call_accepted_by_expert' ? false : true,
                   badge: '/favicon.ico'
                 });
 

@@ -235,6 +235,37 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
     callSessionId
   } = useCallFlow({
     onExpertAccepted: async (sessionId: string) => {
+      // CRITICAL: Check database FIRST before any payment processing
+      // This is the most reliable way to prevent duplicate payments
+      if (sessionId) {
+        try {
+          const { data: existingSession, error: sessionCheckError } = await supabase
+            .from('call_sessions')
+            .select('payment_status, cost, status')
+            .eq('id', sessionId)
+            .single();
+
+          if (!sessionCheckError && existingSession) {
+            // If payment is already paid, SKIP everything
+            if (existingSession.payment_status === 'paid') {
+              console.log('🚫 PAYMENT ALREADY PROCESSED - Skipping all payment logic', {
+                sessionId,
+                payment_status: existingSession.payment_status,
+                cost: existingSession.cost,
+                status: existingSession.status
+              });
+              // Clear pending cost
+              setPendingCallCost(null);
+              pendingCallCostRef.current = null;
+              return; // EXIT IMMEDIATELY - no payment processing
+            }
+          }
+        } catch (checkError) {
+          console.error('❌ Error checking payment status:', checkError);
+          // Continue only if we can't check (might be new session)
+        }
+      }
+
       // Deduct credits IMMEDIATELY when expert accepts (not when call connects)
       // This ensures full session price is deducted as soon as expert accepts
       // Use sessionId parameter directly instead of callSessionId from state
@@ -259,6 +290,51 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
             console.error('❌ sessionId is missing when expert accepted');
             toast.error('Call session ID missing. Cannot deduct credits.');
             return;
+          }
+
+          // DOUBLE CHECK: Check again right before deducting (race condition protection)
+          const { data: finalCheck, error: finalCheckError } = await supabase
+            .from('call_sessions')
+            .select('payment_status')
+            .eq('id', sessionId)
+            .single();
+
+          if (!finalCheckError && finalCheck?.payment_status === 'paid') {
+            console.log('🚫 PAYMENT ALREADY PAID (final check) - Skipping deduction', {
+              sessionId,
+              payment_status: finalCheck.payment_status
+            });
+            setPendingCallCost(null);
+            pendingCallCostRef.current = null;
+            return; // Exit - payment already done
+          }
+
+          // TRIPLE CHECK: Check if wallet transaction already exists for this session
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const supabaseAny = supabase as any;
+          const { data: existingTransaction, error: transactionCheckError } = await supabaseAny
+            .from('wallet_transactions')
+            .select('id, amount, type')
+            .eq('reference_id', sessionId)
+            .eq('reference_type', 'call_session')
+            .eq('type', 'debit')
+            .maybeSingle();
+
+          if (!transactionCheckError && existingTransaction) {
+            console.log('🚫 WALLET TRANSACTION ALREADY EXISTS - Skipping deduction', {
+              sessionId,
+              transactionId: existingTransaction.id,
+              amount: existingTransaction.amount,
+              type: existingTransaction.type
+            });
+            // Update payment_status if not already set
+            await supabase
+              .from('call_sessions')
+              .update({ payment_status: 'paid' })
+              .eq('id', sessionId);
+            setPendingCallCost(null);
+            pendingCallCostRef.current = null;
+            return; // Exit - transaction already exists
           }
 
           console.log('💰 Expert accepted - Deducting session price immediately:', {
@@ -633,7 +709,28 @@ console.log('🔄 Setting modalState to connecting...');
   // This useEffect is now handled in the isOpen useEffect above
 
   // Debug: Log current state
-  console.log('🔍 UserCallInterface render:', { isOpen, modalState, isConnecting, isInCall, hasCallState: !!callState });
+  console.log('🔍 UserCallInterface render:', { 
+    isOpen, 
+    modalState, 
+    isConnecting, 
+    isInCall, 
+    hasCallState: !!callState,
+    showInterruptionModal,
+    wasDisconnected,
+    callStateConnectionState: callState?.client?.connectionState
+  });
+  
+  // Debug: Log when showInterruptionModal changes
+  useEffect(() => {
+    if (showInterruptionModal) {
+      console.log('🚨 USER SIDE: showInterruptionModal is TRUE - modal should be visible!', {
+        showInterruptionModal,
+        wasDisconnected,
+        isInCall,
+        hasCallState: !!callState
+      });
+    }
+  }, [showInterruptionModal, wasDisconnected, isInCall, callState]);
   
   // Render appropriate modal based on state
   // Priority: incall > connecting > waiting > selection
@@ -718,13 +815,24 @@ console.log('🔄 Setting modalState to connecting...');
             </AlertDialogContent>
           </AlertDialog>
 
-          {/* Call Interruption Modal */}
+          {/* Call Interruption Modal - High z-index to appear above InCallModal */}
           <CallInterruptionModal
             isOpen={showInterruptionModal}
             onRejoin={handleInterruptionRejoin}
             onEndCall={handleInterruptionEndCall}
             isUser={true}
           />
+          
+          {/* Debug Info - Remove in production */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="fixed bottom-4 left-4 bg-black/80 text-white p-2 text-xs rounded z-[10001]">
+              <div>User Side Debug:</div>
+              <div>Modal: {showInterruptionModal ? 'OPEN' : 'CLOSED'}</div>
+              <div>Disconnected: {wasDisconnected ? 'YES' : 'NO'}</div>
+              <div>In Call: {isInCall ? 'YES' : 'NO'}</div>
+              <div>Connection: {callState?.client?.connectionState || 'N/A'}</div>
+            </div>
+          )}
         </>
       );
     } else if (isInCall) {

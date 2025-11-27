@@ -33,6 +33,13 @@ const CallInterruptionModal: React.FC<CallInterruptionModalProps> = ({
   const [showEndConfirmation, setShowEndConfirmation] = useState(false);
   const [showCompletionMessage, setShowCompletionMessage] = useState(false);
 
+  // Debug log
+  React.useEffect(() => {
+    if (isOpen) {
+      console.log('🔔 CallInterruptionModal is now OPEN', { isOpen, isUser });
+    }
+  }, [isOpen, isUser]);
+
   const handleNoImDone = () => {
     if (isUser) {
       // Show double confirmation for users
@@ -46,10 +53,12 @@ const CallInterruptionModal: React.FC<CallInterruptionModalProps> = ({
   const handleConfirmEnd = () => {
     setShowEndConfirmation(false);
     setShowCompletionMessage(true);
-    // Call onEndCall after showing completion message
-    setTimeout(() => {
-      onEndCall();
-    }, 2000); // Show message for 2 seconds before ending
+    // Call onEndCall immediately to mark call as completed
+    onEndCall();
+  };
+
+  const handleCloseCompletionMessage = () => {
+    setShowCompletionMessage(false);
   };
 
   const handleRejoinFromConfirmation = () => {
@@ -57,10 +66,11 @@ const CallInterruptionModal: React.FC<CallInterruptionModalProps> = ({
     onRejoin();
   };
 
-  // Completion message dialog
+  // Completion message dialog - shown independently of main modal
+  // This ensures it stays visible even if parent closes the interruption modal
   if (showCompletionMessage) {
     return (
-      <AlertDialog open={showCompletionMessage} onOpenChange={() => {}}>
+      <AlertDialog open={true} onOpenChange={handleCloseCompletionMessage}>
         <AlertDialogContent className="sm:max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle>Thank you for your time</AlertDialogTitle>
@@ -68,6 +78,11 @@ const CallInterruptionModal: React.FC<CallInterruptionModalProps> = ({
               The call has been marked as completed.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={handleCloseCompletionMessage}>
+              OK
+            </AlertDialogAction>
+          </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     );
@@ -100,7 +115,7 @@ const CallInterruptionModal: React.FC<CallInterruptionModalProps> = ({
   // Main interruption dialog
   return (
     <AlertDialog open={isOpen} onOpenChange={() => {}}>
-      <AlertDialogContent className="sm:max-w-md">
+      <AlertDialogContent className="sm:max-w-md z-[9999]">
         <AlertDialogHeader>
           <AlertDialogTitle>Your call was interrupted</AlertDialogTitle>
           <AlertDialogDescription>
@@ -119,8 +134,14 @@ const CallInterruptionModal: React.FC<CallInterruptionModalProps> = ({
             </Button>
           )}
           <Button
-            onClick={onRejoin}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('🔄 Rejoin button clicked');
+              onRejoin();
+            }}
             className="w-full sm:w-auto"
+            type="button"
           >
             <RotateCcw className="h-4 w-4 mr-2" />
             Yes, Rejoin Call
