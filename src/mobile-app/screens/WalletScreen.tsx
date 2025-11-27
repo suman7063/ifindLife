@@ -109,6 +109,7 @@ export const WalletScreen: React.FC = () => {
   });
 
   const handleQuickRecharge = (amount: number) => {
+    setCustomAmount(amount.toString());
     console.log('Quick recharge:', amount);
     // PG flow will be initiated here
   };
