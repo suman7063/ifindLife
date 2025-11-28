@@ -11,7 +11,7 @@ interface UseOptimizedExpertDataProps {
 
 // Type for raw expert data from database
 type RawExpertData = {
-  id: string;
+  id?: string; // Optional - RPC function doesn't return id, only auth_id
   auth_id: string;
   name: string;
   profile_picture?: string;
@@ -23,6 +23,7 @@ type RawExpertData = {
   category?: string;
   status: string;
   profile_completed?: boolean;
+  onboarding_completed?: boolean;
   pricing_set?: boolean;
   availability_set?: boolean;
   selected_services?: number[];
@@ -36,9 +37,19 @@ const expertDataCache: {
   loading: boolean;
 } = {
   data: null,
-  timestamp: 0, // Force fresh fetch
+  timestamp: 0, // Force fresh fetch - cache cleared after migration
   loading: false
 };
+
+// Function to clear cache (useful after migrations or data updates)
+export const clearExpertDataCache = () => {
+  expertDataCache.data = null;
+  expertDataCache.timestamp = 0;
+  console.log('🗑️ Expert data cache cleared');
+};
+
+// Clear cache on module load to ensure fresh data after migration
+clearExpertDataCache();
 
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes cache
 
@@ -65,7 +76,8 @@ export function useOptimizedExpertData({
   // Memoized expert mapping to prevent unnecessary recalculations
   const mapDbExpertToExpertCard = useMemo(() => {
     return (dbExpert: RawExpertData): ExpertCardData => {
-      const expertId = String(dbExpert.id); // UUID from expert_accounts.id
+      // Use auth_id as id if id is not present (RPC function returns auth_id but not id)
+      const expertId = String(dbExpert.id || dbExpert.auth_id); // UUID from expert_accounts.id or auth_id
       const expertAuthId = dbExpert.auth_id;
       const isApproved = dbExpert.status === 'approved';
       // Use expert UUID for presence lookup (cache keyed by expert_id)
@@ -105,13 +117,17 @@ export function useOptimizedExpertData({
         
         // Check cache first
         const now = Date.now();
-        const isCacheValid = expertDataCache.data && (now - expertDataCache.timestamp) < CACHE_DURATION;
+        const isCacheValid = expertDataCache.data && expertDataCache.timestamp > 0 && (now - expertDataCache.timestamp) < CACHE_DURATION;
         
         if (isCacheValid && !expertDataCache.loading) {
-          console.log('📦 Using cached expert data');
+          console.log('📦 Using cached expert data', expertDataCache.data.length, 'experts');
           setRawExperts(expertDataCache.data!);
           setLoading(false);
           return;
+        }
+        
+        if (expertDataCache.data && expertDataCache.timestamp === 0) {
+          console.log('🔄 Cache was cleared, fetching fresh data');
         }
 
         // Prevent duplicate API calls
@@ -141,7 +157,17 @@ export function useOptimizedExpertData({
           throw error;
         }
 
+        console.log('📥 Raw RPC response:', data);
+        console.log('📥 RPC response length:', data?.length);
         let filteredData = data || [];
+        
+        // Ensure all experts have auth_id
+        filteredData = filteredData.map(expert => {
+          if (!expert.auth_id) {
+            console.error('❌ Expert missing auth_id:', expert);
+          }
+          return expert;
+        });
 
         // Apply filters in JavaScript since we're using RPC
         if (specialization) {
@@ -159,7 +185,31 @@ export function useOptimizedExpertData({
           }
         }
 
-        console.log(`Loaded ${filteredData.length} filtered experts`);
+        console.log(`✅✅✅ Loaded ${filteredData.length} filtered experts ✅✅✅`);
+        const expertNames = filteredData.map(e => e.name);
+        console.log('✅✅✅ Expert names:', expertNames);
+        console.log('✅✅✅ Expert auth_ids:', filteredData.map(e => e.auth_id));
+        const hasJohnDoe = expertNames.includes('John Doe');
+        console.log(hasJohnDoe ? '✅✅✅ JOHN DOE FOUND IN DATA!' : '❌❌❌ JOHN DOE NOT IN DATA!');
+        console.log('Full expert data sample:', filteredData[0] ? {
+          name: filteredData[0].name,
+          auth_id: filteredData[0].auth_id,
+          id: filteredData[0].id,
+          hasAuthId: !!filteredData[0].auth_id,
+          keys: Object.keys(filteredData[0])
+        } : 'No experts');
+        // Check for John Doe specifically in the raw data
+        const johnDoeRaw = filteredData.find(e => e.name === 'John Doe');
+        if (johnDoeRaw) {
+          console.log('👤👤👤 John Doe in filteredData:', {
+            name: johnDoeRaw.name,
+            auth_id: johnDoeRaw.auth_id,
+            hasAuthId: !!johnDoeRaw.auth_id,
+            allKeys: Object.keys(johnDoeRaw)
+          });
+        } else {
+          console.warn('❌ John Doe NOT in filteredData!');
+        }
         expertDataCache.data = filteredData;
         expertDataCache.timestamp = Date.now();
         expertDataCache.loading = false;
@@ -183,21 +233,81 @@ export function useOptimizedExpertData({
   // Update experts when raw data or presence changes
   useEffect(() => {
     if (rawExperts.length > 0) {
+      console.log('📋 Mapping raw experts to cards:', rawExperts.length);
+      // Check for John Doe specifically
+      const johnDoe = rawExperts.find(e => e.name === 'John Doe');
+      if (johnDoe) {
+        console.log('👤 John Doe found in rawExperts:', {
+          name: johnDoe.name,
+          auth_id: johnDoe.auth_id,
+          id: johnDoe.id,
+          onboarding_completed: johnDoe.onboarding_completed
+        });
+      }
       const formattedExperts = rawExperts.map(expert => mapDbExpertToExpertCard(expert));
-      // Filter to only show experts with profile_completed === true
-      // If profile_completed field doesn't exist (migration not applied), show all experts for backward compatibility
-      const filteredExperts = formattedExperts.filter(expert => 
-        expert.profile_completed === true || expert.profile_completed === undefined
-      );
-      setExperts(filteredExperts);
+      console.log('✅ Formatted experts:', formattedExperts.length, 'Names:', formattedExperts.map(e => e.name));
+      const johnDoeFormatted = formattedExperts.find(e => e.name === 'John Doe');
+      if (johnDoeFormatted) {
+        console.log('✅ John Doe formatted successfully:', {
+          name: johnDoeFormatted.name,
+          auth_id: johnDoeFormatted.auth_id,
+          id: johnDoeFormatted.id,
+          dbStatus: johnDoeFormatted.dbStatus
+        });
+      } else {
+        console.warn('⚠️ John Doe NOT found in formatted experts!');
+      }
+      // No need to filter here - get_approved_experts() RPC function already filters by onboarding_completed = true
+      setExperts(formattedExperts);
+    } else if (rawExperts.length === 0) {
+      console.log('⚠️ No raw experts to map');
+      setExperts([]);
     }
   }, [rawExperts, mapDbExpertToExpertCard]);
 
   // Optionally fetch presence for listed experts
   useEffect(() => {
     if (!enablePresenceChecking || rawExperts.length === 0) return;
-    const ids = rawExperts.map((e) => String(e.id));
-    bulkCheckPresence(ids);
+    // RPC function returns auth_id, use that for presence checking
+    console.log('🔍 Raw experts for presence check:', rawExperts.length, rawExperts.map(e => ({ 
+      name: e.name, 
+      auth_id: e.auth_id,
+      hasAuthId: !!e.auth_id,
+      allKeys: Object.keys(e)
+    })));
+    
+    // Filter out any experts without auth_id before mapping
+    const validExperts = rawExperts.filter(e => {
+      const hasAuthId = !!e.auth_id;
+      if (!hasAuthId) {
+        console.warn('⚠️ Skipping expert without auth_id:', e.name, 'Full object:', e);
+      }
+      return hasAuthId;
+    });
+    
+    const ids = validExperts
+      .map((e) => {
+        const authId = e.auth_id;
+        if (!authId) {
+          console.error('❌ Unexpected: Expert missing auth_id after filter:', e.name);
+          return null;
+        }
+        const idString = String(authId);
+        // Validate it's a proper UUID format
+        if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idString)) {
+          console.warn('⚠️ Invalid UUID format:', idString, 'for expert:', e.name);
+          return null;
+        }
+        return idString;
+      })
+      .filter((id): id is string => id !== null && id !== 'undefined' && id.length > 0);
+      
+    console.log('🔍 Checking presence for experts:', ids.length, 'IDs:', ids);
+    if (ids.length > 0) {
+      bulkCheckPresence(ids);
+    } else {
+      console.warn('⚠️ No valid expert IDs for presence check. Valid experts:', validExperts.length, 'Total rawExperts:', rawExperts.length);
+    }
   }, [enablePresenceChecking, rawExperts, bulkCheckPresence]);
 
   return { experts, loading, error };

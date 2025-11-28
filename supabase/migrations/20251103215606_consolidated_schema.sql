@@ -587,7 +587,8 @@ RETURNS TABLE(
   languages text[],
     selected_services uuid[],
   status text,
-  profile_completed boolean
+  profile_completed boolean,
+  onboarding_completed boolean
 )
 LANGUAGE plpgsql
 STABLE
@@ -609,10 +610,11 @@ BEGIN
     ea.languages,
     ea.selected_services,
     'approved'::text AS status,
-    COALESCE(ea.profile_completed, false) AS profile_completed
+    COALESCE(ea.profile_completed, false) AS profile_completed,
+    COALESCE(ea.onboarding_completed, false) AS onboarding_completed
   FROM public.expert_accounts ea
   WHERE ea.status = 'approved'
-    AND COALESCE(ea.profile_completed, false) = true
+    AND COALESCE(ea.onboarding_completed, false) = true
   ORDER BY ea.created_at DESC;
 END;
 $$;
