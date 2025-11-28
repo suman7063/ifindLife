@@ -173,38 +173,51 @@ const ExpertRegistrationForm: React.FC = () => {
       let profilePictureUrl = '';
       if (selectedProfilePicture) {
         const fileExt = selectedProfilePicture.name.split('.').pop();
-        const fileName = `${authData.user.id}-profile.${fileExt}`;
+        // Add timestamp to filename to avoid caching issues and ensure unique file
+        const timestamp = Date.now();
+        const fileName = `${authData.user.id}-profile-${timestamp}.${fileExt}`;
+        
+        console.log('Uploading profile picture during registration:', { fileName, fileSize: selectedProfilePicture.size });
         
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('avatars')
           .upload(fileName, selectedProfilePicture);
 
         if (uploadError) {
+          console.error('Profile picture upload error:', uploadError);
           throw new Error('Failed to upload profile picture: ' + uploadError.message);
         }
 
+        console.log('Profile picture uploaded successfully, path:', uploadData.path);
+        
+        // Save only the path to database (consistent pattern)
+        // Display will automatically convert path to URL using getProfilePictureUrl utility
         profilePictureUrl = uploadData.path;
+        console.log('✅ Saving profile picture PATH to database:', profilePictureUrl);
+      } else {
+        console.log('⚠️ No profile picture selected during registration');
       }
 
       // Create expert account BEFORE signing out (while user is authenticated)
       console.log('🔍 Creating expert account for user:', authData.user.id);
+      console.log('📸 Profile picture URL to be saved:', profilePictureUrl || 'NULL');
+      console.log('📸 Profile picture URL type check:', typeof profilePictureUrl);
+      console.log('📸 Profile picture URL length:', profilePictureUrl?.length || 0);
       
-      const { error: expertError } = await supabase
-        .from('expert_accounts')
-        .insert({
-          auth_id: authData.user.id,
-          name: data.name,
-          email: data.email,
-          phone: data.phone,
-          address: data.address,
-          city: data.city,
-          state: data.state,
-          country: data.country,
-          specialization: data.title,
-          experience: data.experience.toString(),
-          bio: data.bio,
-          certificate_urls: certificateUrl ? [certificateUrl] : [],
-          profile_picture: profilePictureUrl || null,
+      const insertData = {
+        auth_id: authData.user.id,
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        address: data.address,
+        city: data.city,
+        state: data.state,
+        country: data.country,
+        specialization: data.title,
+        experience: data.experience.toString(),
+        bio: data.bio,
+        certificate_urls: certificateUrl ? [certificateUrl] : [],
+        profile_picture: profilePictureUrl || null,
           category: data.expertCategory,
           languages: data.languages.split(',').map(lang => lang.trim()).filter(lang => lang),
           status: 'pending',
@@ -212,10 +225,25 @@ const ExpertRegistrationForm: React.FC = () => {
           pricing_set: false,
           availability_set: false,
           profile_completed: false,
-        });
+        };
+      
+      console.log('📝 Insert data profile_picture value:', insertData.profile_picture);
+      console.log('📝 Insert data profile_picture is URL?:', insertData.profile_picture?.startsWith('https://'));
+      
+      const { error: expertError, data: insertedData } = await supabase
+        .from('expert_accounts')
+        .insert(insertData)
+        .select();
 
       if (expertError) {
+        console.error('❌ Error creating expert account:', expertError);
         throw new Error(expertError.message);
+      }
+      
+      if (insertedData && insertedData.length > 0) {
+        console.log('✅ Expert account created successfully');
+        console.log('📸 Saved profile_picture in database:', insertedData[0].profile_picture);
+        console.log('📸 Verification - saved value is URL?:', insertedData[0].profile_picture?.startsWith('https://'));
       }
 
       // Important: Sign out AFTER creating expert account since experts need approval

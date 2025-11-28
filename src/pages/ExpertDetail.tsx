@@ -13,6 +13,7 @@ import { useFetchExpertProfile } from '@/contexts/auth/hooks/useFetchExpertProfi
 import { useExpertPresence } from '@/contexts/ExpertPresenceContext';
 import ExpertProfile from '@/components/expert/ExpertProfile';
 import ExpertDetailTabs from '@/components/expert/ExpertDetailTabs';
+import { getProfilePictureUrl } from '@/utils/profilePictureUtils';
 
 const ExpertDetail = () => {
   const { id } = useParams();
@@ -72,6 +73,7 @@ const ExpertDetail = () => {
   const [expert, setExpert] = useState(null);
   const [loading, setLoading] = useState(true);
   const [expertAuthId, setExpertAuthId] = useState(null);
+  const [imageKey, setImageKey] = useState(0);
 
   useEffect(() => {
     const loadExpert = async () => {
@@ -91,6 +93,10 @@ const ExpertDetail = () => {
           const isAvailable = presenceData.status === 'available' && presenceData.acceptingCalls;
           
           // Transform database expert to component format with real presence data
+          // Convert profile_picture to URL if it's a path (handles both URLs and paths)
+          const profilePictureFromDB = expertData.profile_picture || expertData.profilePicture || '';
+          const profilePictureUrl = getProfilePictureUrl(profilePictureFromDB);
+          
           const transformedExpert = {
             id: expertData.auth_id || id,
             auth_id: expertData.auth_id,
@@ -102,7 +108,7 @@ const ExpertDetail = () => {
             price: 30, // TODO: Get from service pricing
             waitTime: isAvailable ? 'Available Now' : 
                      presenceData.status === 'away' ? 'Away' : 'Not Available',
-            imageUrl: expertData.profile_picture ? `https://jrkjdiefnvgrfpjvnjng.supabase.co/storage/v1/object/public/avatars/${expertData.profile_picture}` : "",
+            imageUrl: profilePictureUrl, // Use converted URL (handles both URLs and paths)
             online: expertData.status === 'approved' && isAvailable,
             languages: expertData.languages || ["English"],
             description: expertData.bio || "This expert is available for consultation.",
@@ -137,6 +143,59 @@ const ExpertDetail = () => {
       }
     }
   }, [expert, expertAuthId, getExpertPresence]);
+
+  // Listen for profile image updates for real-time refresh
+  useEffect(() => {
+    const handleProfileUpdate = (event: CustomEvent) => {
+      const eventAuthId = event.detail?.authId;
+      if (eventAuthId === expertAuthId && expert) {
+        const newUrl = event.detail?.profilePictureUrl;
+        console.log('ExpertDetail: Profile image update received', {
+          authId: expertAuthId,
+          newUrl: newUrl,
+          currentUrl: expert.imageUrl
+        });
+        
+        if (newUrl) {
+          // Update expert imageUrl immediately for real-time update
+          setExpert(prev => ({
+            ...prev,
+            imageUrl: newUrl
+          }));
+          // Force image re-render
+          setImageKey(prev => prev + 1);
+          console.log('ExpertDetail: Updated imageUrl in real-time');
+        } else {
+          // If no URL provided, refetch the expert profile
+          const loadExpert = async () => {
+            try {
+              const expertData = await fetchExpertProfile(id);
+              if (expertData) {
+                const profilePictureFromDB = expertData.profile_picture || expertData.profilePicture || '';
+                const profilePictureUrl = getProfilePictureUrl(profilePictureFromDB);
+                setExpert(prev => ({
+                  ...prev,
+                  imageUrl: profilePictureUrl
+                }));
+                setImageKey(prev => prev + 1);
+              }
+            } catch (error) {
+              console.error('Error refreshing expert profile:', error);
+            }
+          };
+          loadExpert();
+        }
+      }
+    };
+
+    window.addEventListener('expertProfileImageUpdated', handleProfileUpdate as EventListener);
+    window.addEventListener('expertProfileRefreshed', handleProfileUpdate as EventListener);
+
+    return () => {
+      window.removeEventListener('expertProfileImageUpdated', handleProfileUpdate as EventListener);
+      window.removeEventListener('expertProfileRefreshed', handleProfileUpdate as EventListener);
+    };
+  }, [expertAuthId, expert, id, fetchExpertProfile]);
 
   if (loading) {
     return (

@@ -1,4 +1,4 @@
-import React, { memo, useMemo } from 'react';
+import React, { memo, useMemo, useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -24,7 +24,7 @@ export interface ExpertCardSimplifiedProps {
   onShowConnectOptions?: (show: boolean) => void;
 }
 
-const ExpertCardSimplified: React.FC<ExpertCardSimplifiedProps> = memo(({ 
+const ExpertCardSimplified: React.FC<ExpertCardSimplifiedProps> = ({ 
   expert, 
   onClick, 
   className = '',
@@ -38,6 +38,36 @@ const ExpertCardSimplified: React.FC<ExpertCardSimplifiedProps> = memo(({
   const { isExpertFavorite, toggleExpertFavorite } = useFavorites();
   const { getExpertPresence, version } = useExpertPresence();
   const { getPrice30, getPrice60, formatPrice, loading: pricingLoading } = useExpertProfilePricing(expert.auth_id);
+  const [imageKey, setImageKey] = useState(0);
+  
+  // Listen for profile image updates for this specific expert
+  useEffect(() => {
+    const handleProfileUpdate = (event: CustomEvent) => {
+      const eventAuthId = event.detail?.authId;
+      if (eventAuthId === expert.auth_id) {
+        console.log('ExpertCardSimplified: Profile image update for this expert', {
+          authId: expert.auth_id,
+          newUrl: event.detail?.profilePictureUrl,
+          currentUrl: expert.profilePicture
+        });
+        // Update the image key to force re-render
+        setImageKey(prev => prev + 1);
+        // Also update expert data if new URL is provided
+        if (event.detail?.profilePictureUrl) {
+          // Force component to use new URL
+          expert.profilePicture = event.detail.profilePictureUrl;
+        }
+      }
+    };
+
+    window.addEventListener('expertProfileImageUpdated', handleProfileUpdate as EventListener);
+    window.addEventListener('expertProfileRefreshed', handleProfileUpdate as EventListener);
+
+    return () => {
+      window.removeEventListener('expertProfileImageUpdated', handleProfileUpdate as EventListener);
+      window.removeEventListener('expertProfileRefreshed', handleProfileUpdate as EventListener);
+    };
+  }, [expert.auth_id, expert.profilePicture]);
   
   // Get real-time presence status
   const presence = useMemo(() => {
@@ -48,16 +78,26 @@ const ExpertCardSimplified: React.FC<ExpertCardSimplifiedProps> = memo(({
     };
   }, [expert.auth_id, version, getExpertPresence]);
 
-  const expertData = useMemo(() => ({
-    name: expert.name || 'Unnamed Expert',
-    avatarUrl: expert.profilePicture || '',
-    specialization: expert.specialization || 'General',
-    rating: expert.averageRating || 0,
-    reviewCount: expert.reviewsCount || 0,
-    experience: expert.experience || 0,
-    price: expert.price || 0,
-    initials: getInitials(expert.name || ''),
-  }), [expert]);
+  const expertData = useMemo(() => {
+    // Use imageKey to force recalculation when image updates
+    const avatarUrl = expert.profilePicture || '';
+    
+    // Log for debugging - especially for John Doe
+    if (expert.name === 'John Doe' || avatarUrl) {
+      console.log(`🎴 ExpertCardSimplified: ${expert.name} (${expert.auth_id}) profilePicture:`, avatarUrl || 'EMPTY');
+    }
+    
+    return {
+      name: expert.name || 'Unnamed Expert',
+      avatarUrl: avatarUrl, // This comes from database via useOptimizedExpertData
+      specialization: expert.specialization || 'General',
+      rating: expert.averageRating || 0,
+      reviewCount: expert.reviewsCount || 0,
+      experience: expert.experience || 0,
+      price: expert.price || 0,
+      initials: getInitials(expert.name || ''),
+    };
+  }, [expert.name, expert.profilePicture, expert.specialization, expert.averageRating, expert.reviewsCount, expert.experience, expert.price, expert.auth_id, imageKey]);
 
   // Handle Connect Now button
   const handleConnectNow = async (e: React.MouseEvent) => {
@@ -199,8 +239,12 @@ const ExpertCardSimplified: React.FC<ExpertCardSimplifiedProps> = memo(({
       <CardContent className="p-4">
         <div className="flex items-start gap-4">
           <div className="relative">
-            <Avatar className="h-16 w-16 border-2 border-white shadow">
-              <AvatarImage src={expertData.avatarUrl} alt={expertData.name} />
+            <Avatar className="h-16 w-16 border-2 border-white shadow" key={imageKey}>
+              <AvatarImage 
+                src={expertData.avatarUrl} 
+                alt={expertData.name}
+                key={`${expertData.avatarUrl}-${imageKey}`}
+              />
               <AvatarFallback className="bg-primary text-primary-foreground">
                 {expertData.initials}
               </AvatarFallback>
@@ -266,8 +310,8 @@ const ExpertCardSimplified: React.FC<ExpertCardSimplifiedProps> = memo(({
       </CardFooter>
     </Card>
   );
-});
+};
 
 ExpertCardSimplified.displayName = 'ExpertCardSimplified';
-export default ExpertCardSimplified;
+export default memo(ExpertCardSimplified);
 

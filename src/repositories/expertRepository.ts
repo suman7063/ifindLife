@@ -210,7 +210,8 @@ export class ExpertRepository {
         experience_years: 0,
         hourly_rate: 0,
         status: 'pending',
-        profilePicture: data.profile_picture,
+        profile_picture: data.profile_picture,
+        profilePicture: data.profile_picture, // For backward compatibility
         created_at: data.created_at,
         updated_at: data.created_at,
         address: data.address,

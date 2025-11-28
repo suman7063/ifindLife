@@ -49,7 +49,33 @@ export const ProfileCompletionStep: React.FC<ProfileCompletionStepProps> = ({
       // Upload profile picture if provided
       if (profile.profilePicture) {
         const fileExt = profile.profilePicture.name.split('.').pop();
-        const fileName = `${expertAccount.auth_id}-profile.${fileExt}`;
+        // Add timestamp to filename to avoid caching issues
+        const timestamp = Date.now();
+        const fileName = `${expertAccount.auth_id}-profile-${timestamp}.${fileExt}`;
+        
+        // Optionally delete old profile pictures
+        try {
+          const { data: oldFiles } = await supabase.storage
+            .from('avatars')
+            .list('', {
+              search: `${expertAccount.auth_id}-profile`,
+            });
+          
+          if (oldFiles && oldFiles.length > 0) {
+            const filesToDelete = oldFiles
+              .filter(f => f.name.startsWith(`${expertAccount.auth_id}-profile`) && f.name !== fileName)
+              .map(f => f.name);
+            
+            if (filesToDelete.length > 0) {
+              await supabase.storage
+                .from('avatars')
+                .remove(filesToDelete);
+            }
+          }
+        } catch (deleteError) {
+          // Non-critical - continue even if deletion fails
+          console.warn('Could not delete old profile pictures:', deleteError);
+        }
         
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('avatars')
@@ -62,12 +88,10 @@ export const ProfileCompletionStep: React.FC<ProfileCompletionStepProps> = ({
         } else {
           toast.success('Profile picture uploaded successfully');
           
-          // Get public URL only if upload was successful
-          const { data: urlData } = supabase.storage
-            .from('avatars')
-            .getPublicUrl(uploadData.path);
-          
-          profilePictureUrl = urlData.publicUrl;
+          // Save only the path to database (consistent pattern)
+          // Display will automatically convert path to URL using getProfilePictureUrl utility
+          profilePictureUrl = uploadData.path;
+          console.log('✅ Saving profile picture PATH to database:', profilePictureUrl);
         }
       }
 

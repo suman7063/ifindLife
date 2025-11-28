@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,6 +37,44 @@ const ExpertProfile: React.FC<ExpertProfileProps> = ({
   const { requireAuthForExpert, requireAuthForCall, isAuthenticated } = useAuthRedirectSystem();
   const { isExpertFavorite, toggleExpertFavorite } = useFavorites();
   const { getPrice30, getPrice60, formatPrice, loading: pricingLoading } = useExpertProfilePricing(expert.auth_id?.toString() || '');
+  const [imageUrl, setImageUrl] = useState(expert.imageUrl);
+  const [imageKey, setImageKey] = useState(0);
+
+  // Update local imageUrl when expert prop changes
+  useEffect(() => {
+    setImageUrl(expert.imageUrl);
+  }, [expert.imageUrl]);
+
+  // Listen for profile image updates for real-time refresh
+  useEffect(() => {
+    const handleProfileUpdate = (event: CustomEvent) => {
+      const eventAuthId = event.detail?.authId;
+      if (eventAuthId === expert.auth_id?.toString()) {
+        const newUrl = event.detail?.profilePictureUrl;
+        console.log('ExpertProfile: Profile image update received', {
+          authId: expert.auth_id,
+          newUrl: newUrl,
+          currentUrl: imageUrl
+        });
+        
+        if (newUrl) {
+          // Add cache-busting parameter
+          const cacheBustedUrl = `${newUrl}${newUrl.includes('?') ? '&' : '?'}t=${Date.now()}`;
+          setImageUrl(cacheBustedUrl);
+          setImageKey(prev => prev + 1);
+          console.log('ExpertProfile: Updated imageUrl in real-time');
+        }
+      }
+    };
+
+    window.addEventListener('expertProfileImageUpdated', handleProfileUpdate as EventListener);
+    window.addEventListener('expertProfileRefreshed', handleProfileUpdate as EventListener);
+
+    return () => {
+      window.removeEventListener('expertProfileImageUpdated', handleProfileUpdate as EventListener);
+      window.removeEventListener('expertProfileRefreshed', handleProfileUpdate as EventListener);
+    };
+  }, [expert.auth_id, imageUrl]);
 
   const handleCallClick = () => {
     if (!requireAuthForCall(expert.auth_id?.toString() || '', expert.name, 'video')) {
@@ -67,18 +105,26 @@ const ExpertProfile: React.FC<ExpertProfileProps> = ({
     }
   };
   return (
-    <Card className="overflow-hidden border border-ifind-teal/20 bg-white">
+    <Card className="overflow-hidden border border-ifind-teal/20 bg-white shadow-sm">
         {/* Expert Image */}
-        <div className="relative h-72 w-full">
-          {expert.imageUrl ? (
-            <img 
-              src={expert.imageUrl} 
-              alt={expert.name} 
-              className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-              }}
-            />
+        <div className="relative h-80 w-full bg-gradient-to-br from-ifind-offwhite to-gray-100 overflow-hidden">
+          {imageUrl ? (
+            <div className="w-full h-full flex items-center justify-center p-4">
+              <img 
+                key={imageKey}
+                src={imageUrl} 
+                alt={expert.name} 
+                className="max-w-full max-h-full w-auto h-auto object-contain rounded-lg shadow-md transition-all duration-300 hover:scale-105"
+                style={{ 
+                  objectFit: 'contain',
+                  objectPosition: 'center'
+                }}
+                onError={(e) => {
+                  console.error('Image load error:', imageUrl);
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            </div>
           ) : (
             <div className="w-full h-full bg-ifind-offwhite flex items-center justify-center">
               <span className="text-6xl font-bold text-ifind-charcoal">
@@ -89,28 +135,25 @@ const ExpertProfile: React.FC<ExpertProfileProps> = ({
           
           {/* Online Status */}
           {expert.online && (
-            <div className="absolute top-4 right-4 bg-ifind-teal text-white px-2 py-1 rounded-full text-xs font-medium">
-              <div className="flex items-center space-x-1">
-                <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
+            <div className="absolute top-4 right-4 bg-ifind-teal text-white px-3 py-1.5 rounded-full text-xs font-medium shadow-lg z-10">
+              <div className="flex items-center space-x-1.5">
+                <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
                 <span>Online</span>
               </div>
             </div>
           )}
 
           {/* Favorite Button */}
-          <div className="absolute top-4 left-4">
+          <div className="absolute top-4 left-4 z-10">
             <FavoriteButton
               isFavorite={isExpertFavorite(expert.auth_id?.toString() || '')}
               onClick={handleFavoriteClick}
               expertId={expert.auth_id?.toString() || ''}
               expertName={expert.name}
               tooltipText={isExpertFavorite(expert.auth_id?.toString() || '') ? 'Remove from favorites' : 'Add to favorites'}
-              className="backdrop-blur-sm bg-white/20 hover:bg-white/30 border border-white/30"
+              className="backdrop-blur-md bg-white/40 hover:bg-white/60 border border-white/50 shadow-md"
             />
           </div>
-
-          {/* Overlay gradient for better text readability */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
         </div>
       
       <CardContent className="p-6">

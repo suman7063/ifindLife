@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
@@ -9,8 +9,9 @@ import { showLogoutSuccessToast, showLogoutErrorToast } from '@/utils/toastConfi
 import { useNavigate } from 'react-router-dom';
 
 const ExpertHeader: React.FC = () => {
-  const { expert, logout } = useSimpleAuth();
+  const { expert, logout, refreshProfiles, user } = useSimpleAuth();
   const navigate = useNavigate();
+  const [imageKey, setImageKey] = useState(0);
 
   const getInitials = (name: string) => {
     return name
@@ -20,6 +21,25 @@ const ExpertHeader: React.FC = () => {
       .toUpperCase()
       .slice(0, 2);
   };
+
+  // Listen for profile image updates
+  useEffect(() => {
+    const handleProfileUpdate = async (event: CustomEvent) => {
+      console.log('ExpertHeader: Profile image update received', event.detail);
+      if (user?.id) {
+        await refreshProfiles(user.id);
+        setImageKey(prev => prev + 1); // Force re-render
+      }
+    };
+
+    window.addEventListener('expertProfileImageUpdated', handleProfileUpdate as EventListener);
+    window.addEventListener('expertProfileRefreshed', handleProfileUpdate as EventListener);
+
+    return () => {
+      window.removeEventListener('expertProfileImageUpdated', handleProfileUpdate as EventListener);
+      window.removeEventListener('expertProfileRefreshed', handleProfileUpdate as EventListener);
+    };
+  }, [user?.id, refreshProfiles]);
 
   const handleLogout = async () => {
     try {
@@ -44,10 +64,11 @@ const ExpertHeader: React.FC = () => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <div className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 rounded-lg p-2">
-                <Avatar className="h-8 w-8">
+                <Avatar className="h-8 w-8" key={imageKey}>
                   <AvatarImage 
-                    src={expert?.profile_picture || ''} 
-                    alt={expert?.name || 'Expert'} 
+                    src={expert?.profile_picture || expert?.profilePicture || ''} 
+                    alt={expert?.name || 'Expert'}
+                    key={`${expert?.profile_picture || expert?.profilePicture || ''}-${imageKey}`}
                   />
                   <AvatarFallback className="bg-primary text-white text-sm">
                     {getInitials(expert?.name || 'E')}

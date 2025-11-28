@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect, useRef, ReactNod
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { UserProfile, ExpertProfile } from '@/types/database/unified';
+import { getProfilePictureUrl } from '@/utils/profilePictureUtils';
 
 export type SessionType = 'none' | 'user' | 'expert' | 'dual';
 
@@ -338,6 +339,10 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
 
       
       // Transform the data to match ExpertProfile interface with proper defaults
+      // Convert profile_picture path to URL if needed (handles both URLs and paths)
+      const profilePictureFromDB = expertData.profile_picture || '';
+      const profilePictureUrl = getProfilePictureUrl(profilePictureFromDB);
+      
       const transformedExpert: ExpertProfile = {
         id: expertData.auth_id || userId, // Use auth_id as id for backward compatibility
         auth_id: expertData.auth_id || userId,
@@ -349,8 +354,8 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         experience_years: expertData.experience ? parseInt(expertData.experience) || 0 : 0,
         hourly_rate: 0,
         status: (expertData.status as 'pending' | 'approved' | 'disapproved') || 'pending',
-        profile_picture: expertData.profile_picture || '',
-        profilePicture: expertData.profile_picture || '',
+        profile_picture: profilePictureUrl, // Use converted URL (handles both URLs and paths)
+        profilePicture: profilePictureUrl, // Use converted URL for backward compatibility
         created_at: expertData.created_at,
         updated_at: expertData.created_at,
         address: expertData.address || '',

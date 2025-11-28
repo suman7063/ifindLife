@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ExpertCardData } from '@/components/expert-card/types';
 import { useExpertPresence } from '@/contexts/ExpertPresenceContext';
+import { getProfilePictureUrl } from '@/utils/profilePictureUtils';
 
 interface UseOptimizedExpertDataProps {
   serviceId?: string;
@@ -85,11 +86,25 @@ export function useOptimizedExpertData({
       const expertStatus = presence?.status || 'offline';
       const isAvailable = presence?.status === 'available' && presence?.acceptingCalls === true;
       
+      // Get profile picture directly from database - this is the source of truth
+      const profilePictureFromDB = dbExpert.profile_picture || '';
+      
+      // Convert path to URL if needed (handles both URLs and paths)
+      const profilePictureUrl = getProfilePictureUrl(profilePictureFromDB);
+      
+      // Log for debugging
+      if (dbExpert.name === 'John Doe' || profilePictureFromDB) {
+        console.log(`📸 Database profile_picture for ${dbExpert.name} (${expertAuthId}):`, profilePictureFromDB || 'EMPTY');
+        if (profilePictureFromDB && !profilePictureFromDB.startsWith('http')) {
+          console.log(`🔄 Converted path to URL: ${profilePictureUrl}`);
+        }
+      }
+      
       return {
         id: expertId,
         auth_id: expertAuthId,
         name: dbExpert.name || 'Unknown Expert',
-        profilePicture: dbExpert.profile_picture || '',
+        profilePicture: profilePictureUrl, // Use converted URL (handles both URLs and paths)
         specialization: dbExpert.specialization || 'General Counseling',
         experience: typeof dbExpert.experience === 'string' ? parseInt(dbExpert.experience) || 0 : Number(dbExpert.experience) || 0,
         averageRating: Number(dbExpert.average_rating) || 4.5,
@@ -161,6 +176,12 @@ export function useOptimizedExpertData({
         console.log('📥 RPC response length:', data?.length);
         let filteredData = data || [];
         
+        // Log profile_picture URLs from database
+        console.log('📸 Profile pictures from database:');
+        filteredData.forEach(expert => {
+          console.log(`  - ${expert.name} (${expert.auth_id}): ${expert.profile_picture || 'NO IMAGE'}`);
+        });
+        
         // Ensure all experts have auth_id
         filteredData = filteredData.map(expert => {
           if (!expert.auth_id) {
@@ -224,6 +245,56 @@ export function useOptimizedExpertData({
       }
     };
   }, [serviceId, specialization]);
+
+  // Listen for profile image updates to force refresh
+  useEffect(() => {
+    const handleProfileUpdate = async (event: CustomEvent) => {
+      const authId = event.detail?.authId;
+      const newUrl = event.detail?.profilePictureUrl;
+      console.log('useOptimizedExpertData: Profile image update received', {
+        authId,
+        profilePictureUrl: newUrl,
+        timestamp: event.detail?.timestamp
+      });
+      
+      // If we have the authId, directly update that expert's data in the cache
+      if (authId && newUrl && rawExperts.length > 0) {
+        console.log('useOptimizedExpertData: Updating expert in cache directly');
+        const updatedRawExperts = rawExperts.map(expert => {
+          if (expert.auth_id === authId) {
+            console.log(`Updating ${expert.name} profile_picture from "${expert.profile_picture}" to "${newUrl}"`);
+            return { ...expert, profile_picture: newUrl };
+          }
+          return expert;
+        });
+        setRawExperts(updatedRawExperts);
+      }
+      
+      // Clear cache and refetch to ensure database consistency
+      clearExpertDataCache();
+      expertDataCache.timestamp = 0;
+      expertDataCache.data = null;
+      
+      // Wait a bit longer for database transaction to commit
+      setTimeout(async () => {
+        console.log('useOptimizedExpertData: Refetching expert data from database after profile update');
+        try {
+          await fetchExpertData();
+          console.log('useOptimizedExpertData: Data refetched successfully from database');
+        } catch (error) {
+          console.error('useOptimizedExpertData: Error refetching data:', error);
+        }
+      }, 1500);
+    };
+
+    window.addEventListener('expertProfileImageUpdated', handleProfileUpdate as EventListener);
+    window.addEventListener('expertProfileRefreshed', handleProfileUpdate as EventListener);
+
+    return () => {
+      window.removeEventListener('expertProfileImageUpdated', handleProfileUpdate as EventListener);
+      window.removeEventListener('expertProfileRefreshed', handleProfileUpdate as EventListener);
+    };
+  }, [fetchExpertData, rawExperts]);
 
   useEffect(() => {
     fetchExpertData();

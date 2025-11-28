@@ -12,7 +12,7 @@ const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const { isAuthenticated, userType, user, expert, userProfile, isLoading, logout } = useSimpleAuth();
+  const { isAuthenticated, userType, user, expert, userProfile, isLoading, logout, refreshProfiles } = useSimpleAuth();
 
   // Navbar rendering state tracking
 
@@ -48,6 +48,30 @@ const Navbar = () => {
     return scrolled ? 'bg-white/95 backdrop-blur-sm shadow-sm' : 'bg-white';
   };
 
+  // State to force re-render on profile image update
+  const [profileUpdateKey, setProfileUpdateKey] = useState(0);
+
+  // Listen for profile image updates when expert is logged in
+  useEffect(() => {
+    if (userType !== 'expert') return;
+
+    const handleProfileUpdate = async () => {
+      console.log('Navbar: Profile image update received');
+      if (user?.id) {
+        await refreshProfiles(user.id);
+        setProfileUpdateKey(prev => prev + 1); // Force re-render
+      }
+    };
+
+    window.addEventListener('expertProfileImageUpdated', handleProfileUpdate as EventListener);
+    window.addEventListener('expertProfileRefreshed', handleProfileUpdate as EventListener);
+
+    return () => {
+      window.removeEventListener('expertProfileImageUpdated', handleProfileUpdate as EventListener);
+      window.removeEventListener('expertProfileRefreshed', handleProfileUpdate as EventListener);
+    };
+  }, [userType, user?.id, refreshProfiles]);
+
   // Memoize currentUser to prevent unnecessary re-renders
   const currentUser: UserProfile | null = useMemo(() => {
     if (userType === 'expert' && expert) {
@@ -82,7 +106,7 @@ const Navbar = () => {
       return userProfile;
     }
     return null;
-  }, [userType, expert, userProfile]);
+  }, [userType, expert, userProfile, profileUpdateKey]);
 
   const hasExpertProfile = useMemo(() => userType === 'expert' && !!expert, [userType, expert]);
 
