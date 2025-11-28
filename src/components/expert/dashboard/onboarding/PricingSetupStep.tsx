@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase';
@@ -15,12 +14,6 @@ export const PricingSetupStep: React.FC<PricingSetupStepProps> = ({
   expertAccount,
   onComplete
 }) => {
-  const [pricing, setPricing] = useState({
-    session_30_inr: 0,
-    session_30_eur: 0,
-    session_60_inr: 0,
-    session_60_eur: 0
-  });
   const [loading, setLoading] = useState(false);
   const [basePricing, setBasePricing] = useState<any>(null);
 
@@ -35,81 +28,46 @@ export const PricingSetupStep: React.FC<PricingSetupStepProps> = ({
     try {
       console.log('🔍 Fetching base pricing for category:', expertAccount.category);
       
-      // Try to query by id first (which should match the category format)
+      // Query database for category pricing
       const { data, error } = await supabase
         .from('expert_categories')
         .select('*')
-        .eq('id', expertAccount.category);
+        .eq('id', expertAccount.category)
+        .single();
 
       console.log('🔍 Query by id result:', data, 'Error:', error);
 
       if (error) {
         console.error('Database query error:', error);
-        throw error;
+        // If category not found, set basePricing to null but keep pricing at 0
+        setBasePricing(null);
+        return;
       }
 
-      if (data && data.length > 0) {
-        console.log('✅ Found category data:', data[0]);
-        setBasePricing(data[0]);
-        
-        // Set pricing based on database data
-        const categoryData = data[0];
-        setPricing({
-          session_30_inr: Number(categoryData.base_price_30_inr) || 0,
-          session_30_eur: Number(categoryData.base_price_30_eur) || 0,
-          session_60_inr: Number(categoryData.base_price_60_inr) || 0,
-          session_60_eur: Number(categoryData.base_price_60_eur) || 0,
-        });
+      if (data) {
+        console.log('✅ Found category data:', data);
+        setBasePricing(data);
       } else {
-        console.log('⚠️ No data found, using fallback pricing');
-        // Fallback to hardcoded pricing
-        const categoryName = expertAccount.category
-          .split('-')
-          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(' ');
-        const categoryPricing = getCategoryPricing(categoryName);
-        setPricing(categoryPricing);
+        console.log('⚠️ No category data found in database');
+        setBasePricing(null);
       }
     } catch (error) {
       console.error('Error fetching base pricing:', error);
-      // Fallback to hardcoded pricing if database lookup fails
-      const categoryName = expertAccount.category
-        .split('-')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
-      const categoryPricing = getCategoryPricing(categoryName);
-      setPricing(categoryPricing);
-    }
-  };
-
-  const getCategoryPricing = (category: string) => {
-    switch (category) {
-      case 'Listening Volunteer':
-        return { session_30_inr: 200, session_30_eur: 10, session_60_inr: 0, session_60_eur: 0 };
-      case 'Listening Expert':
-        return { session_30_inr: 400, session_30_eur: 20, session_60_inr: 0, session_60_eur: 0 };
-      case 'Mindfulness Expert':
-        return { session_30_inr: 600, session_30_eur: 50, session_60_inr: 1000, session_60_eur: 30 };
-      case 'Mindfulness Coach':
-        return { session_30_inr: 1200, session_30_eur: 50, session_60_inr: 2000, session_60_eur: 80 };
-      case 'Spiritual Mentor':
-        return { session_30_inr: 1800, session_30_eur: 80, session_60_inr: 3000, session_60_eur: 150 };
-      default:
-        return { session_30_inr: 0, session_30_eur: 0, session_60_inr: 0, session_60_eur: 0 };
+      setBasePricing(null);
     }
   };
 
   const fetchExistingPricing = async () => {
+    // Check if pricing is already set for this expert
+    // This is just for checking completion status, not for editing
     try {
-      console.log('🔍 Fetching existing pricing for expert:', expertAccount.auth_id, 'category:', expertAccount.category);
+      console.log('🔍 Checking existing pricing for expert:', expertAccount.auth_id, 'category:', expertAccount.category);
       
       const { data, error } = await supabase
         .from('expert_pricing_tiers')
         .select('*')
         .eq('expert_id', expertAccount.auth_id)
         .eq('category', expertAccount.category);
-
-      console.log('🔍 Existing pricing query result:', data, 'Error:', error);
 
       if (error) {
         console.error('Error fetching existing pricing:', error);
@@ -118,38 +76,33 @@ export const PricingSetupStep: React.FC<PricingSetupStepProps> = ({
 
       if (data && data.length > 0) {
         console.log('✅ Found existing pricing:', data[0]);
-        setPricing({
-          session_30_inr: data[0].session_30_inr || 0,
-          session_30_eur: data[0].session_30_eur || 0,
-          session_60_inr: data[0].session_60_inr || 0,
-          session_60_eur: data[0].session_60_eur || 0
-        });
       } else {
-        console.log('ℹ️ No existing pricing found, using base pricing');
+        console.log('ℹ️ No existing pricing found');
       }
-
-      
-      // Presence of existing pricing will be treated by parent for completion UI
     } catch (error) {
       console.error('Error fetching existing pricing:', error);
     }
   };
 
-  const handleSavePricing = async () => {
+  const handleConfirmPricing = async () => {
+    if (!basePricing) {
+      toast.error('Pricing information not available');
+      return;
+    }
+
     setLoading(true);
     
     try {
-      console.log('💾 Saving pricing for expert:', expertAccount.auth_id, 'category:', expertAccount.category);
-      console.log('💾 Pricing data to save:', pricing);
+      console.log('💾 Confirming predefined pricing for expert:', expertAccount.auth_id, 'category:', expertAccount.category);
       
-      // Upsert pricing tiers
+      // Save the predefined pricing from admin (basePricing) to expert_pricing_tiers
       const pricingData = {
         expert_id: expertAccount.auth_id,
         category: expertAccount.category,
-        session_30_inr: pricing.session_30_inr,
-        session_30_eur: pricing.session_30_eur,
-        session_60_inr: pricing.session_60_inr,
-        session_60_eur: pricing.session_60_eur
+        session_30_inr: Number(basePricing.base_price_30_inr) || 0,
+        session_30_eur: Number(basePricing.base_price_30_eur) || 0,
+        session_60_inr: Number(basePricing.base_price_60_inr) || 0,
+        session_60_eur: Number(basePricing.base_price_60_eur) || 0
       };
       
       console.log('💾 Final pricing data:', pricingData);
@@ -195,125 +148,71 @@ export const PricingSetupStep: React.FC<PricingSetupStepProps> = ({
           .eq('auth_id', expertAccount.auth_id);
       }
 
-      console.log('✅ Pricing saved successfully');
-      toast.success('Pricing saved successfully!');
+      console.log('✅ Pricing confirmed successfully');
+      toast.success('Pricing confirmed successfully!');
       onComplete();
     } catch (error) {
-      console.error('Error saving pricing:', error);
-      toast.error('Failed to save pricing');
+      console.error('Error confirming pricing:', error);
+      toast.error('Failed to confirm pricing');
     } finally {
       setLoading(false);
     }
   };
 
-  const supports60Minutes = ['Mindfulness Expert', 'Mindfulness Coach', 'Spiritual Mentor'].includes(expertAccount.category);
+  // Always show 60-minute pricing - read from database
+  // No conditional check needed - always display the fields
 
   return (
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-semibold mb-2">Category: {expertAccount.category}</h3>
         <p className="text-muted-foreground mb-4">
-          Set your rates for consultations. Pricing is based on your category and market standards.
+          Your consultation rates are predefined by the admin based on your category. Please review and confirm.
         </p>
       </div>
 
-      {basePricing && (
-        <Card className="bg-blue-50 border-blue-200">
-          <CardHeader>
-            <CardTitle className="text-blue-800">Standard Rates for {expertAccount.category}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <Label className="text-blue-700">30 min session</Label>
-                <p className="font-medium">₹{pricing.session_30_inr} / €{pricing.session_30_eur}</p>
-              </div>
-              {supports60Minutes && (
-                <div>
-                  <Label className="text-blue-700">60 min session</Label>
-                  <p className="font-medium">₹{pricing.session_60_inr} / €{pricing.session_60_eur}</p>
+      {basePricing ? (
+        <>
+          <Card className="bg-blue-50 border-blue-200">
+            <CardHeader>
+              <CardTitle className="text-blue-800">Predefined Rates for {expertAccount.category}</CardTitle>
+              <p className="text-sm text-blue-600 mt-1">These rates are set by the admin and cannot be changed</p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-white p-4 rounded-lg border border-blue-200">
+                    <Label className="text-blue-700 font-semibold">30 min session</Label>
+                    <p className="text-lg font-bold mt-1">₹{Number(basePricing.base_price_30_inr) || 0} / €{Number(basePricing.base_price_30_eur) || 0}</p>
+                  </div>
+                  <div className="bg-white p-4 rounded-lg border border-blue-200">
+                    <Label className="text-blue-700 font-semibold">60 min session</Label>
+                    <p className="text-lg font-bold mt-1">₹{Number(basePricing.base_price_60_inr) || 0} / €{Number(basePricing.base_price_60_eur) || 0}</p>
+                  </div>
                 </div>
-              )}
-            </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="flex justify-end pt-4">
+            <Button 
+              onClick={handleConfirmPricing}
+              disabled={loading}
+              className="px-8"
+            >
+              {loading ? 'Confirming...' : 'Confirm Pricing'}
+            </Button>
+          </div>
+        </>
+      ) : (
+        <Card className="bg-yellow-50 border-yellow-200">
+          <CardContent className="p-6">
+            <p className="text-yellow-800">
+              Pricing information is not available for your category. Please contact the admin.
+            </p>
           </CardContent>
         </Card>
       )}
-
-      <div className="space-y-4">
-        <h4 className="font-medium">30-Minute Session Rates</h4>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="session_30_inr">INR (30 min session)</Label>
-            <Input
-              id="session_30_inr"
-              type="number"
-              step="1"
-              value={pricing.session_30_inr}
-              onChange={(e) => setPricing(prev => ({
-                ...prev,
-                session_30_inr: parseFloat(e.target.value) || 0
-              }))}
-            />
-          </div>
-          <div>
-            <Label htmlFor="session_30_eur">EUR (30 min session)</Label>
-            <Input
-              id="session_30_eur"
-              type="number"
-              step="1"
-              value={pricing.session_30_eur}
-              onChange={(e) => setPricing(prev => ({
-                ...prev,
-                session_30_eur: parseFloat(e.target.value) || 0
-              }))}
-            />
-          </div>
-        </div>
-      </div>
-
-      {supports60Minutes && (
-        <div className="space-y-4">
-          <h4 className="font-medium">60-Minute Session Rates</h4>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="session_60_inr">INR (60 min session)</Label>
-              <Input
-                id="session_60_inr"
-                type="number"
-                step="1"
-                value={pricing.session_60_inr}
-                onChange={(e) => setPricing(prev => ({
-                  ...prev,
-                  session_60_inr: parseFloat(e.target.value) || 0
-                }))}
-              />
-            </div>
-            <div>
-              <Label htmlFor="session_60_eur">EUR (60 min session)</Label>
-              <Input
-                id="session_60_eur"
-                type="number"
-                step="1"
-                value={pricing.session_60_eur}
-                onChange={(e) => setPricing(prev => ({
-                  ...prev,
-                  session_60_eur: parseFloat(e.target.value) || 0
-                }))}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="flex justify-end pt-4">
-        <Button 
-          onClick={handleSavePricing}
-          disabled={loading}
-          className="px-8"
-        >
-          {loading ? 'Saving...' : 'Save Pricing'}
-        </Button>
-      </div>
     </div>
   );
 };
