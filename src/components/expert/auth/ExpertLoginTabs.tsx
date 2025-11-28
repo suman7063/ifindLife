@@ -52,7 +52,7 @@ const ExpertLoginTabs: React.FC<ExpertLoginTabsProps> = ({
         />
       </TabsContent>
       
-      <TabsContent value="register" className="max-h-[70vh] overflow-y-auto pb-8">
+      <TabsContent value="register" className="pb-8">
         <ExpertRegistrationForm />
       </TabsContent>
     </Tabs>

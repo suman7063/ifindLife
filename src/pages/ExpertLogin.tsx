@@ -169,7 +169,7 @@ const ExpertLogin: React.FC = () => {
     <>
       <Navbar />
       <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12">
-        <Container className="max-w-md">
+        <Container className="max-w-4xl">
           <div className="bg-white rounded-lg shadow-md p-8">
             <div className="mb-6 text-center">
               <h1 className="text-2xl font-bold mb-1">Expert Portal</h1>
