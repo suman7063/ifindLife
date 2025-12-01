@@ -353,7 +353,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         specialties: expertData.specialization ? [expertData.specialization] : [],
         experience_years: expertData.experience ? parseInt(expertData.experience) || 0 : 0,
         hourly_rate: 0,
-        status: (expertData.status as 'pending' | 'approved' | 'disapproved') || 'pending',
+        status: (expertData.status as 'pending' | 'approved' | 'rejected') || 'pending',
         profile_picture: profilePictureUrl, // Use converted URL (handles both URLs and paths)
         profilePicture: profilePictureUrl, // Use converted URL for backward compatibility
         created_at: expertData.created_at,
@@ -543,8 +543,8 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
           // Show specific error message based on expert status
           if (validation.expertStatus === 'pending') {
             errorMessage = 'Your expert account is pending approval by admin. Please wait for approval before logging in.';
-          } else if (validation.expertStatus === 'disapproved') {
-            errorMessage = 'Your expert account has been disapproved by admin. Please contact support for more information.';
+          } else if (validation.expertStatus === 'rejected') {
+            errorMessage = 'Your expert account has been rejected by admin. Please contact support for more information.';
           } else if (validation.expertStatus === 'suspended') {
             errorMessage = 'Your expert account has been suspended by admin. Please contact support for more information.';
           } else if (validation.expertStatus) {

@@ -73,12 +73,12 @@ export const useInitialSessionCheck = (
             setTimeout(() => {
               window.location.href = '/expert-login?status=pending';
             }, 1500);
-          } else if (expertProfile.status === 'disapproved') {
-            toast.error('Your expert account has been disapproved. Please check your email for details.');
+          } else if (expertProfile.status === 'rejected') {
+            toast.error('Your expert account has been rejected. Please check your email for details.');
             
             // Redirect to login page with status
             setTimeout(() => {
-              window.location.href = '/expert-login?status=disapproved';
+              window.location.href = '/expert-login?status=rejected';
             }, 1500);
           }
           

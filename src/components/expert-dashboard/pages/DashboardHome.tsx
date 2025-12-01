@@ -66,8 +66,8 @@ const DashboardHome: React.FC = () => {
         return <Badge variant="default" className="bg-green-100 text-green-800">Approved</Badge>;
       case 'pending':
         return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Pending Approval</Badge>;
-      case 'disapproved':
-        return <Badge variant="destructive">Disapproved</Badge>;
+      case 'rejected':
+        return <Badge variant="destructive">Rejected</Badge>;
       default:
         return <Badge variant="outline">Unknown</Badge>;
     }
@@ -209,7 +209,7 @@ const DashboardHome: React.FC = () => {
         </Card>
       )}
 
-      {expert.status === 'disapproved' && (
+      {expert.status === 'rejected' && (
         <Card className="border-red-200 bg-red-50">
           <CardHeader>
             <CardTitle className="text-red-800">Account Needs Attention</CardTitle>

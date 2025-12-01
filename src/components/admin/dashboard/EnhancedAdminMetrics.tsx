@@ -157,7 +157,7 @@ export const EnhancedAdminMetrics: React.FC = () => {
       icon: XCircle,
       color: 'text-red-600',
       bgColor: 'bg-red-50',
-      description: 'Disapproved experts'
+      description: 'Rejected experts'
     }
   ];
 

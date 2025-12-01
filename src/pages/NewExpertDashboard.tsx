@@ -160,8 +160,8 @@ const NewExpertDashboard: React.FC = () => {
     
     if (expert.status === 'pending') {
       toast.error('Your expert account is pending approval by admin. Please wait for approval.');
-    } else if (expert.status === 'disapproved') {
-      toast.error('Your expert account has been disapproved by admin.');
+    } else if (expert.status === 'rejected') {
+      toast.error('Your expert account has been rejected by admin.');
     } else {
       toast.error('Your expert account is not approved by admin.');
     }

@@ -61,7 +61,7 @@ interface ExpertData {
   country?: string;
   specialization?: string;
   experience?: string;
-  status: 'pending' | 'approved' | 'disapproved' | 'suspended';
+  status: 'pending' | 'approved' | 'rejected' | 'suspended';
   average_rating?: number;
   reviews_count?: number;
   verified?: boolean;
@@ -183,7 +183,7 @@ const ExpertManagement: React.FC = () => {
   const getStatusBadge = (status: string) => {
     const styles = {
       approved: 'bg-green-100 text-green-800',
-      disapproved: 'bg-red-100 text-red-800',
+      rejected: 'bg-red-100 text-red-800',
       suspended: 'bg-yellow-100 text-yellow-800',
     };
     
@@ -246,7 +246,7 @@ const ExpertManagement: React.FC = () => {
                 <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="approved">Approved</SelectItem>
                 <SelectItem value="suspended">Suspended</SelectItem>
-                <SelectItem value="disapproved">Disapproved</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
               </SelectContent>
             </Select>
             <Select value={sortBy} onValueChange={setSortBy}>

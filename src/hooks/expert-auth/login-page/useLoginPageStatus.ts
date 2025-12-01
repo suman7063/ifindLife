@@ -22,10 +22,10 @@ export const useLoginPageStatus = (): UseLoginPageStatusReturn => {
         type: 'info',
         message: 'Your account is still pending approval. You will be notified via email once approved.'
       });
-    } else if (status === 'disapproved') {
+    } else if (status === 'rejected') {
       setStatusMessage({
         type: 'warning',
-        message: 'Your account has been disapproved. Please check your email for details or contact support.'
+        message: 'Your account has been rejected. Please check your email for details or contact support.'
       });
     }
   }, [location.search]);

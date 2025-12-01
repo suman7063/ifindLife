@@ -37,7 +37,7 @@ interface ExpertApplication {
   experience: string;
   bio: string;
   certificate_urls: string[];
-  status: 'pending' | 'approved' | 'disapproved';
+  status: 'pending' | 'approved' | 'rejected';
   created_at: string;
 }
 
@@ -56,7 +56,7 @@ export const ExpertApprovalWorkflow: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedApp, setSelectedApp] = useState<ExpertApplication | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'approved' | 'disapproved'>('pending');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
   const [rejectionReason, setRejectionReason] = useState('');
   const [categories, setCategories] = useState<ExpertCategory[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
@@ -116,7 +116,7 @@ export const ExpertApprovalWorkflow: React.FC = () => {
     }
   };
 
-  const handleApproval = async (applicationId: string, action: 'approved' | 'disapproved') => {
+  const handleApproval = async (applicationId: string, action: 'approved' | 'rejected') => {
     setActionLoading(applicationId);
     
     try {
@@ -131,7 +131,7 @@ export const ExpertApprovalWorkflow: React.FC = () => {
       }
 
       // If rejecting, add the reason to the bio temporarily (you might want a separate rejection_reason field)
-      if (action === 'disapproved' && rejectionReason) {
+      if (action === 'rejected' && rejectionReason) {
         updateData.rejection_reason = rejectionReason;
       }
 
@@ -343,7 +343,7 @@ export const ExpertApprovalWorkflow: React.FC = () => {
               <SelectItem value="all">All Applications</SelectItem>
               <SelectItem value="pending">Pending Review</SelectItem>
               <SelectItem value="approved">Approved</SelectItem>
-              <SelectItem value="disapproved">Rejected</SelectItem>
+              <SelectItem value="rejected">Rejected</SelectItem>
             </SelectContent>
           </Select>
           <Button onClick={fetchApplications} variant="outline">
@@ -412,7 +412,7 @@ export const ExpertApprovalWorkflow: React.FC = () => {
                           Approved
                         </Badge>
                       )}
-                      {app.status === 'disapproved' && (
+                      {app.status === 'rejected' && (
                         <Badge variant="outline" className="text-red-600 border-red-600">
                           <XCircle className="h-3 w-3 mr-1" />
                           Rejected
@@ -531,7 +531,7 @@ export const ExpertApprovalWorkflow: React.FC = () => {
                       </Button>
                       <Button
                         variant="destructive"
-                        onClick={() => handleApproval(selectedApp.id, 'disapproved')}
+                        onClick={() => handleApproval(selectedApp.id, 'rejected')}
                         disabled={actionLoading === selectedApp.id}
                         className="flex-1"
                       >

@@ -10,7 +10,7 @@ export interface ExpertProfile {
   specialties?: string[];
   experience_years?: number;
   hourly_rate?: number;
-  status: 'pending' | 'approved' | 'disapproved';
+  status: 'pending' | 'approved' | 'rejected';
   profilePicture?: string;
   created_at?: string;
   updated_at?: string;
@@ -112,7 +112,7 @@ export interface ExpertFormData {
   city?: string;
   state?: string;
   country?: string;
-  status?: 'pending' | 'approved' | 'disapproved';
+  status?: 'pending' | 'approved' | 'rejected';
   reportedUsers?: any[];
   profilePicture?: string;
   password?: string;

@@ -57,11 +57,11 @@ export const useExpertLogin = (
           
           // Redirect to login page with status
           window.location.href = '/expert-login?status=pending';
-        } else if (expertProfile.status === 'disapproved') {
-          toast.error('Your account application has been disapproved. Please check your email for details.');
+        } else if (expertProfile.status === 'rejected') {
+          toast.error('Your account application has been rejected. Please check your email for details.');
           
           // Redirect to login page with status
-          window.location.href = '/expert-login?status=disapproved';
+          window.location.href = '/expert-login?status=rejected';
         }
         
         return false;

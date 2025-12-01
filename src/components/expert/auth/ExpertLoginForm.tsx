@@ -65,8 +65,8 @@ const ExpertLoginForm: React.FC<ExpertLoginFormProps> = ({
         setFormError('Please verify your email address before logging in. Check your inbox for the verification link.');
       } else if (error.message?.includes('pending approval')) {
         setFormError('Your expert account is pending approval by admin. Please wait for approval before logging in.');
-      } else if (error.message?.includes('disapproved')) {
-        setFormError('Your expert account has been disapproved by admin. Please contact support for more information.');
+      } else if (error.message?.includes('rejected') || error.message?.includes('disapproved')) {
+        setFormError('Your expert account has been rejected by admin. Please contact support for more information.');
       } else if (error.message?.includes('suspended')) {
         setFormError('Your expert account has been suspended by admin. Please contact support for more information.');
       } else if (error.message?.includes('not approved')) {

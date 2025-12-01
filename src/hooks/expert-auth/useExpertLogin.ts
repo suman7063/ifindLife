@@ -76,15 +76,15 @@ export const useExpertLogin = (
         return false;
       }
       
-      if (expertProfile.status === 'disapproved') {
-        console.error('Expert login: Account is disapproved');
-        toast.error('Your account has been disapproved. Please check your email for details.');
+      if (expertProfile.status === 'rejected') {
+        console.error('Expert login: Account is rejected');
+        toast.error('Your account has been rejected. Please check your email for details.');
         
-        // Sign out since this expert is disapproved
+        // Sign out since this expert is rejected
         await supabase.auth.signOut();
         
-        // Redirect to the expert login page with status=disapproved
-        window.location.href = '/expert-login?status=disapproved';
+        // Redirect to the expert login page with status=rejected
+        window.location.href = '/expert-login?status=rejected';
         return false;
       }
       

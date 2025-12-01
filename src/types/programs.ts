@@ -95,7 +95,7 @@ export interface ExtendedExpert extends Expert {
   updated_at?: string;
   experience?: string;
   verified?: boolean;
-  status?: 'pending' | 'approved' | 'disapproved';
+  status?: 'pending' | 'approved' | 'rejected';
   selected_services?: number[]; // Add missing property
   created_at?: string; // Made optional to avoid errors
 }

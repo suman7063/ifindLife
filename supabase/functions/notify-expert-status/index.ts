@@ -85,7 +85,7 @@ serve(async (req) => {
 
     const subject = status === "approved" 
       ? "Your Expert Account has been Approved!"
-      : status === "rejected" || status === "disapproved"
+      : status === "rejected"
       ? "Update on Your Expert Account Application"
       : "Update on Your Expert Account Application";
     

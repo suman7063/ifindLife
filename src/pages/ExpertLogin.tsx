@@ -27,8 +27,8 @@ const ExpertLogin: React.FC = () => {
     const status = searchParams.get('status');
     if (status === 'pending') {
       toast.info('Your expert account is pending approval. You will be notified once approved.');
-    } else if (status === 'disapproved') {
-      toast.error('Your expert account application has been disapproved.');
+    } else if (status === 'rejected') {
+      toast.error('Your expert account application has been rejected.');
     }
 
     // Show email verification notice if redirected from signup

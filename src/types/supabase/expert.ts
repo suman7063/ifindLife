@@ -20,7 +20,7 @@ export interface ExpertProfile {
   average_rating?: number;
   reviews_count?: number;
   verified?: boolean;
-  status?: 'pending' | 'approved' | 'disapproved'; // Use union type instead of string
+  status?: 'pending' | 'approved' | 'rejected'; // Use union type instead of string
   created_at?: string;
   updated_at?: string;
   languages?: string[]; // Add languages field

@@ -234,7 +234,7 @@ const ExpertApprovals = () => {
   // Filter experts by status
   const pendingExperts = experts.filter(e => e.status === 'pending');
   const approvedExperts = experts.filter(e => e.status === 'approved');
-  const rejectedExperts = experts.filter(e => e.status === 'rejected' || e.status === 'disapproved');
+  const rejectedExperts = experts.filter(e => e.status === 'rejected');
   
   // Update expert status with better error handling
   const updateExpertStatus = async () => {
@@ -312,15 +312,12 @@ const ExpertApprovals = () => {
       // Use the custom message if provided, otherwise use default
       const emailMessage = message.trim() || getDefaultMessage(status);
       
-      // Map 'rejected' to 'disapproved' for the edge function (if needed)
-      const emailStatus = status === 'rejected' ? 'disapproved' : status;
-      
-      console.log('ExpertApprovals: Sending email notification:', { email, status: emailStatus, message: emailMessage });
+      console.log('ExpertApprovals: Sending email notification:', { email, status, message: emailMessage });
       
       const { data, error } = await supabase.functions.invoke('notify-expert-status', {
         body: {
           email,
-          status: emailStatus,
+          status,
           message: emailMessage
         }
       });
@@ -352,9 +349,9 @@ const ExpertApprovals = () => {
   const openApprovalDialog = (expert: ExpertProfileWithStatus) => {
     setSelectedExpert(expert);
     // Set status based on current expert status from database
-    // Map 'pending' to 'approved' (default), 'rejected' or 'disapproved' stays 'rejected', 'approved' stays 'approved'
+    // Map 'pending' to 'approved' (default), 'rejected' stays 'rejected', 'approved' stays 'approved'
     let currentStatus: 'approved' | 'rejected' = 'approved';
-    if (expert.status === 'rejected' || expert.status === 'disapproved') {
+    if (expert.status === 'rejected') {
       currentStatus = 'rejected';
     } else if (expert.status === 'approved') {
       currentStatus = 'approved';

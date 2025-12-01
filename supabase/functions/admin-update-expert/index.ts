@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
     const updateData: any = {};
     
     if (status) {
-      if (!['approved', 'rejected', 'disapproved', 'pending'].includes(status)) {
+      if (!['approved', 'rejected', 'pending'].includes(status)) {
         return new Response(JSON.stringify({
           success: false,
           error: 'invalid status'
@@ -48,9 +48,8 @@ Deno.serve(async (req) => {
           headers: corsHeaders
         });
       }
-      // Map 'rejected' to 'disapproved' for database compatibility
-      // (database constraint still uses 'disapproved', but UI uses 'rejected')
-      updateData.status = status === 'rejected' ? 'disapproved' : status;
+      // Use 'rejected' directly (database now uses 'rejected' instead of 'disapproved')
+      updateData.status = status;
     }
 
     if (category) {

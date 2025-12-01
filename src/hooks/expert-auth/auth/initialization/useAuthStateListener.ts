@@ -46,11 +46,11 @@ export const useAuthStateListener = (
                 
                 // Redirect to login page with status
                 window.location.href = '/expert-login?status=pending';
-              } else if (expertProfile.status === 'disapproved') {
-                toast.error('Your expert account has been disapproved.');
+              } else if (expertProfile.status === 'rejected') {
+                toast.error('Your expert account has been rejected.');
                 
                 // Redirect to login page with status
-                window.location.href = '/expert-login?status=disapproved';
+                window.location.href = '/expert-login?status=rejected';
               }
               
               setAuthState(prev => ({

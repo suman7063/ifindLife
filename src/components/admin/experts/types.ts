@@ -19,5 +19,5 @@ export interface Expert {
   state?: string;
   country?: string;
   availability?: string;
-  status?: 'pending' | 'approved' | 'disapproved'; // Added status property
+  status?: 'pending' | 'approved' | 'rejected'; // Added status property
 }

@@ -16,7 +16,7 @@ export interface ExpertCreateData {
   profile_picture?: string;
   certificate_urls?: string[];
   selected_services?: number[];
-  status?: 'pending' | 'approved' | 'disapproved';
+  status?: 'pending' | 'approved' | 'rejected';
 }
 
 export class ExpertRepository {
@@ -163,7 +163,7 @@ export class ExpertRepository {
         specialties: [],
         experience_years: parseInt(expertData.experience) || 0,
         hourly_rate: 0,
-        status: expertData.status as 'pending' | 'approved' | 'disapproved',
+        status: expertData.status as 'pending' | 'approved' | 'rejected',
         profilePicture: expertData.profile_picture,
         created_at: expertData.created_at,
         updated_at: expertData.created_at, // fallback
