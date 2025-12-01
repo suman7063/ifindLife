@@ -28,8 +28,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from 'sonner';
-import { CheckCircle, XCircle, User, CalendarClock, RefreshCw, Eye } from 'lucide-react';
+import { CheckCircle, XCircle, User, CalendarClock, RefreshCw, Eye, Trash2, RotateCcw } from 'lucide-react';
 import ExpertDetailDialog from './ExpertDetailDialog';
 
 // Enhanced expert profile type that matches database schema
@@ -38,19 +39,24 @@ interface ExpertProfileWithStatus extends Omit<ExpertProfile, 'status'> {
   auth_id?: string | null;
   user_id?: string | null;
   verified?: boolean | null;
+  deleted_at?: string | null;
+  feedback_message?: string | null;
+  updated_by_admin_at?: string | null;
 }
 
 const ExpertApprovals = () => {
   const [experts, setExperts] = useState<ExpertProfileWithStatus[]>([]);
+  const [deletedExperts, setDeletedExperts] = useState<ExpertProfileWithStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedExpert, setSelectedExpert] = useState<ExpertProfileWithStatus | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState<'approved' | 'disapproved'>('approved');
+  const [selectedStatus, setSelectedStatus] = useState<'approved' | 'rejected'>('approved');
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedExpertId, setSelectedExpertId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<string>('active');
   
   // Load expert applications with better error handling
   const fetchExperts = async (showLoadingState = true) => {
@@ -74,7 +80,7 @@ const ExpertApprovals = () => {
       
       
       // Ensure all experts have auth_id
-      const expertsWithAuthId = (data || []).map((expert: any) => ({
+      const expertsWithAuthId = (data || []).map((expert: ExpertProfileWithStatus & { id?: string }) => ({
         ...expert,
         auth_id: expert.auth_id || expert.id || null
       }));
@@ -83,6 +89,9 @@ const ExpertApprovals = () => {
       console.log('ExpertApprovals: Sample expert:', expertsWithAuthId[0]);
       
       setExperts(expertsWithAuthId as ExpertProfileWithStatus[]);
+      
+      // Also fetch deleted experts
+      fetchDeletedExperts();
       
     } catch (error) {
       console.error('ExpertApprovals: Error fetching experts:', error);
@@ -94,20 +103,138 @@ const ExpertApprovals = () => {
     }
   };
 
+  // Fetch deleted experts
+  const fetchDeletedExperts = async () => {
+    try {
+      console.log('ExpertApprovals: Fetching deleted experts...');
+      
+      // Use admin_list_all_experts_including_deleted and filter (this function exists and works)
+      // Type assertion needed because TypeScript doesn't know about this function yet
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: rpcData, error: rpcError } = await (supabase.rpc as any)('admin_list_all_experts_including_deleted');
+      
+      if (rpcError) {
+        console.error('ExpertApprovals: RPC error:', rpcError);
+        // Try direct query as last resort (may fail due to RLS)
+        const { data: directData, error: directError } = await supabase
+          .from('expert_accounts')
+          .select('*')
+          .not('deleted_at', 'is', null);
+        
+        if (directError) {
+          console.error('ExpertApprovals: Direct query also failed:', directError);
+          return;
+        }
+        
+        if (directData && Array.isArray(directData)) {
+          console.log('ExpertApprovals: Found deleted experts via direct query:', directData.length);
+          const deletedWithAuthId = (directData as unknown[]).map((expert: unknown) => {
+            const e = expert as ExpertProfileWithStatus & { id?: string; deleted_at?: string };
+            return {
+              ...e,
+              auth_id: e.auth_id || e.id || null
+            };
+          }) as ExpertProfileWithStatus[];
+          
+          setDeletedExperts(deletedWithAuthId);
+        }
+        return;
+      }
+      
+      if (!rpcData || !Array.isArray(rpcData)) {
+        console.warn('ExpertApprovals: RPC returned invalid data:', rpcData);
+        return;
+      }
+      
+      // Filter deleted experts from all experts
+      const deleted = rpcData.filter((expert: unknown) => {
+        const e = expert as { deleted_at?: string | null };
+        const hasDeletedAt = e.deleted_at != null && e.deleted_at !== '';
+        if (hasDeletedAt) {
+          console.log('ExpertApprovals: Found deleted expert:', e);
+        }
+        return hasDeletedAt;
+      });
+      
+      console.log('ExpertApprovals: Found deleted experts via RPC:', deleted.length, 'out of', rpcData.length);
+      console.log('ExpertApprovals: Deleted experts data:', deleted);
+      
+      if (deleted.length === 0) {
+        console.warn('ExpertApprovals: No deleted experts found in RPC response. Checking data structure...');
+        if (rpcData.length > 0) {
+          console.log('ExpertApprovals: Sample expert from RPC:', rpcData[0]);
+        }
+      }
+      
+      const deletedWithAuthId = (deleted as unknown[]).map((expert: unknown) => {
+        const e = expert as ExpertProfileWithStatus & { id?: string; deleted_at?: string };
+        return {
+          ...e,
+          auth_id: e.auth_id || e.id || null
+        };
+      }) as ExpertProfileWithStatus[];
+      
+      console.log('ExpertApprovals: Setting deleted experts state:', deletedWithAuthId.length);
+      setDeletedExperts(deletedWithAuthId);
+    } catch (error) {
+      console.error('ExpertApprovals: Error fetching deleted experts:', error);
+    }
+  };
+
+  // Restore deleted expert
+  const handleRestoreExpert = async (expert: ExpertProfileWithStatus) => {
+    if (!expert.auth_id) {
+      toast.error('Invalid expert data: missing auth_id');
+      return;
+    }
+    
+    try {
+      const { data: fnData, error: fnError } = await supabase.functions.invoke('admin-restore-expert', {
+        body: { id: String(expert.auth_id) }
+      });
+
+      if (fnError) {
+        throw fnError;
+      }
+
+      if (!fnData?.success) {
+        throw new Error(fnData?.error || 'Failed to restore expert');
+      }
+      
+      toast.success('Expert restored successfully');
+      await fetchExperts(false);
+      await fetchDeletedExperts();
+    } catch (error) {
+      console.error('Error restoring expert:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Failed to restore expert: ${errorMessage}`);
+    }
+  };
+
   useEffect(() => {
     fetchExperts();
+    fetchDeletedExperts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Fetch deleted experts when deleted tab is opened
+  useEffect(() => {
+    if (activeTab === 'deleted') {
+      fetchDeletedExperts();
+    }
+  }, [activeTab]);
   
   // Manual refresh function
   const handleRefresh = () => {
     fetchExperts(false);
+    fetchDeletedExperts();
     toast.info('Refreshing expert applications...');
   };
   
   // Filter experts by status
   const pendingExperts = experts.filter(e => e.status === 'pending');
   const approvedExperts = experts.filter(e => e.status === 'approved');
-  const disapprovedExperts = experts.filter(e => e.status === 'disapproved');
+  const rejectedExperts = experts.filter(e => e.status === 'rejected' || e.status === 'disapproved');
   
   // Update expert status with better error handling
   const updateExpertStatus = async () => {
@@ -127,9 +254,13 @@ const ExpertApprovals = () => {
         expert: selectedExpert
       });
 
-      // Call edge function (runs with service role) to update status
+      // Call edge function (runs with service role) to update status and save feedback message
       const { data: fnData, error: fnError } = await supabase.functions.invoke('admin-update-expert', {
-        body: { id: String(selectedExpert.auth_id), status: selectedStatus }
+        body: { 
+          id: String(selectedExpert.auth_id), 
+          status: selectedStatus,
+          feedback_message: feedbackMessage.trim() || null
+        }
       });
 
       if (fnError) {
@@ -151,40 +282,89 @@ const ExpertApprovals = () => {
       // Refresh from DB
       await fetchExperts(false);
 
-      toast.success(`Expert ${selectedStatus === 'approved' ? 'approved' : 'disapproved'} successfully`);
+      toast.success(`Expert ${selectedStatus === 'approved' ? 'approved' : 'rejected'} successfully`);
       setOpenDialog(false);
 
-      // Optionally send email notification (non-blocking)
+      // Send email notification (non-blocking)
       try {
-        await sendStatusUpdateEmail(selectedExpert.email, selectedStatus, feedbackMessage);
+        console.log('ExpertApprovals: Attempting to send email notification...');
+        const emailResult = await sendStatusUpdateEmail(selectedExpert.email, selectedStatus, feedbackMessage);
+        console.log('ExpertApprovals: Email notification result:', emailResult);
+        if (emailResult && !emailResult.error) {
+          toast.success('Status updated and email notification sent successfully');
+        } else {
+          toast.warning('Status updated but email notification may have failed');
+        }
       } catch (emailError) {
         console.error('ExpertApprovals: Error sending email notification:', emailError);
         toast.warning('Status updated but email notification failed to send');
       }
     } catch (error) {
       console.error('ExpertApprovals: Error updating expert status:', error);
-      toast.error(`Failed to update expert status: ${(error as any)?.message || 'Unknown error'}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Failed to update expert status: ${errorMessage}`);
     }
   };
   
-  // Helper function to send email notification (placeholder - implement as needed)
+  // Helper function to send email notification
   const sendStatusUpdateEmail = async (email: string, status: string, message: string) => {
-    // This would typically call an edge function or email service
-    // For now, we'll skip the actual email sending to avoid errors
-    return Promise.resolve();
+    try {
+      // Use the custom message if provided, otherwise use default
+      const emailMessage = message.trim() || getDefaultMessage(status);
+      
+      // Map 'rejected' to 'disapproved' for the edge function (if needed)
+      const emailStatus = status === 'rejected' ? 'disapproved' : status;
+      
+      console.log('ExpertApprovals: Sending email notification:', { email, status: emailStatus, message: emailMessage });
+      
+      const { data, error } = await supabase.functions.invoke('notify-expert-status', {
+        body: {
+          email,
+          status: emailStatus,
+          message: emailMessage
+        }
+      });
+
+      if (error) {
+        console.error('ExpertApprovals: Error calling notify-expert-status:', error);
+        throw error;
+      }
+
+      if (data && !data.message) {
+        console.warn('ExpertApprovals: Email function returned unexpected response:', data);
+      }
+
+      console.log('ExpertApprovals: Email notification sent successfully');
+      return data;
+    } catch (error) {
+      console.error('ExpertApprovals: Failed to send email notification:', error);
+      throw error;
+    }
   };
   
   const getDefaultMessage = (status: string) => {
     return status === 'approved'
       ? 'Congratulations! Your expert account has been approved. You can now log in to your dashboard.'
-      : 'Unfortunately, your expert account application has been disapproved.';
+      : 'Unfortunately, your expert account application has been rejected.';
   };
   
   // Open the approval dialog
   const openApprovalDialog = (expert: ExpertProfileWithStatus) => {
     setSelectedExpert(expert);
-    setSelectedStatus('approved');
-    setFeedbackMessage('');
+    // Set status based on current expert status from database
+    // Map 'pending' to 'approved' (default), 'rejected' or 'disapproved' stays 'rejected', 'approved' stays 'approved'
+    let currentStatus: 'approved' | 'rejected' = 'approved';
+    if (expert.status === 'rejected' || expert.status === 'disapproved') {
+      currentStatus = 'rejected';
+    } else if (expert.status === 'approved') {
+      currentStatus = 'approved';
+    } else {
+      // For 'pending' or any other status, default to 'approved'
+      currentStatus = 'approved';
+    }
+    setSelectedStatus(currentStatus);
+    // Load previous feedback message if it exists, otherwise use default
+    setFeedbackMessage(expert.feedback_message || '');
     setOpenDialog(true);
   };
   
@@ -195,7 +375,7 @@ const ExpertApprovals = () => {
     } else if (status === 'approved') {
       return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Approved</Badge>;
     } else {
-      return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Disapproved</Badge>;
+      return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Rejected</Badge>;
     }
   };
 
@@ -257,7 +437,20 @@ const ExpertApprovals = () => {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-8">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+          <TabsList>
+            <TabsTrigger value="active">Active Experts</TabsTrigger>
+            <TabsTrigger value="deleted">
+              Deleted Experts
+              {deletedExperts.length > 0 && (
+                <Badge variant="outline" className="ml-2 bg-gray-100 text-gray-700">
+                  {deletedExperts.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="active" className="space-y-8 mt-4">
           {pendingExperts.length > 0 && (
             <div className="space-y-4">
               <h3 className="text-xl font-medium flex items-center">
@@ -291,8 +484,13 @@ const ExpertApprovals = () => {
                     <CardFooter className="flex gap-2">
                       <Button 
                         onClick={() => {
-                          setSelectedExpertId(expert.auth_id);
-                          setDetailDialogOpen(true);
+                          const expertId = expert.auth_id || expert.id || expert.user_id;
+                          if (expertId) {
+                            setSelectedExpertId(String(expertId));
+                            setDetailDialogOpen(true);
+                          } else {
+                            toast.error('Unable to load expert details: missing expert ID');
+                          }
                         }}
                         variant="outline"
                         size="sm"
@@ -354,15 +552,15 @@ const ExpertApprovals = () => {
             </div>
           )}
           
-          {disapprovedExperts.length > 0 && (
+          {rejectedExperts.length > 0 && (
             <div className="space-y-4">
               <h3 className="text-xl font-medium flex items-center">
                 <XCircle className="mr-2 h-5 w-5 text-red-500" /> 
-                Disapproved Applications ({disapprovedExperts.length})
+                Rejected Applications ({rejectedExperts.length})
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {disapprovedExperts.map((expert, index) => (
-                  <Card key={expert.auth_id || `disapproved-${expert.email}-${index}`}>
+                {rejectedExperts.map((expert, index) => (
+                  <Card key={expert.auth_id || `rejected-${expert.email}-${index}`}>
                     <CardHeader>
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-lg">{expert.name}</CardTitle>
@@ -404,7 +602,97 @@ const ExpertApprovals = () => {
               </CardContent>
             </Card>
           )}
-        </div>
+
+          </TabsContent>
+
+          <TabsContent value="deleted" className="space-y-8 mt-4">
+            {deletedExperts.length > 0 ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-medium flex items-center">
+                    <Trash2 className="mr-2 h-5 w-5 text-gray-500" /> 
+                    Deleted Experts ({deletedExperts.length})
+                  </h3>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fetchDeletedExperts()}
+                  >
+                    <RefreshCw className="h-4 w-4 mr-1" />
+                    Refresh
+                  </Button>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {deletedExperts.map((expert, index) => (
+                    <Card key={expert.auth_id || `deleted-${expert.email}-${index}`} className="opacity-75 border-gray-300">
+                      <CardHeader>
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-lg">{expert.name}</CardTitle>
+                          <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-300">
+                            Deleted
+                          </Badge>
+                        </div>
+                        <CardDescription>{expert.email}</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-2">
+                        <div className="text-sm">
+                          <span className="font-medium">Specialization:</span> {expert.specialization || 'Not specified'}
+                        </div>
+                        <div className="text-sm">
+                          <span className="font-medium">Experience:</span> {expert.experience || 'Not specified'}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          <span className="font-medium">Deleted:</span> {expert.deleted_at ? new Date(expert.deleted_at).toLocaleDateString() : 'Unknown'}
+                        </div>
+                      </CardContent>
+                      <CardFooter className="flex gap-2">
+                        <Button 
+                          onClick={() => {
+                            setSelectedExpertId(expert.auth_id || null);
+                            setDetailDialogOpen(true);
+                          }}
+                          variant="outline"
+                          size="sm"
+                          className="flex-1"
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          View
+                        </Button>
+                        <Button 
+                          onClick={() => handleRestoreExpert(expert)}
+                          size="sm"
+                          className="flex-1 bg-green-600 hover:bg-green-700"
+                        >
+                          <RotateCcw className="h-4 w-4 mr-1" />
+                          Restore
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center p-8">
+                  <Trash2 className="h-12 w-12 text-gray-300 mb-4" />
+                  <p className="text-gray-500 mb-4">No deleted experts found</p>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      console.log('ExpertApprovals: Manual refresh clicked. Current deletedExperts state:', deletedExperts);
+                      fetchDeletedExperts();
+                    }}
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Refresh Deleted Experts
+                  </Button>
+                  <p className="text-xs text-gray-400 mt-2">Check browser console for debug logs</p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+        </Tabs>
       )}
       
       {/* Expert approval/disapproval dialog */}
@@ -417,7 +705,9 @@ const ExpertApprovals = () => {
                 : 'Update Expert Status'}
             </DialogTitle>
             <DialogDescription>
-              Update status for {selectedExpert?.name || 'expert'}.
+              {selectedExpert?.status === 'pending' 
+                ? `Review and approve or reject the application for ${selectedExpert?.name || 'expert'}. Click "Details" button to view full expert information.`
+                : `Update status for ${selectedExpert?.name || 'expert'}.`}
             </DialogDescription>
           </DialogHeader>
           
@@ -426,14 +716,14 @@ const ExpertApprovals = () => {
               <label className="text-sm font-medium">Status</label>
               <Select
                 value={selectedStatus}
-                onValueChange={(value) => setSelectedStatus(value as 'approved' | 'disapproved')}
+                onValueChange={(value) => setSelectedStatus(value as 'approved' | 'rejected')}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="approved">Approve</SelectItem>
-                  <SelectItem value="disapproved">Disapprove</SelectItem>
+                <SelectContent className="z-[9999]" position="popper" sideOffset={4}>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -452,7 +742,7 @@ const ExpertApprovals = () => {
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpenDialog(false)}>Cancel</Button>
             <Button onClick={updateExpertStatus}>
-              {selectedStatus === 'approved' ? 'Approve' : 'Disapprove'}
+              {selectedStatus === 'approved' ? 'Approve' : 'Reject'}
             </Button>
           </DialogFooter>
         </DialogContent>

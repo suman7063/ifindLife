@@ -20,25 +20,68 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
 
     const body = await req.json().catch(() => ({}));
-    const { id, status } = body;
+    const { id, status, category, feedback_message } = body;
 
-    console.log('admin-update-expert: Received request:', { id, status, body });
+    console.log('admin-update-expert: Received request:', { id, status, category, body });
 
-    if (!id || !status) {
-      console.error('admin-update-expert: Missing required fields:', { id, status });
+    if (!id) {
+      console.error('admin-update-expert: Missing required field: id');
       return new Response(JSON.stringify({
         success: false,
-        error: `id and status are required. Received: id=${id}, status=${status}`
+        error: `id is required. Received: id=${id}`
       }), {
         status: 400,
         headers: corsHeaders
       });
     }
 
-    if (!['approved', 'disapproved', 'pending'].includes(status)) {
+    // Build update object
+    const updateData: any = {};
+    
+    if (status) {
+      if (!['approved', 'rejected', 'disapproved', 'pending'].includes(status)) {
+        return new Response(JSON.stringify({
+          success: false,
+          error: 'invalid status'
+        }), {
+          status: 400,
+          headers: corsHeaders
+        });
+      }
+      // Map 'rejected' to 'disapproved' for database compatibility
+      // (database constraint still uses 'disapproved', but UI uses 'rejected')
+      updateData.status = status === 'rejected' ? 'disapproved' : status;
+    }
+
+    if (category) {
+      // Validate category if provided
+      const validCategories = ['listening-volunteer', 'listening-expert', 'listening-coach', 'mindfulness-expert'];
+      if (!validCategories.includes(category)) {
+        return new Response(JSON.stringify({
+          success: false,
+          error: `invalid category. Must be one of: ${validCategories.join(', ')}`
+        }), {
+          status: 400,
+          headers: corsHeaders
+        });
+      }
+      updateData.category = category;
+    }
+
+    if (feedback_message !== undefined) {
+      // Save feedback message (can be empty string to clear it)
+      updateData.feedback_message = feedback_message || null;
+    }
+
+    // Always update the admin update timestamp when status or feedback is changed
+    if (status || feedback_message !== undefined) {
+      updateData.updated_by_admin_at = new Date().toISOString();
+    }
+
+    if (Object.keys(updateData).length === 0) {
       return new Response(JSON.stringify({
         success: false,
-        error: 'invalid status'
+        error: 'At least one of status or category must be provided'
       }), {
         status: 400,
         headers: corsHeaders
@@ -46,12 +89,12 @@ Deno.serve(async (req) => {
     }
 
     // Update by auth_id (primary key)
-    console.log('admin-update-expert: Updating expert_accounts with auth_id:', id);
+    console.log('admin-update-expert: Updating expert_accounts with auth_id:', id, 'updateData:', updateData);
     const { data, error } = await supabase
       .from('expert_accounts')
-      .update({ status })
+      .update(updateData)
       .eq('auth_id', id)
-      .select('auth_id, status')
+      .select('auth_id, status, category')
       .limit(1);
 
     if (error) {
