@@ -108,6 +108,7 @@ const UserRoutes: React.FC = () => {
         <Route path="/expert/:id" element={<ExpertDetail />} /> {/* Backward compatibility */}
         <Route path="/expert-login" element={<ExpertLogin />} />
         <Route path="/expert-signup" element={<ExpertSignup />} />
+        <Route path="/expert-register" element={<ExpertSignup />} />
         <Route path="/expert-dashboard/*" element={<NewExpertDashboard />} />
         
         {/* Expert Category Routes - Unified */}

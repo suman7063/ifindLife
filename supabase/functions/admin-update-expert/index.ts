@@ -38,18 +38,26 @@ Deno.serve(async (req) => {
     // Build update object
     const updateData: any = {};
     
-    if (status) {
-      if (!['approved', 'rejected', 'pending'].includes(status)) {
+    if (status !== undefined && status !== null) {
+      // Normalize status: trim whitespace and convert to lowercase
+      const normalizedStatus = String(status).trim().toLowerCase();
+      
+      if (!['approved', 'rejected', 'pending'].includes(normalizedStatus)) {
+        console.error('admin-update-expert: Invalid status value:', { 
+          original: status, 
+          normalized: normalizedStatus,
+          type: typeof status 
+        });
         return new Response(JSON.stringify({
           success: false,
-          error: 'invalid status'
+          error: `Invalid status: ${status}. Must be one of: approved, rejected, pending`
         }), {
           status: 400,
           headers: corsHeaders
         });
       }
-      // Use 'rejected' directly (database now uses 'rejected' instead of 'disapproved')
-      updateData.status = status;
+      // Use normalized status
+      updateData.status = normalizedStatus;
     }
 
     if (category) {
@@ -88,7 +96,39 @@ Deno.serve(async (req) => {
     }
 
     // Update by auth_id (primary key)
-    console.log('admin-update-expert: Updating expert_accounts with auth_id:', id, 'updateData:', updateData);
+    console.log('admin-update-expert: Updating expert_accounts with auth_id:', id, 'updateData:', JSON.stringify(updateData));
+    
+    // First, check current status
+    const { data: currentData, error: checkError } = await supabase
+      .from('expert_accounts')
+      .select('auth_id, status')
+      .eq('auth_id', id)
+      .maybeSingle();
+    
+    if (checkError) {
+      console.error('admin-update-expert: Error checking current status:', checkError);
+      return new Response(JSON.stringify({
+        success: false,
+        error: `Error checking expert: ${checkError.message}`
+      }), {
+        status: 400,
+        headers: corsHeaders
+      });
+    }
+    
+    if (!currentData) {
+      console.error('admin-update-expert: Expert not found with auth_id:', id);
+      return new Response(JSON.stringify({
+        success: false,
+        error: `No expert found with auth_id: ${id}`
+      }), {
+        status: 400,
+        headers: corsHeaders
+      });
+    }
+    
+    console.log('admin-update-expert: Current status:', currentData.status, 'Updating to:', updateData.status);
+    
     const { data, error } = await supabase
       .from('expert_accounts')
       .update(updateData)
@@ -98,9 +138,15 @@ Deno.serve(async (req) => {
 
     if (error) {
       console.error('admin-update-expert: Database error:', error);
+      console.error('admin-update-expert: Error details:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
       return new Response(JSON.stringify({
         success: false,
-        error: `Database error: ${error.message}`
+        error: `Database error: ${error.message}${error.details ? ` - ${error.details}` : ''}${error.hint ? ` (${error.hint})` : ''}`
       }), {
         status: 400,
         headers: corsHeaders
