@@ -39,18 +39,29 @@ const ExpertOnboardingWelcome: React.FC<ExpertOnboardingWelcomeProps> = ({
     try {
       const { data, error } = await supabase
         .from('expert_accounts')
-        .select('selected_services, pricing_set, availability_set, profile_completed, onboarding_completed')
+        .select('pricing_set, availability_set, profile_completed, onboarding_completed')
         .eq('auth_id', expertId)
         .single();
 
       if (error && error.code !== 'PGRST116') throw error;
 
-      setAccountFlags(data || {
-        selected_services: [],
-        pricing_set: false,
-        availability_set: false,
-        profile_completed: false,
-        onboarding_completed: false,
+      // Check services from expert_service_specializations table
+      const { data: specializations } = await supabase
+        .from('expert_service_specializations')
+        .select('id')
+        .eq('expert_id', expertId)
+        .limit(1);
+
+      const hasServices = (specializations?.length || 0) > 0;
+
+      setAccountFlags({
+        ...(data || {
+          pricing_set: false,
+          availability_set: false,
+          profile_completed: false,
+          onboarding_completed: false,
+        }),
+        hasServices,
       });
     } catch (error) {
       console.error('Error fetching expert account flags:', error);
@@ -94,7 +105,7 @@ const ExpertOnboardingWelcome: React.FC<ExpertOnboardingWelcomeProps> = ({
       title: 'Select Your Services',
       description: 'Choose the services you want to offer from your category',
       icon: <Settings className="h-5 w-5" />,
-      completed: (Array.isArray(accountFlags?.selected_services) && accountFlags.selected_services.length > 0) || false,
+      completed: accountFlags?.hasServices || false,
       required: true,
     },
     {

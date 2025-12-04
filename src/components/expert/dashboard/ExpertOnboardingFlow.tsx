@@ -111,29 +111,43 @@ export const ExpertOnboardingFlow: React.FC = () => {
 
   const getStepCompletion = async (stepId: string, account: any): Promise<boolean> => {
     try {
-      // Source of truth: expert_accounts flags
-      const { data, error } = await supabase
-        .from('expert_accounts')
-        .select('selected_services, pricing_set, availability_set, profile_completed')
-        .eq('auth_id', account.auth_id)
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching expert account flags:', error);
-        return false;
-      }
-
-      const flags = data || { selected_services: [], pricing_set: false, availability_set: false, profile_completed: false };
-
       switch (stepId) {
         case 'services':
-          return Array.isArray(flags.selected_services) && flags.selected_services.length > 0;
+          // Use expert_service_specializations table as single source of truth
+          const { data: specializations, error: specError } = await supabase
+            .from('expert_service_specializations')
+            .select('id')
+            .eq('expert_id', account.auth_id)
+            .limit(1);
+          
+          return !specError && specializations && specializations.length > 0;
         case 'pricing':
-          return !!flags.pricing_set;
         case 'availability':
-          return !!flags.availability_set;
         case 'profile':
-          return !!flags.profile_completed;
+          // Source of truth: expert_accounts flags
+          const { data, error } = await supabase
+            .from('expert_accounts')
+            .select('pricing_set, availability_set, profile_completed')
+            .eq('auth_id', account.auth_id)
+            .single();
+
+          if (error && error.code !== 'PGRST116') {
+            console.error('Error fetching expert account flags:', error);
+            return false;
+          }
+
+          const flags = data || { pricing_set: false, availability_set: false, profile_completed: false };
+          
+          switch (stepId) {
+            case 'pricing':
+              return !!flags.pricing_set;
+            case 'availability':
+              return !!flags.availability_set;
+            case 'profile':
+              return !!flags.profile_completed;
+            default:
+              return false;
+          }
         default:
           return false;
       }

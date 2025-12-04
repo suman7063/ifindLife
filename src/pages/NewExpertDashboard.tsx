@@ -72,7 +72,7 @@ const NewExpertDashboard: React.FC = () => {
       try {
         const { data, error } = await supabase
           .from('expert_accounts')
-          .select('onboarding_completed, status, selected_services, pricing_set, availability_set, profile_completed')
+          .select('onboarding_completed, status, pricing_set, availability_set, profile_completed')
           .eq('auth_id', expert.auth_id)
           .single();
 
@@ -82,8 +82,14 @@ const NewExpertDashboard: React.FC = () => {
           return;
         }
 
-        // Check if core onboarding steps are completed
-        const hasServices = data.selected_services && data.selected_services.length > 0;
+        // Check if services exist - use expert_service_specializations table as single source of truth
+        const { data: specializations, error: specError } = await supabase
+          .from('expert_service_specializations')
+          .select('id')
+          .eq('expert_id', expert.auth_id)
+          .limit(1);
+        
+        const hasServices = !specError && specializations && specializations.length > 0;
         const hasPricing = data.pricing_set;
         const hasAvailability = data.availability_set;
         // Onboarding is needed if any core step is incomplete

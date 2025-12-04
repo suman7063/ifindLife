@@ -174,20 +174,28 @@ const ExpertServiceAssignment: React.FC<ExpertServiceAssignmentProps> = ({
       if (eaUpdateError) throw eaUpdateError;
 
       // If all flags satisfied, mark onboarding_completed on expert_accounts
-      const { data: eaFlags } = await supabase
-        .from('expert_accounts')
-        .select('selected_services, pricing_set, availability_set, onboarding_completed')
-        .eq('auth_id', expertId)
-        .single();
-
-      // Check if services exist in expert_services table instead of selected_services
+      // Check services from expert_services table (admin assigned) or expert_service_specializations
       const { data: servicesCheck } = await supabase
         .from('expert_services')
         .select('id')
         .eq('expert_id', expertId)
         .limit(1);
       
-      const hasServices = (servicesCheck?.length || 0) > 0;
+      // Also check expert_service_specializations as fallback
+      const { data: specializationsCheck } = await supabase
+        .from('expert_service_specializations')
+        .select('id')
+        .eq('expert_id', expertId)
+        .limit(1);
+      
+      const hasServices = (servicesCheck?.length || 0) > 0 || (specializationsCheck?.length || 0) > 0;
+      
+      const { data: eaFlags } = await supabase
+        .from('expert_accounts')
+        .select('pricing_set, availability_set, onboarding_completed')
+        .eq('auth_id', expertId)
+        .single();
+      
       const hasPricing = !!eaFlags?.pricing_set;
       const hasAvailability = !!eaFlags?.availability_set;
 

@@ -130,13 +130,20 @@ export const PricingSetupStep: React.FC<PricingSetupStepProps> = ({
       }
 
       // If all flags are true, set onboarding_completed on expert_accounts as well
+      // Check services from expert_service_specializations table
+      const { data: specializationsCheck } = await supabase
+        .from('expert_service_specializations')
+        .select('id')
+        .eq('expert_id', expertAccount.auth_id)
+        .limit(1);
+
       const { data: eaFlags } = await supabase
         .from('expert_accounts')
-        .select('selected_services, pricing_set, availability_set, onboarding_completed')
+        .select('pricing_set, availability_set, onboarding_completed')
         .eq('auth_id', expertAccount.auth_id)
         .single();
 
-      const hasServices = Array.isArray(eaFlags?.selected_services) && eaFlags!.selected_services.length > 0;
+      const hasServices = (specializationsCheck?.length || 0) > 0;
       const hasPricing = !!eaFlags?.pricing_set;
       const hasAvailability = !!eaFlags?.availability_set;
 

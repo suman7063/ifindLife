@@ -215,23 +215,8 @@ const ServiceSelectionStep: React.FC<ServiceSelectionStepProps> = ({
         }
       }
 
-      // Update expert account to reflect service selection completion
-      // Save selected service UUIDs to selected_services column (now UUID[])
-      console.log('💾 Updating expert account with selected services...');
-      const { error: updateError } = await supabase
-        .from('expert_accounts')
-        .update({ 
-          selected_services: selectedServices // Array of service UUIDs
-        })
-        .eq('auth_id', expertAccount.auth_id);
-
-      if (updateError) {
-        console.error('Error updating expert account:', updateError);
-        throw updateError;
-      }
-
+      // Services are saved in expert_service_specializations table - no need to update expert_accounts.selected_services
       // Check if all onboarding flags are satisfied
-      // Check expert_service_specializations to verify services are saved
       const { data: specializationsCheck } = await supabase
         .from('expert_service_specializations')
         .select('id')

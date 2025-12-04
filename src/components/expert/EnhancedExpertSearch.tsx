@@ -93,7 +93,8 @@ export const EnhancedExpertSearch: React.FC = () => {
 
   const fetchExperts = async () => {
     try {
-      const { data, error } = await supabase
+      // Fetch experts without selected_services field
+      const { data: expertsData, error: expertsError } = await supabase
         .from('expert_accounts')
         .select(`
           auth_id,
@@ -104,14 +105,41 @@ export const EnhancedExpertSearch: React.FC = () => {
           bio,
           experience,
           average_rating,
-          reviews_count,
-          selected_services
+          reviews_count
         `)
         .eq('status', 'approved')
         .order('average_rating', { ascending: false });
 
-      if (error) throw error;
-      setExperts(data || []);
+      if (expertsError) throw expertsError;
+
+      // Fetch services for each expert from expert_service_specializations
+      if (expertsData && expertsData.length > 0) {
+        const expertIds = expertsData.map(e => e.auth_id);
+        const { data: specializationsData, error: specError } = await supabase
+          .from('expert_service_specializations')
+          .select('expert_id, service_id')
+          .in('expert_id', expertIds);
+
+        if (specError) {
+          console.error('Error fetching specializations:', specError);
+        }
+
+        // Map services to experts
+        const expertsWithServices = expertsData.map(expert => {
+          const services = specializationsData
+            ?.filter(s => s.expert_id === expert.auth_id)
+            .map(s => s.service_id) || [];
+          
+          return {
+            ...expert,
+            selected_services: services
+          };
+        });
+
+        setExperts(expertsWithServices);
+      } else {
+        setExperts([]);
+      }
     } catch (error) {
       console.error('Error fetching experts:', error);
       toast.error('Failed to load experts');

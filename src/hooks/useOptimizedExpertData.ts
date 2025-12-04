@@ -200,9 +200,22 @@ export function useOptimizedExpertData({
         if (serviceId) {
           const serviceIdNum = parseInt(serviceId);
           if (!isNaN(serviceIdNum)) {
-            filteredData = filteredData.filter(expert => 
-              expert.selected_services?.includes(serviceIdNum)
-            );
+            // Filter experts by checking expert_service_specializations table
+            const expertIds = filteredData.map(e => e.auth_id || e.id).filter(Boolean);
+            if (expertIds.length > 0) {
+              const { data: specializations } = await supabase
+                .from('expert_service_specializations')
+                .select('expert_id')
+                .in('expert_id', expertIds)
+                .eq('service_id', serviceIdNum);
+              
+              const expertIdsWithService = new Set(specializations?.map(s => s.expert_id) || []);
+              filteredData = filteredData.filter(expert => 
+                expertIdsWithService.has(expert.auth_id || expert.id)
+              );
+            } else {
+              filteredData = [];
+            }
           }
         }
 
