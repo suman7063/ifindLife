@@ -30,48 +30,77 @@ export function useExpertAvailability(expertId?: string) {
       setLoading(true);
       setError(null);
 
-      // Fetch expert availabilities with time slots (ensuring no duplicates)
+      // Fetch expert availabilities - current schema uses day_of_week, start_time, end_time
+      // Note: TypeScript types are outdated, actual DB has day_of_week/start_time/end_time
+      // @ts-expect-error - TypeScript types are outdated, actual DB schema has day_of_week/start_time/end_time
       const { data: availabilityData, error: availabilityError } = await supabase
         .from('expert_availabilities')
-        .select(`
-          id,
-          expert_id,
-          start_date,
-          end_date,
-          availability_type,
-          time_slots:expert_time_slots!inner(
-            id,
-            start_time,
-            end_time,
-            day_of_week,
-            specific_date,
-            is_booked
-          )
-        `)
+        .select('id, expert_id, day_of_week, start_time, end_time, is_available, timezone')
         .eq('expert_id', id)
-        .order('start_date', { ascending: true });
+        .eq('is_available', true)
+        .order('day_of_week', { ascending: true })
+        .order('start_time', { ascending: true });
 
-      if (availabilityError) throw availabilityError;
+      if (availabilityError) {
+        console.error('Error fetching availability:', availabilityError);
+        throw availabilityError;
+      }
 
-      const formattedAvailabilities: ExpertAvailability[] = availabilityData?.map(availability => ({
+      // Transform the data to match the expected interface
+      // Group by day_of_week and create availability periods
+      // Note: TypeScript types are outdated - actual DB has day_of_week/start_time/end_time
+      const formattedAvailabilities: ExpertAvailability[] = ((availabilityData as unknown as Array<{
+        id: string;
+        expert_id: string;
+        day_of_week: number;
+        start_time: string;
+        end_time: string;
+        is_available: boolean;
+        timezone: string | null;
+      }>) || []).map((availability) => ({
         id: availability.id,
         expert_id: availability.expert_id,
-        start_date: availability.start_date,
-        end_date: availability.end_date,
-        availability_type: availability.availability_type as 'date_range' | 'recurring',
-        time_slots: availability.time_slots || []
-      })) || [];
+        // Use a wide date range for recurring availability (e.g., next year)
+        start_date: new Date().toISOString().split('T')[0],
+        end_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 1 year from now
+        availability_type: 'recurring' as const,
+        time_slots: [{
+          id: availability.id, // Use availability id as slot id
+          start_time: availability.start_time,
+          end_time: availability.end_time,
+          day_of_week: availability.day_of_week,
+          is_booked: false
+        }]
+      }));
 
       setAvailabilities(formattedAvailabilities);
-    } catch (err: any) {
+      
+      // Log what was fetched from database (to verify it's not hardcoded)
+      if (formattedAvailabilities.length > 0) {
+        console.log('📅 Fetched availability from DATABASE (not hardcoded):', {
+          expertId: id,
+          count: formattedAvailabilities.length,
+          availabilities: formattedAvailabilities.map(a => ({
+            day: a.time_slots[0]?.day_of_week,
+            time: `${a.time_slots[0]?.start_time} - ${a.time_slots[0]?.end_time}`,
+            source: 'DATABASE'
+          }))
+        });
+      } else {
+        console.warn('⚠️ No availability found in database for expert:', id);
+      }
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       console.error('Error fetching expert availability:', err);
-      setError(err.message);
+      setError(errorMessage);
+      // Don't set any fallback - return empty array if fetch fails
+      setAvailabilities([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Get available time slots for a specific date - directly from expert's configured slots
+  // Get available time slots for a specific date - split availability windows into 30-minute slots
   const generate30MinuteSlots = (date: string) => {
     const targetDate = new Date(date);
     const dayOfWeek = targetDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
@@ -86,7 +115,49 @@ export function useExpertAvailability(expertId?: string) {
       availability_id: string;
     }> = [];
 
-    // Simply iterate through each availability and get matching slots
+    // Helper function to split a time range into 30-minute slots
+    const splitInto30MinSlots = (startTime: string, endTime: string, availabilityId: string, expertId: string) => {
+      const [startHour, startMin] = startTime.split(':').map(Number);
+      const [endHour, endMin] = endTime.split(':').map(Number);
+      
+      const startMinutes = startHour * 60 + startMin;
+      const endMinutes = endHour * 60 + endMin;
+      
+      const slots: Array<{
+        id: string;
+        start_time: string;
+        end_time: string;
+        expert_id: string;
+        availability_id: string;
+      }> = [];
+      
+      // Generate 30-minute slots from start to end
+      for (let currentMinutes = startMinutes; currentMinutes < endMinutes; currentMinutes += 30) {
+        const slotStartHour = Math.floor(currentMinutes / 60);
+        const slotStartMin = currentMinutes % 60;
+        const slotEndMinutes = currentMinutes + 30;
+        const slotEndHour = Math.floor(slotEndMinutes / 60);
+        const slotEndMin = slotEndMinutes % 60;
+        
+        const slotStartTime = `${slotStartHour.toString().padStart(2, '0')}:${slotStartMin.toString().padStart(2, '0')}`;
+        const slotEndTime = `${slotEndHour.toString().padStart(2, '0')}:${slotEndMin.toString().padStart(2, '0')}`;
+        
+        // Only add if the slot doesn't exceed the end time
+        if (slotEndMinutes <= endMinutes) {
+          slots.push({
+            id: `${availabilityId}-${slotStartTime}`,
+            start_time: slotStartTime,
+            end_time: slotEndTime,
+            expert_id: expertId,
+            availability_id: availabilityId
+          });
+        }
+      }
+      
+      return slots;
+    };
+
+    // Iterate through each availability and get matching slots
     availabilities.forEach(availability => {
       const startDate = new Date(availability.start_date);
       const endDate = new Date(availability.end_date);
@@ -117,13 +188,14 @@ export function useExpertAvailability(expertId?: string) {
           }
 
           if (includeSlot) {
-            availableSlots.push({
-              id: slot.id,
-              start_time: slot.start_time,
-              end_time: slot.end_time,
-              expert_id: availability.expert_id,
-              availability_id: availability.id
-            });
+            // Split the time window into 30-minute slots
+            const thirtyMinSlots = splitInto30MinSlots(
+              slot.start_time,
+              slot.end_time,
+              availability.id,
+              availability.expert_id
+            );
+            availableSlots.push(...thirtyMinSlots);
           }
         });
       }

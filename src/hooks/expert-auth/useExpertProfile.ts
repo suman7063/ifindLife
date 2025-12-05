@@ -83,23 +83,29 @@ export const useExpertProfile = (
       }
       
       // Then, insert the new availability entries
-      // Map the timeSlots to match the database schema
+      // Map the timeSlots to match the CURRENT database schema (day_of_week, start_time, end_time)
+      // Note: TypeScript types are outdated - actual DB has day_of_week/start_time/end_time, not start_date/end_date
       const availabilityData = timeSlots.map(slot => ({
         expert_id: expertId,
-        availability_type: 'regular',
-        start_date: slot.start_time,
-        end_date: slot.end_time,
-        day_of_week: slot.day_of_week || slot.day // Use day_of_week or fallback to day
+        day_of_week: slot.day_of_week ?? (slot.day ? parseInt(String(slot.day)) : 0),
+        start_time: slot.start_time || '09:00:00',
+        end_time: slot.end_time || '17:00:00',
+        is_available: true,
+        timezone: 'UTC'
       }));
       
       // Insert the transformed data
+      // TypeScript types are outdated - actual DB schema has day_of_week/start_time/end_time, not start_date/end_date
+      // Cast availabilityData to bypass outdated type definitions
       const { error: insertError } = await supabase
         .from('expert_availabilities')
+        // @ts-expect-error - TypeScript types expect start_date/end_date/availability_type, but actual DB has day_of_week/start_time/end_time
         .insert(availabilityData);
       
       if (insertError) {
         console.error('Error updating availability:', insertError);
-        toast.error('Failed to update availability: ' + insertError.message);
+        const errorMessage = insertError instanceof Error ? insertError.message : String(insertError);
+        toast.error('Failed to update availability: ' + errorMessage);
         return false;
       }
       

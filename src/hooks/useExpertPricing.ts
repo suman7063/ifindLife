@@ -76,7 +76,18 @@ export const useExpertPricing = (expertId?: string) => {
       let pricingSet = false;
       if (expertAccount.category) {
         try {
-          const { data: tableExists } = await supabase.rpc('check_if_table_exists', { table_name: 'category_pricing' });
+          // Check if table exists, but handle gracefully if RPC doesn't exist
+          let tableExists = false;
+          try {
+            const { data, error } = await supabase.rpc('check_if_table_exists', { table_name: 'category_pricing' });
+            if (!error && data) {
+              tableExists = data;
+            }
+          } catch (rpcError) {
+            // RPC function might not exist yet - that's okay, skip category pricing
+            console.log('useExpertPricing: check_if_table_exists RPC not available, skipping category pricing check');
+          }
+          
           if (tableExists) {
             const { data: catPricing, error: catErr } = await (supabase as any)
               .from('category_pricing' as any)
@@ -148,17 +159,28 @@ export const useExpertPricing = (expertId?: string) => {
   const detectUserCurrency = async () => {
     try {
       // First check if we already have geolocation data for this user
-      const { data: existingGeo } = await supabase
-        .from('user_geolocations')
-        .select('currency')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-        .order('detected_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      // Handle gracefully if table doesn't exist yet
+      try {
+        const { data: existingGeo, error: geoError } = await supabase
+          .from('user_geolocations')
+          .select('currency')
+          .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+          .order('detected_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
-      if (existingGeo?.currency) {
-        setUserCurrency(existingGeo.currency as 'INR' | 'EUR');
-        return;
+        // If table doesn't exist (404), continue to IP detection
+        if (geoError && geoError.code !== 'PGRST116') {
+          console.warn('Error fetching geolocation (table may not exist):', geoError.message);
+        }
+
+        if (existingGeo?.currency) {
+          setUserCurrency(existingGeo.currency as 'INR' | 'EUR');
+          return;
+        }
+      } catch (geoQueryError) {
+        // Table might not exist yet - continue to IP detection
+        console.warn('Geolocation query failed (table may not exist yet):', geoQueryError);
       }
 
       // If no existing data, use a simple IP-based detection
@@ -172,15 +194,25 @@ export const useExpertPricing = (expertId?: string) => {
       }
       setUserCurrency(currency);
 
-      // Store geolocation data
+      // Store geolocation data (handle gracefully if table doesn't exist yet)
       const user = (await supabase.auth.getUser()).data.user;
       if (user) {
-        await supabase.from('user_geolocations').insert({
-          user_id: user.id,
-          country_code: geoData.country_code,
-          country_name: geoData.country_name,
-          currency: currency
-        });
+        try {
+          const { error: insertError } = await supabase.from('user_geolocations').insert({
+            user_id: user.id,
+            country_code: geoData.country_code,
+            country_name: geoData.country_name,
+            currency: currency
+          });
+          
+          if (insertError) {
+            // Log but don't throw - table might not exist yet or RLS might prevent insert
+            console.warn('Could not store geolocation data (this is okay if table migration not applied yet):', insertError.message);
+          }
+        } catch (insertErr) {
+          // Silently handle insert errors - table might not exist yet
+          console.warn('Geolocation insert failed (table may not exist yet):', insertErr);
+        }
       }
     } catch (error) {
       console.error('Error detecting currency:', error);

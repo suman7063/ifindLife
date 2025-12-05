@@ -170,22 +170,28 @@ const CallTypeSelectionModal: React.FC<CallTypeSelectionModalProps> = ({
           categoryData
         });
 
-        // Only set pricing if we got valid values from database
-        // IMPORTANT: Check if price is > 0, not just truthy (to handle 0 values correctly)
-        if (price30 > 0 || price60 > 0) {
-          // Calculate pricing for durations
-          // 30m and 60m use direct database values
-          const calculatedPricing: { [key: number]: number } = {
-            30: price30,
-            60: price60
-          };
+        // Set pricing from database values
+        // Note: We set pricing even if values are 0, as 0 is a valid price
+        // Only use fallback if values are null/undefined
+        const calculatedPricing: { [key: number]: number } = {};
+        
+        // Set prices if they exist (including 0)
+        if (price30Raw != null) {
+          calculatedPricing[30] = price30;
+        }
+        if (price60Raw != null) {
+          calculatedPricing[60] = price60;
+        }
 
+        // If we got at least one valid price from database, use it
+        if (Object.keys(calculatedPricing).length > 0) {
           console.log('✅ Setting pricing from database:', calculatedPricing, {
             note: 'These are the actual session prices, not per-minute rates'
           });
           setPricing(calculatedPricing);
         } else {
-          console.warn('⚠️ Database prices are 0 or invalid, using fallback');
+          // No valid prices found, use fallback
+          console.warn('⚠️ Database prices are null/undefined, using fallback');
           console.warn('⚠️ This will cause incorrect pricing - check database values!');
           calculateFallbackPricing();
         }
@@ -206,10 +212,16 @@ const CallTypeSelectionModal: React.FC<CallTypeSelectionModalProps> = ({
       });
       console.log('🔄 Using fallback pricing:', fallbackPricing, 'expertPrice:', expertPrice);
       setPricing(fallbackPricing);
+      // Ensure pricingLoading is set to false when using fallback
+      setPricingLoading(false);
     };
 
     if (isOpen && (expertId || expertAuthId)) {
       fetchPricingFromDatabase();
+    } else if (!isOpen) {
+      // Reset pricing when modal closes to avoid stale data
+      setPricing({});
+      setPricingLoading(false);
     }
   }, [isOpen, expertId, expertAuthId, currency, expertPrice]);
 
@@ -244,13 +256,16 @@ const CallTypeSelectionModal: React.FC<CallTypeSelectionModalProps> = ({
   });
   
   // Additional warning if using fallback when database price should be available
-  if (pricingFromDB === undefined || pricingFromDB === null) {
+  // Only show warning if pricing has finished loading (not during loading state)
+  if (!pricingLoading && (pricingFromDB === undefined || pricingFromDB === null)) {
     console.warn('⚠️ WARNING: Using fallback pricing calculation!', {
       duration,
       pricing,
       expectedPrice: 'Should be from database',
       fallbackPrice: fallbackCost,
-      issue: 'Database pricing not loaded or duration not in pricing object'
+      issue: 'Database pricing not loaded or duration not in pricing object',
+      pricingLoading,
+      isOpen
     });
   }
   
