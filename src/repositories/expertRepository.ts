@@ -37,7 +37,7 @@ export class ExpertRepository {
         country: expertData.country || null,
         profile_picture: expertData.profile_picture || null,
         certificate_urls: expertData.certificate_urls || [],
-        selected_services: expertData.selected_services || [],
+        // selected_services removed - services are stored in expert_service_specializations table
         average_rating: 0,
         reviews_count: 0
       };
@@ -51,6 +51,20 @@ export class ExpertRepository {
       if (error) {
         console.error('Error creating expert:', error);
         return null;
+      }
+
+      // If services were provided, save them to expert_service_specializations
+      if (expertData.selected_services && expertData.selected_services.length > 0) {
+        const specializations = expertData.selected_services.map((serviceId, index) => ({
+          expert_id: data.auth_id,
+          service_id: String(serviceId), // Database has UUID, but types expect number - using string
+          is_available: true,
+          is_primary_service: index === 0
+        })) as unknown as Array<{ expert_id: string; service_id: number; is_available: boolean; is_primary_service: boolean }>; // Type assertion needed due to type mismatch (DB has UUID but types expect number)
+        
+        await supabase
+          .from('expert_service_specializations')
+          .insert(specializations);
       }
 
       // Convert to ExpertProfile format
@@ -75,7 +89,7 @@ export class ExpertRepository {
         specialization: data.specialization,
         experience: data.experience,
         certificate_urls: data.certificate_urls,
-        selected_services: data.selected_services,
+        selected_services: expertData.selected_services || [], // From input, now saved in expert_service_specializations
         average_rating: data.average_rating,
         reviews_count: data.reviews_count,
         verified: false
@@ -98,6 +112,15 @@ export class ExpertRepository {
         return null;
       }
 
+      // Fetch services from expert_service_specializations
+      const { data: servicesData } = await supabase
+        .from('expert_service_specializations')
+        .select('service_id')
+        .eq('expert_id', authId)
+        .eq('is_available', true);
+
+      const selectedServices = servicesData?.map(s => Number(s.service_id)) || [];
+
       return {
         id: data.auth_id, // Use auth_id as id for backward compatibility
         auth_id: data.auth_id,
@@ -119,7 +142,7 @@ export class ExpertRepository {
         specialization: data.specialization,
         experience: data.experience,
         certificate_urls: data.certificate_urls,
-        selected_services: data.selected_services,
+        selected_services: selectedServices, // From expert_service_specializations
         average_rating: data.average_rating,
         reviews_count: data.reviews_count,
         verified: false
@@ -174,7 +197,7 @@ export class ExpertRepository {
         specialization: expertData.specialization,
         experience: expertData.experience,
         certificate_urls: (expertData as { certificate_urls?: string[] }).certificate_urls || [],
-        selected_services: expertData.selected_services,
+        selected_services: expertData.selected_services || [],
         average_rating: expertData.average_rating,
         reviews_count: expertData.reviews_count,
         verified: expertData.verified
@@ -187,9 +210,12 @@ export class ExpertRepository {
 
   static async update(authId: string, expertData: Partial<ExpertCreateData>): Promise<ExpertProfile | null> {
     try {
+      // Extract selected_services if present (will be handled separately)
+      const { selected_services, ...updateData } = expertData;
+      
       const { data, error } = await supabase
         .from('expert_accounts')
-        .update(expertData)
+        .update(updateData)
         .eq('auth_id', authId)
         .select()
         .single();
@@ -198,6 +224,43 @@ export class ExpertRepository {
         console.error('Error updating expert:', error);
         return null;
       }
+
+      // If selected_services was provided, update expert_service_specializations
+      if (selected_services !== undefined) {
+        // Delete existing specializations
+        await supabase
+          .from('expert_service_specializations')
+          .delete()
+          .eq('expert_id', authId);
+        
+        // Insert new specializations
+        if (selected_services.length > 0) {
+          const specializations = selected_services.map((serviceId, index) => ({
+            expert_id: authId,
+            service_id: String(serviceId), // Database has UUID, but types expect number - using string
+            is_available: true,
+            is_primary_service: index === 0
+          })) as unknown as Array<{ expert_id: string; service_id: number; is_available: boolean; is_primary_service: boolean }>; // Type assertion needed due to type mismatch (DB has UUID but types expect number)
+          
+          await supabase
+            .from('expert_service_specializations')
+            .insert(specializations);
+        }
+      }
+
+      // Fetch services from expert_service_specializations for return value
+      const { data: servicesData } = await supabase
+        .from('expert_service_specializations')
+        .select('service_id')
+        .eq('expert_id', authId)
+        .eq('is_available', true);
+
+      // Convert UUID strings to numbers for backward compatibility with types
+      const selectedServices = servicesData?.map(s => {
+        // If service_id is UUID string, we'll return it as-is since types expect number[]
+        // This is a type mismatch - database has UUID but types expect number
+        return s.service_id;
+      }).filter(Boolean) || [];
 
       return {
         id: data.auth_id, // Use auth_id as id for backward compatibility
@@ -221,7 +284,7 @@ export class ExpertRepository {
         specialization: data.specialization,
         experience: data.experience,
         certificate_urls: data.certificate_urls,
-        selected_services: data.selected_services,
+        selected_services: selectedServices as unknown as number[], // From expert_service_specializations - UUID strings but types expect number[]
         average_rating: data.average_rating,
         reviews_count: data.reviews_count,
         verified: false

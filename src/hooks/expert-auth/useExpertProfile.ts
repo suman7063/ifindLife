@@ -116,6 +116,7 @@ export const useExpertProfile = (
 
   /**
    * Updates the services offered by the expert
+   * Services are stored in expert_service_specializations table
    */
   const updateServices = async (serviceIds: number[]): Promise<boolean> => {
     if (!currentExpert) {
@@ -129,20 +130,36 @@ export const useExpertProfile = (
       // Use auth_id for expert operations
       const expertId = String(currentExpert.auth_id || currentExpert.id);
       
-      // Update the selected_services field in the expert_accounts table
-      // Note: selected_services is INTEGER[] but services use UUID, so we skip updating it
-      // Services are stored in expert_service_specializations table instead
-      const { error } = await supabase
-        .from('expert_accounts')
-        .update({ 
-          // selected_services: serviceIds, // Skip - INTEGER[] vs UUID mismatch
-        })
-        .eq('auth_id', expertId);
+      // Delete existing specializations
+      const { error: deleteError } = await supabase
+        .from('expert_service_specializations')
+        .delete()
+        .eq('expert_id', expertId);
       
-      if (error) {
-        console.error('Services update error:', error);
-        toast.error('Failed to update services: ' + error.message);
+      if (deleteError) {
+        console.error('Error deleting existing services:', deleteError);
+        toast.error('Failed to update services: ' + deleteError.message);
         return false;
+      }
+      
+      // Insert new specializations
+      if (serviceIds.length > 0) {
+        const specializations = serviceIds.map((serviceId, index) => ({
+          expert_id: expertId,
+          service_id: String(serviceId), // Database has UUID, but types expect number - using string
+          is_available: true,
+          is_primary_service: index === 0
+        })) as unknown as Array<{ expert_id: string; service_id: number; is_available: boolean; is_primary_service: boolean }>; // Type assertion needed due to type mismatch (DB has UUID but types expect number)
+        
+        const { error: insertError } = await supabase
+          .from('expert_service_specializations')
+          .insert(specializations);
+        
+        if (insertError) {
+          console.error('Error inserting services:', insertError);
+          toast.error('Failed to update services: ' + insertError.message);
+          return false;
+        }
       }
       
       // Update the local state

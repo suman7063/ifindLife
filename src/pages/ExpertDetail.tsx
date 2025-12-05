@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -65,20 +65,23 @@ const ExpertDetail = () => {
         }
       }
     }
-  }, [isAuthenticated]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]); // executeIntendedAction is stable, omitting to prevent loops
   
   // Fetch real expert data using the useFetchExpertProfile hook
   const { fetchExpertProfile } = useFetchExpertProfile();
-  const { checkExpertPresence, getExpertPresence } = useExpertPresence();
+  const { checkExpertPresence, getExpertPresence, version: presenceVersion } = useExpertPresence();
   const [expert, setExpert] = useState(null);
   const [loading, setLoading] = useState(true);
   const [expertAuthId, setExpertAuthId] = useState(null);
   const [imageKey, setImageKey] = useState(0);
+  const loadingRef = useRef(false);
 
   useEffect(() => {
     const loadExpert = async () => {
-      if (!id) return;
+      if (!id || loadingRef.current) return;
       
+      loadingRef.current = true;
       setLoading(true);
       try {
         const expertData = await fetchExpertProfile(id);
@@ -122,65 +125,98 @@ const ExpertDetail = () => {
         console.error('Error loading expert:', error);
       } finally {
         setLoading(false);
+        loadingRef.current = false;
       }
     };
 
     loadExpert();
-  }, [id, fetchExpertProfile, checkExpertPresence]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]); // Only depend on id to prevent infinite loops
   
   // Update expert status when presence changes
+  // Use presenceVersion to track changes and prevent infinite loops
+  const prevPresenceVersionRef = useRef<number>(0);
+  
   useEffect(() => {
-    if (expert && expertAuthId) {
+    if (!expertAuthId) return;
+    
+    // Only update if presence version actually changed
+    if (presenceVersion !== prevPresenceVersionRef.current) {
+      prevPresenceVersionRef.current = presenceVersion;
+      
       const presenceData = getExpertPresence(expertAuthId);
       if (presenceData) {
         const isAvailable = presenceData.status === 'available' && presenceData.acceptingCalls;
-        setExpert(prev => ({
-          ...prev,
-          online: prev.online && isAvailable,
-          waitTime: isAvailable ? 'Available Now' : 
-                   presenceData.status === 'away' ? 'Away' : 'Not Available'
-        }));
+        setExpert(prev => {
+          if (!prev) return prev;
+          // Only update if values actually changed to prevent unnecessary re-renders
+          const newWaitTime = isAvailable ? 'Available Now' : 
+                             presenceData.status === 'away' ? 'Away' : 'Not Available';
+          const newOnline = prev.online && isAvailable;
+          
+          if (prev.waitTime === newWaitTime && prev.online === newOnline) {
+            return prev; // No change, return same object
+          }
+          
+          return {
+            ...prev,
+            online: newOnline,
+            waitTime: newWaitTime
+          };
+        });
       }
     }
-  }, [expert, expertAuthId, getExpertPresence]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expertAuthId, presenceVersion]); // getExpertPresence is stable, expert removed to prevent loops
 
   // Listen for profile image updates for real-time refresh
   useEffect(() => {
+    if (!expertAuthId || !id) return;
+    
     const handleProfileUpdate = (event: CustomEvent) => {
       const eventAuthId = event.detail?.authId;
-      if (eventAuthId === expertAuthId && expert) {
+      if (eventAuthId === expertAuthId) {
         const newUrl = event.detail?.profilePictureUrl;
         console.log('ExpertDetail: Profile image update received', {
           authId: expertAuthId,
-          newUrl: newUrl,
-          currentUrl: expert.imageUrl
+          newUrl: newUrl
         });
         
         if (newUrl) {
           // Update expert imageUrl immediately for real-time update
-          setExpert(prev => ({
-            ...prev,
-            imageUrl: newUrl
-          }));
+          setExpert(prev => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              imageUrl: newUrl
+            };
+          });
           // Force image re-render
           setImageKey(prev => prev + 1);
           console.log('ExpertDetail: Updated imageUrl in real-time');
         } else {
           // If no URL provided, refetch the expert profile
           const loadExpert = async () => {
+            if (loadingRef.current) return; // Prevent concurrent loads
+            loadingRef.current = true;
             try {
               const expertData = await fetchExpertProfile(id);
               if (expertData) {
                 const profilePictureFromDB = expertData.profile_picture || expertData.profilePicture || '';
                 const profilePictureUrl = getProfilePictureUrl(profilePictureFromDB);
-                setExpert(prev => ({
-                  ...prev,
-                  imageUrl: profilePictureUrl
-                }));
+                setExpert(prev => {
+                  if (!prev) return prev;
+                  return {
+                    ...prev,
+                    imageUrl: profilePictureUrl
+                  };
+                });
                 setImageKey(prev => prev + 1);
               }
             } catch (error) {
               console.error('Error refreshing expert profile:', error);
+            } finally {
+              loadingRef.current = false;
             }
           };
           loadExpert();
@@ -195,7 +231,8 @@ const ExpertDetail = () => {
       window.removeEventListener('expertProfileImageUpdated', handleProfileUpdate as EventListener);
       window.removeEventListener('expertProfileRefreshed', handleProfileUpdate as EventListener);
     };
-  }, [expertAuthId, expert, id, fetchExpertProfile]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expertAuthId, id]); // fetchExpertProfile is stable (useCallback), omitting to prevent loops
 
   if (loading) {
     return (

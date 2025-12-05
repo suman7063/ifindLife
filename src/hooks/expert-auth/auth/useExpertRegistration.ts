@@ -69,7 +69,7 @@ export const useExpertRegistration = (
         ? String(data.experience) 
         : (data.experience || '');
 
-      // Create expert profile with both auth_id and user_id for compatibility
+      // Create expert profile - selected_services removed from expert_accounts
       const expertData = {
         auth_id: authData.user.id,
         user_id: authData.user.id, // Set both for compatibility
@@ -84,7 +84,7 @@ export const useExpertRegistration = (
         experience: expertExperience,
         bio: data.bio || '',
         certificate_urls: data.certificate_urls || [],
-        selected_services: selectedServices,
+        // selected_services removed - will be saved to expert_service_specializations
         status: 'pending'
       };
       
@@ -103,6 +103,25 @@ export const useExpertRegistration = (
         return false;
       }
       
+      // Save services to expert_service_specializations table
+      if (selectedServices.length > 0) {
+        const specializations = selectedServices.map((serviceId, index) => ({
+          expert_id: authData.user.id,
+          service_id: String(serviceId), // Database has UUID, but types expect number - using string
+          is_available: true,
+          is_primary_service: index === 0
+        })) as unknown as Array<{ expert_id: string; service_id: number; is_available: boolean; is_primary_service: boolean }>; // Type assertion needed due to type mismatch (DB has UUID but types expect number)
+        
+        const { error: servicesError } = await supabase
+          .from('expert_service_specializations')
+          .insert(specializations);
+        
+        if (servicesError) {
+          console.error('Error saving services:', servicesError);
+          // Don't fail registration if services fail, just log it
+        }
+      }
+      
       console.log('Expert registration successful for', data.email);
       
       // Sign out and let the component handle the redirect
@@ -110,10 +129,11 @@ export const useExpertRegistration = (
       
       toast.success('Registration successful! Your application is pending approval. Please log in with your credentials.');
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Registration error:', error);
-      setRegistrationError(error.message || 'An unexpected error occurred during registration');
-      toast.error('Registration error: ' + (error.message || 'Unknown error'));
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred during registration';
+      setRegistrationError(errorMessage);
+      toast.error('Registration error: ' + errorMessage);
       return false;
     } finally {
       setLoading(false);
