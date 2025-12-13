@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,94 +21,50 @@ import {
   Trash2,
   Play,
   Pause,
-  Square
+  Square,
+  Loader2
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-
-interface Session {
-  id: string;
-  clientId: string;
-  clientName: string;
-  clientAvatar?: string;
-  type: 'video' | 'audio' | 'in-person';
-  status: 'scheduled' | 'in-progress' | 'completed' | 'cancelled' | 'no-show';
-  startTime: Date;
-  endTime: Date;
-  duration: number; // in minutes
-  actualDuration?: number;
-  notes: string;
-  goals: string[];
-  outcomes: string[];
-  nextSteps: string[];
-  rating?: number;
-  paymentStatus: 'pending' | 'paid' | 'refunded';
-  amount: number;
-}
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
+import { useExpertSessions, type Session } from '@/hooks/expert-dashboard/useExpertSessions';
 
 const SessionManager: React.FC = () => {
+  const { expert } = useSimpleAuth();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [showSessionDialog, setShowSessionDialog] = useState(false);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [sessionTimer, setSessionTimer] = useState({ isRunning: false, elapsed: 0 });
+  const [editingNotes, setEditingNotes] = useState(false);
+  const [notesText, setNotesText] = useState('');
+  const [goalsText, setGoalsText] = useState('');
+  const [outcomesText, setOutcomesText] = useState('');
+  const [nextStepsText, setNextStepsText] = useState('');
 
-  const [sessions] = useState<Session[]>([
-    {
-      id: '1',
-      clientId: '1',
-      clientName: 'Sarah Johnson',
-      clientAvatar: '/lovable-uploads/avatar1.jpg',
-      type: 'video',
-      status: 'scheduled',
-      startTime: new Date(Date.now() + 3600000), // 1 hour from now
-      endTime: new Date(Date.now() + 7200000), // 2 hours from now
-      duration: 60,
-      notes: 'Follow up on anxiety management techniques',
-      goals: ['Practice breathing exercises', 'Discuss work stress'],
-      outcomes: [],
-      nextSteps: [],
-      paymentStatus: 'paid',
-      amount: 120
-    },
-    {
-      id: '2',
-      clientId: '2',
-      clientName: 'Michael Chen',
-      clientAvatar: '/lovable-uploads/avatar2.jpg',
-      type: 'video',
-      status: 'completed',
-      startTime: new Date(Date.now() - 86400000), // Yesterday
-      endTime: new Date(Date.now() - 82800000),
-      duration: 60,
-      actualDuration: 55,
-      notes: 'Discussed career transition and stress management strategies. Client showed good progress.',
-      goals: ['Career guidance', 'Stress reduction techniques'],
-      outcomes: ['Identified 3 potential career paths', 'Learned new stress management technique'],
-      nextSteps: ['Research identified career options', 'Practice daily meditation'],
-      rating: 5,
-      paymentStatus: 'paid',
-      amount: 120
-    },
-    {
-      id: '3',
-      clientId: '3',
-      clientName: 'Emily Davis',
-      clientAvatar: '/lovable-uploads/avatar3.jpg',
-      type: 'audio',
-      status: 'scheduled',
-      startTime: new Date(Date.now() + 172800000), // Day after tomorrow
-      endTime: new Date(Date.now() + 176400000),
-      duration: 45,
-      notes: 'Initial consultation for relationship counseling',
-      goals: ['Assess relationship dynamics', 'Set therapy goals'],
-      outcomes: [],
-      nextSteps: [],
-      paymentStatus: 'pending',
-      amount: 100
+  // Use the expert sessions hook
+  const {
+    sessions,
+    loading,
+    error,
+    fetchSessions,
+    updateSessionStatus,
+    updateSessionNotes,
+  } = useExpertSessions({
+    expertId: expert?.auth_id,
+    autoFetch: true,
+  });
+
+  // Update notes text when selected session changes
+  useEffect(() => {
+    if (selectedSession) {
+      setNotesText(selectedSession.notes || '');
+      setGoalsText(selectedSession.goals?.join(', ') || '');
+      setOutcomesText(selectedSession.outcomes?.join(', ') || '');
+      setNextStepsText(selectedSession.nextSteps?.join(', ') || '');
     }
-  ]);
+  }, [selectedSession]);
 
   const todaySessions = sessions.filter(session => {
     const sessionDate = session.startTime.toDateString();
@@ -119,6 +75,10 @@ const SessionManager: React.FC = () => {
   const upcomingSessions = sessions.filter(session => {
     return session.startTime > new Date() && session.status === 'scheduled';
   });
+
+  const historySessions = sessions.filter(session => {
+    return session.status === 'completed' || session.status === 'cancelled';
+  }).sort((a, b) => b.startTime.getTime() - a.startTime.getTime());
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -160,19 +120,62 @@ const SessionManager: React.FC = () => {
     return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
   };
 
-  const startSession = (session: Session) => {
-    // In a real app, this would initiate the video/audio call
-    toast.success(`Starting ${session.type} session with ${session.clientName}`);
-    setSessionTimer({ isRunning: true, elapsed: 0 });
+  const startSession = async (session: Session) => {
+    try {
+      await updateSessionStatus(session.id, 'in-progress');
+      setSessionTimer({ isRunning: true, elapsed: 0 });
+      toast.success(`Starting ${session.type} session with ${session.clientName}`);
+    } catch (error) {
+      console.error('Error starting session:', error);
+    }
   };
 
-  const endSession = () => {
-    setSessionTimer({ isRunning: false, elapsed: 0 });
-    toast.success('Session ended');
+  const endSession = async () => {
+    if (selectedSession) {
+      try {
+        await updateSessionStatus(selectedSession.id, 'completed');
+        setSessionTimer({ isRunning: false, elapsed: 0 });
+        toast.success('Session ended');
+      } catch (error) {
+        console.error('Error ending session:', error);
+      }
+    } else {
+      setSessionTimer({ isRunning: false, elapsed: 0 });
+    }
+  };
+
+  const cancelSession = async (session: Session) => {
+    try {
+      await updateSessionStatus(session.id, 'cancelled');
+      toast.success('Session cancelled');
+    } catch (error) {
+      console.error('Error cancelling session:', error);
+    }
+  };
+
+  const handleSaveNotes = async () => {
+    if (!selectedSession) return;
+
+    try {
+      const goals = goalsText.split(',').map(g => g.trim()).filter(g => g);
+      const outcomes = outcomesText.split(',').map(o => o.trim()).filter(o => o);
+      const nextSteps = nextStepsText.split(',').map(s => s.trim()).filter(s => s);
+
+      await updateSessionNotes(
+        selectedSession.id,
+        notesText,
+        goals,
+        outcomes,
+        nextSteps
+      );
+      setEditingNotes(false);
+    } catch (error) {
+      console.error('Error saving notes:', error);
+    }
   };
 
   // Timer effect
-  React.useEffect(() => {
+  useEffect(() => {
     let interval: NodeJS.Timeout;
     if (sessionTimer.isRunning) {
       interval = setInterval(() => {
@@ -181,6 +184,52 @@ const SessionManager: React.FC = () => {
     }
     return () => clearInterval(interval);
   }, [sessionTimer.isRunning]);
+
+  // Check if there's an active session
+  useEffect(() => {
+    const activeSession = sessions.find(s => s.status === 'in-progress');
+    if (activeSession) {
+      setSessionTimer({ isRunning: true, elapsed: 0 });
+      // Calculate elapsed time if session has a start time
+      if (activeSession.startTime) {
+        const elapsed = Math.floor((new Date().getTime() - activeSession.startTime.getTime()) / 1000);
+        setSessionTimer({ isRunning: true, elapsed: Math.max(0, elapsed) });
+      }
+    } else {
+      setSessionTimer({ isRunning: false, elapsed: 0 });
+    }
+  }, [sessions]);
+
+  // Show loading or error state if expert is not available
+  if (!expert?.auth_id) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="p-8 text-center">
+            <div className="flex flex-col items-center gap-4">
+              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+              <p className="text-gray-500">Loading expert information...</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="p-8 text-center">
+            <p className="text-red-500">Error: {error}</p>
+            <Button onClick={() => fetchSessions()} className="mt-4">
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -234,99 +283,194 @@ const SessionManager: React.FC = () => {
                   </Button>
                 </div>
                 
-                <ScrollArea className="h-96">
-                  <div className="space-y-3">
-                    {todaySessions.length > 0 ? (
-                      todaySessions.map((session) => (
-                        <div
-                          key={session.id}
-                          className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
-                          onClick={() => setSelectedSession(session)}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <Avatar>
-                                <AvatarImage src={session.clientAvatar} />
-                                <AvatarFallback>
-                                  {session.clientName.split(' ').map(n => n[0]).join('')}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <h4 className="font-medium">{session.clientName}</h4>
-                                <div className="flex items-center gap-2 text-sm text-gray-500">
-                                  {getTypeIcon(session.type)}
-                                  <span>{formatTime(session.startTime)} - {formatTime(session.endTime)}</span>
-                                  <span>({formatDuration(session.duration)})</span>
+                {loading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                  </div>
+                ) : (
+                  <ScrollArea className="h-96">
+                    <div className="space-y-3">
+                      {todaySessions.length > 0 ? (
+                        todaySessions.map((session) => (
+                          <div
+                            key={session.id}
+                            className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                            onClick={() => setSelectedSession(session)}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <Avatar>
+                                  <AvatarImage src={session.clientAvatar} />
+                                  <AvatarFallback>
+                                    {session.clientName.split(' ').map(n => n[0]).join('')}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <h4 className="font-medium">{session.clientName}</h4>
+                                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                                    {getTypeIcon(session.type)}
+                                    <span>{formatTime(session.startTime)} - {formatTime(session.endTime)}</span>
+                                    <span>({formatDuration(session.duration)})</span>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Badge className={getStatusColor(session.status)}>
-                                {session.status}
-                              </Badge>
-                              {session.status === 'scheduled' && (
-                                <Button size="sm" onClick={(e) => {
-                                  e.stopPropagation();
-                                  startSession(session);
-                                }}>
-                                  <Play className="h-4 w-4 mr-1" />
-                                  Start
-                                </Button>
-                              )}
+                              <div className="flex items-center gap-2">
+                                <Badge className={getStatusColor(session.status)}>
+                                  {session.status}
+                                </Badge>
+                                {session.status === 'scheduled' && (
+                                  <Button size="sm" onClick={(e) => {
+                                    e.stopPropagation();
+                                    startSession(session);
+                                  }}>
+                                    <Play className="h-4 w-4 mr-1" />
+                                    Start
+                                  </Button>
+                                )}
+                                {session.status === 'in-progress' && (
+                                  <Button size="sm" variant="destructive" onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedSession(session);
+                                    endSession();
+                                  }}>
+                                    <Square className="h-4 w-4 mr-1" />
+                                    End
+                                  </Button>
+                                )}
+                              </div>
                             </div>
                           </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-8 text-gray-500">
+                          No sessions scheduled for today
                         </div>
-                      ))
-                    ) : (
-                      <div className="text-center py-8 text-gray-500">
-                        No sessions scheduled for today
-                      </div>
-                    )}
-                  </div>
-                </ScrollArea>
+                      )}
+                    </div>
+                  </ScrollArea>
+                )}
               </TabsContent>
 
               <TabsContent value="upcoming" className="space-y-4">
                 <h3 className="text-lg font-medium">Upcoming Sessions</h3>
-                <ScrollArea className="h-96">
-                  <div className="space-y-3">
-                    {upcomingSessions.map((session) => (
-                      <div
-                        key={session.id}
-                        className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
-                        onClick={() => setSelectedSession(session)}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <Avatar>
-                              <AvatarImage src={session.clientAvatar} />
-                              <AvatarFallback>
-                                {session.clientName.split(' ').map(n => n[0]).join('')}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <h4 className="font-medium">{session.clientName}</h4>
-                              <div className="flex items-center gap-2 text-sm text-gray-500">
-                                {getTypeIcon(session.type)}
-                                <span>{session.startTime.toLocaleDateString()}</span>
-                                <span>{formatTime(session.startTime)} - {formatTime(session.endTime)}</span>
+                {loading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                  </div>
+                ) : (
+                  <ScrollArea className="h-96">
+                    <div className="space-y-3">
+                      {upcomingSessions.length > 0 ? (
+                        upcomingSessions.map((session) => (
+                          <div
+                            key={session.id}
+                            className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                            onClick={() => setSelectedSession(session)}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <Avatar>
+                                  <AvatarImage src={session.clientAvatar} />
+                                  <AvatarFallback>
+                                    {session.clientName.split(' ').map(n => n[0]).join('')}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <h4 className="font-medium">{session.clientName}</h4>
+                                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                                    {getTypeIcon(session.type)}
+                                    <span>{session.startTime.toLocaleDateString()}</span>
+                                    <span>{formatTime(session.startTime)} - {formatTime(session.endTime)}</span>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Badge className={getStatusColor(session.status)}>
+                                  {session.status}
+                                </Badge>
+                                {session.status === 'scheduled' && (
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      cancelSession(session);
+                                    }}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
                               </div>
                             </div>
                           </div>
-                          <Badge className={getStatusColor(session.status)}>
-                            {session.status}
-                          </Badge>
+                        ))
+                      ) : (
+                        <div className="text-center py-8 text-gray-500">
+                          No upcoming sessions
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                </ScrollArea>
+                      )}
+                    </div>
+                  </ScrollArea>
+                )}
               </TabsContent>
 
-              <TabsContent value="history">
-                <div className="text-center py-8 text-gray-500">
-                  Session history will be displayed here
-                </div>
+              <TabsContent value="history" className="space-y-4">
+                <h3 className="text-lg font-medium">Session History</h3>
+                {loading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                  </div>
+                ) : (
+                  <ScrollArea className="h-96">
+                    <div className="space-y-3">
+                      {historySessions.length > 0 ? (
+                        historySessions.map((session) => (
+                          <div
+                            key={session.id}
+                            className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                            onClick={() => setSelectedSession(session)}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <Avatar>
+                                  <AvatarImage src={session.clientAvatar} />
+                                  <AvatarFallback>
+                                    {session.clientName.split(' ').map(n => n[0]).join('')}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <h4 className="font-medium">{session.clientName}</h4>
+                                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                                    {getTypeIcon(session.type)}
+                                    <span>{session.startTime.toLocaleDateString()}</span>
+                                    <span>{formatTime(session.startTime)} - {formatTime(session.endTime)}</span>
+                                    {session.actualDuration && (
+                                      <span className="text-xs">({formatDuration(session.actualDuration)} actual)</span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Badge className={getStatusColor(session.status)}>
+                                  {session.status}
+                                </Badge>
+                                {session.rating && (
+                                  <div className="text-yellow-500 text-sm">
+                                    {'★'.repeat(session.rating)}{'☆'.repeat(5 - session.rating)}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-8 text-gray-500">
+                          No session history
+                        </div>
+                      )}
+                    </div>
+                  </ScrollArea>
+                )}
               </TabsContent>
             </Tabs>
           </CardContent>
@@ -421,13 +565,71 @@ const SessionManager: React.FC = () => {
 
                 <TabsContent value="notes" className="space-y-4">
                   <div>
-                    <Label>Session Notes</Label>
+                    <div className="flex justify-between items-center mb-2">
+                      <Label>Session Notes</Label>
+                      {selectedSession.status !== 'completed' && !editingNotes && (
+                        <Button size="sm" variant="outline" onClick={() => setEditingNotes(true)}>
+                          <Edit className="h-4 w-4 mr-1" />
+                          Edit
+                        </Button>
+                      )}
+                    </div>
                     <Textarea
-                      value={selectedSession.notes}
-                      readOnly={selectedSession.status === 'completed'}
+                      value={notesText}
+                      onChange={(e) => setNotesText(e.target.value)}
+                      readOnly={!editingNotes || selectedSession.status === 'completed'}
                       rows={6}
                       className="mt-2"
                     />
+                    {editingNotes && (
+                      <div className="mt-4 space-y-4">
+                        <div>
+                          <Label>Goals</Label>
+                          <Input
+                            value={goalsText}
+                            onChange={(e) => setGoalsText(e.target.value)}
+                            placeholder="Comma-separated goals"
+                            className="mt-1"
+                          />
+                        </div>
+                        {selectedSession.status === 'completed' && (
+                          <>
+                            <div>
+                              <Label>Outcomes</Label>
+                              <Input
+                                value={outcomesText}
+                                onChange={(e) => setOutcomesText(e.target.value)}
+                                placeholder="Comma-separated outcomes"
+                                className="mt-1"
+                              />
+                            </div>
+                            <div>
+                              <Label>Next Steps</Label>
+                              <Input
+                                value={nextStepsText}
+                                onChange={(e) => setNextStepsText(e.target.value)}
+                                placeholder="Comma-separated next steps"
+                                className="mt-1"
+                              />
+                            </div>
+                          </>
+                        )}
+                        <div className="flex gap-2">
+                          <Button size="sm" onClick={handleSaveNotes}>
+                            Save Notes
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => {
+                            setEditingNotes(false);
+                            setNotesText(selectedSession.notes || '');
+                            setGoalsText(selectedSession.goals?.join(', ') || '');
+                            setOutcomesText(selectedSession.outcomes?.join(', ') || '');
+                            setNextStepsText(selectedSession.nextSteps?.join(', ') || '');
+                          }}>
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </TabsContent>
 
