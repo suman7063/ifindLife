@@ -10,9 +10,10 @@ import { toast } from 'sonner';
 import { Calendar, Clock, Globe, Plus, X } from 'lucide-react';
 import { validateTimeSlots, validateDateRange, normalizeExpertId } from '@/utils/availabilityValidation';
 import AvailabilityErrorBoundary from './AvailabilityErrorBoundary';
+import { ExpertProfile, UserProfile } from '@/types/database/unified';
 
 interface EnhancedAvailabilityFormProps {
-  user: any;
+  user: ExpertProfile | UserProfile | null;
   onAvailabilityUpdated?: () => void;
 }
 
@@ -87,7 +88,7 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
 
   // Load existing availability from Supabase
   useEffect(() => {
-    if (user && (user.auth_id || user.id)) {
+    if (user && (('auth_id' in user && user.auth_id) || user.id)) {
       setIsInitialLoad(true);
       fetchAvailabilities().finally(() => {
         setIsInitialLoad(false);
@@ -475,7 +476,7 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
         </p>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form id="availability-form" onSubmit={handleSubmit} className="space-y-6">
           {/* Timezone Selection */}
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
@@ -657,19 +658,23 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
             </div>
           </div>
 
-          {/* Submit Button */}
-          <Button 
+          {/* Submit button removed - using top button instead */}
+          {/* Hidden submit button for form submission */}
+          <button type="submit" className="hidden" aria-hidden="true" />
+                    {/* Submit Button */}
+          {/* <Button 
             type="submit" 
             className="w-full"
             disabled={loading}
             size="lg"
           >
             {loading ? 'Creating Availability...' : 'Create 30-Minute Slot Availability'}
-          </Button>
+          </Button> */}
           
           <div className="text-xs text-muted-foreground text-center">
             Users will see these time slots as 30-minute booking options on the frontend.
           </div>
+
         </form>
       </CardContent>
     </Card>

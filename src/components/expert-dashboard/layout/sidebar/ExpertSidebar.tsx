@@ -9,7 +9,7 @@ const ExpertSidebar = () => {
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex flex-col w-64 border-r bg-card">
+      <aside className="hidden md:flex flex-col w-64 border-r bg-card fixed left-0 top-0 h-screen z-40">
         <SidebarContent />
       </aside>
       

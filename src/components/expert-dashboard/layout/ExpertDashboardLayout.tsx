@@ -111,8 +111,10 @@ const ExpertDashboardLayout: React.FC<ExpertDashboardLayoutProps> = ({ children 
       <ExpertSidebar />
       
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0">
-        <ExpertHeader />
+      <div className="flex-1 flex flex-col min-w-0 md:ml-64">
+        <div className="sticky top-0 z-30 bg-white border-b">
+          <ExpertHeader />
+        </div>
         <div className="flex-1 p-4 md:p-8 overflow-auto">
           {children}
         </div>

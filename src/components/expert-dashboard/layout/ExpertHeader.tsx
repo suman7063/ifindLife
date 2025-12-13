@@ -53,7 +53,7 @@ const ExpertHeader: React.FC = () => {
   };
 
   return (
-    <header className="border-b bg-white px-6 py-4">
+    <header className="bg-white px-6 py-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <h2 className="text-xl font-semibold">Expert Dashboard</h2>
