@@ -5,9 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAvailabilityManagement } from '@/hooks/useAvailabilityManagement';
 import { toast } from 'sonner';
-import { Calendar, Clock, Globe, Plus, X } from 'lucide-react';
+import { Calendar, Clock, Globe, Plus, X, Info } from 'lucide-react';
 import { validateTimeSlots, validateDateRange, normalizeExpertId } from '@/utils/availabilityValidation';
 import AvailabilityErrorBoundary from './AvailabilityErrorBoundary';
 import { ExpertProfile, UserProfile } from '@/types/database/unified';
@@ -449,10 +450,20 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
             Enhanced Availability Setup
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button type="button" className="inline-flex items-center">
+                    <Info className="h-4 w-4 text-muted-foreground cursor-help hover:text-foreground transition-colors" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs">
+                  <p className="text-sm font-medium text-green-400">Set your availability with 30-minute time slots that users can book on the frontend.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Set your availability with 30-minute time slots that users can book on the frontend.
-          </p>
+        
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center justify-center py-12">
@@ -470,10 +481,20 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
         <CardTitle className="flex items-center gap-2">
           <Calendar className="h-5 w-5" />
           Enhanced Availability Setup
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button type="button" className="inline-flex items-center">
+                  <Info className="h-4 w-4 text-muted-foreground cursor-help hover:text-foreground transition-colors" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs">
+                <p className="text-sm font-medium text-green-400">Set your availability with 30-minute time slots that users can book on the frontend.</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </CardTitle>
-        <p className="text-sm text-muted-foreground">
-          Set your availability with 30-minute time slots that users can book on the frontend.
-        </p>
+
       </CardHeader>
       <CardContent>
         <form id="availability-form" onSubmit={handleSubmit} className="space-y-6">
@@ -671,9 +692,7 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
             {loading ? 'Creating Availability...' : 'Create 30-Minute Slot Availability'}
           </Button> */}
           
-          <div className="text-xs text-muted-foreground text-center">
-            Users will see these time slots as 30-minute booking options on the frontend.
-          </div>
+          
 
         </form>
       </CardContent>

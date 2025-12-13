@@ -43,6 +43,7 @@ const SchedulePage: React.FC = () => {
           <p className="text-muted-foreground">
             Manage your availability, appointments, and sessions
           </p>
+         
         </div>
         <Button 
           onClick={handleCreateAvailability}

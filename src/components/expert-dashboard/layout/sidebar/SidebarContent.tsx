@@ -7,11 +7,12 @@ import SidebarLogout from './SidebarLogout';
 const SidebarContent: React.FC = () => {
   return (
     <div className="flex flex-col h-full overflow-hidden">
+      {/* Removed logo and expert profile card as requested */}
       <div className="pt-6">
-        {/* Removed logo and expert profile card as requested */}
+      <Separator />
       </div>
       
-      <Separator />
+ 
       
       <div className="flex-1 overflow-y-auto">
         <SidebarNavigation />
