@@ -57,6 +57,33 @@ const generateTimeSlots = (): string[] => {
 
 const TIME_SLOTS = generateTimeSlots();
 
+// Helper function to convert time string to minutes
+const timeToMinutes = (time: string): number => {
+  const [hours, minutes] = time.split(':').map(Number);
+  return hours * 60 + minutes;
+};
+
+// Helper function to check if two time slots overlap
+const doSlotsOverlap = (slot1: { start: string; end: string }, slot2: { start: string; end: string }): boolean => {
+  const start1 = timeToMinutes(slot1.start);
+  const end1 = timeToMinutes(slot1.end);
+  const start2 = timeToMinutes(slot2.start);
+  const end2 = timeToMinutes(slot2.end);
+  
+  // Two slots overlap if one starts before the other ends and vice versa
+  // But they don't overlap if one ends exactly when the other starts
+  return start1 < end2 && start2 < end1;
+};
+
+// Helper function to check if a slot overlaps with any other slots (excluding a specific index)
+const hasOverlap = (slots: TimeSlot[], newSlot: { start: string; end: string }, excludeIndex?: number): boolean => {
+  return slots.some((slot, index) => {
+    if (excludeIndex !== undefined && index === excludeIndex) return false;
+    if (!slot.enabled) return false;
+    return doSlotsOverlap(slot, newSlot);
+  });
+};
+
 const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
   user,
   onAvailabilityUpdated
@@ -194,16 +221,49 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
 
   const addTimeSlot = (day: string) => {
     setFormEdited(true);
-    setWeeklySchedule(prev => ({
-      ...prev,
-      [day]: {
-        ...prev[day],
-        slots: [
-          ...prev[day].slots,
-          { start: '09:00', end: '17:00', enabled: true }
-        ]
+    setWeeklySchedule(prev => {
+      const existingSlots = prev[day].slots;
+      let newStartTime = '09:00';
+      let newEndTime = '17:00';
+      
+      // If there are existing slots, suggest a time after the last slot
+      if (existingSlots.length > 0) {
+        const lastSlot = existingSlots[existingSlots.length - 1];
+        newStartTime = lastSlot.end;
+        
+        // Calculate end time: add 1 hour to start time, but cap at 23:30
+        const [startHour, startMin] = newStartTime.split(':').map(Number);
+        const startMinutes = startHour * 60 + startMin;
+        const endMinutes = Math.min(startMinutes + 60, 23 * 60 + 30); // Cap at 23:30
+        const endHour = Math.floor(endMinutes / 60);
+        const endMin = endMinutes % 60;
+        newEndTime = `${endHour.toString().padStart(2, '0')}:${endMin.toString().padStart(2, '0')}`;
+        
+        // If start time is already at or past 23:00, default to 09:00-17:00
+        if (startMinutes >= 23 * 60) {
+          newStartTime = '09:00';
+          newEndTime = '17:00';
+        }
       }
-    }));
+      
+      const newSlot = { start: newStartTime, end: newEndTime };
+      
+      // Check for overlap and show warning (but don't block)
+      if (hasOverlap(existingSlots, newSlot)) {
+        toast.warning(`⚠️ Time slot ${newStartTime} - ${newEndTime} overlaps with existing slots on ${day}`);
+      }
+      
+      return {
+        ...prev,
+        [day]: {
+          ...prev[day],
+          slots: [
+            ...prev[day].slots,
+            { start: newStartTime, end: newEndTime, enabled: true }
+          ]
+        }
+      };
+    });
   };
 
   const removeTimeSlot = (day: string, slotIndex: number) => {
@@ -234,26 +294,54 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
 
   const updateTimeSlot = (day: string, slotIndex: number, field: 'start' | 'end', value: string) => {
     setFormEdited(true);
-    setWeeklySchedule(prev => ({
-      ...prev,
-      [day]: {
-        ...prev[day],
-        slots: prev[day].slots.map((slot, index) =>
-          index === slotIndex ? { ...slot, [field]: value } : slot
-        )
+    setWeeklySchedule(prev => {
+      const updatedSlots = prev[day].slots.map((slot, index) =>
+        index === slotIndex ? { ...slot, [field]: value } : slot
+      );
+      
+      // Get the updated slot
+      const updatedSlot = updatedSlots[slotIndex];
+      
+      // Validate: start time must be before end time
+      if (timeToMinutes(updatedSlot.start) >= timeToMinutes(updatedSlot.end)) {
+        toast.error('Start time must be before end time');
+        return prev; // Revert the change
       }
-    }));
+      
+      // Check for overlap and show warning (but don't block)
+      if (hasOverlap(updatedSlots, updatedSlot, slotIndex)) {
+        toast.warning(`⚠️ Time slot ${updatedSlot.start} - ${updatedSlot.end} overlaps with another slot on ${day}`);
+      }
+      
+      // Allow expert to set any time, even if it overlaps
+      return {
+        ...prev,
+        [day]: {
+          ...prev[day],
+          slots: updatedSlots
+        }
+      };
+    });
   };
 
   const toggleDayEnabled = (day: string) => {
     setFormEdited(true);
-    setWeeklySchedule(prev => ({
-      ...prev,
-      [day]: {
-        ...prev[day],
-        enabled: !prev[day].enabled
-      }
-    }));
+    setWeeklySchedule(prev => {
+      const newEnabled = !prev[day].enabled;
+      // If enabling a day and it has no slots, add a default slot
+      const slots = newEnabled && prev[day].slots.length === 0
+        ? [{ start: '09:00', end: '17:00', enabled: true }]
+        : prev[day].slots;
+      
+      return {
+        ...prev,
+        [day]: {
+          ...prev[day],
+          enabled: newEnabled,
+          slots
+        }
+      };
+    });
   };
 
   const setQuickSchedule = (type: 'business' | 'evening' | 'weekend') => {
@@ -602,17 +690,6 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
                             </Badge>
                           )}
                         </div>
-                        
-                        {weeklySchedule[day].enabled && weeklySchedule[day].slots.length < 3 && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => addTimeSlot(day)}
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Button>
-                        )}
                       </div>
 
                       {/* Time Slots */}
@@ -658,18 +735,32 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
                                 </Badge>
                               </div>
 
-                              {weeklySchedule[day].slots.length > 1 && (
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => removeTimeSlot(day, slotIndex)}
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              )}
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeTimeSlot(day, slotIndex)}
+                                className="text-destructive hover:text-destructive"
+                                title="Remove slot"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
                             </div>
                           ))}
+                          
+                          {/* Add Slot Button at bottom of slots list */}
+                          <div className="pt-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => addTimeSlot(day)}
+                              className="w-full gap-2 border-dashed"
+                            >
+                              <Plus className="h-4 w-4" />
+                              Add Another Slot
+                            </Button>
+                          </div>
                         </div>
                       )}
                     </div>
