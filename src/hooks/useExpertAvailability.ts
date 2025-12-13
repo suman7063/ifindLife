@@ -8,6 +8,7 @@ export interface ExpertAvailability {
   start_date: string;
   end_date: string;
   availability_type: 'date_range' | 'recurring';
+  timezone?: string; // Expert's timezone
   time_slots: Array<{
     id: string;
     start_time: string;
@@ -64,6 +65,7 @@ export function useExpertAvailability(expertId?: string) {
         start_date: new Date().toISOString().split('T')[0],
         end_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 1 year from now
         availability_type: 'recurring' as const,
+        timezone: availability.timezone || 'UTC', // Store timezone from database
         time_slots: [{
           id: availability.id, // Use availability id as slot id
           start_time: availability.start_time,

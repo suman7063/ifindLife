@@ -28,22 +28,12 @@ export function useAvailabilityManagement(user: any) {
       
       console.log('🔧 Creating availability with auth_id:', expertAuthId);
 
-      // First, create the availability record
-      const { data: availability, error: availabilityError } = await supabase
+      // Delete existing availability first (clean slate approach)
+      await supabase
         .from('expert_availabilities')
-        .insert({
-          expert_id: expertAuthId,
-          start_date: startDate,
-          end_date: endDate,
-          availability_type: availabilityType,
-          timezone: availabilityTimezone || 'UTC'
-        })
-        .select()
-        .single();
+        .delete()
+        .eq('expert_id', expertAuthId);
 
-      if (availabilityError) throw availabilityError;
-
-      // Then, create time slots for this availability
       // De-duplicate slots to prevent identical entries
       const uniqueMap = new Map<string, TimeSlot>();
       timeSlots.forEach(slot => {
@@ -53,22 +43,25 @@ export function useAvailabilityManagement(user: any) {
 
       const dedupedSlots = Array.from(uniqueMap.values());
 
-      const timeSlotsToInsert = dedupedSlots.map(slot => ({
-        availability_id: availability.id,
+      // Insert directly into expert_availabilities table (simple schema)
+      // Each day + time range = one row
+      const availabilityRecords = dedupedSlots.map(slot => ({
+        expert_id: expertAuthId,
+        day_of_week: slot.day_of_week, // 0-6 (Sunday=0, Monday=1, ..., Saturday=6)
         start_time: slot.start_time,
         end_time: slot.end_time,
-        day_of_week: slot.day_of_week,
-        specific_date: slot.specific_date,
-        timezone: slot.timezone || availabilityTimezone || 'UTC',
-        is_booked: false
+        is_available: true,
+        timezone: slot.timezone || availabilityTimezone || 'UTC'
       }));
 
-      const { error: slotsError } = await supabase
-        .from('expert_time_slots')
-        .insert(timeSlotsToInsert);
+      const { error: insertError } = await supabase
+        .from('expert_availabilities')
+        // @ts-expect-error - TypeScript types are outdated, actual DB has day_of_week/start_time/end_time
+        .insert(availabilityRecords);
 
-      if (slotsError) throw slotsError;
+      if (insertError) throw insertError;
 
+      console.log('✅ Availability created successfully:', availabilityRecords.length, 'records');
       return true;
     } catch (error) {
       console.error('Error creating availability:', error);
@@ -83,13 +76,7 @@ export function useAvailabilityManagement(user: any) {
     try {
       setLoading(true);
 
-      // Delete time slots first
-      await supabase
-        .from('expert_time_slots')
-        .delete()
-        .eq('availability_id', availabilityId);
-
-      // Then delete availability
+      // Delete availability record (simple schema - no related tables)
       const { error } = await supabase
         .from('expert_availabilities')
         .delete()
@@ -122,14 +109,15 @@ export function useAvailabilityManagement(user: any) {
       
       console.log('🔍 Fetching availabilities for auth_id:', expertAuthId);
 
+      // Fetch from expert_availabilities table (simple schema)
+      // Each row = one day with time range
       const { data, error: fetchError } = await supabase
         .from('expert_availabilities')
-        .select(`
-          *,
-          time_slots:expert_time_slots(*)
-        `)
+        .select('*')
         .eq('expert_id', expertAuthId)
-        .order('created_at', { ascending: false });
+        .eq('is_available', true)
+        .order('day_of_week', { ascending: true })
+        .order('start_time', { ascending: true });
 
       if (fetchError) throw fetchError;
       console.log('✅ Fetched availabilities:', data);

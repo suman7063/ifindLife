@@ -98,7 +98,7 @@ const StreamlinedBooking: React.FC<StreamlinedBookingProps> = ({
         .select('start_time, end_time')
         .eq('expert_id', expert.auth_id)
         .eq('appointment_date', dateStr)
-        .eq('status', 'confirmed');
+        .eq('status', 'scheduled');
 
       if (error) {
         console.error('Error fetching booked slots:', error);
@@ -163,7 +163,7 @@ const StreamlinedBooking: React.FC<StreamlinedBookingProps> = ({
           appointment_date: selectedDate.toISOString().split('T')[0],
           start_time: slot.start_time,
           end_time: slot.end_time,
-          status: 'confirmed',
+          status: 'scheduled',
           duration: 30,
         };
       }).filter(Boolean);

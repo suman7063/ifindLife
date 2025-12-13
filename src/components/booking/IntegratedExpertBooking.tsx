@@ -85,34 +85,74 @@ const IntegratedExpertBooking: React.FC<IntegratedExpertBookingProps> = ({
       setLoadingSlots(true);
       const dateStr = selectedDate.toISOString().split('T')[0];
       
-      // Get expert's availability for the selected date
+      // Get expert's availability for the selected date (simple schema)
+      const targetDate = new Date(dateStr);
+      const dayOfWeek = targetDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
+      
       const { data: availability, error: availError } = await supabase
         .from('expert_availabilities')
-        .select(`
-          id,
-          expert_time_slots (
-            id,
-            start_time,
-            end_time,
-            is_booked
-          )
-        `)
+        .select('*')
         .eq('expert_id', expert.auth_id)
-        .lte('start_date', dateStr)
-        .gte('end_date', dateStr);
+        .eq('day_of_week', dayOfWeek) // Match day of week (0-6)
+        .eq('is_available', true);
 
       if (availError) {
         console.error('Error fetching availability:', availError);
         throw availError;
       }
 
-      // Flatten time slots from all availability periods
+      // Generate 30-minute slots from availability time ranges
       const timeSlots: TimeSlot[] = [];
+      
       availability?.forEach(avail => {
-        if (avail.expert_time_slots) {
-          timeSlots.push(...avail.expert_time_slots);
+        const [startHour, startMin] = avail.start_time.split(':').map(Number);
+        const [endHour, endMin] = avail.end_time.split(':').map(Number);
+        
+        const startMinutes = startHour * 60 + startMin;
+        const endMinutes = endHour * 60 + endMin;
+        
+        // Generate 30-minute slots
+        for (let currentMinutes = startMinutes; currentMinutes < endMinutes; currentMinutes += 30) {
+          const slotStartHour = Math.floor(currentMinutes / 60);
+          const slotStartMin = currentMinutes % 60;
+          const slotEndMinutes = currentMinutes + 30;
+          const slotEndHour = Math.floor(slotEndMinutes / 60);
+          const slotEndMin = slotEndMinutes % 60;
+          
+          const slotStartTime = `${slotStartHour.toString().padStart(2, '0')}:${slotStartMin.toString().padStart(2, '0')}`;
+          const slotEndTime = `${slotEndHour.toString().padStart(2, '0')}:${slotEndMin.toString().padStart(2, '0')}`;
+          
+          if (slotEndMinutes <= endMinutes) {
+            timeSlots.push({
+              id: `${avail.id}-${slotStartTime}`,
+              start_time: slotStartTime,
+              end_time: slotEndTime,
+              is_booked: false
+            });
+          }
         }
       });
+
+      // Check which slots are already booked by checking appointments
+      const { data: bookedAppointments } = await supabase
+        .from('appointments')
+        .select('start_time, end_time')
+        .eq('expert_id', expert.auth_id)
+        .eq('appointment_date', dateStr)
+        .in('status', ['scheduled', 'completed']);
+
+      // Mark booked slots
+      if (bookedAppointments) {
+        timeSlots.forEach(slot => {
+          const isBooked = bookedAppointments.some(apt => 
+            apt.start_time === slot.start_time || 
+            (apt.start_time <= slot.start_time && apt.end_time > slot.start_time)
+          );
+          if (isBooked) {
+            slot.is_booked = true;
+          }
+        });
+      }
 
       setAvailableTimeSlots(timeSlots.filter(slot => !slot.is_booked));
     } catch (error) {
@@ -181,8 +221,8 @@ const IntegratedExpertBooking: React.FC<IntegratedExpertBookingProps> = ({
               appointment_date: selectedDate.toISOString().split('T')[0],
               start_time: selectedTimeSlot.start_time,
               end_time: selectedTimeSlot.end_time,
-              time_slot_id: selectedTimeSlot.id,
-              status: 'confirmed',
+              time_slot_id: null, // Not using expert_time_slots table anymore
+              status: 'scheduled',
               notes: notes,
               duration: 60, // 1 hour default
             };
@@ -198,11 +238,7 @@ const IntegratedExpertBooking: React.FC<IntegratedExpertBookingProps> = ({
               throw error;
             }
 
-            // Mark time slot as booked
-            await supabase
-              .from('expert_time_slots')
-              .update({ is_booked: true })
-              .eq('id', selectedTimeSlot.id);
+            // No need to mark time slot as booked - we check appointments table instead
 
             toast.success('Appointment booked successfully!');
             onBookingComplete();

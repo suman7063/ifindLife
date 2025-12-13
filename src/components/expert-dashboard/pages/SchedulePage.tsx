@@ -26,7 +26,7 @@ const SchedulePage: React.FC = () => {
         <TabsContent value="availability">
           <div className="space-y-6">
             <AvailabilityManagement />
-            <GoogleCalendarIntegration />
+            {/* <GoogleCalendarIntegration /> */}
           </div>
         </TabsContent>
 

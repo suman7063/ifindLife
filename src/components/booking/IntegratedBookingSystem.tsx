@@ -120,8 +120,8 @@ const IntegratedBookingSystem: React.FC<IntegratedBookingSystemProps> = ({
                 appointment_date: date,
                 start_time: startTime,
                 end_time: endTime,
-                status: 'confirmed', // Since payment was processed
-                time_slot_id: slotIds[0], // Use first slot ID for reference
+                status: 'scheduled', // Since payment was processed
+                time_slot_id: null, // Not using expert_time_slots table anymore
                 duration: durationMinutes,
                 notes: `Scheduled consultation with ${expert.name} - ${slotIds.length} slots booked`,
                 channel_name: channelName,
@@ -132,15 +132,7 @@ const IntegratedBookingSystem: React.FC<IntegratedBookingSystemProps> = ({
 
             if (error) throw error;
 
-            // Mark the time slots as booked
-            if (slotIds.length > 0) {
-              const baseSlotIds = slotIds.map(id => id.split('-')[0]).filter((value, index, self) => self.indexOf(value) === index);
-              
-              await supabase
-                .from('expert_time_slots')
-                .update({ is_booked: true })
-                .in('id', baseSlotIds);
-            }
+            // No need to mark time slots as booked - we check appointments table instead
 
             // Record transaction with correct currency
             await supabase

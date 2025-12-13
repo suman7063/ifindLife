@@ -34,7 +34,11 @@ const AvailabilityManagement: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <Tabs defaultValue="create" className="w-full">
+      <EnhancedAvailabilityForm 
+            user={currentUser} 
+            onAvailabilityUpdated={handleAvailabilityUpdated}
+          />
+      {/* <Tabs defaultValue="create" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="create">Create New Availability</TabsTrigger>
           <TabsTrigger value="manage">Manage Existing</TabsTrigger>
@@ -53,7 +57,7 @@ const AvailabilityManagement: React.FC = () => {
             user={currentUser} 
           />
         </TabsContent>
-      </Tabs>
+      </Tabs> */}
     </div>
   );
 };

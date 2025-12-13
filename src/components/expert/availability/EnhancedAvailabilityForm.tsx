@@ -59,7 +59,8 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
   user,
   onAvailabilityUpdated
 }) => {
-  const { createAvailability, loading } = useAvailabilityManagement(user);
+  const { createAvailability, loading, availabilities, fetchAvailabilities } = useAvailabilityManagement(user);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [selectedTimezone, setSelectedTimezone] = useState('America/New_York');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -84,7 +85,113 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
     setEndDate(nextMonth.toISOString().split('T')[0]);
   }, []);
 
+  // Load existing availability from Supabase
+  useEffect(() => {
+    if (user && (user.auth_id || user.id)) {
+      setIsInitialLoad(true);
+      fetchAvailabilities().finally(() => {
+        setIsInitialLoad(false);
+      });
+    } else {
+      setIsInitialLoad(false);
+    }
+  }, [user, fetchAvailabilities]);
+  
+  // Track initial load completion
+  useEffect(() => {
+    if (!loading && availabilities !== undefined) {
+      setIsInitialLoad(false);
+    }
+  }, [loading, availabilities]);
+
+  // Track if form has been manually edited to prevent auto-reset
+  const [formEdited, setFormEdited] = useState(false);
+
+  // Populate form with existing availability when loaded (only if not manually edited)
+  useEffect(() => {
+    // Don't auto-populate if user has manually edited the form
+    if (formEdited) {
+      console.log('📝 Form was manually edited, skipping auto-populate');
+      return;
+    }
+
+    if (availabilities && availabilities.length > 0) {
+      console.log('📅 Loading existing availability into form:', availabilities);
+      
+      // SIMPLE SCHEMA: Each day is a separate row in expert_availabilities
+      // Process ALL rows to get all days
+      const newSchedule: Record<string, DaySchedule> = DAYS.reduce((acc, day) => ({
+        ...acc,
+        [day]: {
+          enabled: false,
+          slots: []
+        }
+      }), {});
+
+      // Group availability by day_of_week and merge time ranges
+      const dayAvailabilityMap = new Map<number, Array<{start: string, end: string}>>();
+      
+      availabilities.forEach((availability: {
+        day_of_week?: number;
+        start_time?: string;
+        end_time?: string;
+        timezone?: string;
+      }) => {
+        if (availability.day_of_week !== undefined && availability.start_time && availability.end_time) {
+          const dayOfWeek = availability.day_of_week;
+          const startTime = availability.start_time?.substring(0, 5) || availability.start_time;
+          const endTime = availability.end_time?.substring(0, 5) || availability.end_time;
+          
+          if (!dayAvailabilityMap.has(dayOfWeek)) {
+            dayAvailabilityMap.set(dayOfWeek, []);
+          }
+          
+          dayAvailabilityMap.get(dayOfWeek)!.push({ start: startTime, end: endTime });
+        }
+      });
+
+      // Convert to weekly schedule format
+      dayAvailabilityMap.forEach((timeRanges, dayOfWeek) => {
+        // Handle day_of_week: Database uses 0-6 (Sunday=0, Monday=1, ..., Saturday=6)
+        // But our DAYS array is ['Monday', 'Tuesday', ..., 'Sunday'] (index 0 = Monday)
+        let dayIndex: number;
+        
+        if (dayOfWeek === 0) {
+          // Sunday = last day in our array (index 6)
+          dayIndex = 6;
+        } else {
+          // Monday-Saturday: day_of_week 1-6 maps to array index 0-5
+          dayIndex = dayOfWeek - 1;
+        }
+        
+        const dayName = DAYS[dayIndex];
+        
+        if (dayName) {
+          newSchedule[dayName] = {
+            enabled: true,
+            slots: timeRanges.map(range => ({
+              start: range.start,
+              end: range.end,
+              enabled: true
+            }))
+          };
+        }
+      });
+
+      // Set timezone from first record if available
+      if (availabilities[0]?.timezone) {
+        setSelectedTimezone(availabilities[0].timezone);
+      }
+
+      console.log('✅ Populated weekly schedule:', newSchedule);
+      setWeeklySchedule(newSchedule);
+    } else {
+      console.log('ℹ️ No availabilities found - form will remain blank for new entry');
+    }
+  }, [availabilities, formEdited]);
+
   const addTimeSlot = (day: string) => {
+    setFormEdited(true);
     setWeeklySchedule(prev => ({
       ...prev,
       [day]: {
@@ -98,16 +205,33 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
   };
 
   const removeTimeSlot = (day: string, slotIndex: number) => {
-    setWeeklySchedule(prev => ({
-      ...prev,
-      [day]: {
-        ...prev[day],
-        slots: prev[day].slots.filter((_, index) => index !== slotIndex)
+    setFormEdited(true);
+    setWeeklySchedule(prev => {
+      const newSlots = prev[day].slots.filter((_, index) => index !== slotIndex);
+      
+      // If no slots left, disable the day
+      if (newSlots.length === 0) {
+        return {
+          ...prev,
+          [day]: {
+            enabled: false,
+            slots: [{ start: '09:00', end: '17:00', enabled: true }]
+          }
+        };
       }
-    }));
+      
+      return {
+        ...prev,
+        [day]: {
+          ...prev[day],
+          slots: newSlots
+        }
+      };
+    });
   };
 
   const updateTimeSlot = (day: string, slotIndex: number, field: 'start' | 'end', value: string) => {
+    setFormEdited(true);
     setWeeklySchedule(prev => ({
       ...prev,
       [day]: {
@@ -120,6 +244,7 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
   };
 
   const toggleDayEnabled = (day: string) => {
+    setFormEdited(true);
     setWeeklySchedule(prev => ({
       ...prev,
       [day]: {
@@ -164,14 +289,18 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
   // Convert time slots to 30-minute intervals
   const generate30MinuteSlots = (startTime: string, endTime: string): string[] => {
     const slots: string[] = [];
-    const start = new Date(`2000-01-01T${startTime}:00`);
-    const end = new Date(`2000-01-01T${endTime}:00`);
+    const [startHour, startMin] = startTime.split(':').map(Number);
+    const [endHour, endMin] = endTime.split(':').map(Number);
     
-    let current = new Date(start);
-    while (current < end) {
-      const currentTimeString = current.toTimeString().slice(0, 5);
-      slots.push(currentTimeString);
-      current.setMinutes(current.getMinutes() + 30);
+    const startMinutes = startHour * 60 + startMin;
+    const endMinutes = endHour * 60 + endMin;
+    
+    // Generate 30-minute intervals from start to end (inclusive of end)
+    for (let currentMinutes = startMinutes; currentMinutes <= endMinutes; currentMinutes += 30) {
+      const hour = Math.floor(currentMinutes / 60);
+      const minute = currentMinutes % 60;
+      const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+      slots.push(timeString);
     }
     
     return slots;
@@ -204,13 +333,37 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
     }
 
     try {
+      console.log('📝 Form submission started. Weekly schedule:', weeklySchedule);
+      console.log('📝 Enabled days:', enabledDays.length);
+      
       // Convert schedule to database format
       const timeSlots = enabledDays.flatMap(([day, schedule]) => {
-        const dayIndex = DAYS.indexOf(day) + 1; // 1-7 for Monday-Sunday
+        // Convert DAYS array index to database day_of_week (0-6)
+        // DAYS: ['Monday', 'Tuesday', ..., 'Sunday'] (0-6)
+        // Database: Sunday=0, Monday=1, ..., Saturday=6
+        const arrayIndex = DAYS.indexOf(day);
+        const dayOfWeek = arrayIndex === 6 ? 0 : arrayIndex + 1; // Sunday=0, Monday=1, etc.
         
         return schedule.slots.flatMap(slot => {
+          // Skip disabled slots
+          if (!slot.enabled) {
+            return [];
+          }
+          
+          // Skip slots where start >= end
+          if (slot.start >= slot.end) {
+            console.warn(`Skipping invalid slot: ${slot.start} - ${slot.end}`);
+            return [];
+          }
+          
           // Generate 30-minute slots for each time range
           const thirtyMinSlots = generate30MinuteSlots(slot.start, slot.end);
+          
+          // If no slots generated, skip
+          if (thirtyMinSlots.length < 2) {
+            console.warn(`No slots generated for ${slot.start} - ${slot.end}`);
+            return [];
+          }
           
           // Create 30-minute time slots from the generated time points
           const slots = [];
@@ -218,18 +371,22 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
             slots.push({
               start_time: thirtyMinSlots[i],
               end_time: thirtyMinSlots[i + 1],
-              day_of_week: dayIndex,
+              day_of_week: dayOfWeek,
               specific_date: null,
               timezone: selectedTimezone
             });
           }
           
+          console.log(`Generated ${slots.length} slots for ${day} from ${slot.start} to ${slot.end}`);
           return slots;
         });
       }).filter(Boolean);
 
+      console.log('📝 Total time slots generated:', timeSlots.length);
+      console.log('📝 Sample slots:', timeSlots.slice(0, 5));
+
       // Validate time slots before submission
-      const slotsValidation = validateTimeSlots(timeSlots as any);
+      const slotsValidation = validateTimeSlots(timeSlots);
       if (!slotsValidation.isValid) {
         toast.error(`Time slot validation failed: ${slotsValidation.errors.join(', ')}`);
         return;
@@ -246,35 +403,65 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
         return;
       }
 
+      console.log('📝 Calling createAvailability with:', {
+        expertId,
+        startDate,
+        endDate,
+        timeSlotsCount: timeSlots.length,
+        timezone: selectedTimezone
+      });
+
       const result = await createAvailability(
         expertId,
         startDate,
         endDate,
         'recurring',
-        timeSlots as any,
+        timeSlots,
         selectedTimezone
       );
+
+      console.log('📝 createAvailability result:', result);
 
       if (result) {
         toast.success('Availability created successfully! Users can now book 30-minute slots.');
         onAvailabilityUpdated?.();
         
-        // Reset form
-        setWeeklySchedule(
-          DAYS.reduce((acc, day) => ({
-            ...acc,
-            [day]: {
-              enabled: false,
-              slots: [{ start: '09:00', end: '17:00', enabled: true }]
-            }
-          }), {})
-        );
+        // Reset form edited flag so form can be auto-populated with saved data
+        setFormEdited(false);
+        
+        // Refresh availabilities to show updated data
+        await fetchAvailabilities();
+      } else {
+        toast.error('Failed to save availability. Please check console for details.');
       }
     } catch (error) {
       console.error('Error creating availability:', error);
       toast.error('Failed to create availability');
     }
   };
+
+  // Show loader while initial data is loading
+  if (isInitialLoad) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Enhanced Availability Setup
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Set your availability with 30-minute time slots that users can book on the frontend.
+          </p>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+            <p className="text-sm text-muted-foreground">Loading availability data...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>

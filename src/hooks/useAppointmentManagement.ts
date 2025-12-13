@@ -79,21 +79,18 @@ export const useAppointmentManagement = (currentUser: any, expertId?: string) =>
       setLoading(true);
       setError(null);
       
-      // First check if time slot is available
-      if (timeSlotId) {
-        const checkResult = await supabase
-          .from('expert_time_slots')
-          .select('*')
-          .eq('id', timeSlotId)
-          .eq('is_booked', false);
+      // Check if time slot is available by checking existing appointments
+      // (No longer using expert_time_slots table - using simple schema)
+      if (timeSlotId && startTime && endTime) {
+        const { data: conflictingAppointments } = await supabase
+          .from('appointments')
+          .select('id')
+          .eq('expert_id', expertId)
+          .eq('appointment_date', date)
+          .in('status', ['confirmed', 'completed'])
+          .or(`start_time.eq.${startTime},and(start_time.lte.${startTime},end_time.gt.${startTime})`);
         
-        if (checkResult.error) {
-          handleDatabaseError(checkResult.error, 'Error checking time slot availability');
-          throw checkResult.error;
-        }
-        
-        const slots = checkResult.data;
-        if (!slots || slots.length === 0) {
+        if (conflictingAppointments && conflictingAppointments.length > 0) {
           toast.error('This time slot is no longer available');
           return null;
         }
@@ -142,19 +139,8 @@ export const useAppointmentManagement = (currentUser: any, expertId?: string) =>
       
       const data = appointmentResult.data;
       
-      // Mark time slot as booked if provided
-      if (timeSlotId) {
-        const updateResult = await supabase
-          .from('expert_time_slots')
-          .update({ is_booked: true })
-          .eq('id', timeSlotId);
-        
-        if (updateResult.error) {
-          handleDatabaseError(updateResult.error, 'Failed to update time slot status');
-          // Continue anyway since the appointment is created
-          console.error('Failed to update time slot status:', updateResult.error);
-        }
-      }
+      // No need to mark time slot as booked - we check appointments table instead
+      // (Not using expert_time_slots table anymore)
       
       // Refresh appointments
       await fetchAppointments(userId, expertId);

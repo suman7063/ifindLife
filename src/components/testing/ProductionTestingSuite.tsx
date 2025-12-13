@@ -235,11 +235,14 @@ const ProductionTestingSuite: React.FC = () => {
       // Test booking flow (without actually booking)
       setCurrentTest('Booking Flow Integration');
       try {
-        const { data: timeSlots } = await supabase
-          .from('expert_time_slots')
+        // Test booking flow - check expert_availabilities instead
+        const { data: availabilities } = await supabase
+          .from('expert_availabilities')
           .select('*')
-          .eq('is_booked', false)
+          .eq('is_available', true)
           .limit(1);
+        
+        const timeSlots = availabilities; // Use availabilities for testing
         
         if (timeSlots && timeSlots.length > 0) {
           addTestResult('Booking Flow Integration', 'pass', 'Available time slots found');

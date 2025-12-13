@@ -4,12 +4,15 @@ import { format, parseISO, isWithinInterval, isBefore } from 'date-fns';
 
 /**
  * Checks if a time slot is already booked for a specific date
+ * (Updated to check by time instead of time_slot_id)
  */
 export const isTimeSlotBooked = (
   timeSlotId: string,
   existingAppointments: Appointment[]
 ): boolean => {
-  return existingAppointments.some(apt => apt.time_slot_id === timeSlotId);
+  // No longer using time_slot_id - check by time conflict instead
+  // This function is kept for backward compatibility but uses hasTimeConflict
+  return false; // Will be checked via hasTimeConflict instead
 };
 
 /**

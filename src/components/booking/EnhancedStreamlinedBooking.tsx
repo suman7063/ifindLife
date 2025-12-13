@@ -65,8 +65,12 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
     getAvailableSlots,
     loading: availabilityLoading,
     error: availabilityError,
-    hasAvailability
+    hasAvailability,
+    availabilities
   } = useExpertAvailability(expertId);
+  
+  // Get expert's timezone from availability data
+  const expertTimezone = availabilities?.[0]?.timezone || 'UTC';
 
   // Use the payment hook
   const { processPayment, isLoading: paymentLoading } = useRazorpayPayment();
@@ -147,7 +151,7 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
         .select('start_time, end_time')
         .eq('expert_id', expert.auth_id)
         .eq('appointment_date', dateStr)
-        .in('status', ['confirmed', 'completed']);
+        .in('status', ['scheduled', 'completed']);
 
       if (error) {
         console.error('Error fetching booked slots:', error);
@@ -345,10 +349,9 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
             appointment_date: selectedDate.toISOString().split('T')[0],
             start_time: slot.start_time,
             end_time: slot.end_time,
-            status: 'confirmed',
+            status: 'scheduled',
             duration: 30,
-            payment_status: 'pending',
-            payment_method: 'wallet'
+            payment_status: 'pending'
           };
         }).filter(Boolean);
 
@@ -393,7 +396,7 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
           .from('appointments')
           .update({
             payment_status: 'completed',
-            payment_id: paymentId,
+            razorpay_payment_id: paymentId,
             order_id: orderId
           })
           .in('id', appointmentData.map(a => a.id));
@@ -436,11 +439,9 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
                 appointment_date: selectedDate.toISOString().split('T')[0],
                 start_time: slot.start_time,
                 end_time: slot.end_time,
-                status: 'confirmed',
+                status: 'scheduled',
                 duration: 30,
                 payment_status: 'completed',
-                payment_method: 'gateway',
-                payment_id: paymentId,
                 razorpay_payment_id: paymentId,
                 order_id: orderId
               };
@@ -539,6 +540,11 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
               <Clock className="h-5 w-5" />
               <span>Available 30-Min Slots</span>
             </CardTitle>
+            {expertTimezone && expertTimezone !== 'UTC' && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Times shown in {expertTimezone.replace('_', ' ')} timezone
+              </p>
+            )}
           </CardHeader>
           <CardContent>
             {selectedDate && (
