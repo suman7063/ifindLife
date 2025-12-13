@@ -12,10 +12,14 @@ import { Calendar, Clock, Globe, Plus, X, Info } from 'lucide-react';
 import { validateTimeSlots, validateDateRange, normalizeExpertId } from '@/utils/availabilityValidation';
 import AvailabilityErrorBoundary from './AvailabilityErrorBoundary';
 import { ExpertProfile, UserProfile } from '@/types/database/unified';
+import { supabase } from '@/lib/supabase';
 
 interface EnhancedAvailabilityFormProps {
   user: ExpertProfile | UserProfile | null;
   onAvailabilityUpdated?: () => void;
+  title?: string;
+  showSaveButton?: boolean;
+  hideCardWrapper?: boolean;
 }
 
 interface TimeSlot {
@@ -86,7 +90,10 @@ const hasOverlap = (slots: TimeSlot[], newSlot: { start: string; end: string }, 
 
 const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
   user,
-  onAvailabilityUpdated
+  onAvailabilityUpdated,
+  title = 'Enhanced Availability Setup',
+  showSaveButton = false,
+  hideCardWrapper = false
 }) => {
   const { createAvailability, loading, availabilities, fetchAvailabilities } = useAvailabilityManagement(user);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
@@ -513,8 +520,29 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
       console.log('📝 createAvailability result:', result);
 
       if (result) {
+        // Update availability_set flag in expert_accounts (for onboarding completion)
+        const expertId = normalizeExpertId(user);
+        if (expertId) {
+          console.log('✅ Updating availability_set flag for expert:', expertId);
+          const { error: updateError } = await supabase
+            .from('expert_accounts')
+            .update({ availability_set: true })
+            .eq('auth_id', expertId);
+          
+          if (updateError) {
+            console.error('❌ Error updating availability_set flag:', updateError);
+          } else {
+            console.log('✅ availability_set flag updated successfully');
+          }
+        }
+        
         toast.success('Availability created successfully! Users can now book 30-minute slots.');
-        onAvailabilityUpdated?.();
+        
+        // Call onAvailabilityUpdated callback (for onboarding step completion)
+        if (onAvailabilityUpdated) {
+          console.log('✅ Calling onAvailabilityUpdated callback for onboarding completion');
+          onAvailabilityUpdated();
+        }
         
         // Reset form edited flag so form can be auto-populated with saved data
         setFormEdited(false);
@@ -532,12 +560,23 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
 
   // Show loader while initial data is loading
   if (isInitialLoad) {
+    const loadingContent = (
+      <div className="flex flex-col items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+        <p className="text-sm text-muted-foreground">Loading availability data...</p>
+      </div>
+    );
+
+    if (hideCardWrapper) {
+      return loadingContent;
+    }
+
     return (
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
-            Enhanced Availability Setup
+            {title}
             <TooltipProvider delayDuration={200}>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -551,41 +590,16 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
               </Tooltip>
             </TooltipProvider>
           </CardTitle>
-        
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
-            <p className="text-sm text-muted-foreground">Loading availability data...</p>
-          </div>
+          {loadingContent}
         </CardContent>
       </Card>
     );
   }
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Calendar className="h-5 w-5" />
-          Enhanced Availability Setup
-          <TooltipProvider delayDuration={200}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button type="button" className="inline-flex items-center">
-                  <Info className="h-4 w-4 text-muted-foreground cursor-help hover:text-foreground transition-colors" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-xs">
-                <p className="text-sm font-medium text-green-400">Set your availability with 30-minute time slots that users can book on the frontend.</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </CardTitle>
-
-      </CardHeader>
-      <CardContent>
-        <form id="availability-form" onSubmit={handleSubmit} className="space-y-6">
+  const formContent = (
+    <form id="availability-form" onSubmit={handleSubmit} className="space-y-6">
           {/* Timezone Selection */}
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
@@ -770,22 +784,84 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
             </div>
           </div>
 
-          {/* Submit button removed - using top button instead */}
-          {/* Hidden submit button for form submission */}
-          <button type="submit" className="hidden" aria-hidden="true" />
-                    {/* Submit Button */}
-          {/* <Button 
-            type="submit" 
-            className="w-full"
-            disabled={loading}
-            size="lg"
-          >
-            {loading ? 'Creating Availability...' : 'Create 30-Minute Slot Availability'}
-          </Button> */}
+          {/* Submit button - shown when showSaveButton is true (e.g., in onboarding) */}
+          {showSaveButton && (() => {
+            // Check if at least one day is enabled with valid slots
+            const hasEnabledSlots = Object.entries(weeklySchedule).some(([_, schedule]) => {
+              if (!schedule.enabled) return false;
+              return schedule.slots.some(slot => 
+                slot.enabled && 
+                slot.start < slot.end &&
+                timeToMinutes(slot.start) < timeToMinutes(slot.end)
+              );
+            });
+            
+            return (
+              <div className="flex justify-end pt-4">
+                <Button 
+                  type="submit" 
+                  className="px-8"
+                  disabled={loading || !hasEnabledSlots}
+                  size="lg"
+                >
+                  {loading ? 'Saving...' : 'Save Availability'}
+                </Button>
+              </div>
+            );
+          })()}
           
-          
-
+          {/* Hidden submit button for form submission (when not using save button) */}
+          {!showSaveButton && (
+            <button type="submit" className="hidden" aria-hidden="true" />
+          )}
         </form>
+  );
+
+  if (hideCardWrapper) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-2 pt-4">
+          <h3 className="text-lg font-semibold">{title}</h3>
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button type="button" className="inline-flex items-center">
+                  <Info className="h-4 w-4 text-muted-foreground cursor-help hover:text-foreground transition-colors" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs">
+                <p className="text-sm font-medium text-green-400">Set your availability with 30-minute time slots that users can book on the frontend.</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+        {formContent}
+      </div>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Calendar className="h-5 w-5" />
+          {title}
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button type="button" className="inline-flex items-center">
+                  <Info className="h-4 w-4 text-muted-foreground cursor-help hover:text-foreground transition-colors" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs">
+                <p className="text-sm font-medium text-green-400">Set your availability with 30-minute time slots that users can book on the frontend.</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {formContent}
       </CardContent>
     </Card>
   );

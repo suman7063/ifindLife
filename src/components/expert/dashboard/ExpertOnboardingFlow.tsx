@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { PricingSetupStep } from './onboarding/PricingSetupStep';
-import { AvailabilitySetupStep } from './onboarding/AvailabilitySetupStep';
+import EnhancedAvailabilityForm from '@/components/expert/availability/EnhancedAvailabilityForm';
 import { ProfileCompletionStep } from './onboarding/ProfileCompletionStep';
 import ServiceSelectionStep from './onboarding/ServiceSelectionStep';
 
@@ -112,7 +112,7 @@ export const ExpertOnboardingFlow: React.FC = () => {
   const getStepCompletion = async (stepId: string, account: any): Promise<boolean> => {
     try {
       switch (stepId) {
-        case 'services':
+        case 'services': {
           // Use expert_service_specializations table as single source of truth
           const { data: specializations, error: specError } = await supabase
             .from('expert_service_specializations')
@@ -121,9 +121,10 @@ export const ExpertOnboardingFlow: React.FC = () => {
             .limit(1);
           
           return !specError && specializations && specializations.length > 0;
+        }
         case 'pricing':
         case 'availability':
-        case 'profile':
+        case 'profile': {
           // Source of truth: expert_accounts flags
           const { data, error } = await supabase
             .from('expert_accounts')
@@ -148,6 +149,7 @@ export const ExpertOnboardingFlow: React.FC = () => {
             default:
               return false;
           }
+        }
         default:
           return false;
       }
@@ -215,9 +217,12 @@ export const ExpertOnboardingFlow: React.FC = () => {
         );
       case 'availability':
         return (
-          <AvailabilitySetupStep
-            expertAccount={expertAccount}
-            onComplete={() => handleStepComplete('availability')}
+          <EnhancedAvailabilityForm
+            user={expertAccount}
+            onAvailabilityUpdated={() => handleStepComplete('availability')}
+            title="Configure Availability"
+            showSaveButton={true}
+            hideCardWrapper={true}
           />
         );
       case 'profile':
@@ -271,7 +276,7 @@ export const ExpertOnboardingFlow: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
+    <div className={`${activeStep === 'availability' ? 'max-w-7xl' : 'max-w-4xl'} mx-auto p-6 space-y-6`}>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -291,7 +296,7 @@ export const ExpertOnboardingFlow: React.FC = () => {
         </CardHeader>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className={`grid grid-cols-1 ${activeStep === 'availability' ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-6`}>
         {/* Progress Steps */}
         <Card className="lg:col-span-1">
           <CardHeader>
@@ -324,12 +329,14 @@ export const ExpertOnboardingFlow: React.FC = () => {
         </Card>
 
         {/* Active Step Content */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>
-              {steps.find(s => s.id === activeStep)?.title}
-            </CardTitle>
-          </CardHeader>
+        <Card className={activeStep === 'availability' ? 'lg:col-span-3' : 'lg:col-span-2'}>
+          {activeStep !== 'availability' && (
+            <CardHeader>
+              <CardTitle>
+                {steps.find(s => s.id === activeStep)?.title}
+              </CardTitle>
+            </CardHeader>
+          )}
           <CardContent>
             {renderStepContent()}
           </CardContent>
