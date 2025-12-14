@@ -154,7 +154,26 @@ const IntegratedExpertBooking: React.FC<IntegratedExpertBookingProps> = ({
         });
       }
 
-      setAvailableTimeSlots(timeSlots.filter(slot => !slot.is_booked));
+      // Filter out past time slots - only show future slots
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const selectedDateOnly = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+      
+      const futureSlots = timeSlots.filter(slot => {
+        // Skip booked slots
+        if (slot.is_booked) return false;
+        
+        // If selected date is today, check if slot time is in the future
+        if (selectedDateOnly.getTime() === today.getTime()) {
+          const [hours, minutes] = slot.start_time.split(':').map(Number);
+          const slotDateTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes);
+          return slotDateTime > now;
+        }
+        // If selected date is in the future, show all non-booked slots
+        return true;
+      });
+
+      setAvailableTimeSlots(futureSlots);
     } catch (error) {
       console.error('Error fetching time slots:', error);
       toast.error('Failed to load available time slots');

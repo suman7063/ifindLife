@@ -165,8 +165,24 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
         });
       }
 
-      console.log('BookingTab: Final time slots:', timeSlots);
-      setAvailableSlots(timeSlots);
+      // Filter out past time slots - only show future slots
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const selectedDateOnly = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+      
+      const futureSlots = timeSlots.filter(slot => {
+        // If selected date is today, check if slot time is in the future
+        if (selectedDateOnly.getTime() === today.getTime()) {
+          const [hours, minutes] = slot.start_time.split(':').map(Number);
+          const slotDateTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes);
+          return slotDateTime > now;
+        }
+        // If selected date is in the future, show all slots
+        return true;
+      });
+
+      console.log('BookingTab: Final time slots (filtered for future):', futureSlots);
+      setAvailableSlots(futureSlots);
     } catch (error) {
       console.error('Error fetching time slots:', error);
       toast.error('Failed to load available time slots');
