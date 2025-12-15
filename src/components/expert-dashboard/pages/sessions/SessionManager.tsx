@@ -30,7 +30,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { useExpertSessions, type Session } from '@/hooks/expert-dashboard/useExpertSessions';
+import { useExpertNoShowWarning } from '@/hooks/useExpertNoShowWarning';
 import { supabase } from '@/integrations/supabase/client';
+import { AlertTriangle } from 'lucide-react';
+import { format } from 'date-fns';
 
 const SessionManager: React.FC = () => {
   const { expert } = useSimpleAuth();
@@ -288,6 +291,108 @@ const SessionManager: React.FC = () => {
     }
   };
 
+  // Component for session item with warning
+  const SessionItemWithWarning: React.FC<{
+    session: Session;
+    appointmentDate: string;
+    startTime: string;
+    onSelect: () => void;
+    onStart: (e: React.MouseEvent) => void;
+    onEnd: (e: React.MouseEvent) => void;
+    formatTime: (date: Date) => string;
+    formatDuration: (minutes: number) => string;
+    getTypeIcon: (type: string) => React.ReactNode;
+    getStatusColor: (status: string) => string;
+  }> = ({ session, appointmentDate, startTime, onSelect, onStart, onEnd, formatTime, formatDuration, getTypeIcon, getStatusColor }) => {
+    const { warningData } = useExpertNoShowWarning(
+      session.id,
+      appointmentDate,
+      startTime,
+      session.status
+    );
+
+    const isWarning = warningData?.isWarning || false;
+    const isNoShow = warningData?.isNoShow || false;
+    const minutesRemaining = warningData?.minutesRemaining || 0;
+
+    return (
+      <div
+        className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
+        onClick={onSelect}
+      >
+        {/* Warning Alert */}
+        {isWarning && !isNoShow && (
+          <div className="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-yellow-900">
+                  Join Session Reminder
+                </p>
+                <p className="text-xs text-yellow-700 mt-1">
+                  You haven't joined your scheduled session yet. If you don't join within {minutesRemaining} minute(s), the user will receive a full refund automatically.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* No-Show Alert */}
+        {isNoShow && (
+          <div className="mb-3 p-3 bg-orange-50 border border-orange-200 rounded-md">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="h-5 w-5 text-orange-600 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-orange-900">
+                  Session Not Joined
+                </p>
+                <p className="text-xs text-orange-700 mt-1">
+                  You did not join the session within 5 minutes. The user has been refunded the full amount.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Avatar>
+              <AvatarImage src={session.clientAvatar} />
+              <AvatarFallback>
+                {session.clientName.split(' ').map(n => n[0]).join('')}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <h4 className="font-medium">{session.clientName}</h4>
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                {getTypeIcon(session.type)}
+                <span>{formatTime(session.startTime)} - {formatTime(session.endTime)}</span>
+                <span>({formatDuration(session.duration)})</span>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge className={getStatusColor(session.status)}>
+              {session.status}
+            </Badge>
+            {session.status === 'scheduled' && (
+              <Button size="sm" onClick={onStart}>
+                <Play className="h-4 w-4 mr-1" />
+                Start
+              </Button>
+            )}
+            {session.status === 'in-progress' && (
+              <Button size="sm" variant="destructive" onClick={onEnd}>
+                <Square className="h-4 w-4 mr-1" />
+                End
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // Timer effect
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -405,56 +510,34 @@ const SessionManager: React.FC = () => {
                   <ScrollArea className="h-96">
                     <div className="space-y-3">
                       {todaySessions.length > 0 ? (
-                        todaySessions.map((session) => (
-                          <div
-                            key={session.id}
-                            className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
-                            onClick={() => setSelectedSession(session)}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <Avatar>
-                                  <AvatarImage src={session.clientAvatar} />
-                                  <AvatarFallback>
-                                    {session.clientName.split(' ').map(n => n[0]).join('')}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div>
-                                  <h4 className="font-medium">{session.clientName}</h4>
-                                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                                    {getTypeIcon(session.type)}
-                                    <span>{formatTime(session.startTime)} - {formatTime(session.endTime)}</span>
-                                    <span>({formatDuration(session.duration)})</span>
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Badge className={getStatusColor(session.status)}>
-                                  {session.status}
-                                </Badge>
-                                {session.status === 'scheduled' && (
-                                  <Button size="sm" onClick={(e) => {
-                                    e.stopPropagation();
-                                    startSession(session);
-                                  }}>
-                                    <Play className="h-4 w-4 mr-1" />
-                                    Start
-                                  </Button>
-                                )}
-                                {session.status === 'in-progress' && (
-                                  <Button size="sm" variant="destructive" onClick={(e) => {
-                                    e.stopPropagation();
-                                    setSelectedSession(session);
-                                    endSession();
-                                  }}>
-                                    <Square className="h-4 w-4 mr-1" />
-                                    End
-                                  </Button>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        ))
+                        todaySessions.map((session) => {
+                          // Get appointment date and time for warning check
+                          const appointmentDate = session.appointmentDate || format(session.startTime, 'yyyy-MM-dd');
+                          const startTime = format(session.startTime, 'HH:mm');
+                          
+                          return (
+                            <SessionItemWithWarning
+                              key={session.id}
+                              session={session}
+                              appointmentDate={appointmentDate}
+                              startTime={startTime}
+                              onSelect={() => setSelectedSession(session)}
+                              onStart={(e) => {
+                                e.stopPropagation();
+                                startSession(session);
+                              }}
+                              onEnd={(e) => {
+                                e.stopPropagation();
+                                setSelectedSession(session);
+                                endSession();
+                              }}
+                              formatTime={formatTime}
+                              formatDuration={formatDuration}
+                              getTypeIcon={getTypeIcon}
+                              getStatusColor={getStatusColor}
+                            />
+                          );
+                        })
                       ) : (
                         <div className="text-center py-8 text-gray-500">
                           No sessions scheduled for today

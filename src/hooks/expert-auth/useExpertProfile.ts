@@ -83,13 +83,21 @@ export const useExpertProfile = (
       }
       
       // Then, insert the new availability entries
-      // Map the timeSlots to match the CURRENT database schema (day_of_week, start_time, end_time)
-      // Note: TypeScript types are outdated - actual DB has day_of_week/start_time/end_time, not start_date/end_date
+      // Map the timeSlots to match the CURRENT database schema (day_of_week, start_time, end_time, start_date, end_date)
+      // Set default date range: today to 1 year from now
+      const today = new Date();
+      const oneYearLater = new Date(today);
+      oneYearLater.setFullYear(today.getFullYear() + 1);
+      const startDate = today.toISOString().split('T')[0];
+      const endDate = oneYearLater.toISOString().split('T')[0];
+      
       const availabilityData = timeSlots.map(slot => ({
         expert_id: expertId,
         day_of_week: slot.day_of_week ?? (slot.day ? parseInt(String(slot.day)) : 0),
         start_time: slot.start_time || '09:00:00',
         end_time: slot.end_time || '17:00:00',
+        start_date: startDate, // Availability start date
+        end_date: endDate, // Availability end date
         is_available: true,
         timezone: 'UTC'
       }));

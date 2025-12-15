@@ -5,11 +5,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, Clock, User, Plus, Video } from 'lucide-react';
+import { Calendar, Clock, User, Plus, Video, AlertTriangle, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { format, isAfter, isBefore, parseISO } from 'date-fns';
+import { format, isAfter, isBefore, parseISO, isToday as dateFnsIsToday } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { useExpertNoShow } from '@/hooks/useExpertNoShow';
 
 interface BookingHistorySectionProps {
   user?: UserProfile;
@@ -32,12 +33,169 @@ interface Booking {
   created_at: string;
 }
 
-type FilterType = 'all' | 'upcoming' | 'past';
+type FilterType = 'all' | 'upcoming' | 'past' | 'today';
+
+// Separate component for booking card to use hooks
+const BookingCard: React.FC<{
+  booking: Booking;
+  canJoinCall: boolean;
+  navigate: (path: string) => void;
+  getStatusColor: (status: string, isNoShow?: boolean) => string;
+  formatTime: (timeStr: string) => string;
+}> = ({ booking, canJoinCall, navigate, getStatusColor, formatTime }) => {
+  const { noShowData, isChecking, reportNoShow } = useExpertNoShow(
+    booking.id,
+    booking.appointment_date,
+    booking.start_time,
+    booking.status
+  );
+
+  const isNoShow = noShowData?.isNoShow || false;
+  const canReportNoShow = noShowData?.canReportNoShow || false;
+  const refundProcessed = noShowData?.refundProcessed || false;
+  const isWarning = noShowData?.isWarning || false;
+
+  return (
+    <Card key={booking.id} className="hover:shadow-md transition-shadow">
+      <CardContent className="p-6">
+        <div className="flex justify-between items-start">
+          <div className="flex-1">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h3 className="text-lg font-semibold">{booking.expert_name}</h3>
+                <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    {format(parseISO(booking.appointment_date), 'EEEE, MMMM d, yyyy')}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    {booking.duration} min
+                  </div>
+                </div>
+              </div>
+              <Badge className={getStatusColor(booking.status, isNoShow)}>
+                {isNoShow ? 'Expert No-Show' : booking.status}
+              </Badge>
+            </div>
+            
+            {/* Warning: Expert hasn't joined yet (3-5 minutes) */}
+            {isWarning && !isNoShow && (
+              <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-yellow-900">
+                      Waiting for expert to join
+                    </p>
+                    <p className="text-xs text-yellow-700 mt-1">
+                      The expert hasn't joined your session yet. If they don't join within {5 - (noShowData?.timeSinceStart || 0)} minute(s), you'll receive a full refund automatically. No action needed from your side.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* No-Show Alert */}
+            {isNoShow && (
+              <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-md">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="h-5 w-5 text-orange-600 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-orange-900">
+                      Expert did not join the session
+                    </p>
+                    <p className="text-xs text-orange-700 mt-1">
+                      {refundProcessed 
+                        ? 'Full refund has been processed and credited to your wallet automatically. No action needed from your side.'
+                        : 'Refund is being processed automatically. You will receive a full refund shortly. No action needed from your side.'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Cancellation Info */}
+            {booking.status === 'cancelled' && booking.notes && (
+              <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-md">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-red-900 mb-1">
+                      Appointment Cancelled
+                    </p>
+                    {(() => {
+                      try {
+                        const notesData = typeof booking.notes === 'string' ? JSON.parse(booking.notes) : booking.notes;
+                        const cancellationReason = notesData?.cancellation_reason || notesData?.reason || 'Unknown reason';
+                        const cancelledAt = notesData?.cancelled_at ? format(parseISO(notesData.cancelled_at), 'MMM d, yyyy h:mm a') : null;
+                        
+                        const reasonText = cancellationReason === 'expert_no_show' 
+                          ? 'Expert did not join the session'
+                          : cancellationReason === 'user_cancelled'
+                          ? 'Cancelled by you'
+                          : cancellationReason === 'expert_cancelled'
+                          ? 'Cancelled by expert'
+                          : cancellationReason.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                        
+                        return (
+                          <div className="text-xs text-red-700 space-y-1">
+                            <p><span className="font-medium">Reason:</span> {reasonText}</p>
+                            {cancelledAt && (
+                              <p><span className="font-medium">Cancelled on:</span> {cancelledAt}</p>
+                            )}
+                          </div>
+                        );
+                      } catch {
+                        // If not JSON, display as plain text
+                        return (
+                          <p className="text-xs text-red-700">{booking.notes}</p>
+                        );
+                      }
+                    })()}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Regular Notes (non-cancelled) */}
+            {booking.notes && booking.status !== 'cancelled' && !isNoShow && (
+              <div className="mt-3 p-3 bg-muted rounded-md">
+                <p className="text-sm">{booking.notes}</p>
+              </div>
+            )}
+
+            {/* Show waiting warning when appointment time has arrived but expert hasn't joined */}
+            {canJoinCall && !isNoShow && !isWarning && (
+              <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-yellow-900">
+                      Waiting for expert to join
+                    </p>
+                    <p className="text-xs text-yellow-700 mt-1">
+                      The expert hasn't joined your session yet. If they don't join within 5 minutes, you'll receive a full refund automatically.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
 
 const BookingHistorySection: React.FC<BookingHistorySectionProps> = ({ user }) => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<FilterType>('all');
+  const [filter, setFilter] = useState<FilterType>('today');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -54,10 +212,19 @@ const BookingHistorySection: React.FC<BookingHistorySectionProps> = ({ user }) =
         .from('appointments')
         .select('*')
         .eq('user_id', user?.id)
-        .order('appointment_date', { ascending: false })
-        .order('start_time', { ascending: false });
+        .in('status', ['scheduled', 'confirmed', 'completed', 'cancelled', 'in-progress']);
+        // Don't order in query - we'll sort client-side for better control
 
       if (error) throw error;
+      
+      console.log('📅 Fetched appointments:', data?.length, 'appointments');
+      console.log('📅 Sample appointments:', data?.slice(0, 3).map(a => ({
+        id: a.id,
+        date: a.appointment_date,
+        time: `${a.start_time} - ${a.end_time}`,
+        status: a.status
+      })));
+      
       setBookings(data || []);
     } catch (error) {
       console.error('Error fetching booking history:', error);
@@ -67,7 +234,10 @@ const BookingHistorySection: React.FC<BookingHistorySectionProps> = ({ user }) =
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string, isNoShow?: boolean) => {
+    if (isNoShow) {
+      return 'bg-orange-100 text-orange-800 border-orange-200';
+    }
     switch (status.toLowerCase()) {
       case 'completed': return 'bg-green-100 text-green-800 border-green-200';
       case 'scheduled': return 'bg-blue-100 text-blue-800 border-blue-200';
@@ -80,8 +250,11 @@ const BookingHistorySection: React.FC<BookingHistorySectionProps> = ({ user }) =
 
   const formatTime = (timeStr: string): string => {
     try {
-      const [hours, minutes] = timeStr.split(':');
-      const hour = parseInt(hours);
+      // Handle HH:MM:SS format (take only HH:MM)
+      const timeParts = timeStr.split(':');
+      const hours = timeParts[0];
+      const minutes = timeParts[1] || '00';
+      const hour = parseInt(hours, 10);
       const ampm = hour >= 12 ? 'PM' : 'AM';
       const displayHour = hour % 12 || 12;
       return `${displayHour}:${minutes} ${ampm}`;
@@ -92,8 +265,10 @@ const BookingHistorySection: React.FC<BookingHistorySectionProps> = ({ user }) =
 
   const isUpcoming = (booking: Booking): boolean => {
     try {
-      const appointmentDateTime = parseISO(`${booking.appointment_date}T${booking.start_time}`);
-      return isAfter(appointmentDateTime, new Date()) && booking.status === 'scheduled';
+      // Handle HH:MM:SS format (take only HH:MM for parsing)
+      const startTime = booking.start_time.split(':').slice(0, 2).join(':');
+      const appointmentDateTime = parseISO(`${booking.appointment_date}T${startTime}`);
+      return isAfter(appointmentDateTime, new Date()) && (booking.status === 'scheduled' || booking.status === 'confirmed');
     } catch {
       return false;
     }
@@ -101,34 +276,101 @@ const BookingHistorySection: React.FC<BookingHistorySectionProps> = ({ user }) =
 
   const isPast = (booking: Booking): boolean => {
     try {
-      const appointmentDateTime = parseISO(`${booking.appointment_date}T${booking.end_time}`);
+      // Handle HH:MM:SS format (take only HH:MM for parsing)
+      const endTime = booking.end_time.split(':').slice(0, 2).join(':');
+      const appointmentDateTime = parseISO(`${booking.appointment_date}T${endTime}`);
       return isBefore(appointmentDateTime, new Date()) || booking.status === 'completed' || booking.status === 'cancelled';
     } catch {
       return false;
     }
   };
 
-  const filteredBookings = bookings.filter(booking => {
-    if (filter === 'upcoming') return isUpcoming(booking);
-    if (filter === 'past') return isPast(booking);
-    return true;
-  });
+  const isToday = (booking: Booking): boolean => {
+    try {
+      const appointmentDate = parseISO(booking.appointment_date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const bookingDate = new Date(appointmentDate);
+      bookingDate.setHours(0, 0, 0, 0);
+      return bookingDate.getTime() === today.getTime();
+    } catch {
+      return false;
+    }
+  };
+
+  const filteredBookings = bookings
+    .filter(booking => {
+      if (filter === 'upcoming') return isUpcoming(booking);
+      if (filter === 'past') return isPast(booking);
+      if (filter === 'today') return isToday(booking);
+      return true;
+    })
+    .sort((a, b) => {
+      // Sort by date first (ascending: 15, 16, 17, 18...)
+      const dateA = parseISO(a.appointment_date);
+      const dateB = parseISO(b.appointment_date);
+      const dateDiff = dateA.getTime() - dateB.getTime();
+      
+      if (dateDiff !== 0) return dateDiff;
+      
+      // If same date, sort by start time (descending: 23:30, 23:00, 10:30, 10:00...)
+      try {
+        // Get time in HH:MM format (handle HH:MM:SS)
+        const timeA = a.start_time.split(':').slice(0, 2).join(':');
+        const timeB = b.start_time.split(':').slice(0, 2).join(':');
+        
+        // Convert time to minutes for comparison (24-hour format)
+        // Handle HH:MM format (e.g., "10:00" -> 600, "23:00" -> 1380)
+        // Handle "24:00" as 1440 minutes (midnight)
+        const parseTimeToMinutes = (timeStr: string): number => {
+          const parts = timeStr.split(':');
+          const hours = parseInt(parts[0] || '0', 10);
+          const minutes = parseInt(parts[1] || '0', 10);
+          
+          // Handle 24:00 as midnight (1440 minutes)
+          if (hours === 24 || timeStr.startsWith('24:')) {
+            return 24 * 60; // 1440 minutes
+          }
+          
+          return hours * 60 + minutes;
+        };
+        
+        const totalMinutesA = parseTimeToMinutes(timeA);
+        const totalMinutesB = parseTimeToMinutes(timeB);
+        
+        // Descending order: latest time first (23:30, 23:00, 10:30, 10:00)
+        return totalMinutesB - totalMinutesA;
+      } catch (error) {
+        console.error('Error sorting by time:', error, a.start_time, b.start_time);
+        return 0;
+      }
+    });
 
   const stats = {
     total: bookings.length,
     upcoming: bookings.filter(isUpcoming).length,
     completed: bookings.filter(b => b.status === 'completed').length,
     cancelled: bookings.filter(b => b.status === 'cancelled').length,
+    today: bookings.filter(isToday).length,
   };
 
   const canJoinCall = (booking: Booking): boolean => {
-    if (booking.status !== 'scheduled') return false;
+    if (booking.status !== 'scheduled' && booking.status !== 'confirmed' && booking.status !== 'in-progress') return false;
     try {
-      const appointmentDateTime = parseISO(`${booking.appointment_date}T${booking.start_time}`);
+      // Handle HH:MM:SS format (take only HH:MM for parsing)
+      const startTime = booking.start_time.split(':').slice(0, 2).join(':');
+      const appointmentDateTime = parseISO(`${booking.appointment_date}T${startTime}`);
       const now = new Date();
       const timeDiff = appointmentDateTime.getTime() - now.getTime();
-      // Can join 15 minutes before start time
-      return timeDiff <= 15 * 60 * 1000 && timeDiff >= -30 * 60 * 1000;
+      
+      // Can join only when:
+      // 1. Appointment has started (timeDiff <= 0) - not before
+      // 2. And within the session duration (30 minutes after start)
+      const sessionEndTime = appointmentDateTime.getTime() + (booking.duration || 30) * 60 * 1000;
+      const isWithinSession = now.getTime() <= sessionEndTime;
+      
+      // Only show button when appointment time has arrived (not before)
+      return timeDiff <= 0 && isWithinSession;
     } catch {
       return false;
     }
@@ -213,6 +455,9 @@ const BookingHistorySection: React.FC<BookingHistorySectionProps> = ({ user }) =
         <CardContent>
           <Tabs value={filter} onValueChange={(v) => setFilter(v as FilterType)}>
             <TabsList>
+              <TabsTrigger value="today">
+                Today ({stats.today})
+              </TabsTrigger>
               <TabsTrigger value="upcoming">
                 Upcoming ({stats.upcoming})
               </TabsTrigger>
@@ -228,71 +473,29 @@ const BookingHistorySection: React.FC<BookingHistorySectionProps> = ({ user }) =
               {filteredBookings.length > 0 ? (
                 <div className="space-y-4">
                   {filteredBookings.map((booking) => (
-                    <Card key={booking.id} className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-6">
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between mb-3">
-                              <div>
-                                <h3 className="text-lg font-semibold">{booking.expert_name}</h3>
-                                <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                                  <div className="flex items-center gap-2">
-                                    <Calendar className="h-4 w-4" />
-                                    {format(parseISO(booking.appointment_date), 'EEEE, MMMM d, yyyy')}
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <Clock className="h-4 w-4" />
-                                    {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <User className="h-4 w-4" />
-                                    {booking.duration} min
-                                  </div>
-                                </div>
-                              </div>
-                              <Badge className={getStatusColor(booking.status)}>
-                                {booking.status}
-                              </Badge>
-                            </div>
-                            
-                            {booking.notes && (
-                              <div className="mt-3 p-3 bg-muted rounded-md">
-                                <p className="text-sm">{booking.notes}</p>
-                              </div>
-                            )}
-
-                            {canJoinCall(booking) && (
-                              <div className="mt-4 flex gap-2">
-                                <Button 
-                                  size="sm" 
-                                  onClick={() => {
-                                    // Navigate to call page or open call interface
-                                    if (booking.channel_name && booking.token) {
-                                      navigate(`/call/${booking.id}`);
-                                    } else {
-                                      toast.info('Call session is being prepared. Please wait a moment.');
-                                    }
-                                  }}
-                                >
-                                  <Video className="h-4 w-4 mr-2" />
-                                  Join Call
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                    <BookingCard 
+                      key={booking.id} 
+                      booking={booking}
+                      canJoinCall={canJoinCall(booking)}
+                      navigate={navigate}
+                      getStatusColor={getStatusColor}
+                      formatTime={formatTime}
+                    />
                   ))}
                 </div>
               ) : (
                 <div className="text-center py-12">
                   <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                   <h3 className="text-xl font-medium mb-2">
-                    {filter === 'upcoming' ? 'No upcoming appointments' : filter === 'past' ? 'No past appointments' : 'No appointments'}
+                    {filter === 'today' ? 'No appointments today' 
+                     : filter === 'upcoming' ? 'No upcoming appointments' 
+                     : filter === 'past' ? 'No past appointments' 
+                     : 'No appointments'}
                   </h3>
                   <p className="text-muted-foreground">
-                    {filter === 'upcoming' 
+                    {filter === 'today'
+                      ? 'You don\'t have any appointments scheduled for today.'
+                      : filter === 'upcoming' 
                       ? 'Book a session with one of our experts to get started.'
                       : 'Your appointment history will appear here.'}
                   </p>

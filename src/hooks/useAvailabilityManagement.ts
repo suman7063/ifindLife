@@ -45,11 +45,14 @@ export function useAvailabilityManagement(user: any) {
 
       // Insert directly into expert_availabilities table (simple schema)
       // Each day + time range = one row
+      // Include start_date and end_date for date range filtering
       const availabilityRecords = dedupedSlots.map(slot => ({
         expert_id: expertAuthId,
         day_of_week: slot.day_of_week, // 0-6 (Sunday=0, Monday=1, ..., Saturday=6)
         start_time: slot.start_time,
         end_time: slot.end_time,
+        start_date: startDate, // Availability start date
+        end_date: endDate, // Availability end date
         is_available: true,
         timezone: slot.timezone || availabilityTimezone || 'UTC'
       }));

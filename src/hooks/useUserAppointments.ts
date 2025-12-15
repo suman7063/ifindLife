@@ -49,7 +49,19 @@ export const useUserAppointments = (userId?: string) => {
           created_at
         `)
         .eq('user_id', userId)
-        .order('appointment_date', { ascending: true });
+        .in('status', ['scheduled', 'confirmed', 'completed', 'cancelled', 'in-progress', 'pending'])
+        .order('appointment_date', { ascending: true })
+        .order('start_time', { ascending: true });
+      
+      console.log('📅 useUserAppointments: Fetched', data?.length, 'appointments');
+      if (data && data.length > 0) {
+        console.log('📅 Sample appointments:', data.slice(0, 5).map(a => ({
+          id: a.id,
+          date: a.appointment_date,
+          time: `${a.start_time} - ${a.end_time}`,
+          status: a.status
+        })));
+      }
 
       if (fetchError) {
         throw fetchError;
@@ -104,18 +116,39 @@ export const useUserAppointments = (userId?: string) => {
 
   // Get upcoming appointments (today and future)
   const upcomingAppointments = appointments.filter(apt => {
-    const appointmentDate = new Date(apt.appointment_date);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return appointmentDate >= today && apt.status !== 'cancelled' && apt.status !== 'completed';
+    try {
+      // Handle HH:MM:SS format (take only HH:MM for parsing)
+      const startTime = apt.start_time.split(':').slice(0, 2).join(':');
+      const appointmentDateTime = new Date(`${apt.appointment_date}T${startTime}`);
+      const now = new Date();
+      
+      // Include if appointment is in the future and not cancelled/completed
+      return appointmentDateTime > now && 
+             apt.status !== 'cancelled' && 
+             apt.status !== 'completed' &&
+             (apt.status === 'scheduled' || apt.status === 'confirmed' || apt.status === 'in-progress' || apt.status === 'pending');
+    } catch (error) {
+      console.error('Error filtering upcoming appointment:', apt.id, error);
+      return false;
+    }
   });
 
   // Get past appointments
   const pastAppointments = appointments.filter(apt => {
-    const appointmentDate = new Date(apt.appointment_date);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return appointmentDate < today || apt.status === 'completed' || apt.status === 'cancelled';
+    try {
+      // Handle HH:MM:SS format (take only HH:MM for parsing)
+      const endTime = apt.end_time.split(':').slice(0, 2).join(':');
+      const appointmentDateTime = new Date(`${apt.appointment_date}T${endTime}`);
+      const now = new Date();
+      
+      // Include if appointment has ended or is completed/cancelled
+      return appointmentDateTime < now || 
+             apt.status === 'completed' || 
+             apt.status === 'cancelled';
+    } catch (error) {
+      console.error('Error filtering past appointment:', apt.id, error);
+      return false;
+    }
   });
 
   useEffect(() => {

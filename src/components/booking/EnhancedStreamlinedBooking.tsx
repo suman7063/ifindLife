@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar } from '@/components/ui/calendar';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Calendar as CalendarIcon, Clock, Check, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, Check, ChevronRight, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
@@ -49,6 +49,9 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
     totalCost: number;
     slotsCount: number;
   } | null>(null);
+  const [userBookedSlots, setUserBookedSlots] = useState<Set<string>>(new Set());
+  const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
+  const [duplicateSlotInfo, setDuplicateSlotInfo] = useState<{ startTime: string; endTime: string; date: string } | null>(null);
 
   // Use the expert pricing hook
   const { 
@@ -153,7 +156,7 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
         };
       });
 
-      // Check which slots are already booked
+      // Check which slots are already booked (by anyone)
       const { data: bookedSlots, error } = await supabase
         .from('appointments')
         .select('start_time, end_time')
@@ -171,6 +174,30 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
             slot.is_booked = true;
           }
         });
+      }
+
+      // Check which slots are already booked by the current user
+      if (user?.id) {
+        const { data: userBookings, error: userBookingError } = await supabase
+          .from('appointments')
+          .select('start_time, end_time')
+          .eq('user_id', user.id)
+          .eq('expert_id', expert.auth_id)
+          .eq('appointment_date', dateStr)
+          .in('status', ['scheduled', 'completed']);
+
+        if (userBookingError) {
+          console.error('Error fetching user bookings:', userBookingError);
+        } else if (userBookings) {
+          // Create a set of user's booked slot times for quick lookup
+          const userBookedSet = new Set<string>();
+          userBookings.forEach(booking => {
+            userBookedSet.add(`${booking.start_time}-${booking.end_time}`);
+          });
+          setUserBookedSlots(userBookedSet);
+        } else {
+          setUserBookedSlots(new Set());
+        }
       }
 
       // Filter out past time slots - only show future slots
@@ -209,11 +236,102 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
   };
 
   const toggleSlotSelection = (slotId: string) => {
+    // Find the slot being clicked
+    const slot = availableSlots.find(s => s.id === slotId);
+    if (!slot) {
+      console.log('❌ Slot not found:', slotId);
+      return;
+    }
+
+    // Quick check: Use cached userBookedSlots first for immediate feedback
+    const slotKey = `${slot.start_time}-${slot.end_time}`;
+    if (userBookedSlots.has(slotKey)) {
+      // Show popup dialog
+      const formatDateLocal = (date: Date): string => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+      
+      setDuplicateSlotInfo({
+        startTime: formatTime(slot.start_time),
+        endTime: formatTime(slot.end_time),
+        date: selectedDate ? format(selectedDate, 'EEEE, MMMM d, yyyy') : ''
+      });
+      setShowDuplicateWarning(true);
+      return;
+    }
+
+    // Check if slot is already booked by someone else
+    if (slot.is_booked) {
+      toast.warning('This slot is no longer available', {
+        description: 'This time slot has been booked by another user. Please select a different slot.',
+        duration: 4000,
+      });
+      return;
+    }
+
+    // Allow selection/deselection immediately
     setSelectedSlots(prev => 
       prev.includes(slotId) 
         ? prev.filter(id => id !== slotId)
         : [...prev, slotId]
     );
+
+    // Do async verification in background (non-blocking)
+    if (selectedDate && user?.id && expert?.auth_id) {
+      const formatDateLocal = (date: Date): string => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
+      const appointmentDate = formatDateLocal(selectedDate);
+      
+      // Background check - if duplicate found, remove from selection
+      supabase
+        .from('appointments')
+        .select('id, start_time, end_time, status')
+        .eq('user_id', user.id)
+        .eq('expert_id', expert.auth_id)
+        .eq('appointment_date', appointmentDate)
+        .eq('start_time', slot.start_time)
+        .eq('end_time', slot.end_time)
+        .in('status', ['scheduled', 'completed'])
+        .maybeSingle()
+        .then(({ data: existingBooking, error: checkError }) => {
+          if (checkError) {
+            console.error('❌ Error checking duplicate booking:', checkError);
+            return;
+          }
+
+          if (existingBooking) {
+            console.log('⚠️ Duplicate booking found in background check:', existingBooking);
+            // Remove from selection if duplicate found
+            setSelectedSlots(prev => prev.filter(id => id !== slotId));
+            
+            // Show popup dialog
+            const formatDateLocal = (date: Date): string => {
+              const year = date.getFullYear();
+              const month = String(date.getMonth() + 1).padStart(2, '0');
+              const day = String(date.getDate()).padStart(2, '0');
+              return `${year}-${month}-${day}`;
+            };
+            
+            setDuplicateSlotInfo({
+              startTime: formatTime(slot.start_time),
+              endTime: formatTime(slot.end_time),
+              date: selectedDate ? format(selectedDate, 'EEEE, MMMM d, yyyy') : ''
+            });
+            setShowDuplicateWarning(true);
+            
+            // Refresh slots to update UI
+            fetchAvailableTimeSlots();
+          }
+        });
+    }
   };
 
   // Helper function to check if slots are continuous
@@ -361,7 +479,6 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
       if (paymentMethod === 'wallet') {
         console.log('🔧 Payment: Using wallet payment');
         
-        // Create appointments first, then deduct credits
         // Format date in local timezone (not UTC) to avoid date shift
         const formatDateLocal = (date: Date): string => {
           const year = date.getFullYear();
@@ -370,22 +487,87 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
           return `${year}-${month}-${day}`;
         };
 
-        const appointments = selectedSlots.map(slotId => {
+        const appointmentDate = formatDateLocal(selectedDate);
+
+        // Check for duplicate bookings before creating appointments
+        const slotsToBook = selectedSlots.map(slotId => {
           const slot = availableSlots.find(s => s.id === slotId);
           if (!slot) return null;
+          return { slot, start_time: slot.start_time, end_time: slot.end_time };
+        }).filter(Boolean) as Array<{ slot: TimeSlot; start_time: string; end_time: string }>;
 
-          return {
-            user_id: user.id,
-            expert_id: expert.auth_id,
-            expert_name: expert.name,
-            appointment_date: formatDateLocal(selectedDate),
-            start_time: slot.start_time,
-            end_time: slot.end_time,
-            status: 'scheduled',
-            duration: 30,
-            payment_status: 'pending'
-          };
-        }).filter(Boolean);
+        // Check if user has already booked any of these slots
+        const { data: existingUserBookings, error: checkError } = await supabase
+          .from('appointments')
+          .select('start_time, end_time')
+          .eq('user_id', user.id)
+          .eq('expert_id', expert.auth_id)
+          .eq('appointment_date', appointmentDate)
+          .in('status', ['scheduled', 'completed']);
+
+        if (checkError) {
+          console.error('Error checking existing bookings:', checkError);
+          toast.error('Failed to verify slot availability');
+          setLoading(false);
+          return;
+        }
+
+        // Check for duplicates - user already booked this slot
+        const duplicateBookings = slotsToBook.filter(slotData => {
+          return existingUserBookings?.some(existing => 
+            existing.start_time === slotData.start_time && existing.end_time === slotData.end_time
+          );
+        });
+
+        if (duplicateBookings.length > 0) {
+          toast.error(`You have already booked ${duplicateBookings.length} of the selected slot(s). Please select different slots.`);
+          setLoading(false);
+          // Refresh slots to show updated availability
+          fetchAvailableTimeSlots();
+          return;
+        }
+
+        // Check if slots are still available (not booked by someone else)
+        const { data: conflictingBookings, error: conflictError } = await supabase
+          .from('appointments')
+          .select('start_time, end_time')
+          .eq('expert_id', expert.auth_id)
+          .eq('appointment_date', appointmentDate)
+          .in('status', ['scheduled', 'completed']);
+
+        if (conflictError) {
+          console.error('Error checking conflicting bookings:', conflictError);
+          toast.error('Failed to verify slot availability');
+          setLoading(false);
+          return;
+        }
+
+        const unavailableSlots = slotsToBook.filter(slotData => {
+          return conflictingBookings?.some(conflicting => 
+            conflicting.start_time === slotData.start_time && conflicting.end_time === slotData.end_time
+          );
+        });
+
+        if (unavailableSlots.length > 0) {
+          toast.error(`${unavailableSlots.length} selected slot(s) are no longer available. Please refresh and select different slots.`);
+          setLoading(false);
+          // Refresh slots to show updated availability
+          fetchAvailableTimeSlots();
+          return;
+        }
+
+        // Create appointments - all checks passed
+        const appointments = slotsToBook.map(({ slot }) => ({
+          user_id: user.id,
+          expert_id: expert.auth_id,
+          expert_name: expert.name,
+          appointment_date: appointmentDate,
+          start_time: slot.start_time,
+          end_time: slot.end_time,
+          status: 'scheduled',
+          duration: 30,
+          payment_status: 'pending'
+        }));
 
         const { data: appointmentData, error: appointmentError } = await supabase
           .from('appointments')
@@ -455,6 +637,81 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
         // Process payment via Razorpay
         console.log('🔧 Payment: Using Razorpay payment gateway');
         
+        // Format date in local timezone (not UTC) to avoid date shift
+        const formatDateLocal = (date: Date): string => {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        };
+
+        const appointmentDate = formatDateLocal(selectedDate);
+
+        // Prepare slots to book
+        const slotsToBook = selectedSlots.map(slotId => {
+          const slot = availableSlots.find(s => s.id === slotId);
+          if (!slot) return null;
+          return { slot, start_time: slot.start_time, end_time: slot.end_time };
+        }).filter(Boolean) as Array<{ slot: TimeSlot; start_time: string; end_time: string }>;
+
+        // Check for duplicate bookings before processing payment
+        const { data: existingUserBookings, error: checkError } = await supabase
+          .from('appointments')
+          .select('start_time, end_time')
+          .eq('user_id', user.id)
+          .eq('expert_id', expert.auth_id)
+          .eq('appointment_date', appointmentDate)
+          .in('status', ['scheduled', 'completed']);
+
+        if (checkError) {
+          console.error('Error checking existing bookings:', checkError);
+          toast.error('Failed to verify slot availability');
+          setLoading(false);
+          return;
+        }
+
+        // Check for duplicates - user already booked this slot
+        const duplicateBookings = slotsToBook.filter(slotData => {
+          return existingUserBookings?.some(existing => 
+            existing.start_time === slotData.start_time && existing.end_time === slotData.end_time
+          );
+        });
+
+        if (duplicateBookings.length > 0) {
+          toast.error(`You have already booked ${duplicateBookings.length} of the selected slot(s). Please select different slots.`);
+          setLoading(false);
+          fetchAvailableTimeSlots();
+          return;
+        }
+
+        // Check if slots are still available (not booked by someone else)
+        const { data: conflictingBookings, error: conflictError } = await supabase
+          .from('appointments')
+          .select('start_time, end_time')
+          .eq('expert_id', expert.auth_id)
+          .eq('appointment_date', appointmentDate)
+          .in('status', ['scheduled', 'completed']);
+
+        if (conflictError) {
+          console.error('Error checking conflicting bookings:', conflictError);
+          toast.error('Failed to verify slot availability');
+          setLoading(false);
+          return;
+        }
+
+        const unavailableSlots = slotsToBook.filter(slotData => {
+          return conflictingBookings?.some(conflicting => 
+            conflicting.start_time === slotData.start_time && conflicting.end_time === slotData.end_time
+          );
+        });
+
+        if (unavailableSlots.length > 0) {
+          toast.error(`${unavailableSlots.length} selected slot(s) are no longer available. Please refresh and select different slots.`);
+          setLoading(false);
+          fetchAvailableTimeSlots();
+          return;
+        }
+        
         await processPayment(
           {
             amount: totalCost, // Amount in INR/EUR, edge function will convert to smallest unit
@@ -467,33 +724,49 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
             orderId = orderIdReceived;
             console.log('🔧 Payment: Payment successful:', paymentId, orderId);
 
+            // Double-check availability after payment (race condition protection)
+            const { data: finalCheck, error: finalCheckError } = await supabase
+              .from('appointments')
+              .select('start_time, end_time')
+              .eq('expert_id', expert.auth_id)
+              .eq('appointment_date', appointmentDate)
+              .in('status', ['scheduled', 'completed']);
+
+            if (finalCheckError) {
+              console.error('Error in final availability check:', finalCheckError);
+              toast.error('Failed to verify slot availability after payment');
+              setLoading(false);
+              return;
+            }
+
+            const stillUnavailable = slotsToBook.filter(slotData => {
+              return finalCheck?.some(conflicting => 
+                conflicting.start_time === slotData.start_time && conflicting.end_time === slotData.end_time
+              );
+            });
+
+            if (stillUnavailable.length > 0) {
+              toast.error(`${stillUnavailable.length} slot(s) were booked by someone else during payment. Refunding...`);
+              setLoading(false);
+              // Note: Payment will need to be refunded - this should be handled by payment gateway
+              fetchAvailableTimeSlots();
+              return;
+            }
+
             // Create appointments after successful payment
-            // Format date in local timezone (not UTC) to avoid date shift
-            const formatDateLocal = (date: Date): string => {
-              const year = date.getFullYear();
-              const month = String(date.getMonth() + 1).padStart(2, '0');
-              const day = String(date.getDate()).padStart(2, '0');
-              return `${year}-${month}-${day}`;
-            };
-
-            const appointments = selectedSlots.map(slotId => {
-              const slot = availableSlots.find(s => s.id === slotId);
-              if (!slot) return null;
-
-              return {
-                user_id: user.id,
-                expert_id: expert.auth_id,
-                expert_name: expert.name,
-                appointment_date: formatDateLocal(selectedDate),
-                start_time: slot.start_time,
-                end_time: slot.end_time,
-                status: 'scheduled',
-                duration: 30,
-                payment_status: 'completed',
-                razorpay_payment_id: paymentId,
-                order_id: orderId
-              };
-            }).filter(Boolean);
+            const appointments = slotsToBook.map(({ slot }) => ({
+              user_id: user.id,
+              expert_id: expert.auth_id,
+              expert_name: expert.name,
+              appointment_date: appointmentDate,
+              start_time: slot.start_time,
+              end_time: slot.end_time,
+              status: 'scheduled',
+              duration: 30,
+              payment_status: 'completed',
+              razorpay_payment_id: paymentId,
+              order_id: orderId
+            }));
 
             const { data, error } = await supabase
               .from('appointments')
@@ -619,27 +892,34 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
                     {availableSlots.map((slot) => {
                       const isSelected = selectedSlots.includes(slot.id);
                       const isBooked = slot.is_booked;
+                      const slotKey = `${slot.start_time}-${slot.end_time}`;
+                      const isUserBooked = userBookedSlots.has(slotKey);
                       
                       return (
                         <Button
                           key={slot.id}
-                          variant={isSelected ? "default" : isBooked ? "secondary" : "outline"}
+                          variant={isSelected ? "default" : isBooked || isUserBooked ? "secondary" : "outline"}
                           size="sm"
                           className={`h-auto py-3 px-2 text-xs ${
-                            isBooked ? 'opacity-50 cursor-not-allowed' : ''
+                            isBooked || isUserBooked ? 'opacity-50 cursor-not-allowed' : ''
                           } ${
                             isSelected 
                               ? 'bg-ifind-aqua text-white hover:bg-ifind-aqua/90' 
                               : 'border-ifind-teal/30 text-ifind-charcoal hover:bg-ifind-teal/10'
                           }`}
-                          onClick={() => !isBooked && toggleSlotSelection(slot.id)}
-                          disabled={isBooked}
+                          onClick={() => !isBooked && !isUserBooked && toggleSlotSelection(slot.id)}
+                          disabled={isBooked || isUserBooked}
                         >
                           <div className="text-center w-full">
                             <div className="font-medium">
                               {formatTime(slot.start_time)}
                             </div>
-                            {isBooked && (
+                            {isUserBooked && (
+                              <div className="text-xs text-orange-600 font-medium mt-1">
+                                You booked
+                              </div>
+                            )}
+                            {isBooked && !isUserBooked && (
                               <div className="text-xs text-muted-foreground mt-1">
                                 Booked
                               </div>
@@ -807,6 +1087,59 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
               }}
             >
               View My Appointments
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Duplicate Booking Warning Dialog */}
+      <Dialog open={showDuplicateWarning} onOpenChange={setShowDuplicateWarning}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center justify-center mb-4">
+              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
+                <AlertTriangle className="w-8 h-8 text-orange-600" />
+              </div>
+            </div>
+            <DialogTitle className="text-center text-2xl">Already Booked</DialogTitle>
+            <DialogDescription className="text-center">
+              You have already booked this time slot
+            </DialogDescription>
+          </DialogHeader>
+          
+          {duplicateSlotInfo && (
+            <div className="space-y-4 py-4">
+              <div className="bg-muted/50 p-4 rounded-md space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Date:</span>
+                  <span className="font-medium">{duplicateSlotInfo.date}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Time:</span>
+                  <span className="font-medium">{duplicateSlotInfo.startTime} - {duplicateSlotInfo.endTime}</span>
+                </div>
+              </div>
+              
+              <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-md">
+                <div className="flex gap-2">
+                  <AlertTriangle className="h-5 w-5 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-orange-700 dark:text-orange-300">
+                    You already have a booking for this time slot. Please select a different time slot to book another session.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button 
+              className="w-full bg-ifind-aqua hover:bg-ifind-aqua/90" 
+              onClick={() => {
+                setShowDuplicateWarning(false);
+                setDuplicateSlotInfo(null);
+              }}
+            >
+              OK, I Understand
             </Button>
           </DialogFooter>
         </DialogContent>

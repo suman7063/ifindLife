@@ -170,6 +170,13 @@ export const AvailabilitySetupStep: React.FC<AvailabilitySetupStepProps> = ({
       }
 
       // Prepare new availability records
+      // Set default date range: today to 1 year from now
+      const today = new Date();
+      const oneYearLater = new Date(today);
+      oneYearLater.setFullYear(today.getFullYear() + 1);
+      const startDate = today.toISOString().split('T')[0];
+      const endDate = oneYearLater.toISOString().split('T')[0];
+      
       const availabilityRecords: any[] = [];
       
       availability
@@ -183,6 +190,8 @@ export const AvailabilitySetupStep: React.FC<AvailabilitySetupStepProps> = ({
               day_of_week: dayIndex,
               start_time: slot.start_time,
               end_time: slot.end_time,
+              start_date: startDate, // Availability start date
+              end_date: endDate, // Availability end date
               is_available: true,
               timezone: 'UTC'
             });

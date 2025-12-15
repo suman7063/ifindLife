@@ -1,10 +1,11 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, User, Phone, MessageSquare, AlertTriangle } from 'lucide-react';
+import { Calendar, Clock, User, Phone, MessageSquare, AlertTriangle, RefreshCw } from 'lucide-react';
 import { format, parseISO, isToday, isTomorrow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { UserAppointment } from '@/hooks/useUserAppointments';
+import { useExpertNoShow } from '@/hooks/useExpertNoShow';
 
 interface AppointmentCardProps {
   appointment: UserAppointment;
@@ -24,14 +25,36 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
   const navigate = useNavigate();
   const appointmentDate = parseISO(appointment.appointment_date);
   const currentTime = new Date();
-  const appointmentDateTime = new Date(`${appointment.appointment_date}T${appointment.start_time}`);
+  // Handle HH:MM:SS format (take only HH:MM for parsing)
+  const startTime = appointment.start_time.split(':').slice(0, 2).join(':');
+  const appointmentDateTime = new Date(`${appointment.appointment_date}T${startTime}`);
   
   const isAppointmentToday = isToday(appointmentDate);
   const isAppointmentTomorrow = isTomorrow(appointmentDate);
-  const isAppointmentSoon = appointmentDateTime.getTime() - currentTime.getTime() <= 15 * 60 * 1000; // 15 minutes
-  const canStartCall = isAppointmentToday && isAppointmentSoon && appointment.status === 'confirmed';
+  
+  // Can start call only when appointment time has actually arrived (not before)
+  const timeDiff = appointmentDateTime.getTime() - currentTime.getTime();
+  const sessionEndTime = appointmentDateTime.getTime() + (appointment.duration || 30) * 60 * 1000;
+  const isWithinSession = currentTime.getTime() <= sessionEndTime;
+  const canStartCall = isAppointmentToday && timeDiff <= 0 && isWithinSession && (appointment.status === 'confirmed' || appointment.status === 'scheduled' || appointment.status === 'in-progress');
 
-  const getStatusColor = (status: string) => {
+  // Check for expert no-show
+  const { noShowData, isChecking, reportNoShow } = useExpertNoShow(
+    appointment.id,
+    appointment.appointment_date,
+    appointment.start_time,
+    appointment.status
+  );
+
+  const isNoShow = noShowData?.isNoShow || false;
+  const canReportNoShow = noShowData?.canReportNoShow || false;
+  const refundProcessed = noShowData?.refundProcessed || false;
+  const isWarning = noShowData?.isWarning || false;
+
+  const getStatusColor = (status: string, isNoShow?: boolean) => {
+    if (isNoShow) {
+      return 'bg-orange-100 text-orange-800 border-orange-200';
+    }
     switch (status) {
       case 'confirmed':
         return 'bg-green-100 text-green-800 border-green-200';
@@ -53,10 +76,17 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
   };
 
   const formatTime = (time: string) => {
-    const [hours, minutes] = time.split(':');
-    const timeDate = new Date();
-    timeDate.setHours(parseInt(hours), parseInt(minutes));
-    return format(timeDate, 'h:mm a');
+    try {
+      // Handle HH:MM:SS format (take only HH:MM)
+      const timeParts = time.split(':');
+      const hours = parseInt(timeParts[0] || '0', 10);
+      const minutes = parseInt(timeParts[1] || '0', 10);
+      const timeDate = new Date();
+      timeDate.setHours(hours, minutes);
+      return format(timeDate, 'h:mm a');
+    } catch {
+      return time;
+    }
   };
 
   return (
@@ -79,37 +109,117 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
               </div>
             </div>
           </div>
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(appointment.status)}`}>
-            {appointment.status}
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(appointment.status, isNoShow)}`}>
+            {isNoShow ? 'Expert No-Show' : appointment.status}
           </span>
         </div>
       </CardHeader>
       
       <CardContent className="space-y-4">
-        {appointment.notes && (
+        {/* Warning: Expert hasn't joined yet (3-5 minutes) */}
+        {isWarning && !isNoShow && (
+          <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-yellow-900">
+                  Waiting for expert to join
+                </p>
+                <p className="text-xs text-yellow-700 mt-1">
+                  The expert hasn't joined your session yet. If they don't join within {5 - (noShowData?.timeSinceStart || 0)} minute(s), you'll receive a full refund automatically. No action needed from your side.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* No-Show Alert */}
+        {isNoShow && (
+          <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="h-5 w-5 text-orange-600 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-orange-900">
+                  Expert did not join the session
+                </p>
+                <p className="text-xs text-orange-700 mt-1">
+                  {refundProcessed 
+                    ? 'Full refund has been processed and credited to your wallet automatically. No action needed from your side.'
+                    : 'Refund is being processed automatically. You will receive a full refund shortly. No action needed from your side.'}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Cancellation Info */}
+        {appointment.status === 'cancelled' && appointment.notes && (
+          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-red-900 mb-1">
+                  Appointment Cancelled
+                </p>
+                {(() => {
+                  try {
+                    const notesData = typeof appointment.notes === 'string' ? JSON.parse(appointment.notes) : appointment.notes;
+                    const cancellationReason = notesData?.cancellation_reason || notesData?.reason || 'Unknown reason';
+                    const cancelledAt = notesData?.cancelled_at ? format(parseISO(notesData.cancelled_at), 'MMM d, yyyy h:mm a') : null;
+                    
+                    const reasonText = cancellationReason === 'expert_no_show' 
+                      ? 'Expert did not join the session'
+                      : cancellationReason === 'user_cancelled'
+                      ? 'Cancelled by you'
+                      : cancellationReason === 'expert_cancelled'
+                      ? 'Cancelled by expert'
+                      : cancellationReason.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    
+                    return (
+                      <div className="text-xs text-red-700 space-y-1">
+                        <p><span className="font-medium">Reason:</span> {reasonText}</p>
+                        {cancelledAt && (
+                          <p><span className="font-medium">Cancelled on:</span> {cancelledAt}</p>
+                        )}
+                      </div>
+                    );
+                  } catch {
+                    // If not JSON, display as plain text
+                    return (
+                      <p className="text-xs text-red-700">{appointment.notes}</p>
+                    );
+                  }
+                })()}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Regular Notes (non-cancelled) */}
+        {appointment.notes && appointment.status !== 'cancelled' && !isNoShow && (
           <div className="p-3 bg-muted rounded-lg">
             <p className="text-sm">{appointment.notes}</p>
           </div>
         )}
 
-        {canStartCall && (
-          <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-            <div className="flex items-center gap-2 text-green-800 text-sm font-medium mb-2">
-              <AlertTriangle className="h-4 w-4" />
-              Your session is starting soon!
+        {/* Show waiting warning when appointment time has arrived but expert hasn't joined */}
+        {canStartCall && !isNoShow && !isWarning && (
+          <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-yellow-900">
+                  Waiting for expert to join
+                </p>
+                <p className="text-xs text-yellow-700 mt-1">
+                  The expert hasn't joined your session yet. If they don't join within 5 minutes, you'll receive a full refund automatically.
+                </p>
+              </div>
             </div>
-            <Button 
-              onClick={() => navigate(`/call/${appointment.id}`)}
-              className="w-full"
-              size="sm"
-            >
-              <Phone className="h-4 w-4 mr-2" />
-              Join Call
-            </Button>
           </div>
         )}
 
-        {type === 'upcoming' && appointment.status !== 'cancelled' && (
+        {type === 'upcoming' && appointment.status !== 'cancelled' && !isNoShow && (
           <div className="flex gap-2">
             {!canStartCall && (
               <>

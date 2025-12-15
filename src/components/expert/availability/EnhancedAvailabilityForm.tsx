@@ -49,13 +49,15 @@ const TIMEZONES = [
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-// Generate 30-minute time slots from 00:00 to 23:30
+// Generate 30-minute time slots from 00:00 to 24:00 (midnight)
 const generateTimeSlots = (): string[] => {
   const slots: string[] = [];
   for (let hour = 0; hour < 24; hour++) {
     slots.push(`${hour.toString().padStart(2, '0')}:00`);
     slots.push(`${hour.toString().padStart(2, '0')}:30`);
   }
+  // Add 24:00 (midnight) as a valid end time
+  slots.push('24:00');
   return slots;
 };
 
@@ -63,8 +65,39 @@ const TIME_SLOTS = generateTimeSlots();
 
 // Helper function to convert time string to minutes
 const timeToMinutes = (time: string): number => {
+  if (time === '24:00') return 24 * 60;
   const [hours, minutes] = time.split(':').map(Number);
   return hours * 60 + minutes;
+};
+
+// Simple helper: Convert any time to database format (HH:MM:SS)
+// Handles 24:00 -> 23:59:59 conversion for PostgreSQL
+const convertTimeForDB = (time: string): string => {
+  // Convert 24:00 to 23:59:59 (PostgreSQL doesn't support 24:00)
+  if (time === '24:00') return '23:59:59';
+  
+  // Add seconds if missing (HH:MM -> HH:MM:SS)
+  if (time.includes(':') && time.split(':').length === 2) {
+    return `${time}:00`;
+  }
+  
+  return time; // Already in correct format
+};
+
+// Convert database time back to display format (HH:MM)
+// Handles 23:59:59 -> 24:00 conversion for display
+const convertTimeFromDB = (time: string): string => {
+  // Convert 23:59:59 back to 24:00 for display
+  if (time === '23:59:59' || time === '23:59:59.000000') {
+    return '24:00';
+  }
+  
+  // Remove seconds if present (HH:MM:SS -> HH:MM)
+  if (time.includes(':') && time.split(':').length === 3) {
+    return time.substring(0, 5); // Take only HH:MM
+  }
+  
+  return time; // Already in correct format
 };
 
 // Helper function to check if two time slots overlap
@@ -175,8 +208,9 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
       }) => {
         if (availability.day_of_week !== undefined && availability.start_time && availability.end_time) {
           const dayOfWeek = availability.day_of_week;
-          const startTime = availability.start_time?.substring(0, 5) || availability.start_time;
-          const endTime = availability.end_time?.substring(0, 5) || availability.end_time;
+          // Convert database times back to display format (23:59:59 -> 24:00)
+          const startTime = convertTimeFromDB(availability.start_time);
+          const endTime = convertTimeFromDB(availability.end_time);
           
           if (!dayAvailabilityMap.has(dayOfWeek)) {
             dayAvailabilityMap.set(dayOfWeek, []);
@@ -230,26 +264,44 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
     setFormEdited(true);
     setWeeklySchedule(prev => {
       const existingSlots = prev[day].slots;
-      let newStartTime = '09:00';
-      let newEndTime = '17:00';
+      
+      // Check if there's already a slot ending at 24:00 (midnight)
+      const hasMidnightSlot = existingSlots.some(slot => slot.end === '24:00' || slot.end === '00:00');
+      if (hasMidnightSlot) {
+        toast.info('You already have a slot ending at midnight (24:00). Please modify existing slots instead.');
+        return prev;
+      }
+      
+      let newStartTime = '23:30';
+      let newEndTime = '24:00';
       
       // If there are existing slots, suggest a time after the last slot
       if (existingSlots.length > 0) {
         const lastSlot = existingSlots[existingSlots.length - 1];
         newStartTime = lastSlot.end;
         
-        // Calculate end time: add 1 hour to start time, but cap at 23:30
+        // Calculate end time: add 30 minutes to start time
         const [startHour, startMin] = newStartTime.split(':').map(Number);
         const startMinutes = startHour * 60 + startMin;
-        const endMinutes = Math.min(startMinutes + 60, 23 * 60 + 30); // Cap at 23:30
-        const endHour = Math.floor(endMinutes / 60);
-        const endMin = endMinutes % 60;
-        newEndTime = `${endHour.toString().padStart(2, '0')}:${endMin.toString().padStart(2, '0')}`;
+        const endMinutes = startMinutes + 30; // Add 30 minutes
         
-        // If start time is already at or past 23:00, default to 09:00-17:00
-        if (startMinutes >= 23 * 60) {
-          newStartTime = '09:00';
-          newEndTime = '17:00';
+        // If we can reach exactly 24:00, use it
+        if (endMinutes === 24 * 60) {
+          newEndTime = '24:00';
+        } else if (endMinutes < 24 * 60) {
+          // Normal time within the day
+          const endHour = Math.floor(endMinutes / 60);
+          const endMin = endMinutes % 60;
+          newEndTime = `${endHour.toString().padStart(2, '0')}:${endMin.toString().padStart(2, '0')}`;
+        } else {
+          // Can't go beyond 24:00, if start is 23:30 or later, use 23:30-24:00
+          if (startMinutes >= 23 * 60 + 30) {
+            newStartTime = '23:30';
+            newEndTime = '24:00';
+          } else {
+            // If start is before 23:30, cap at 24:00
+            newEndTime = '24:00';
+          }
         }
       }
       
@@ -309,8 +361,15 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
       // Get the updated slot
       const updatedSlot = updatedSlots[slotIndex];
       
-      // Validate: start time must be before end time
-      if (timeToMinutes(updatedSlot.start) >= timeToMinutes(updatedSlot.end)) {
+      // Validate: start time must be before end time (handle 24:00 specially)
+      let endMinutes: number;
+      if (updatedSlot.end === '24:00') {
+        endMinutes = 24 * 60; // 1440 minutes for 24:00
+      } else {
+        endMinutes = timeToMinutes(updatedSlot.end);
+      }
+      
+      if (timeToMinutes(updatedSlot.start) >= endMinutes) {
         toast.error('Start time must be before end time');
         return prev; // Revert the change
       }
@@ -387,17 +446,43 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
   const generate30MinuteSlots = (startTime: string, endTime: string): string[] => {
     const slots: string[] = [];
     const [startHour, startMin] = startTime.split(':').map(Number);
-    const [endHour, endMin] = endTime.split(':').map(Number);
+    
+    // Handle 24:00 as midnight (1440 minutes)
+    let endMinutes: number;
+    if (endTime === '24:00') {
+      endMinutes = 24 * 60; // 1440 minutes (midnight)
+    } else {
+      const [endHour, endMin] = endTime.split(':').map(Number);
+      endMinutes = endHour * 60 + endMin;
+    }
     
     const startMinutes = startHour * 60 + startMin;
-    const endMinutes = endHour * 60 + endMin;
     
     // Generate 30-minute intervals from start to end (inclusive of end)
-    for (let currentMinutes = startMinutes; currentMinutes <= endMinutes; currentMinutes += 30) {
+    for (let currentMinutes = startMinutes; currentMinutes < endMinutes; currentMinutes += 30) {
       const hour = Math.floor(currentMinutes / 60);
       const minute = currentMinutes % 60;
+      
+      // Don't generate slots beyond 24:00
+      if (hour >= 24) break;
+      
       const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
       slots.push(timeString);
+    }
+    
+    // If end time is exactly 24:00, add it as the final slot
+    if (endTime === '24:00') {
+      slots.push('24:00');
+    } else {
+      // Add the end time if it's not already included
+      const endHour = Math.floor(endMinutes / 60);
+      const endMin = endMinutes % 60;
+      if (endHour < 24) {
+        const endTimeString = `${endHour.toString().padStart(2, '0')}:${endMin.toString().padStart(2, '0')}`;
+        if (!slots.includes(endTimeString)) {
+          slots.push(endTimeString);
+        }
+      }
     }
     
     return slots;
@@ -447,14 +532,24 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
             return [];
           }
           
-          // Skip slots where start >= end
-          if (slot.start >= slot.end) {
+          // Skip slots where start >= end (handle 24:00 specially)
+          // Allow 24:00 as a valid end time
+          if (slot.end === '24:00') {
+            // 24:00 is valid as end time, check if start is before it
+            const startMinutes = timeToMinutes(slot.start);
+            const endMinutes = 24 * 60; // 1440 minutes for 24:00
+            if (startMinutes >= endMinutes) {
+              console.warn(`Skipping invalid slot: ${slot.start} - ${slot.end}`);
+              return [];
+            }
+          } else if (slot.start >= slot.end) {
             console.warn(`Skipping invalid slot: ${slot.start} - ${slot.end}`);
             return [];
           }
           
           // Generate 30-minute slots for each time range
           const thirtyMinSlots = generate30MinuteSlots(slot.start, slot.end);
+          console.log(`Generated time points for ${slot.start} - ${slot.end}:`, thirtyMinSlots);
           
           // If no slots generated, skip
           if (thirtyMinSlots.length < 2) {
@@ -465,13 +560,26 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
           // Create 30-minute time slots from the generated time points
           const slots = [];
           for (let i = 0; i < thirtyMinSlots.length - 1; i++) {
-            slots.push({
-              start_time: thirtyMinSlots[i],
-              end_time: thirtyMinSlots[i + 1],
-              day_of_week: dayOfWeek,
-              specific_date: null,
-              timezone: selectedTimezone
-            });
+            const startTime = thirtyMinSlots[i];
+            const endTime = thirtyMinSlots[i + 1];
+            
+            // Convert times to database format (handles 24:00 -> 23:59:59 automatically)
+            const dbStartTime = convertTimeForDB(startTime);
+            const dbEndTime = convertTimeForDB(endTime);
+            
+            // Validate: start must be before end (using numeric comparison)
+            const startMinutes = timeToMinutes(startTime);
+            const endMinutes = timeToMinutes(endTime);
+            
+            if (startMinutes < endMinutes) {
+              slots.push({
+                start_time: dbStartTime,
+                end_time: dbEndTime,
+                day_of_week: dayOfWeek,
+                specific_date: null,
+                timezone: selectedTimezone
+              });
+            }
           }
           
           console.log(`Generated ${slots.length} slots for ${day} from ${slot.start} to ${slot.end}`);
@@ -764,16 +872,31 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
                           
                           {/* Add Slot Button at bottom of slots list */}
                           <div className="pt-2">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => addTimeSlot(day)}
-                              className="w-full gap-2 border-dashed"
-                            >
-                              <Plus className="h-4 w-4" />
-                              Add Another Slot
-                            </Button>
+                            {(() => {
+                              // Check if there's already a slot ending at 24:00
+                              const hasMidnightSlot = weeklySchedule[day].slots.some(
+                                slot => slot.end === '24:00' || slot.end === '00:00'
+                              );
+                              
+                              // Only disable if there's already a slot ending at 24:00
+                              // Allow adding slots until we reach 24:00
+                              const cannotAddMore = hasMidnightSlot;
+                              
+                              return (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => addTimeSlot(day)}
+                                  className="w-full gap-2 border-dashed"
+                                  disabled={cannotAddMore}
+                                  title={cannotAddMore ? 'Cannot add more slots after midnight (24:00)' : 'Add another time slot'}
+                                >
+                                  <Plus className="h-4 w-4" />
+                                  Add Another Slot
+                                </Button>
+                              );
+                            })()}
                           </div>
                         </div>
                       )}
@@ -791,8 +914,8 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
               if (!schedule.enabled) return false;
               return schedule.slots.some(slot => 
                 slot.enabled && 
-                slot.start < slot.end &&
-                timeToMinutes(slot.start) < timeToMinutes(slot.end)
+                (slot.end === '24:00' ? timeToMinutes(slot.start) < 24 * 60 : slot.start < slot.end) &&
+                (slot.end === '24:00' ? timeToMinutes(slot.start) < 24 * 60 : timeToMinutes(slot.start) < timeToMinutes(slot.end))
               );
             });
             
