@@ -168,6 +168,14 @@ const StreamlinedBooking: React.FC<StreamlinedBookingProps> = ({
     try {
       setLoading(true);
       
+      // Format date in local timezone (not UTC) to avoid date shift
+      const formatDateLocal = (date: Date): string => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
       const appointments = selectedSlots.map(slotId => {
         const slot = availableSlots.find(s => s.id === slotId);
         if (!slot) return null;
@@ -176,7 +184,7 @@ const StreamlinedBooking: React.FC<StreamlinedBookingProps> = ({
           user_id: user.id,
           expert_id: expert.auth_id,
           expert_name: expert.name,
-          appointment_date: selectedDate.toISOString().split('T')[0],
+          appointment_date: formatDateLocal(selectedDate),
           start_time: slot.start_time,
           end_time: slot.end_time,
           status: 'scheduled',

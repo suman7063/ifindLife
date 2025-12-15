@@ -24,6 +24,7 @@ export interface Session {
   appointmentId?: string;
   channelName?: string;
   token?: string;
+  appointmentDate?: string; // Store original appointment_date from database (YYYY-MM-DD format)
 }
 
 interface UseExpertSessionsOptions {
@@ -55,6 +56,38 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
       console.error('Error fetching user profile:', err);
       return null;
     }
+  };
+
+  // Helper function to find continuous sessions (same user, same date, consecutive times)
+  const findContinuousSessions = (startSession: Session, allSessions: Session[]): Session[] => {
+    const continuous: Session[] = [startSession];
+    
+    // Get all sessions for the same user on the same date, sorted by start time
+    const sameUserDateSessions = allSessions
+      .filter(s => 
+        s.clientId === startSession.clientId &&
+        s.appointmentDate === startSession.appointmentDate &&
+        s.status === 'scheduled' &&
+        s.id !== startSession.id
+      )
+      .sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
+    
+    // Find sessions that are continuous (end time of current = start time of next)
+    let currentEndTime = startSession.endTime;
+    
+    for (const nextSession of sameUserDateSessions) {
+      // Check if next session starts exactly when current ends (within 1 minute tolerance)
+      const timeDiff = Math.abs(nextSession.startTime.getTime() - currentEndTime.getTime());
+      if (timeDiff <= 60000) { // 1 minute tolerance
+        continuous.push(nextSession);
+        currentEndTime = nextSession.endTime;
+      } else {
+        // Not continuous, stop looking
+        break;
+      }
+    }
+    
+    return continuous;
   };
 
   // Fetch call session data if available
@@ -169,6 +202,7 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
       appointmentId: appointment.id,
       channelName: appointment.channel_name || callSession?.channel_name || undefined,
       token: appointment.token || callSession?.agora_token || undefined,
+      appointmentDate: appointment.appointment_date, // Store original date string for accurate comparison
     };
   };
 
@@ -275,20 +309,42 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
             .single();
 
           if (!existingCallSession) {
-            // Create new call session
-            await supabase
+            // Find continuous appointments for the same user on the same date
+            const continuousSessions = findContinuousSessions(session, sessions);
+            const totalDuration = continuousSessions.reduce((sum, s) => sum + s.duration, 0);
+            
+            // Use the first session's ID as the primary appointment_id
+            const primarySessionId = continuousSessions[0].id;
+            const appointmentIds = continuousSessions.map(s => s.id);
+            
+            // Create new call session with combined duration
+            const callSessionId = `call_${primarySessionId}_${Date.now()}`;
+            const { data: newCallSession, error: insertError } = await supabase
               .from('call_sessions')
               .insert({
-                id: `call_${sessionId}_${Date.now()}`,
+                id: callSessionId,
                 expert_id: expertId!,
                 user_id: session.clientId,
-                appointment_id: sessionId,
-                channel_name: session.channelName || `channel_${sessionId}`,
+                appointment_id: primarySessionId, // Primary appointment ID
+                channel_name: session.channelName || `channel_${primarySessionId}`,
                 call_type: session.type === 'video' ? 'video' : 'audio',
                 status: 'active',
                 start_time: new Date().toISOString(),
-                selected_duration: session.duration,
-              });
+                selected_duration: totalDuration, // Combined duration for continuous slots
+                call_metadata: {
+                  continuous_appointments: appointmentIds,
+                  total_slots: continuousSessions.length,
+                  is_continuous: continuousSessions.length > 1
+                }
+              })
+              .select()
+              .single();
+            
+            if (insertError) {
+              console.error('Error creating call session:', insertError);
+            } else if (newCallSession && continuousSessions.length > 1) {
+              console.log(`✅ Created continuous call session for ${continuousSessions.length} slots (${totalDuration} minutes total)`);
+            }
           } else {
             // Update existing call session
             await supabase
@@ -313,6 +369,18 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
           .single();
 
         if (callSession) {
+          // If this is a continuous call session, mark all related appointments as completed
+          const callMetadata = callSession.call_metadata as any;
+          if (callMetadata?.continuous_appointments && Array.isArray(callMetadata.continuous_appointments)) {
+            const continuousAppointmentIds = callMetadata.continuous_appointments;
+            // Update all continuous appointments to completed
+            await supabase
+              .from('appointments')
+              .update({ status: 'completed' })
+              .in('id', continuousAppointmentIds);
+            
+            console.log(`✅ Marked ${continuousAppointmentIds.length} continuous appointments as completed`);
+          }
           const startTime = callSession.start_time 
             ? new Date(callSession.start_time)
             : new Date();

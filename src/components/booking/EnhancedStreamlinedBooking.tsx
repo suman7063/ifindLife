@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar } from '@/components/ui/calendar';
-import { Calendar as CalendarIcon, Clock, Check, ChevronRight } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Calendar as CalendarIcon, Clock, Check, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
@@ -12,6 +13,7 @@ import { useExpertAvailability } from '@/hooks/useExpertAvailability';
 import { useRazorpayPayment } from '@/hooks/useRazorpayPayment';
 import { useWallet } from '@/hooks/useWallet';
 import PaymentMethodSelector from './PaymentMethodSelector';
+import { format } from 'date-fns';
 
 interface TimeSlot {
   id: string;
@@ -41,6 +43,12 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
   const [loading, setLoading] = useState(false);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [expert, setExpert] = useState<any>(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [bookingDetails, setBookingDetails] = useState<{
+    appointmentIds: string[];
+    totalCost: number;
+    slotsCount: number;
+  } | null>(null);
 
   // Use the expert pricing hook
   const { 
@@ -354,6 +362,14 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
         console.log('🔧 Payment: Using wallet payment');
         
         // Create appointments first, then deduct credits
+        // Format date in local timezone (not UTC) to avoid date shift
+        const formatDateLocal = (date: Date): string => {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        };
+
         const appointments = selectedSlots.map(slotId => {
           const slot = availableSlots.find(s => s.id === slotId);
           if (!slot) return null;
@@ -362,7 +378,7 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
             user_id: user.id,
             expert_id: expert.auth_id,
             expert_name: expert.name,
-            appointment_date: selectedDate.toISOString().split('T')[0],
+            appointment_date: formatDateLocal(selectedDate),
             start_time: slot.start_time,
             end_time: slot.end_time,
             status: 'scheduled',
@@ -382,7 +398,6 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
         }
 
         // Deduct credits from wallet with appointment reference
-        const appointmentIds = appointmentData?.map(a => a.id).join(',') || null;
         const result = await deductCredits(
           totalCost,
           'booking',
@@ -419,6 +434,15 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
 
         console.log('🔧 Payment: Wallet deduction successful:', result);
         
+        // Store booking details for confirmation modal
+        const appointmentIds = appointmentData?.map(a => a.id) || [];
+        setBookingDetails({
+          appointmentIds,
+          totalCost,
+          slotsCount: selectedSlots.length
+        });
+        setShowConfirmation(true);
+        
         toast.success(`Successfully booked ${selectedSlots.length} session(s)!`, {
           description: `Total cost: ${formatPrice(totalCost)} (Paid with wallet)`
         });
@@ -444,6 +468,14 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
             console.log('🔧 Payment: Payment successful:', paymentId, orderId);
 
             // Create appointments after successful payment
+            // Format date in local timezone (not UTC) to avoid date shift
+            const formatDateLocal = (date: Date): string => {
+              const year = date.getFullYear();
+              const month = String(date.getMonth() + 1).padStart(2, '0');
+              const day = String(date.getDate()).padStart(2, '0');
+              return `${year}-${month}-${day}`;
+            };
+
             const appointments = selectedSlots.map(slotId => {
               const slot = availableSlots.find(s => s.id === slotId);
               if (!slot) return null;
@@ -452,7 +484,7 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
                 user_id: user.id,
                 expert_id: expert.auth_id,
                 expert_name: expert.name,
-                appointment_date: selectedDate.toISOString().split('T')[0],
+                appointment_date: formatDateLocal(selectedDate),
                 start_time: slot.start_time,
                 end_time: slot.end_time,
                 status: 'scheduled',
@@ -473,6 +505,15 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
               toast.error('Failed to create appointments after payment');
               throw error;
             }
+
+            // Store booking details for confirmation modal
+            const appointmentIds = data?.map(a => a.id) || [];
+            setBookingDetails({
+              appointmentIds,
+              totalCost,
+              slotsCount: selectedSlots.length
+            });
+            setShowConfirmation(true);
 
             toast.success(`Successfully booked ${selectedSlots.length} session(s)!`, {
               description: `Total cost: ${formatPrice(totalCost)}`
@@ -691,6 +732,85 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
           </CardContent>
         </Card>
       )}
+
+      {/* Booking Confirmation Modal */}
+      <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center justify-center mb-4">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                <CheckCircle2 className="w-8 h-8 text-green-600" />
+              </div>
+            </div>
+            <DialogTitle className="text-center text-2xl">Booking Confirmed!</DialogTitle>
+            <DialogDescription className="text-center">
+              Your booking has been successfully completed
+            </DialogDescription>
+          </DialogHeader>
+          
+          {bookingDetails && selectedDate && (
+            <div className="space-y-4 py-4">
+              <div className="bg-muted/50 p-4 rounded-md space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Expert:</span>
+                  <span className="font-medium">{expertName}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Date:</span>
+                  <span className="font-medium">{format(selectedDate, 'EEEE, MMMM d, yyyy')}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Sessions:</span>
+                  <span className="font-medium">{bookingDetails.slotsCount} session{bookingDetails.slotsCount > 1 ? 's' : ''}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Total Amount:</span>
+                  <span className="font-semibold text-lg text-ifind-teal">{formatPrice(bookingDetails.totalCost)}</span>
+                </div>
+                {bookingDetails.appointmentIds.length > 0 && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Booking ID:</span>
+                    <span className="font-medium text-xs">{bookingDetails.appointmentIds[0].slice(0, 8).toUpperCase()}</span>
+                  </div>
+                )}
+              </div>
+              
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-md">
+                <div className="flex gap-2">
+                  <CalendarIcon className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                    A confirmation email has been sent to you. You can view your session details on your appointments page.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button 
+              variant="outline" 
+              className="w-full" 
+              onClick={() => {
+                setShowConfirmation(false);
+                setBookingDetails(null);
+              }}
+            >
+              Close
+            </Button>
+            <Button 
+              className="w-full bg-ifind-aqua hover:bg-ifind-aqua/90" 
+              onClick={() => {
+                setShowConfirmation(false);
+                setBookingDetails(null);
+                // Navigate to appointments page if needed
+                window.location.href = '/appointments';
+              }}
+            >
+              View My Appointments
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

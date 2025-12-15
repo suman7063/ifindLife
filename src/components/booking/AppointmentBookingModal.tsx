@@ -199,11 +199,19 @@ const AppointmentBookingModal: React.FC<AppointmentBookingModalProps> = ({
         async (paymentId: string, orderId: string) => {
           // Payment successful, create appointment
           try {
+            // Format date in local timezone (not UTC) to avoid date shift
+            const formatDateLocal = (date: Date): string => {
+              const year = date.getFullYear();
+              const month = String(date.getMonth() + 1).padStart(2, '0');
+              const day = String(date.getDate()).padStart(2, '0');
+              return `${year}-${month}-${day}`;
+            };
+
             const appointmentData = {
               user_id: user.id,
               expert_id: expert.auth_id,
               expert_name: expert.name,
-              appointment_date: selectedDate.toISOString().split('T')[0],
+              appointment_date: formatDateLocal(selectedDate),
               start_time: selectedTimeSlot.start_time,
               end_time: selectedTimeSlot.end_time,
               time_slot_id: null, // Not using expert_time_slots table anymore

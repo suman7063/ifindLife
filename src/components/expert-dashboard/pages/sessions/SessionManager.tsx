@@ -30,6 +30,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { useExpertSessions, type Session } from '@/hooks/expert-dashboard/useExpertSessions';
+import { supabase } from '@/integrations/supabase/client';
 
 const SessionManager: React.FC = () => {
   const { expert } = useSimpleAuth();
@@ -42,6 +43,7 @@ const SessionManager: React.FC = () => {
   const [goalsText, setGoalsText] = useState('');
   const [outcomesText, setOutcomesText] = useState('');
   const [nextStepsText, setNextStepsText] = useState('');
+  const [expertTimezone, setExpertTimezone] = useState<string>('UTC');
 
   // Use the expert sessions hook
   const {
@@ -56,6 +58,35 @@ const SessionManager: React.FC = () => {
     autoFetch: true,
   });
 
+  // Fetch expert timezone
+  useEffect(() => {
+    const fetchExpertTimezone = async () => {
+      if (!expert?.auth_id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('expert_availabilities')
+          .select('timezone')
+          .eq('expert_id', expert.auth_id)
+          .limit(1);
+        
+        if (!error && data && data.length > 0 && data[0]?.timezone) {
+          const timezone = data[0].timezone;
+          console.log('🌍 Expert timezone fetched:', timezone);
+          setExpertTimezone(timezone);
+        } else {
+          console.log('⚠️ No timezone found, using UTC as default');
+          setExpertTimezone('UTC');
+        }
+      } catch (err) {
+        console.error('Error fetching expert timezone:', err);
+        setExpertTimezone('UTC'); // Fallback to UTC
+      }
+    };
+    
+    fetchExpertTimezone();
+  }, [expert?.auth_id]);
+
   // Update notes text when selected session changes
   useEffect(() => {
     if (selectedSession) {
@@ -66,14 +97,97 @@ const SessionManager: React.FC = () => {
     }
   }, [selectedSession]);
 
+  // Helper function to get today's date in expert's timezone (YYYY-MM-DD format)
+  const getTodayDateStringInTimezone = (timezone: string): string => {
+    try {
+      // Get current date/time in expert's timezone
+      const now = new Date();
+      const formatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: timezone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+      // en-CA format gives YYYY-MM-DD
+      return formatter.format(now);
+    } catch (error) {
+      console.error('Error formatting date in timezone:', error);
+      // Fallback to local timezone
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+  };
+
+  // Get today's date in expert's timezone
+  const todayDateString = getTodayDateStringInTimezone(expertTimezone);
+  
+  console.log('🔍 Date comparison debug:', {
+    expertTimezone,
+    todayDateString,
+    sessionsCount: sessions.length,
+    sessionsWithDates: sessions.map(s => ({
+      appointmentDate: s.appointmentDate,
+      startTime: s.startTime
+    }))
+  });
+  
+  // Filter sessions by comparing appointment_date directly
+  // appointment_date is already stored as YYYY-MM-DD in expert's timezone context
   const todaySessions = sessions.filter(session => {
-    const sessionDate = session.startTime.toDateString();
-    const today = new Date().toDateString();
-    return sessionDate === today;
+    if (session.appointmentDate) {
+      // Direct string comparison - appointment_date is already in expert's timezone context
+      return session.appointmentDate === todayDateString;
+    }
+    // Fallback: compare using startTime converted to expert's timezone
+    try {
+      const formatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: expertTimezone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+      const sessionDateInTimezone = formatter.format(session.startTime);
+      return sessionDateInTimezone === todayDateString;
+    } catch {
+      // If timezone conversion fails, use simple date comparison
+      const sessionDate = new Date(session.startTime);
+      const today = new Date();
+      return sessionDate.getFullYear() === today.getFullYear() &&
+             sessionDate.getMonth() === today.getMonth() &&
+             sessionDate.getDate() === today.getDate();
+    }
   });
 
   const upcomingSessions = sessions.filter(session => {
-    return session.startTime > new Date() && session.status === 'scheduled';
+    const now = new Date();
+    // Use appointmentDate for comparison if available
+    if (session.appointmentDate) {
+      // Direct string comparison - appointment_date is already in expert's timezone context
+      const isToday = session.appointmentDate === todayDateString;
+      return !isToday && session.startTime > now && session.status === 'scheduled';
+    }
+    // Fallback: use date comparison with timezone
+    try {
+      const formatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: expertTimezone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+      const sessionDateInTimezone = formatter.format(session.startTime);
+      const isToday = sessionDateInTimezone === todayDateString;
+      return !isToday && session.startTime > now && session.status === 'scheduled';
+    } catch {
+      const sessionDate = new Date(session.startTime);
+      const today = new Date();
+      const isToday = sessionDate.getFullYear() === today.getFullYear() &&
+                      sessionDate.getMonth() === today.getMonth() &&
+                      sessionDate.getDate() === today.getDate();
+      return !isToday && session.startTime > now && session.status === 'scheduled';
+    }
   });
 
   const historySessions = sessions.filter(session => {
