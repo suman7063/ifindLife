@@ -6,7 +6,7 @@ import { Calendar, Plus, AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { useUserAppointments } from '@/hooks/useUserAppointments';
-import AppointmentCard from '../components/AppointmentCard';
+import AppointmentCard from '../appointment/AppointmentCard';
 
 interface UserAppointmentsProps {
   user: UserProfile | null;

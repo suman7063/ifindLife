@@ -14,7 +14,6 @@ import ExpertSignup from './pages/ExpertRegister';
 import NewExpertDashboard from './pages/NewExpertDashboard';
 import UserDashboardWrapper from './pages/UserDashboardWrapper';
 
-import AppointmentsPage from './pages/AppointmentsPage';
 import AdminDashboard from '@/components/admin/dashboard/AdminDashboard';
 import ServiceDetailPage from './pages/service/ServiceDetailPage';
 import ProgramDetailPage from './pages/ProgramDetail';
@@ -126,7 +125,6 @@ const UserRoutes: React.FC = () => {
         <Route path="/user-signup" element={<UserSignup />} />
         <Route path="/user-dashboard/*" element={<UserDashboardWrapper />} />
         <Route path="/dashboard" element={<UserDashboard />} />
-        <Route path="/appointments" element={<AppointmentsPage />} />
         {/* TODO: Re-implement call page if needed */}
         {/* <Route path="/call/:appointmentId" element={<CallPage />} /> */}
         <Route path="/messaging" element={<MessagingPage />} />

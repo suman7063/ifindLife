@@ -140,7 +140,7 @@ const BookingHistorySection: React.FC<BookingHistorySectionProps> = ({ user }) =
         <div className="flex justify-between items-center">
           <div>
             <h2 className="text-3xl font-bold">My Appointments</h2>
-            <p className="text-muted-foreground">Manage your scheduled sessions and join calls</p>
+            <p className="text-muted-foreground text-xs font-light">Manage your scheduled sessions and join calls</p>
           </div>
         </div>
         <div className="grid gap-4">

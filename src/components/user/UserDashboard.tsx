@@ -476,7 +476,7 @@ export const UserDashboard: React.FC = () => {
             <Button 
               className="h-16 flex flex-col gap-1" 
               variant="outline"
-              onClick={() => navigate('/appointments')}
+              onClick={() => navigate('/user-dashboard/booking-history')}
             >
               <Calendar className="h-5 w-5" />
               <span>My Sessions</span>

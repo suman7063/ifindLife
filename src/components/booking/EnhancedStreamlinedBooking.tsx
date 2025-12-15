@@ -802,8 +802,8 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
               onClick={() => {
                 setShowConfirmation(false);
                 setBookingDetails(null);
-                // Navigate to appointments page if needed
-                window.location.href = '/appointments';
+                // Navigate to booking history page
+                window.location.href = '/user-dashboard/booking-history';
               }}
             >
               View My Appointments
