@@ -385,6 +385,139 @@ export async function declineCall(callRequestId: string): Promise<boolean> {
 }
 
 /**
+ * Initiate a call from expert to user (for scheduled sessions)
+ * This is used when expert clicks "Start" button on a scheduled session
+ */
+export interface InitiateCallFromExpertParams {
+  expertId: string;
+  expertAuthId: string;
+  expertName?: string;
+  expertAvatar?: string;
+  userId: string;
+  userName?: string;
+  userAvatar?: string;
+  callType: 'audio' | 'video';
+  duration: number; // in minutes
+  appointmentId: string;
+}
+
+export async function initiateCallFromExpert(params: InitiateCallFromExpertParams): Promise<CallRequestResponse | null> {
+  try {
+    const {
+      expertId,
+      expertAuthId,
+      expertName,
+      expertAvatar,
+      userId,
+      userName,
+      userAvatar,
+      callType,
+      duration,
+      appointmentId
+    } = params;
+
+    console.log('📞 Expert initiating call for scheduled session:', { expertId, userId, appointmentId, callType, duration });
+
+    // Generate unique channel name and UIDs
+    const timestamp = Date.now();
+    const shortExpertId = expertAuthId.replace(/-/g, '').substring(0, 8);
+    const shortUserId = userId.replace(/-/g, '').substring(0, 8);
+    const channelName = `call_${shortExpertId}_${shortUserId}_${timestamp}`;
+    const userUid = Math.floor(Math.random() * 1000000);
+    const expertUid = Math.floor(Math.random() * 1000000);
+
+    // Generate Agora tokens for both user and expert
+    console.log('🔑 Generating Agora tokens...');
+    
+    const { data: userTokenData, error: userTokenError } = await supabase.functions.invoke('smooth-action', {
+      body: {
+        channelName,
+        uid: userUid,
+        role: 1, // Publisher role
+        expireTime: (duration + 5) * 60 // Token expires after call duration + 5 min buffer
+      }
+    });
+
+    if (userTokenError) {
+      console.error('❌ Failed to generate Agora token for user:', userTokenError);
+      toast.error('Failed to initialize call. Please try again.');
+      return null;
+    }
+
+    const userAgoraToken = userTokenData?.token || null;
+    console.log('✅ Agora token generated for user (UID:', userUid, ')');
+
+    const { data: expertTokenData, error: expertTokenError } = await supabase.functions.invoke('smooth-action', {
+      body: {
+        channelName,
+        uid: expertUid,
+        role: 1, // Publisher role
+        expireTime: (duration + 5) * 60
+      }
+    });
+
+    if (expertTokenError) {
+      console.error('❌ Failed to generate Agora token for expert:', expertTokenError);
+      toast.error('Failed to initialize call. Please try again.');
+      return null;
+    }
+
+    const expertAgoraToken = expertTokenData?.token || null;
+    console.log('✅ Agora token generated for expert (UID:', expertUid, ')');
+
+    // Use Edge Function to create call session and request (bypasses RLS)
+    console.log('📞 Calling Edge Function to create call session and request...');
+    
+    const { data: callData, error: edgeFunctionError } = await supabase.functions.invoke('initiate-expert-call', {
+      body: {
+        expertId,
+        expertAuthId,
+        expertName,
+        expertAvatar,
+        userId,
+        userName,
+        userAvatar,
+        callType,
+        duration,
+        appointmentId,
+        channelName,
+        userAgoraToken,
+        expertAgoraToken,
+        userUid,
+        expertUid
+      }
+    });
+
+    if (edgeFunctionError || !callData) {
+      console.error('❌ Failed to create call via Edge Function:', edgeFunctionError);
+      toast.error('Failed to initiate call. Please try again.');
+      return null;
+    }
+
+    if (!callData.success) {
+      console.error('❌ Edge Function returned error:', callData.error);
+      toast.error(callData.error || 'Failed to initiate call');
+      return null;
+    }
+
+    console.log('✅ Call session and request created via Edge Function');
+
+    return {
+      callRequestId: callData.callRequestId || '',
+      channelName: callData.channelName || channelName,
+      agoraToken: callData.agoraToken || expertAgoraToken,
+      agoraUid: callData.agoraUid || expertUid,
+      callSessionId: callData.callSessionId || ''
+    };
+
+  } catch (error) {
+    console.error('❌ Error initiating call from expert:', error);
+    toast.error('Failed to initiate call');
+    return null;
+  }
+}
+
+/**
  * End a call and update session
  * @param callSessionId - The call session ID
  * @param duration - Call duration in seconds
