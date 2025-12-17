@@ -82,6 +82,7 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
   
   // Get expert's timezone from availability data
   const expertTimezone = availabilities?.[0]?.timezone || 'UTC';
+  
 
   // Use the payment hook
   const { processPayment, isLoading: paymentLoading } = useRazorpayPayment();
@@ -912,7 +913,7 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
                         >
                           <div className="text-center w-full">
                             <div className="font-medium">
-                              {formatTime(slot.start_time)}
+                              {formatTime(slot.start_time)}-{formatTime(slot.end_time)}
                             </div>
                             {isUserBooked && (
                               <div className="text-xs text-orange-600 font-medium mt-1">

@@ -111,10 +111,22 @@ export function useExpertAvailability(expertId?: string) {
 
   // Get available time slots for a specific date - split availability windows into 30-minute slots
   const generate30MinuteSlots = (date: string) => {
-    const targetDate = new Date(date);
+    // Parse date in local timezone to avoid UTC timezone issues
+    // Date string format: "YYYY-MM-DD"
+    const [year, month, day] = date.split('-').map(Number);
+    const targetDate = new Date(year, month - 1, day); // month is 0-indexed in Date constructor
     const dayOfWeek = targetDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
     
-    console.log('Getting expert slots for date:', date, 'dayOfWeek:', dayOfWeek);
+    // Map day of week to day name for better logging
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const dayName = dayNames[dayOfWeek];
+    
+    console.log('📆 Getting expert slots for date:', date, {
+      dayOfWeek,
+      dayName,
+      parsedDate: targetDate.toISOString(),
+      localDate: targetDate.toLocaleDateString()
+    });
 
     const availableSlots: Array<{
       id: string;
@@ -193,45 +205,93 @@ export function useExpertAvailability(expertId?: string) {
     };
 
     // Iterate through each availability and get matching slots
+    console.log('🔍 Filtering slots for date:', date, 'dayOfWeek:', dayOfWeek, 'total availabilities:', availabilities.length);
+    
     availabilities.forEach(availability => {
       // Check BOTH date range AND day_of_week for recurring availability
-      const startDate = new Date(availability.start_date);
-      const endDate = new Date(availability.end_date);
+      // Parse dates in local timezone to avoid UTC timezone issues
+      const parseLocalDate = (dateStr: string) => {
+        const [y, m, d] = dateStr.split('-').map(Number);
+        return new Date(y, m - 1, d); // month is 0-indexed
+      };
+      
+      const startDate = parseLocalDate(availability.start_date);
+      const endDate = parseLocalDate(availability.end_date);
       
       // Check if the target date is within the availability date range
-      const isDateInRange = targetDate >= startDate && targetDate <= endDate;
+      // Compare dates at midnight (00:00:00) to avoid time component issues
+      const targetDateMidnight = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
+      const startDateMidnight = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+      const endDateMidnight = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+      
+      const isDateInRange = targetDateMidnight >= startDateMidnight && targetDateMidnight <= endDateMidnight;
+      
+      console.log('📅 Checking availability:', availability.id, {
+        timezone: availability.timezone || 'not set',
+        startDate: availability.start_date,
+        endDate: availability.end_date,
+        isDateInRange,
+        targetDate: date,
+        targetDayOfWeek: dayOfWeek
+      });
       
       if (!isDateInRange) {
-        console.log('Date not in range for availability:', availability.id, {
+        console.log('❌ Date not in range for availability:', availability.id, {
           targetDate: date,
+          targetDateMidnight: targetDateMidnight.toISOString(),
           startDate: availability.start_date,
-          endDate: availability.end_date
+          startDateMidnight: startDateMidnight.toISOString(),
+          endDate: availability.end_date,
+          endDateMidnight: endDateMidnight.toISOString()
         });
         return;
       }
       
-      console.log('Date within range for availability:', availability.id, 'type:', availability.availability_type);
+      console.log('✅ Date within range for availability:', availability.id, {
+        type: availability.availability_type,
+        timezone: availability.timezone || 'not set',
+        timeSlotsCount: availability.time_slots?.length || 0
+      });
       
       // Get slots that match this date
       availability.time_slots?.forEach(slot => {
         // Skip already booked slots
         if (slot.is_booked) {
-          console.log('Skipping booked slot:', slot.id);
+          console.log('⏭️ Skipping booked slot:', slot.id);
           return;
         }
 
         let includeSlot = false;
+        const reason: string[] = [];
         
         // For recurring availability, check BOTH date range (already checked above) AND day of week
-        if (availability.availability_type === 'recurring' && slot.day_of_week === dayOfWeek) {
-          includeSlot = true;
-          console.log('✅ Including recurring slot:', slot.id, 'for day:', dayOfWeek, 'date:', date);
+        if (availability.availability_type === 'recurring') {
+          if (slot.day_of_week === dayOfWeek) {
+            includeSlot = true;
+            reason.push(`day_of_week matches (${slot.day_of_week} === ${dayOfWeek})`);
+          } else {
+            reason.push(`day_of_week mismatch (slot: ${slot.day_of_week}, target: ${dayOfWeek})`);
+          }
         }
         // For date range availability, match specific date
-        else if (availability.availability_type === 'date_range' && slot.specific_date === date) {
-          includeSlot = true;
-          console.log('✅ Including date-specific slot:', slot.id, 'for date:', date);
+        else if (availability.availability_type === 'date_range') {
+          if (slot.specific_date === date) {
+            includeSlot = true;
+            reason.push(`specific_date matches (${slot.specific_date} === ${date})`);
+          } else {
+            reason.push(`specific_date mismatch (slot: ${slot.specific_date}, target: ${date})`);
+          }
         }
+
+        console.log('🔎 Slot check:', {
+          slotId: slot.id,
+          startTime: slot.start_time,
+          endTime: slot.end_time,
+          dayOfWeek: slot.day_of_week,
+          specificDate: slot.specific_date,
+          includeSlot,
+          reason: reason.join(', ')
+        });
 
         if (includeSlot) {
           // Split the time window into 30-minute slots
@@ -241,7 +301,10 @@ export function useExpertAvailability(expertId?: string) {
             availability.id,
             availability.expert_id
           );
+          console.log(`✅ Including ${thirtyMinSlots.length} slots from ${slot.start_time} to ${slot.end_time}`);
           availableSlots.push(...thirtyMinSlots);
+        } else {
+          console.log(`❌ Excluding slot ${slot.start_time}-${slot.end_time}: ${reason.join(', ')}`);
         }
       });
     });
@@ -251,7 +314,15 @@ export function useExpertAvailability(expertId?: string) {
       index === self.findIndex(s => s.start_time === slot.start_time && s.end_time === slot.end_time)
     );
     
-    console.log('Final available slots (after deduplication):', uniqueSlots.length, uniqueSlots);
+    console.log('📊 Final available slots summary:', {
+      date,
+      dayOfWeek,
+      dayName: dayNames[dayOfWeek],
+      totalSlotsBeforeDedup: availableSlots.length,
+      totalSlotsAfterDedup: uniqueSlots.length,
+      slots: uniqueSlots.map(s => `${s.start_time}-${s.end_time}`)
+    });
+    
     return uniqueSlots.sort((a, b) => a.start_time.localeCompare(b.start_time));
   };
 

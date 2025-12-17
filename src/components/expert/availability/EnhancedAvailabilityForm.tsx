@@ -789,7 +789,14 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
 
           {/* Weekly Schedule */}
           <div className="space-y-4">
-            <Label>Weekly Availability Schedule</Label>
+            <div className="flex items-center justify-between">
+              <Label>Weekly Availability Schedule</Label>
+              {startDate && endDate && (
+                <span className="text-xs text-muted-foreground">
+                  Active: {new Date(startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} - {new Date(endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                </span>
+              )}
+            </div>
             <div className="space-y-4">
               {DAYS.map((day) => (
                 <Card key={day} className={`transition-colors ${weeklySchedule[day].enabled ? 'border-primary/20 bg-primary/5' : 'border-border'}`}>
