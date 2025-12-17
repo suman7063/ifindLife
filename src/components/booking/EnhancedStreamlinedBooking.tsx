@@ -913,14 +913,14 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
                             isBooked || isUserBooked ? 'opacity-50 cursor-not-allowed' : ''
                           } ${
                             isSelected 
-                              ? 'bg-ifind-aqua text-white hover:bg-ifind-aqua/90' 
-                              : 'border-ifind-teal/30 text-ifind-charcoal hover:bg-ifind-teal/10'
+                              ? 'bg-ifind-aqua text-white hover:bg-ifind-aqua/90 hover:text-white' 
+                              : 'border-ifind-teal/30 text-ifind-charcoal hover:bg-ifind-teal/10 hover:text-ifind-charcoal'
                           }`}
                           onClick={() => !isBooked && !isUserBooked && toggleSlotSelection(slot.id)}
                           disabled={isBooked || isUserBooked}
                         >
                           <div className="text-center w-full">
-                            <div className="font-medium">
+                            <div className={`font-medium ${isSelected ? 'text-white' : 'text-ifind-charcoal'}`}>
                               {formatTime(slot.start_time)}-{formatTime(slot.end_time)}
                             </div>
                             {isUserBooked && (
