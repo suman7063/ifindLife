@@ -34,7 +34,6 @@ import { useExpertNoShowWarning } from '@/hooks/useExpertNoShowWarning';
 import { supabase } from '@/integrations/supabase/client';
 import { AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
-import { initiateCallFromExpert } from '@/services/callService';
 
 const SessionManager: React.FC = () => {
   const { expert } = useSimpleAuth();
@@ -240,47 +239,11 @@ const SessionManager: React.FC = () => {
 
   const startSession = async (session: Session) => {
     try {
-      if (!expert?.auth_id) {
-        toast.error('Expert information not available');
-        return;
-      }
-
-      // Get expert profile for name and avatar
-      const { data: expertProfile } = await supabase
-        .from('expert_accounts')
-        .select('name, profile_picture')
-        .eq('auth_id', expert.auth_id)
-        .single();
-
-      // Determine call type - default to video for scheduled sessions
-      const callType: 'video' | 'audio' = session.type === 'video' ? 'video' : 
-                                          session.type === 'audio' ? 'audio' : 'video';
-      
-      // Initiate call from expert to user
-      const callData = await initiateCallFromExpert({
-        expertId: expert.auth_id,
-        expertAuthId: expert.auth_id,
-        expertName: expertProfile?.name || 'Expert',
-        expertAvatar: expertProfile?.profile_picture || undefined,
-        userId: session.clientId,
-        userName: session.clientName,
-        userAvatar: session.clientAvatar,
-        callType: callType,
-        duration: session.duration,
-        appointmentId: session.id
-      });
-
-      if (callData) {
-        // Update session status to in-progress
-        await updateSessionStatus(session.id, 'in-progress');
-        setSessionTimer({ isRunning: true, elapsed: 0 });
-        toast.success(`Call initiated. Waiting for ${session.clientName} to accept...`);
-      } else {
-        toast.error('Failed to initiate call. Please try again.');
-      }
+      await updateSessionStatus(session.id, 'in-progress');
+      setSessionTimer({ isRunning: true, elapsed: 0 });
+      toast.success(`Starting ${session.type} session with ${session.clientName}`);
     } catch (error) {
       console.error('Error starting session:', error);
-      toast.error('Failed to start session');
     }
   };
 
