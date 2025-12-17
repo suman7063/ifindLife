@@ -94,8 +94,15 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
 
   // Fetch available time slots for selected date
   useEffect(() => {
+    // Clear slots when date changes to ensure fresh data
+    setAvailableSlots([]);
+    setSelectedSlots([]);
+    
     if (selectedDate && expert?.auth_id && !availabilityLoading && hasAvailability) {
       fetchAvailableTimeSlots();
+    } else if (!selectedDate || !expert?.auth_id || !hasAvailability) {
+      setAvailableSlots([]);
+      setLoadingSlots(false);
     }
   }, [selectedDate, expert?.auth_id, availabilityLoading, hasAvailability]);
 
@@ -129,9 +136,16 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
 
     try {
       setLoadingSlots(true);
-      const dateStr = selectedDate.toISOString().split('T')[0];
+      // Clear previous slots immediately
+      setAvailableSlots([]);
       
-      console.log('BookingTab: Fetching availability for date:', dateStr, 'expert:', expert.auth_id);
+      // Format date in local timezone to avoid UTC issues
+      const year = selectedDate.getFullYear();
+      const month = selectedDate.getMonth();
+      const day = selectedDate.getDate();
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      
+      console.log('BookingTab: Fetching availability for date:', dateStr, 'expert:', expert.auth_id, 'selectedDate:', selectedDate);
       
       // Get expert's actual availability slots using the hook
       const expertSlots = getAvailableSlots(dateStr);
