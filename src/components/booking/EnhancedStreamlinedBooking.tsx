@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -36,6 +37,7 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
   onBookingComplete = () => {}
 }) => {
   const { user } = useSimpleAuth();
+  const navigate = useNavigate();
   
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
@@ -473,12 +475,36 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
     // Check wallet balance if using wallet
     if (paymentMethod === 'wallet') {
       if (safeWalletBalance < totalCost) {
-        toast.error('Insufficient wallet balance. Please add credits or use payment gateway.');
+        const shortfall = totalCost - safeWalletBalance;
+        const currencySymbol = userCurrency === 'INR' ? '₹' : '€';
+        toast.error('Insufficient Wallet Balance', {
+          description: `You need ${currencySymbol}${shortfall.toFixed(2)} more. Redirecting to wallet recharge...`,
+          duration: 3000,
+          action: {
+            label: 'Go to Wallet',
+            onClick: () => navigate('/user-dashboard/wallet')
+          }
+        });
+        setTimeout(() => {
+          navigate('/user-dashboard/wallet');
+        }, 500);
         return;
       }
       const hasBalance = await checkBalance(totalCost);
       if (!hasBalance) {
-        toast.error('Insufficient wallet balance. Please add credits or use payment gateway.');
+        const shortfall = totalCost - safeWalletBalance;
+        const currencySymbol = userCurrency === 'INR' ? '₹' : '€';
+        toast.error('Insufficient Wallet Balance', {
+          description: `You need ${currencySymbol}${shortfall.toFixed(2)} more. Redirecting to wallet recharge...`,
+          duration: 3000,
+          action: {
+            label: 'Go to Wallet',
+            onClick: () => navigate('/user-dashboard/wallet')
+          }
+        });
+        setTimeout(() => {
+          navigate('/user-dashboard/wallet');
+        }, 500);
         return;
       }
     }

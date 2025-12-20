@@ -1,4 +1,6 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
@@ -22,6 +24,8 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   currency,
   loading = false
 }) => {
+  const navigate = useNavigate();
+  
   // Ensure all values are numbers
   const safeWalletBalance = typeof walletBalance === 'number' && !isNaN(walletBalance) ? walletBalance : 0;
   const safeRequiredAmount = typeof requiredAmount === 'number' && !isNaN(requiredAmount) ? requiredAmount : 0;
@@ -29,6 +33,28 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   const symbol = currency === 'INR' ? '₹' : '€';
   const hasSufficientBalance = safeWalletBalance >= safeRequiredAmount;
   const balanceShortfall = Math.max(0, safeRequiredAmount - safeWalletBalance);
+
+  // Handle payment method change with redirect for insufficient balance
+  const handleMethodChange = (value: string) => {
+    const method = value as 'wallet' | 'gateway';
+    
+    // If user tries to select wallet with insufficient balance, redirect to wallet recharge
+    if (method === 'wallet' && !hasSufficientBalance && safeRequiredAmount > 0) {
+      toast.error('Insufficient Wallet Balance', {
+        description: `You need ${symbol}${balanceShortfall.toFixed(2)} more. Redirecting to wallet recharge...`,
+        duration: 3000
+      });
+      
+      // Redirect to wallet page after a short delay
+      setTimeout(() => {
+        navigate('/user-dashboard/wallet');
+      }, 500);
+      return;
+    }
+    
+    // Otherwise, proceed with normal method change
+    onMethodChange(method);
+  };
 
   return (
     <div className="space-y-4">
@@ -41,14 +67,22 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
 
       <RadioGroup
         value={selectedMethod}
-        onValueChange={(value) => onMethodChange(value as 'wallet' | 'gateway')}
+        onValueChange={handleMethodChange}
         disabled={loading}
       >
         <div className="space-y-3">
           {/* Wallet Option */}
-          <Card className={`cursor-pointer transition-all ${
-            selectedMethod === 'wallet' ? 'ring-2 ring-primary' : ''
-          } ${!hasSufficientBalance ? 'opacity-60' : ''}`}>
+          <Card 
+            className={`cursor-pointer transition-all ${
+              selectedMethod === 'wallet' ? 'ring-2 ring-primary' : ''
+            } ${!hasSufficientBalance ? 'opacity-60' : ''}`}
+            onClick={() => {
+              // Allow clicking on card even if radio is disabled
+              if (!hasSufficientBalance && safeRequiredAmount > 0) {
+                handleMethodChange('wallet');
+              }
+            }}
+          >
             <CardContent className="p-4">
               <div className="flex items-center space-x-3">
                 <RadioGroupItem value="wallet" id="wallet" disabled={!hasSufficientBalance || loading} />

@@ -86,13 +86,14 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
       setIsProcessingRefund(true);
 
       // First, check if refund was already processed for this appointment
+      // Check for both 'expert_no_show' and 'refund' reasons
       const { data: existingAppointmentRefund } = await supabase
         .from('wallet_transactions' as never)
         .select('id')
         .eq('reference_id', aptId)
         .eq('reference_type', 'appointment')
         .eq('type', 'credit')
-        .eq('reason', 'expert_no_show')
+        .in('reason', ['expert_no_show', 'refund'])
         .maybeSingle();
 
       if (existingAppointmentRefund) {
@@ -137,13 +138,14 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
         paymentReferenceType = 'call_session';
 
         // Check if refund already processed for call session
+        // Check for both 'expert_no_show' and 'refund' reasons
         const { data: existingCallRefund } = await supabase
           .from('wallet_transactions' as never)
         .select('id')
         .eq('reference_id', callSession.id)
         .eq('reference_type', 'call_session')
         .eq('type', 'credit')
-        .eq('reason', 'expert_no_show')
+        .in('reason', ['expert_no_show', 'refund'])
         .maybeSingle();
 
         if (existingCallRefund) {
@@ -185,8 +187,9 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
       const { data, error } = await supabase.functions.invoke('process-call-refund', {
         body: {
           callSessionId: callSession.id,
+          duration: 0, // Expert didn't join, so duration is 0
           reason: 'expert_no_show',
-            refundFullAmount: true
+          refundFullAmount: true
         }
       });
 
@@ -347,20 +350,20 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
       // Check if refund was already processed (check both appointment and call_session)
       let refundProcessed = false;
       
-      // Check appointment-level refund
+      // Check appointment-level refund (check for both 'expert_no_show' and 'refund' reasons)
       const { data: appointmentRefund } = await supabase
         .from('wallet_transactions' as never)
         .select('id')
         .eq('reference_id', appointmentId)
         .eq('reference_type', 'appointment')
         .eq('type', 'credit')
-        .eq('reason', 'expert_no_show')
+        .in('reason', ['expert_no_show', 'refund'])
         .maybeSingle();
       
       if (appointmentRefund) {
         refundProcessed = true;
       } else {
-        // Check call session refund
+        // Check call session refund (check for both 'expert_no_show' and 'refund' reasons)
       const { data: callSession } = await supabase
         .from('call_sessions')
         .select('id')
@@ -376,7 +379,7 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
           .eq('reference_id', callSession.id)
           .eq('reference_type', 'call_session')
           .eq('type', 'credit')
-          .eq('reason', 'expert_no_show')
+          .in('reason', ['expert_no_show', 'refund'])
           .maybeSingle();
         
           refundProcessed = !!callRefund;

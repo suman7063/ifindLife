@@ -52,9 +52,9 @@ serve(async (req) => {
       )
     }
 
-    const { callSessionId, duration } = requestBody
+    const { callSessionId, duration, reason, refundFullAmount } = requestBody
 
-    console.log('📥 Received refund request:', { callSessionId, duration })
+    console.log('📥 Received refund request:', { callSessionId, duration, reason, refundFullAmount })
 
     if (!callSessionId) {
       console.error('❌ Missing callSessionId in request')
@@ -64,10 +64,11 @@ serve(async (req) => {
       )
     }
 
-    if (duration === undefined || duration === null) {
+    // Duration is required only if not doing a full refund (expert no-show case)
+    if (!refundFullAmount && (duration === undefined || duration === null)) {
       console.error('❌ Missing duration in request')
       return new Response(
-        JSON.stringify({ error: 'duration is required' }),
+        JSON.stringify({ error: 'duration is required when refundFullAmount is not true' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
@@ -97,12 +98,12 @@ serve(async (req) => {
     // from endCall() which processes the refund before updating the status
     // The refund should be processed as part of the call ending process
 
-    // Check if refund already processed
+    // Check if refund already processed (check for both 'refund' and 'expert_no_show' reasons)
     const { data: existingRefund, error: checkError } = await supabaseAdmin
       .from('wallet_transactions')
       .select('id')
       .eq('user_id', callSession.user_id)
-      .eq('reason', 'refund')
+      .in('reason', ['refund', 'expert_no_show'])
       .eq('reference_type', 'call_session')
       .or(`reference_id.eq.${callSessionId},metadata->>reference_id.eq.${callSessionId}`)
       .limit(1)
@@ -147,10 +148,28 @@ serve(async (req) => {
       )
     }
 
-    const actualDurationMinutes = duration / 60 // Convert seconds to minutes
-    const remainingMinutes = Math.max(0, callSession.selected_duration - actualDurationMinutes)
-    const perMinuteRate = callSession.cost / callSession.selected_duration
-    const refundAmount = remainingMinutes * perMinuteRate
+    // Calculate refund amount
+    let refundAmount = 0
+    let remainingMinutes = 0
+    let actualDurationMinutes = 0
+
+    if (refundFullAmount) {
+      // Full refund for expert no-show or other cases
+      refundAmount = callSession.cost
+      remainingMinutes = callSession.selected_duration || 0
+      actualDurationMinutes = 0
+      console.log('💰 Processing full refund:', {
+        refundFullAmount: true,
+        full_cost: callSession.cost,
+        selected_duration: callSession.selected_duration
+      })
+    } else {
+      // Partial refund based on actual duration
+      actualDurationMinutes = (duration || 0) / 60 // Convert seconds to minutes
+      remainingMinutes = Math.max(0, callSession.selected_duration - actualDurationMinutes)
+      const perMinuteRate = callSession.cost / callSession.selected_duration
+      refundAmount = remainingMinutes * perMinuteRate
+    }
     
     // Round to 2 decimal places
     const roundedRefund = Math.round(refundAmount * 100) / 100
@@ -190,6 +209,17 @@ serve(async (req) => {
     // Validate currency from call session
     const validCurrency = callSession.currency === 'EUR' ? 'EUR' : 'INR'
     
+    // Determine refund reason and description
+    const refundReason = reason === 'expert_no_show' ? 'expert_no_show' : 'refund'
+    let refundDescription = ''
+    if (refundFullAmount && reason === 'expert_no_show') {
+      refundDescription = `Full refund for expert no-show - Appointment not attended by expert`
+    } else if (refundFullAmount) {
+      refundDescription = `Full refund processed`
+    } else {
+      refundDescription = `Refund for call ended. Remaining ${remainingMinutes.toFixed(2)} minutes refunded.`
+    }
+    
     // Create credit transaction
     const { data: transactionData, error: transactionError } = await supabaseAdmin
       .from('wallet_transactions')
@@ -198,10 +228,10 @@ serve(async (req) => {
         type: 'credit',
         amount: roundedRefund,
         currency: validCurrency,
-        reason: 'refund',
+        reason: refundReason,
         reference_id: isUUID ? callSessionId : null,
         reference_type: 'call_session',
-        description: `Refund for call ended by expert. Remaining ${remainingMinutes.toFixed(2)} minutes refunded.`,
+        description: refundDescription,
         expires_at: expiresAt.toISOString(),
         metadata: isUUID ? {} : { reference_id: callSessionId }
       })
