@@ -99,28 +99,43 @@ serve(async (req) => {
     // The refund should be processed as part of the call ending process
 
     // Check if refund already processed (check for both 'refund' and 'expert_no_show' reasons)
-    const { data: existingRefund, error: checkError } = await supabaseAdmin
+    // Check ALL existing refunds to detect duplicates
+    const { data: existingRefunds, error: checkError } = await supabaseAdmin
       .from('wallet_transactions')
-      .select('id')
+      .select('id, amount, created_at')
       .eq('user_id', callSession.user_id)
       .in('reason', ['refund', 'expert_no_show'])
       .eq('reference_type', 'call_session')
       .or(`reference_id.eq.${callSessionId},metadata->>reference_id.eq.${callSessionId}`)
-      .limit(1)
-      .maybeSingle()
 
     // Ignore errors when checking for existing refund (might be first time)
     if (checkError && checkError.code !== 'PGRST116') {
       console.warn('⚠️ Error checking for existing refund (continuing anyway):', checkError.message)
     }
 
-    if (existingRefund) {
-      console.log('ℹ️ Refund already processed for this call session:', existingRefund.id)
+    if (existingRefunds && existingRefunds.length > 0) {
+      console.log('⚠️ Duplicate refund detected! Existing refunds:', {
+        count: existingRefunds.length,
+        refunds: existingRefunds.map(r => ({
+          id: r.id,
+          amount: r.amount,
+          created_at: r.created_at
+        }))
+      })
+      
+      // Return the most recent refund instead of creating a new one
+      const mostRecent = existingRefunds.sort((a: any, b: any) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      )[0]
+      
       return new Response(
         JSON.stringify({ 
           success: true, 
           message: 'Refund already processed',
-          refund_id: existingRefund.id
+          refund_id: mostRecent.id,
+          duplicate: true,
+          existing_count: existingRefunds.length,
+          transaction: mostRecent
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
@@ -152,12 +167,14 @@ serve(async (req) => {
     let refundAmount = 0
     let remainingMinutes = 0
     let actualDurationMinutes = 0
+    let perMinuteRate = 0
 
     if (refundFullAmount) {
       // Full refund for expert no-show or other cases
       refundAmount = callSession.cost
       remainingMinutes = callSession.selected_duration || 0
       actualDurationMinutes = 0
+      perMinuteRate = callSession.selected_duration > 0 ? callSession.cost / callSession.selected_duration : 0
       console.log('💰 Processing full refund:', {
         refundFullAmount: true,
         full_cost: callSession.cost,
@@ -167,7 +184,7 @@ serve(async (req) => {
       // Partial refund based on actual duration
       actualDurationMinutes = (duration || 0) / 60 // Convert seconds to minutes
       remainingMinutes = Math.max(0, callSession.selected_duration - actualDurationMinutes)
-      const perMinuteRate = callSession.cost / callSession.selected_duration
+      perMinuteRate = callSession.selected_duration > 0 ? callSession.cost / callSession.selected_duration : 0
       refundAmount = remainingMinutes * perMinuteRate
     }
     

@@ -82,7 +82,8 @@ serve(async (req) => {
           params.reference_type || 'appointment',
           params.description,
           corsHeaders,
-          params.currency || 'INR'
+          params.currency || 'INR',
+          params.metadata || null // Accept metadata for storing multiple appointment IDs
         )
 
       default:
@@ -208,6 +209,61 @@ async function addCredits(
     // Validate currency
     const validCurrency = currency === 'EUR' ? 'EUR' : 'INR'
 
+    // Check for existing refund/credit transaction to prevent duplicates
+    // This is especially important for expert_no_show refunds
+    if (referenceId && referenceType && (reason === 'expert_no_show' || reason === 'refund')) {
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(referenceId)
+      
+      let existingQuery = supabase
+        .from('wallet_transactions')
+        .select('id, amount, created_at')
+        .eq('user_id', userId)
+        .eq('type', 'credit')
+        .eq('reference_type', referenceType)
+        .in('reason', ['expert_no_show', 'refund'])
+        .limit(10) // Check multiple to see if duplicates exist
+
+      if (isUUID) {
+        existingQuery = existingQuery.eq('reference_id', referenceId)
+      } else {
+        existingQuery = existingQuery.eq('metadata->>reference_id', referenceId)
+      }
+
+      const { data: existingTransactions, error: checkError } = await existingQuery
+
+      if (checkError) {
+        console.warn('⚠️ Error checking for existing refunds:', checkError)
+      }
+
+      if (existingTransactions && existingTransactions.length > 0) {
+        console.log('⚠️ Duplicate refund detected! Existing refunds:', {
+          count: existingTransactions.length,
+          refunds: existingTransactions.map(t => ({
+            id: t.id,
+            amount: t.amount,
+            created_at: t.created_at
+          }))
+        })
+        
+        // Return the most recent refund instead of creating a new one
+        const mostRecent = existingTransactions.sort((a: any, b: any) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        )[0]
+
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            message: 'Refund already processed',
+            transaction: mostRecent,
+            duplicate: true,
+            existing_count: existingTransactions.length,
+            new_balance: await getWalletBalanceValue(supabase, userId)
+          }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+    }
+
     // Calculate expiry (12 months from now)
     const expiresAt = new Date()
     expiresAt.setMonth(expiresAt.getMonth() + 12)
@@ -233,7 +289,37 @@ async function addCredits(
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      // Check if it's a duplicate key error
+      if (error.code === '23505' || error.message?.includes('duplicate') || error.message?.includes('unique')) {
+        console.warn('⚠️ Duplicate transaction prevented by database constraint')
+        // Try to find the existing transaction
+        const { data: existing } = await supabase
+          .from('wallet_transactions')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('type', 'credit')
+          .eq('reference_type', referenceType)
+          .in('reason', ['expert_no_show', 'refund'])
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+        
+        if (existing) {
+          return new Response(
+            JSON.stringify({ 
+              success: true, 
+              message: 'Refund already processed (duplicate prevented)',
+              transaction: existing,
+              duplicate: true,
+              new_balance: await getWalletBalanceValue(supabase, userId)
+            }),
+            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          )
+        }
+      }
+      throw error
+    }
 
     // Update user's wallet_balance (for backward compatibility)
     const { error: updateError } = await supabase
@@ -272,7 +358,8 @@ async function deductCredits(
   referenceType: string | null,
   description: string | null,
   corsHeaders: any,
-  currency: string = 'INR'
+  currency: string = 'INR',
+  metadata: Record<string, any> | null = null
 ) {
   try {
     // Validate amount
@@ -316,7 +403,8 @@ async function deductCredits(
     })
     
     // Prepare metadata - store referenceId in metadata if it's not a UUID
-    const transactionMetadata: Record<string, any> = {};
+    // Also merge any provided metadata (e.g., appointment_ids array for multiple slots)
+    const transactionMetadata: Record<string, any> = metadata ? { ...metadata } : {};
     if (referenceId && !isUUID) {
       transactionMetadata.reference_id = referenceId;
     }

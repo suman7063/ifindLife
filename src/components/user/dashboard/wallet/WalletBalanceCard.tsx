@@ -133,12 +133,28 @@ const WalletBalanceCard: React.FC<WalletBalanceCardProps> = ({ user, onBalanceUp
 
     subscriptionRef.current = { transactionsChannel, usersChannel };
 
+    // Listen for manual wallet balance refresh events (e.g., after refund)
+    const handleWalletRefresh = async (event: CustomEvent) => {
+      console.log('💰 Wallet balance refresh event received:', event.detail);
+      await fetchBalance();
+      setUpdatingBalance((prev) => {
+        if (prev) {
+          toast.success('Wallet balance updated!');
+          return false;
+        }
+        return prev;
+      });
+    };
+
+    window.addEventListener('walletBalanceRefresh', handleWalletRefresh as EventListener);
+
     return () => {
       console.log('🔔 Cleaning up wallet balance subscriptions');
       if (subscriptionRef.current) {
         supabase.removeChannel(subscriptionRef.current.transactionsChannel);
         supabase.removeChannel(subscriptionRef.current.usersChannel);
       }
+      window.removeEventListener('walletBalanceRefresh', handleWalletRefresh as EventListener);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);

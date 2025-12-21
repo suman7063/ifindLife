@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -6,6 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { Circle, Clock, UserMinus, Wifi, WifiOff, Phone, PhoneOff } from 'lucide-react';
 import { useExpertPresence } from '@/contexts/ExpertPresenceContext';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 type ExpertStatus = 'available' | 'busy' | 'away' | 'offline';
@@ -15,6 +16,223 @@ const MasterStatusControl: React.FC = () => {
   const { updateExpertPresence, getExpertPresence, checkExpertPresence, bulkCheckPresence } = useExpertPresence();
   const [currentStatus, setCurrentStatus] = useState<ExpertStatus>('offline');
   const [acceptingCalls, setAcceptingCalls] = useState(false);
+  const isAutoUpdatingRef = useRef(false);
+
+  // Check if expert has an active booking/session
+  const checkActiveBooking = async (expertId: string): Promise<boolean> => {
+    try {
+      const now = new Date();
+      // Get today's date in local timezone (YYYY-MM-DD format)
+      // Use local date methods to avoid timezone issues
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const todayStr = `${year}-${month}-${day}`;
+      
+      console.log('📅 Date calculation:', {
+        now: now.toString(),
+        nowISO: now.toISOString(),
+        localDate: todayStr,
+        year,
+        month: now.getMonth() + 1,
+        day: now.getDate(),
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+      });
+      
+      // Get current time in HH:MM format
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+      const currentTimeStr = `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`;
+
+      console.log('🔍 Checking active bookings:', { expertId, todayStr, currentTimeStr });
+
+      // First, let's check all appointments for this expert to debug
+      const { data: allAppointments, error: allError } = await supabase
+        .from('appointments')
+        .select('id, appointment_date, start_time, end_time, duration, status, expert_id')
+        .eq('expert_id', expertId)
+        .order('appointment_date', { ascending: true })
+        .order('start_time', { ascending: true })
+        .limit(10);
+      
+      console.log('📋 All appointments for expert:', allAppointments?.length || 0, allAppointments);
+      
+      // Check today's appointments specifically
+      const todayAppointments = allAppointments?.filter(apt => apt.appointment_date === todayStr) || [];
+      console.log('📅 Today\'s appointments (all statuses):', todayAppointments.length, todayAppointments.map(apt => ({
+        id: apt.id,
+        date: apt.appointment_date,
+        startTime: apt.start_time,
+        endTime: apt.end_time,
+        status: apt.status,
+        duration: apt.duration
+      })));
+      
+      // Log status details for debugging
+      todayAppointments.forEach(apt => {
+        console.log('🔍 Appointment status check:', {
+          id: apt.id,
+          status: apt.status,
+          statusType: typeof apt.status,
+          isInFilter: ['scheduled', 'confirmed', 'in-progress', 'pending'].includes(apt.status),
+          startTime: apt.start_time,
+          currentTime: currentTimeStr
+        });
+      });
+      
+      if (allError) {
+        console.error('❌ Error fetching all appointments:', allError);
+      }
+
+      // Fetch appointments for today that are scheduled or in-progress
+      // Note: Including 'cancelled' temporarily as requested
+      const { data: appointments, error } = await supabase
+        .from('appointments')
+        .select('id, appointment_date, start_time, end_time, duration, status')
+        .eq('expert_id', expertId)
+        .eq('appointment_date', todayStr)
+        .in('status', ['scheduled', 'confirmed', 'in-progress', 'pending', 'cancelled']);
+      
+      console.log('🔍 Query details:', {
+        expertId,
+        todayStr,
+        statusFilter: ['scheduled', 'confirmed', 'in-progress', 'pending', 'cancelled']
+      });
+
+      if (error) {
+        console.error('❌ Error checking active bookings:', error);
+        return false;
+      }
+
+      console.log('📅 Found appointments:', appointments?.length || 0, appointments);
+
+      if (!appointments || appointments.length === 0) {
+        return false;
+      }
+
+      // Check if any appointment is currently active
+      for (const appointment of appointments) {
+        const startTime = appointment.start_time?.split(':').slice(0, 2).join(':') || '';
+        let endTime = appointment.end_time?.split(':').slice(0, 2).join(':') || '';
+        
+        console.log('📋 Checking appointment:', {
+          id: appointment.id,
+          startTime,
+          endTime,
+          duration: appointment.duration,
+          status: appointment.status
+        });
+        
+        // If no end_time, calculate from duration
+        if (!endTime && appointment.duration && startTime) {
+          const [startHour, startMin] = startTime.split(':').map(Number);
+          const endMinutes = startHour * 60 + startMin + appointment.duration;
+          const endHour = Math.floor(endMinutes / 60);
+          const endMin = endMinutes % 60;
+          endTime = `${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}`;
+          console.log('📐 Calculated endTime from duration:', endTime);
+        }
+
+        // Check if current time is within the appointment time range
+        if (startTime && endTime) {
+          // Convert times to minutes for accurate comparison
+          const [currentHourNum, currentMinNum] = [currentHour, currentMinute];
+          const currentMinutes = currentHourNum * 60 + currentMinNum;
+          
+          const [startHourNum, startMinNum] = startTime.split(':').map(Number);
+          const startMinutes = startHourNum * 60 + startMinNum;
+          
+          const [endHourNum, endMinNum] = endTime.split(':').map(Number);
+          const endMinutes = endHourNum * 60 + endMinNum;
+          
+          const isAfterStart = currentMinutes >= startMinutes;
+          const isBeforeEnd = currentMinutes <= endMinutes;
+          
+          console.log('⏰ Time comparison:', {
+            currentTime: `${currentTimeStr} (${currentMinutes} min)`,
+            startTime: `${startTime} (${startMinutes} min)`,
+            endTime: `${endTime} (${endMinutes} min)`,
+            isAfterStart,
+            isBeforeEnd,
+            isActive: isAfterStart && isBeforeEnd
+          });
+          
+          if (isAfterStart && isBeforeEnd) {
+            console.log('✅ Active booking found!', appointment.id);
+            return true; // Active booking found
+          }
+        } else {
+          console.warn('⚠️ Missing time data for appointment:', appointment.id, { startTime, endTime });
+        }
+      }
+
+      console.log('❌ No active booking found');
+      return false;
+    } catch (error) {
+      console.error('❌ Error checking active booking:', error);
+      return false;
+    }
+  };
+
+  // Automatically update status based on active bookings
+  const updateStatusBasedOnBookings = useCallback(async () => {
+    if (!expert?.auth_id || isAutoUpdatingRef.current) {
+      return;
+    }
+
+    try {
+      isAutoUpdatingRef.current = true;
+      console.log('🔄 Starting status check for expert:', expert.auth_id);
+      const hasActiveBooking = await checkActiveBooking(expert.auth_id);
+      
+      // Get current presence status
+      const currentPresence = await checkExpertPresence(expert.auth_id);
+      const currentPresenceStatus = currentPresence.status === 'available' ? 'available' :
+                                    currentPresence.status === 'busy' ? 'busy' :
+                                    currentPresence.status === 'away' ? 'away' : 'offline';
+
+      console.log('📊 Status check result:', {
+        hasActiveBooking,
+        currentPresenceStatus,
+        shouldUpdate: hasActiveBooking && currentPresenceStatus !== 'busy'
+      });
+
+      // If there's an active booking and status is not already busy, set to busy
+      if (hasActiveBooking && currentPresenceStatus !== 'busy') {
+        // Only auto-update if status is available or away (don't override offline)
+        if (currentPresenceStatus === 'available' || currentPresenceStatus === 'away') {
+          console.log('🔄 Updating status to busy...');
+          // Store the previous status in database before setting to busy
+          await updateExpertPresence(expert.auth_id, 'busy', currentPresence.acceptingCalls, currentPresenceStatus);
+          setCurrentStatus('busy');
+          console.log('✅ Auto-updated status to busy due to active booking');
+        } else {
+          console.log('⏭️ Skipping status update (current status is offline)');
+        }
+      } else if (hasActiveBooking && currentPresenceStatus === 'busy') {
+        console.log('✅ Status already busy, no update needed');
+      } 
+      // If no active booking and status is busy, auto-revert to previous status
+      else if (!hasActiveBooking && currentPresenceStatus === 'busy') {
+        // Get previous status from database (or from currentPresence if available)
+        const previousStatusFromDB = currentPresence.previousStatus;
+        const statusToRevert = previousStatusFromDB || 'available';
+        
+        // Only revert if we have a stored previous status (meaning it was auto-set to busy)
+        // or if we're reverting to available (safe default)
+        if (previousStatusFromDB || statusToRevert === 'available') {
+          // Clear previous_status in database when reverting
+          await updateExpertPresence(expert.auth_id, statusToRevert, currentPresence.acceptingCalls, null);
+          setCurrentStatus(statusToRevert);
+          console.log(`🔄 Auto-reverted status from busy to ${statusToRevert} (no active booking)`);
+        }
+      }
+    } catch (error) {
+      console.error('Error updating status based on bookings:', error);
+    } finally {
+      isAutoUpdatingRef.current = false;
+    }
+  }, [expert?.auth_id, checkExpertPresence, updateExpertPresence]);
 
   useEffect(() => {
     if (!expert?.auth_id) {
@@ -30,6 +248,9 @@ const MasterStatusControl: React.FC = () => {
                             presence.status === 'away' ? 'away' : 'offline';
         setCurrentStatus(mappedStatus);
         setAcceptingCalls(!!presence.acceptingCalls && mappedStatus !== 'offline');
+        
+        // Check for active bookings after initial load
+        await updateStatusBasedOnBookings();
       } catch (e) {
         // Fallback to any cached state if network fails
         const cached = getExpertPresence(expert.auth_id);
@@ -42,7 +263,30 @@ const MasterStatusControl: React.FC = () => {
         }
       }
     })();
-  }, [expert?.auth_id, getExpertPresence, checkExpertPresence]);
+
+    // Subscribe to appointment changes for real-time updates only
+    // No polling - relying on Supabase real-time for instant updates
+    const appointmentChannel = supabase
+      .channel(`expert-status-appointments-${expert.auth_id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'appointments',
+          filter: `expert_id=eq.${expert.auth_id}`,
+        },
+        () => {
+          // Check status when appointments change
+          updateStatusBasedOnBookings();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(appointmentChannel);
+    };
+  }, [expert?.auth_id, getExpertPresence, checkExpertPresence, updateStatusBasedOnBookings]);
 
   const refreshSelfPresence = async () => {
     if (!expert?.auth_id) return;
@@ -57,13 +301,20 @@ const MasterStatusControl: React.FC = () => {
     if (!expert?.auth_id) return;
 
     try {
+      // If manually changing status, clear the previous_status in database
+      // This prevents auto-revert when user manually changes status
+      // (only auto-revert if status was auto-set to busy due to booking)
+      // Pass null to clear previous_status
+      const shouldClearPreviousStatus = true;
+
       // Robust transition rules
       // - offline: force accepting calls to false
       // - available: enable accepting calls
       // - busy/away: preserve current switch
       const callAcceptance = newStatus === 'offline' ? false : newStatus === 'available' ? true : acceptingCalls;
       
-      await updateExpertPresence(expert.auth_id, newStatus, callAcceptance);
+      // Clear previous_status when manually changing status
+      await updateExpertPresence(expert.auth_id, newStatus, callAcceptance, shouldClearPreviousStatus ? null : undefined);
       
       // Immediately reflect in local UI
       setCurrentStatus(newStatus);

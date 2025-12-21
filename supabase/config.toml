@@ -32,3 +32,9 @@ verify_jwt = false
 
 [functions.notify-expert-status]
 verify_jwt = false
+
+[functions.wallet-operations]
+verify_jwt = true
+
+[functions.process-call-refund]
+verify_jwt = true

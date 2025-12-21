@@ -43,7 +43,7 @@ const BookingCard: React.FC<{
   getStatusColor: (status: string, isNoShow?: boolean) => string;
   formatTime: (timeStr: string) => string;
 }> = ({ booking, canJoinCall, navigate, getStatusColor, formatTime }) => {
-  const { noShowData, isChecking, reportNoShow } = useExpertNoShow(
+  const { noShowData, isChecking, isProcessingRefund, reportNoShow, processRefundManually } = useExpertNoShow(
     booking.id,
     booking.appointment_date,
     booking.start_time,
@@ -54,6 +54,16 @@ const BookingCard: React.FC<{
   const canReportNoShow = noShowData?.canReportNoShow || false;
   const refundProcessed = noShowData?.refundProcessed || false;
   const isWarning = noShowData?.isWarning || false;
+
+  // Check if this is a cancelled appointment with expert_no_show reason
+  const isExpertNoShowCancelled = booking.status === 'cancelled' && (() => {
+    try {
+      const notesData = typeof booking.notes === 'string' ? JSON.parse(booking.notes) : booking.notes;
+      return notesData?.cancellation_reason === 'expert_no_show';
+    } catch {
+      return false;
+    }
+  })();
 
   return (
     <Card key={booking.id} className="hover:shadow-md transition-shadow">
@@ -100,8 +110,8 @@ const BookingCard: React.FC<{
               </div>
             )}
 
-            {/* No-Show Alert */}
-            {isNoShow && (
+            {/* No-Show Alert - Only show if NOT cancelled (cancelled appointments show cancellation info instead) */}
+            {isNoShow && booking.status !== 'cancelled' && (
               <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-md">
                 <div className="flex items-start gap-2">
                   <AlertTriangle className="h-5 w-5 text-orange-600 mt-0.5" />
@@ -119,7 +129,7 @@ const BookingCard: React.FC<{
               </div>
             )}
 
-            {/* Cancellation Info */}
+            {/* Cancellation Info - Show for cancelled appointments */}
             {booking.status === 'cancelled' && booking.notes && (
               <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-md">
                 <div className="flex items-start gap-2">
@@ -147,6 +157,32 @@ const BookingCard: React.FC<{
                             <p><span className="font-medium">Reason:</span> {reasonText}</p>
                             {cancelledAt && (
                               <p><span className="font-medium">Cancelled on:</span> {cancelledAt}</p>
+                            )}
+                            {isExpertNoShowCancelled && !refundProcessed && (
+                              <div className="mt-2 pt-2 border-t border-red-200">
+                                <p className="text-xs text-red-600 mb-2">
+                                  Refund not processed yet. Click below to process refund manually.
+                                </p>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={async () => {
+                                    const success = await processRefundManually();
+                                    if (success) {
+                                      toast.success('Refund processed successfully!');
+                                    }
+                                  }}
+                                  disabled={isProcessingRefund}
+                                  className="text-xs h-7"
+                                >
+                                  {isProcessingRefund ? 'Processing...' : 'Process Refund Now'}
+                                </Button>
+                              </div>
+                            )}
+                            {isExpertNoShowCancelled && refundProcessed && (
+                              <p className="text-xs text-green-700 mt-2 font-medium">
+                                ✓ Refund has been processed and credited to your wallet.
+                              </p>
                             )}
                           </div>
                         );
@@ -313,7 +349,7 @@ const BookingHistorySection: React.FC<BookingHistorySectionProps> = ({ user }) =
       
       if (dateDiff !== 0) return dateDiff;
       
-      // If same date, sort by start time (descending: 23:30, 23:00, 10:30, 10:00...)
+      // If same date, sort by start time (ascending: 12:00, 12:30, 1:00...)
       try {
         // Get time in HH:MM format (handle HH:MM:SS)
         const timeA = a.start_time.split(':').slice(0, 2).join(':');
@@ -338,8 +374,8 @@ const BookingHistorySection: React.FC<BookingHistorySectionProps> = ({ user }) =
         const totalMinutesA = parseTimeToMinutes(timeA);
         const totalMinutesB = parseTimeToMinutes(timeB);
         
-        // Descending order: latest time first (23:30, 23:00, 10:30, 10:00)
-        return totalMinutesB - totalMinutesA;
+        // Ascending order: earliest time first (12:00, 12:30, 1:00, 1:30...)
+        return totalMinutesA - totalMinutesB;
       } catch (error) {
         console.error('Error sorting by time:', error, a.start_time, b.start_time);
         return 0;

@@ -34,6 +34,7 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
   const [isProcessingRefund, setIsProcessingRefund] = useState(false);
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const hasProcessedRefundRef = useRef(false);
+  const isProcessingRefundRef = useRef(false); // Lock to prevent concurrent processing
 
   // Check if expert has joined the call session
   const checkExpertJoined = useCallback(async (aptId: string): Promise<boolean> => {
@@ -77,28 +78,45 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
 
   // Process refund for no-show
   const processNoShowRefund = useCallback(async (aptId: string): Promise<boolean> => {
+    // Prevent concurrent processing with lock
+    if (isProcessingRefundRef.current) {
+      console.log('⚠️ Refund processing already in progress, skipping duplicate call');
+      return false;
+    }
+
     if (hasProcessedRefundRef.current) {
-      console.log('Refund already processed for this appointment');
+      console.log('✅ Refund already processed for this appointment (from ref)');
       return true;
     }
 
     try {
+      // Set lock immediately to prevent concurrent calls
+      isProcessingRefundRef.current = true;
       setIsProcessingRefund(true);
 
       // First, check if refund was already processed for this appointment
       // Check for both 'expert_no_show' and 'refund' reasons
-      const { data: existingAppointmentRefund } = await supabase
+      // Use .select() instead of .maybeSingle() to check ALL existing refunds
+      const { data: existingAppointmentRefunds, error: checkError } = await supabase
         .from('wallet_transactions' as never)
-        .select('id')
+        .select('id, amount, created_at')
         .eq('reference_id', aptId)
         .eq('reference_type', 'appointment')
         .eq('type', 'credit')
-        .in('reason', ['expert_no_show', 'refund'])
-        .maybeSingle();
+        .in('reason', ['expert_no_show', 'refund']);
 
-      if (existingAppointmentRefund) {
-        console.log('Refund already processed for appointment');
+      if (checkError) {
+        console.error('Error checking existing refunds:', checkError);
+      }
+
+      if (existingAppointmentRefunds && existingAppointmentRefunds.length > 0) {
+        console.log('⚠️ Refund already processed for appointment:', {
+          count: existingAppointmentRefunds.length,
+          refunds: existingAppointmentRefunds.map(r => ({ id: r.id, amount: r.amount, created_at: r.created_at }))
+        });
         hasProcessedRefundRef.current = true;
+        isProcessingRefundRef.current = false;
+        setIsProcessingRefund(false);
         return true;
       }
 
@@ -139,18 +157,23 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
 
         // Check if refund already processed for call session
         // Check for both 'expert_no_show' and 'refund' reasons
-        const { data: existingCallRefund } = await supabase
+        // Use .select() to check ALL existing refunds
+        const { data: existingCallRefunds } = await supabase
           .from('wallet_transactions' as never)
-        .select('id')
-        .eq('reference_id', callSession.id)
-        .eq('reference_type', 'call_session')
-        .eq('type', 'credit')
-        .in('reason', ['expert_no_show', 'refund'])
-        .maybeSingle();
+          .select('id, amount, created_at')
+          .eq('reference_id', callSession.id)
+          .eq('reference_type', 'call_session')
+          .eq('type', 'credit')
+          .in('reason', ['expert_no_show', 'refund']);
 
-        if (existingCallRefund) {
-          console.log('Refund already processed for call session');
+        if (existingCallRefunds && existingCallRefunds.length > 0) {
+          console.log('⚠️ Refund already processed for call session:', {
+            count: existingCallRefunds.length,
+            refunds: existingCallRefunds.map(r => ({ id: r.id, amount: r.amount, created_at: r.created_at }))
+          });
           hasProcessedRefundRef.current = true;
+          isProcessingRefundRef.current = false;
+          setIsProcessingRefund(false);
           return true;
         }
       } else {
@@ -169,18 +192,41 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
         if (transaction?.amount) {
           refundAmount = transaction.amount;
           currency = transaction.currency || 'INR';
+          console.log('💰 Found payment transaction for refund:', {
+            amount: refundAmount,
+            currency: currency,
+            transactionId: transaction.id
+          });
         } else {
-          console.log('No payment found to refund');
+          console.warn('⚠️ No payment found to refund for appointment:', aptId);
+          console.log('Checking if payment was made via call session or external gateway...');
           hasProcessedRefundRef.current = true;
           return true;
         }
       }
 
       if (refundAmount <= 0) {
-        console.log('No payment amount to refund');
+        console.warn('⚠️ No payment amount to refund:', {
+          refundAmount,
+          callSession: callSession ? {
+            id: callSession.id,
+            cost: callSession.cost,
+            payment_status: callSession.payment_status
+          } : null,
+          appointmentId: aptId
+        });
         hasProcessedRefundRef.current = true;
         return true;
       }
+
+      console.log('💰 Processing refund:', {
+        appointmentId: aptId,
+        refundAmount,
+        currency,
+        paymentReferenceId,
+        paymentReferenceType,
+        callSessionExists: !!callSession
+      });
 
       // Process refund via edge function if call session exists
       if (callSession && paymentReferenceType === 'call_session') {
@@ -199,51 +245,79 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
 
       if (data?.success) {
         hasProcessedRefundRef.current = true;
-          console.log('✅ Refund processed successfully for expert no-show via call session');
+        
+        // Check if this was a duplicate
+        if (data.duplicate) {
+          console.log('⚠️ Duplicate refund prevented:', {
+            existing_count: data.existing_count,
+            refund_id: data.refund_id
+          });
+          toast.info('Refund was already processed earlier.');
           return true;
         }
+        
+        console.log('✅ Refund processed successfully for expert no-show via call session');
+        toast.success('Full refund has been credited to your wallet.');
+        
+        // Trigger wallet balance refresh via custom event
+        window.dispatchEvent(new CustomEvent('walletBalanceRefresh', {
+          detail: { 
+            newBalance: data.new_balance,
+            transactionId: data.transaction?.id 
+          }
+        }));
+        
+        return true;
+      } else {
+        console.error('❌ Refund failed - process-call-refund returned:', data);
+        throw new Error(data?.error || 'Failed to process refund via call session');
+      }
       } else {
         // Process refund directly to wallet for appointment payment
-        // Use RPC or edge function for wallet transactions since table might not be in types
-        const { data: refundResult, error: refundError } = await supabase.functions.invoke('process-refund', {
+        // Use wallet-operations edge function to add credits
+        const { data: refundResult, error: refundError } = await supabase.functions.invoke('wallet-operations', {
           body: {
-            appointmentId: aptId,
-            userId: appointment.user_id,
+            action: 'add_credits',
             amount: refundAmount,
             currency: currency,
             reason: 'expert_no_show',
-            referenceId: paymentReferenceId,
-            referenceType: paymentReferenceType
+            reference_id: paymentReferenceId,
+            reference_type: paymentReferenceType,
+            description: `Refund for expert no-show - Appointment ${aptId}`
           }
-        }).catch(async () => {
-          // Fallback: try direct insert if edge function doesn't exist
-          return await supabase
-            .from('wallet_transactions' as never)
-            .insert({
-              user_id: appointment.user_id,
-              type: 'credit',
-              amount: refundAmount,
-              currency: currency,
-              reason: 'expert_no_show',
-              reference_id: paymentReferenceId,
-              reference_type: paymentReferenceType,
-              description: `Refund for expert no-show - Appointment ${aptId}`
-            } as never)
-            .select()
-            .single();
         });
 
-        const refundTransaction = refundResult || (refundResult as { data?: unknown })?.data;
-
         if (refundError) {
+          console.error('❌ Error calling wallet-operations:', refundError);
           throw refundError;
         }
 
-        if (refundTransaction) {
+        if (refundResult?.success) {
           hasProcessedRefundRef.current = true;
-          console.log('✅ Refund processed successfully for expert no-show via appointment');
-          toast.success('Full refund has been credited to your wallet.');
-        return true;
+          console.log('✅ Refund processed successfully for expert no-show via appointment:', {
+            amount: refundAmount,
+            currency: currency,
+            newBalance: refundResult.new_balance,
+            transactionId: refundResult.transaction?.id
+          });
+          toast.success(`Full refund of ₹${refundAmount.toFixed(2)} has been credited to your wallet.`);
+          
+          // Trigger wallet balance refresh via custom event
+          window.dispatchEvent(new CustomEvent('walletBalanceRefresh', {
+            detail: { 
+              newBalance: refundResult.new_balance,
+              transactionId: refundResult.transaction?.id 
+            }
+          }));
+          
+          return true;
+        } else {
+          console.error('❌ Refund failed - wallet-operations returned:', {
+            success: refundResult?.success,
+            error: refundResult?.error,
+            fullResponse: refundResult
+          });
+          throw new Error(refundResult?.error || 'Failed to process refund');
         }
       }
 
@@ -253,6 +327,8 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
       toast.error('Failed to process refund. Please contact support.');
       return false;
     } finally {
+      // Always release the lock
+      isProcessingRefundRef.current = false;
       setIsProcessingRefund(false);
     }
   }, []);
@@ -308,7 +384,358 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
 
   // Check no-show status
   const checkNoShow = useCallback(async () => {
-    if (!appointmentId || status === 'cancelled' || status === 'completed') {
+    if (!appointmentId || status === 'completed') {
+      return;
+    }
+
+    // For cancelled appointments, only check if refund was processed (don't do full no-show check)
+    if (status === 'cancelled') {
+      try {
+        // Check if this was cancelled due to expert no-show
+        const { data: appointment } = await supabase
+          .from('appointments')
+          .select('notes')
+          .eq('id', appointmentId)
+          .single();
+
+        let cancellationReason = null;
+        if (appointment?.notes) {
+          try {
+            const notes = typeof appointment.notes === 'string' 
+              ? JSON.parse(appointment.notes) 
+              : appointment.notes;
+            cancellationReason = notes?.cancellation_reason;
+          } catch {
+            // Ignore parse errors
+          }
+        }
+
+        // Only process refund if it was expert no-show and refund hasn't been processed
+        if (cancellationReason === 'expert_no_show') {
+          // Check if refund was already processed (check both appointment and call_session)
+          // Use comprehensive check: reference_id column OR metadata->>reference_id
+          let refundProcessed = false;
+          
+          console.log('🔍 Checking for existing refund for cancelled appointment:', appointmentId);
+          
+          // Check appointment-level refund - check both reference_id column and metadata
+          // Query 1: Check reference_id column
+          const { data: appointmentRefundsByRefId, error: refIdError } = await supabase
+            .from('wallet_transactions' as never)
+            .select('id, amount, created_at, reference_id, metadata')
+            .eq('reference_type', 'appointment')
+            .eq('type', 'credit')
+            .in('reason', ['expert_no_show', 'refund'])
+            .eq('reference_id', appointmentId);
+
+          // Query 2: Check metadata->>reference_id
+          const { data: appointmentRefundsByMetadata, error: metadataError } = await supabase
+            .from('wallet_transactions' as never)
+            .select('id, amount, created_at, reference_id, metadata')
+            .eq('reference_type', 'appointment')
+            .eq('type', 'credit')
+            .in('reason', ['expert_no_show', 'refund'])
+            .eq('metadata->>reference_id', appointmentId);
+
+          // Query 3: Check if this appointment is in metadata->>appointment_ids array
+          // This handles cases where multiple slots were booked together
+          const { data: appointmentRefundsByMetadataArray } = await supabase
+            .from('wallet_transactions' as never)
+            .select('id, amount, created_at, reference_id, metadata')
+            .eq('reference_type', 'appointment')
+            .eq('type', 'credit')
+            .in('reason', ['expert_no_show', 'refund']);
+
+          const appointmentRefundError = refIdError || metadataError;
+          let appointmentRefunds = [
+            ...(appointmentRefundsByRefId || []),
+            ...(appointmentRefundsByMetadata || [])
+          ];
+
+          // Filter refunds where this appointment ID is in metadata->appointment_ids array
+          if (appointmentRefundsByMetadataArray) {
+            const refundsWithMatchingAppointment = appointmentRefundsByMetadataArray.filter(refund => {
+              const metadata = refund.metadata || {};
+              const appointmentIds = metadata.appointment_ids || [];
+              return Array.isArray(appointmentIds) && appointmentIds.includes(appointmentId);
+            });
+            appointmentRefunds = [...appointmentRefunds, ...refundsWithMatchingAppointment];
+          }
+
+          // Remove duplicates
+          appointmentRefunds = appointmentRefunds.filter((refund, index, self) => 
+            index === self.findIndex(r => r.id === refund.id)
+          );
+
+          if (appointmentRefundError) {
+            console.error('Error checking appointment refunds:', appointmentRefundError);
+          }
+
+          if (appointmentRefunds && appointmentRefunds.length > 0) {
+            console.log('✅ Found appointment-level refund(s):', {
+              count: appointmentRefunds.length,
+              refunds: appointmentRefunds.map(r => ({
+                id: r.id,
+                amount: r.amount,
+                created_at: r.created_at,
+                reference_id: r.reference_id,
+                metadata_ref: r.metadata?.reference_id
+              }))
+            });
+            refundProcessed = true;
+          } else {
+            // Check call session refund
+            const { data: callSession } = await supabase
+              .from('call_sessions')
+              .select('id')
+              .eq('appointment_id', appointmentId)
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle();
+
+            if (callSession) {
+              console.log('🔍 Checking for call session refund:', callSession.id);
+              // Query 1: Check reference_id column
+              const { data: callRefundsByRefId } = await supabase
+                .from('wallet_transactions' as never)
+                .select('id, amount, created_at, reference_id, metadata')
+                .eq('reference_type', 'call_session')
+                .eq('type', 'credit')
+                .in('reason', ['expert_no_show', 'refund'])
+                .eq('reference_id', callSession.id);
+
+              // Query 2: Check metadata->>reference_id
+              const { data: callRefundsByMetadata } = await supabase
+                .from('wallet_transactions' as never)
+                .select('id, amount, created_at, reference_id, metadata')
+                .eq('reference_type', 'call_session')
+                .eq('type', 'credit')
+                .in('reason', ['expert_no_show', 'refund'])
+                .eq('metadata->>reference_id', callSession.id);
+
+              const callRefunds = [
+                ...(callRefundsByRefId || []),
+                ...(callRefundsByMetadata || [])
+              ].filter((refund, index, self) => 
+                index === self.findIndex(r => r.id === refund.id)
+              ); // Remove duplicates
+              const callRefundError = null; // No error if both queries succeed
+              
+              if (callRefundError) {
+                console.error('Error checking call session refunds:', callRefundError);
+              }
+
+              if (callRefunds && callRefunds.length > 0) {
+                console.log('✅ Found call session refund(s):', {
+                  count: callRefunds.length,
+                  refunds: callRefunds.map(r => ({
+                    id: r.id,
+                    amount: r.amount,
+                    created_at: r.created_at,
+                    reference_id: r.reference_id,
+                    metadata_ref: r.metadata?.reference_id
+                  }))
+                });
+                refundProcessed = true;
+              } else {
+                console.log('❌ No refund found for call session:', callSession.id);
+              }
+            } else {
+              console.log('ℹ️ No call session found for appointment:', appointmentId);
+            }
+          }
+
+          // Fallback: Check all recent refund transactions for this user (in case reference doesn't match)
+          // Also check if this appointment is part of a multi-slot booking that was refunded
+          if (!refundProcessed) {
+            try {
+              const { data: currentUser } = await supabase.auth.getUser();
+              if (currentUser?.user?.id) {
+                // Get appointment details to check for same-date, same-expert bookings
+                const { data: appointmentDetails } = await supabase
+                  .from('appointments')
+                  .select('appointment_date, expert_id')
+                  .eq('id', appointmentId)
+                  .single();
+
+                if (appointmentDetails) {
+                  // Check for any recent expert_no_show refunds (within last 24 hours)
+                  const { data: recentRefunds } = await supabase
+                    .from('wallet_transactions' as never)
+                    .select('id, amount, created_at, reference_id, reference_type, metadata, description')
+                    .eq('user_id', currentUser.user.id)
+                    .eq('type', 'credit')
+                    .in('reason', ['expert_no_show', 'refund'])
+                    .order('created_at', { ascending: false })
+                    .limit(20);
+
+                  if (recentRefunds && recentRefunds.length > 0) {
+                    console.log('🔍 Checking recent refunds for potential match:', {
+                      appointmentId,
+                      appointmentDate: appointmentDetails.appointment_date,
+                      expertId: appointmentDetails.expert_id,
+                      recentRefundsCount: recentRefunds.length
+                    });
+
+                    // Check if any refund:
+                    // 1. Has this appointment ID in metadata->appointment_ids array
+                    // 2. Has this appointment ID in reference_id or metadata->reference_id
+                    // 3. Is for same date and expert (multi-slot booking scenario)
+                    const matchingRefund = recentRefunds.find(r => {
+                      const metadata = r.metadata || {};
+                      const appointmentIds = metadata.appointment_ids || [];
+                      
+                      // Check if this appointment is in the refund's appointment_ids array
+                      if (Array.isArray(appointmentIds) && appointmentIds.includes(appointmentId)) {
+                        return true;
+                      }
+                      
+                      // Check direct reference match
+                      if (r.reference_id === appointmentId || metadata.reference_id === appointmentId) {
+                        return true;
+                      }
+                      
+                      // Check if description mentions this appointment
+                      if (r.description?.includes(appointmentId)) {
+                        return true;
+                      }
+                      
+                      return false;
+                    });
+
+                    if (matchingRefund) {
+                      console.log('✅ Found matching refund in recent transactions:', {
+                        refundId: matchingRefund.id,
+                        amount: matchingRefund.amount,
+                        appointmentIds: matchingRefund.metadata?.appointment_ids
+                      });
+                      refundProcessed = true;
+                    }
+                  }
+                }
+              }
+            } catch (error) {
+              console.error('Error in fallback refund check:', error);
+            }
+          }
+
+          if (!refundProcessed) {
+            console.log('⚠️ No refund found, will process refund now');
+          }
+
+          if (!refundProcessed) {
+            // Refund not processed yet, process it now
+            console.log('💰 Processing refund for cancelled appointment with expert_no_show reason');
+            const refundSuccess = await processNoShowRefund(appointmentId);
+            if (refundSuccess) {
+              // Re-check refund status after processing (comprehensive check)
+              // Query 1: Check reference_id column
+              const { data: newRefundsByRefId } = await supabase
+                .from('wallet_transactions' as never)
+                .select('id, amount, created_at, metadata')
+                .eq('reference_type', 'appointment')
+                .eq('type', 'credit')
+                .in('reason', ['expert_no_show', 'refund'])
+                .eq('reference_id', appointmentId);
+
+              // Query 2: Check metadata->>reference_id
+              const { data: newRefundsByMetadata } = await supabase
+                .from('wallet_transactions' as never)
+                .select('id, amount, created_at, metadata')
+                .eq('reference_type', 'appointment')
+                .eq('type', 'credit')
+                .in('reason', ['expert_no_show', 'refund'])
+                .eq('metadata->>reference_id', appointmentId);
+
+              // Query 3: Check if this appointment is in metadata->>appointment_ids array
+              const { data: newRefundsByMetadataArray } = await supabase
+                .from('wallet_transactions' as never)
+                .select('id, amount, created_at, metadata')
+                .eq('reference_type', 'appointment')
+                .eq('type', 'credit')
+                .in('reason', ['expert_no_show', 'refund']);
+
+              let newRefunds = [
+                ...(newRefundsByRefId || []),
+                ...(newRefundsByMetadata || [])
+              ];
+
+              // Filter refunds where this appointment ID is in metadata->appointment_ids array
+              if (newRefundsByMetadataArray) {
+                const refundsWithMatchingAppointment = newRefundsByMetadataArray.filter(refund => {
+                  const metadata = refund.metadata || {};
+                  const appointmentIds = metadata.appointment_ids || [];
+                  return Array.isArray(appointmentIds) && appointmentIds.includes(appointmentId);
+                });
+                newRefunds = [...newRefunds, ...refundsWithMatchingAppointment];
+              }
+
+              // Remove duplicates
+              newRefunds = newRefunds.filter((refund, index, self) => 
+                index === self.findIndex(r => r.id === refund.id)
+              );
+              
+              if (newRefunds && newRefunds.length > 0) {
+                console.log('✅ Refund confirmed after processing:', {
+                  count: newRefunds.length,
+                  refunds: newRefunds.map(r => ({ id: r.id, amount: r.amount, created_at: r.created_at }))
+                });
+                refundProcessed = true;
+              } else {
+                // Also check call session refunds
+                const { data: callSession } = await supabase
+                  .from('call_sessions')
+                  .select('id')
+                  .eq('appointment_id', appointmentId)
+                  .order('created_at', { ascending: false })
+                  .limit(1)
+                  .maybeSingle();
+
+                if (callSession) {
+                  // Query 1: Check reference_id column
+                  const { data: callRefundsByRefId } = await supabase
+                    .from('wallet_transactions' as never)
+                    .select('id')
+                    .eq('reference_type', 'call_session')
+                    .eq('type', 'credit')
+                    .in('reason', ['expert_no_show', 'refund'])
+                    .eq('reference_id', callSession.id);
+
+                  // Query 2: Check metadata->>reference_id
+                  const { data: callRefundsByMetadata } = await supabase
+                    .from('wallet_transactions' as never)
+                    .select('id')
+                    .eq('reference_type', 'call_session')
+                    .eq('type', 'credit')
+                    .in('reason', ['expert_no_show', 'refund'])
+                    .eq('metadata->>reference_id', callSession.id);
+
+                  const callRefunds = [
+                    ...(callRefundsByRefId || []),
+                    ...(callRefundsByMetadata || [])
+                  ].filter((refund, index, self) => 
+                    index === self.findIndex(r => r.id === refund.id)
+                  ); // Remove duplicates
+                  
+                  refundProcessed = !!(callRefunds && callRefunds.length > 0);
+                }
+              }
+            }
+          }
+          
+          // Update state with refund status
+          setNoShowData({
+            appointmentId,
+            isNoShow: true,
+            canReportNoShow: false,
+            timeSinceStart: 0,
+            refundProcessed: refundProcessed,
+            isWarning: false
+          });
+        }
+      } catch (error) {
+        console.error('Error checking refund for cancelled appointment:', error);
+      }
       return;
     }
 
@@ -348,41 +775,114 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
       const canReportNoShow = timeSinceStart >= 5 && !expertJoined && (status === 'scheduled' || status === 'confirmed');
 
       // Check if refund was already processed (check both appointment and call_session)
+      // Use comprehensive check: reference_id column OR metadata->>reference_id
       let refundProcessed = false;
       
-      // Check appointment-level refund (check for both 'expert_no_show' and 'refund' reasons)
-      const { data: appointmentRefund } = await supabase
+      // Check appointment-level refund - check both reference_id column and metadata
+      // Query 1: Check reference_id column
+      const { data: appointmentRefundsByRefId } = await supabase
         .from('wallet_transactions' as never)
-        .select('id')
-        .eq('reference_id', appointmentId)
+        .select('id, amount, created_at, reference_id, metadata')
         .eq('reference_type', 'appointment')
         .eq('type', 'credit')
         .in('reason', ['expert_no_show', 'refund'])
-        .maybeSingle();
+        .eq('reference_id', appointmentId);
+
+      // Query 2: Check metadata->>reference_id
+      const { data: appointmentRefundsByMetadata } = await supabase
+        .from('wallet_transactions' as never)
+        .select('id, amount, created_at, reference_id, metadata')
+        .eq('reference_type', 'appointment')
+        .eq('type', 'credit')
+        .in('reason', ['expert_no_show', 'refund'])
+        .eq('metadata->>reference_id', appointmentId);
+
+      // Query 3: Check if this appointment is in metadata->>appointment_ids array
+      // This handles cases where multiple slots were booked together
+      const { data: appointmentRefundsByMetadataArray } = await supabase
+        .from('wallet_transactions' as never)
+        .select('id, amount, created_at, reference_id, metadata')
+        .eq('reference_type', 'appointment')
+        .eq('type', 'credit')
+        .in('reason', ['expert_no_show', 'refund']);
+
+      let appointmentRefunds = [
+        ...(appointmentRefundsByRefId || []),
+        ...(appointmentRefundsByMetadata || [])
+      ];
+
+      // Filter refunds where this appointment ID is in metadata->appointment_ids array
+      if (appointmentRefundsByMetadataArray) {
+        const refundsWithMatchingAppointment = appointmentRefundsByMetadataArray.filter(refund => {
+          const metadata = refund.metadata || {};
+          const appointmentIds = metadata.appointment_ids || [];
+          return Array.isArray(appointmentIds) && appointmentIds.includes(appointmentId);
+        });
+        appointmentRefunds = [...appointmentRefunds, ...refundsWithMatchingAppointment];
+      }
+
+      // Remove duplicates
+      appointmentRefunds = appointmentRefunds.filter((refund, index, self) => 
+        index === self.findIndex(r => r.id === refund.id)
+      );
       
-      if (appointmentRefund) {
+      if (appointmentRefunds && appointmentRefunds.length > 0) {
+        console.log('✅ Found appointment-level refund for active appointment:', {
+          count: appointmentRefunds.length,
+          refunds: appointmentRefunds.map(r => ({
+            id: r.id,
+            amount: r.amount,
+            created_at: r.created_at
+          }))
+        });
         refundProcessed = true;
       } else {
-        // Check call session refund (check for both 'expert_no_show' and 'refund' reasons)
-      const { data: callSession } = await supabase
-        .from('call_sessions')
-        .select('id')
-        .eq('appointment_id', appointmentId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (callSession) {
-          const { data: callRefund } = await supabase
-            .from('wallet_transactions' as never)
+        // Check call session refund
+        const { data: callSession } = await supabase
+          .from('call_sessions')
           .select('id')
-          .eq('reference_id', callSession.id)
-          .eq('reference_type', 'call_session')
-          .eq('type', 'credit')
-          .in('reason', ['expert_no_show', 'refund'])
+          .eq('appointment_id', appointmentId)
+          .order('created_at', { ascending: false })
+          .limit(1)
           .maybeSingle();
+
+        if (callSession) {
+          // Query 1: Check reference_id column
+          const { data: callRefundsByRefId } = await supabase
+            .from('wallet_transactions' as never)
+            .select('id, amount, created_at, reference_id, metadata')
+            .eq('reference_type', 'call_session')
+            .eq('type', 'credit')
+            .in('reason', ['expert_no_show', 'refund'])
+            .eq('reference_id', callSession.id);
+
+          // Query 2: Check metadata->>reference_id
+          const { data: callRefundsByMetadata } = await supabase
+            .from('wallet_transactions' as never)
+            .select('id, amount, created_at, reference_id, metadata')
+            .eq('reference_type', 'call_session')
+            .eq('type', 'credit')
+            .in('reason', ['expert_no_show', 'refund'])
+            .eq('metadata->>reference_id', callSession.id);
+
+          const callRefunds = [
+            ...(callRefundsByRefId || []),
+            ...(callRefundsByMetadata || [])
+          ].filter((refund, index, self) => 
+            index === self.findIndex(r => r.id === refund.id)
+          ); // Remove duplicates
         
-          refundProcessed = !!callRefund;
+          if (callRefunds && callRefunds.length > 0) {
+            console.log('✅ Found call session refund for active appointment:', {
+              count: callRefunds.length,
+              refunds: callRefunds.map(r => ({
+                id: r.id,
+                amount: r.amount,
+                created_at: r.created_at
+              }))
+            });
+            refundProcessed = true;
+          }
         }
       }
 
@@ -460,24 +960,48 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
     }
   }, [appointmentId, appointmentDate, startTime, status, checkExpertJoined, markAsNoShow]);
 
+  // Listen for wallet balance refresh events (triggered after refunds)
+  useEffect(() => {
+    const handleWalletRefresh = () => {
+      console.log('💰 Wallet refresh event received, re-checking refund status for appointment:', appointmentId);
+      // Re-check refund status when wallet balance is refreshed
+      if (appointmentId && (status === 'cancelled' || noShowData?.isNoShow)) {
+        checkNoShow();
+      }
+    };
+
+    window.addEventListener('walletBalanceRefresh', handleWalletRefresh as EventListener);
+    
+    return () => {
+      window.removeEventListener('walletBalanceRefresh', handleWalletRefresh as EventListener);
+    };
+  }, [appointmentId, status, checkNoShow, noShowData?.isNoShow]);
+
   // Set up periodic checking
   useEffect(() => {
-    if (!appointmentId || status === 'cancelled' || status === 'completed') {
+    if (!appointmentId || status === 'completed') {
       return;
     }
 
-    // Initial check
+    // Initial check (now handles cancelled appointments with expert_no_show)
     checkNoShow();
 
-    // Check every minute for upcoming/past appointments
-    const appointmentDateTime = parseISO(`${appointmentDate}T${startTime}`);
-    const now = new Date();
-    
-    // Only set up interval if appointment is today or in the past (check 5 minutes before)
-    if (!isAfter(appointmentDateTime, addMinutes(now, -5))) {
+    // For cancelled appointments, check periodically to catch refund updates
+    if (status === 'cancelled') {
       checkIntervalRef.current = setInterval(() => {
         checkNoShow();
-      }, 30000); // Check every 30 seconds for faster detection
+      }, 10000); // Check every 10 seconds for cancelled appointments
+    } else {
+      // Check every 30 seconds for upcoming/past appointments
+      const appointmentDateTime = parseISO(`${appointmentDate}T${startTime}`);
+      const now = new Date();
+      
+      // Only set up interval if appointment is today or in the past (check 5 minutes before)
+      if (!isAfter(appointmentDateTime, addMinutes(now, -5))) {
+        checkIntervalRef.current = setInterval(() => {
+          checkNoShow();
+        }, 30000); // Check every 30 seconds for faster detection
+      }
     }
 
     return () => {
@@ -501,12 +1025,33 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
     }
   }, [appointmentId, noShowData, markAsNoShow, checkNoShow]);
 
+  // Manual refund trigger for cancelled appointments
+  const processRefundManually = useCallback(async (): Promise<boolean> => {
+    if (!appointmentId) {
+      toast.error('Appointment ID not found');
+      return false;
+    }
+    
+    console.log('🔄 Manually triggering refund for appointment:', appointmentId);
+    hasProcessedRefundRef.current = false; // Reset to allow retry
+    
+    const success = await processNoShowRefund(appointmentId);
+    
+    if (success) {
+      // Refresh the check to update refundProcessed status
+      await checkNoShow();
+    }
+    
+    return success;
+  }, [appointmentId, processNoShowRefund, checkNoShow]);
+
   return {
     noShowData,
     isChecking,
     isProcessingRefund,
     checkNoShow,
-    reportNoShow
+    reportNoShow,
+    processRefundManually
   };
 };
 

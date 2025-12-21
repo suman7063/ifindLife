@@ -29,6 +29,7 @@ const WalletTransactionsList: React.FC<WalletTransactionsListProps> = ({ user })
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const subscriptionRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (user?.id) {
@@ -104,6 +105,10 @@ const WalletTransactionsList: React.FC<WalletTransactionsListProps> = ({ user })
         supabase.removeChannel(subscriptionRef.current);
         subscriptionRef.current = null;
       }
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
@@ -131,6 +136,19 @@ const WalletTransactionsList: React.FC<WalletTransactionsListProps> = ({ user })
       // Explicitly set to empty array if no transactions
       const transactions = data?.transactions || [];
       console.log('💰 Fetched wallet transactions from database:', transactions.length, 'transactions');
+      
+      // Log all transaction types for debugging
+      if (transactions.length > 0) {
+        const creditCount = transactions.filter(t => t.type === 'credit').length;
+        const debitCount = transactions.filter(t => t.type === 'debit').length;
+        console.log('📊 Transaction breakdown:', {
+          total: transactions.length,
+          credits: creditCount,
+          debits: debitCount,
+          creditReasons: transactions.filter(t => t.type === 'credit').map(t => t.reason),
+          debitReasons: transactions.filter(t => t.type === 'debit').map(t => t.reason)
+        });
+      }
       
       // Update transactions state
       setTransactions(transactions);
@@ -170,6 +188,9 @@ const WalletTransactionsList: React.FC<WalletTransactionsListProps> = ({ user })
         case 'promotional':
         case 'compensation':
           return <Gift className="h-4 w-4 text-green-600" />;
+        case 'refund':
+        case 'expert_no_show':
+          return <ArrowDown className="h-4 w-4 text-green-600" />;
         default:
           return <ArrowDown className="h-4 w-4 text-green-600" />;
       }
@@ -187,6 +208,7 @@ const WalletTransactionsList: React.FC<WalletTransactionsListProps> = ({ user })
       'purchase': 'Purchase',
       'booking': 'Booking',
       'refund': 'Refund',
+      'expert_no_show': 'Expert No-Show Refund',
       'referral_reward': 'Referral Reward',
       'promotional': 'Promotional',
       'compensation': 'Compensation',

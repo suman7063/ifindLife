@@ -8,13 +8,14 @@ interface ExpertPresence {
   isAvailable: boolean;
   lastActivity?: string;
   lastUpdate: number;
+  previousStatus?: 'available' | 'busy' | 'away' | 'offline' | null;
 }
 
 interface ExpertPresenceContextType {
   getExpertPresence: (expertId: string) => ExpertPresence | null;
   checkExpertPresence: (expertId: string) => Promise<ExpertPresence>;
   bulkCheckPresence: (expertIds: string[]) => Promise<void>;
-  updateExpertPresence: (expertId: string, status: 'available' | 'busy' | 'away' | 'offline', acceptingCalls?: boolean) => Promise<void>;
+  updateExpertPresence: (expertId: string, status: 'available' | 'busy' | 'away' | 'offline', acceptingCalls?: boolean, previousStatus?: 'available' | 'busy' | 'away' | 'offline' | null) => Promise<void>;
   trackActivity: (expertId: string) => Promise<void>;
   isLoading: boolean;
   version: number;
@@ -133,12 +134,13 @@ export const ExpertPresenceProvider: React.FC<{ children: React.ReactNode }> = (
       // Get presence data directly - approval check handled elsewhere
       const { data: presenceData } = await supabase
         .from('expert_presence')
-        .select('status, accepting_calls, last_activity')
+        .select('status, accepting_calls, last_activity, previous_status')
         .eq('expert_id', expertId)
         .maybeSingle();
 
       const status = (presenceData?.status as 'available' | 'busy' | 'away' | 'offline') ?? 'offline';
       const acceptingCalls = presenceData?.accepting_calls ?? false;
+      const previousStatus = presenceData?.previous_status as 'available' | 'busy' | 'away' | 'offline' | null | undefined;
 
       const presence: ExpertPresence = {
         expertId,
@@ -146,7 +148,8 @@ export const ExpertPresenceProvider: React.FC<{ children: React.ReactNode }> = (
         acceptingCalls,
         isAvailable: status === 'available' && acceptingCalls,
         lastActivity: presenceData?.last_activity,
-        lastUpdate: Date.now()
+        lastUpdate: Date.now(),
+        previousStatus: previousStatus ?? null
       };
 
       presenceCache.set(expertId, presence);
@@ -243,10 +246,11 @@ export const ExpertPresenceProvider: React.FC<{ children: React.ReactNode }> = (
   const updateExpertPresence = useCallback(async (
     expertId: string, 
     status: 'available' | 'busy' | 'away' | 'offline',
-    acceptingCalls?: boolean
+    acceptingCalls?: boolean,
+    previousStatus?: 'available' | 'busy' | 'away' | 'offline' | null
   ) => {
     try {
-      console.log('📝 Updating expert presence:', { expertId, status, acceptingCalls });
+      console.log('📝 Updating expert presence:', { expertId, status, acceptingCalls, previousStatus });
       console.log('🔍 Expert ID type:', typeof expertId, 'Value:', expertId);
       
       // Validate expertId
@@ -277,6 +281,11 @@ export const ExpertPresenceProvider: React.FC<{ children: React.ReactNode }> = (
           last_activity: new Date().toISOString()
         };
 
+        // Only update previous_status if explicitly provided (null clears it)
+        if (previousStatus !== undefined) {
+          updateData.previous_status = previousStatus;
+        }
+
         const { error } = await supabase
           .from('expert_presence')
           .update(updateData)
@@ -285,14 +294,21 @@ export const ExpertPresenceProvider: React.FC<{ children: React.ReactNode }> = (
         if (error) throw error;
       } else {
         // Create new record
+        const insertData: any = {
+          expert_id: expertId,
+          status,
+          accepting_calls: normalizedAccepting,
+          last_activity: new Date().toISOString()
+        };
+
+        // Only set previous_status if provided
+        if (previousStatus !== undefined && previousStatus !== null) {
+          insertData.previous_status = previousStatus;
+        }
+
         const { error } = await supabase
           .from('expert_presence')
-          .insert({
-            expert_id: expertId,
-            status,
-            accepting_calls: normalizedAccepting,
-            last_activity: new Date().toISOString()
-          });
+          .insert(insertData);
 
         if (error) throw error;
       }

@@ -1,0 +1,69 @@
+#!/bin/bash
+
+echo "=== Deploying Wallet & Refund Edge Functions ==="
+echo ""
+
+# Check if supabase CLI is installed
+if ! command -v supabase &> /dev/null; then
+    echo "❌ Supabase CLI not found. Please install it first:"
+    echo "   npm install -g supabase"
+    exit 1
+fi
+
+echo "Step 1: Checking Supabase login status..."
+if ! supabase projects list &> /dev/null; then
+    echo "⚠️  Not logged in. Attempting login..."
+    supabase login
+    
+    if [ $? -ne 0 ]; then
+        echo "❌ Login failed. Please run 'supabase login' manually first."
+        exit 1
+    fi
+fi
+
+echo ""
+echo "Step 2: Linking to project..."
+PROJECT_REF=$(grep "project_id" supabase/config.toml | cut -d'"' -f2)
+if [ -z "$PROJECT_REF" ]; then
+    echo "❌ Could not find project_id in supabase/config.toml"
+    exit 1
+fi
+
+supabase link --project-ref "$PROJECT_REF"
+
+if [ $? -ne 0 ]; then
+    echo "⚠️  Link failed (may already be linked). Continuing..."
+fi
+
+echo ""
+echo "Step 3: Deploying wallet-operations function..."
+supabase functions deploy wallet-operations
+
+if [ $? -ne 0 ]; then
+    echo "❌ Failed to deploy wallet-operations"
+    exit 1
+fi
+
+echo ""
+echo "Step 4: Deploying process-call-refund function..."
+supabase functions deploy process-call-refund
+
+if [ $? -ne 0 ]; then
+    echo "❌ Failed to deploy process-call-refund"
+    exit 1
+fi
+
+echo ""
+echo "✅ All functions deployed successfully!"
+echo ""
+echo "📋 Verification:"
+echo "   1. Go to Supabase Dashboard → Edge Functions"
+echo "   2. Verify both functions are listed:"
+echo "      - wallet-operations"
+echo "      - process-call-refund"
+echo ""
+echo "   Dashboard: https://supabase.com/dashboard/project/$PROJECT_REF/functions"
+echo ""
+echo "📝 Note: Both functions require JWT authentication (verify_jwt = true)"
+echo "   This is configured in supabase/config.toml"
+

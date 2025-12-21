@@ -621,13 +621,19 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
         }
 
         // Deduct credits from wallet with appointment reference
+        // Store all appointment IDs in metadata for refund detection
+        const appointmentIds = appointmentData?.map(a => a.id) || [];
         const result = await deductCredits(
           totalCost,
           'booking',
-          appointmentData?.[0]?.id || null,
+          appointmentData?.[0]?.id || null, // Primary reference (first appointment)
           'appointment',
           `Booking ${selectedSlots.length} session(s) with ${expertName}`,
-          (userCurrency || 'INR') as 'INR' | 'EUR'
+          (userCurrency || 'INR') as 'INR' | 'EUR',
+          {
+            appointment_ids: appointmentIds, // Store all appointment IDs in metadata
+            slots_count: selectedSlots.length
+          }
         );
 
         if (!result.success) {
@@ -658,7 +664,7 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
         console.log('🔧 Payment: Wallet deduction successful:', result);
         
         // Store booking details for confirmation modal
-        const appointmentIds = appointmentData?.map(a => a.id) || [];
+        // appointmentIds already defined above
         setBookingDetails({
           appointmentIds,
           totalCost,

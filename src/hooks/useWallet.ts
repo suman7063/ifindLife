@@ -96,7 +96,8 @@ export const useWallet = () => {
     referenceId: string | null,
     referenceType: string = 'appointment',
     description?: string,
-    currency: 'INR' | 'EUR' = 'INR'
+    currency: 'INR' | 'EUR' = 'INR',
+    metadata?: Record<string, any>
   ) => {
     try {
       const { data, error } = await supabase.functions.invoke('wallet-operations', {
@@ -107,7 +108,8 @@ export const useWallet = () => {
           reference_id: referenceId,
           reference_type: referenceType,
           description,
-          currency
+          currency,
+          metadata
         }
       });
 
