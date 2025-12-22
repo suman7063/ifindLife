@@ -28,6 +28,8 @@ export const MobileHeader: React.FC = () => {
         location.pathname === '/mobile-app/app/my-sessions' || 
         location.pathname === '/mobile-app/app/favorite-experts') {
       navigate('/mobile-app/app/profile');
+    } else if (location.pathname === '/mobile-app/app/payment') {
+      navigate(-1);
     } else {
       navigate(-1);
     }
