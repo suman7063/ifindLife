@@ -5,12 +5,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, Clock, User, Plus, Video, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Calendar, Clock, User, Plus, Video, AlertTriangle, RefreshCw, Phone } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format, isAfter, isBefore, parseISO, isToday as dateFnsIsToday } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { useExpertNoShow } from '@/hooks/useExpertNoShow';
+import { joinAppointmentCall } from '@/services/callService';
+import UserCallInterface from '@/components/call/UserCallInterface';
 
 interface BookingHistorySectionProps {
   user?: UserProfile;
@@ -42,8 +44,9 @@ const BookingCard: React.FC<{
   navigate: (path: string) => void;
   getStatusColor: (status: string, isNoShow?: boolean) => string;
   formatTime: (timeStr: string) => string;
-}> = ({ booking, canJoinCall, navigate, getStatusColor, formatTime }) => {
-  const { noShowData, isChecking, isProcessingRefund, reportNoShow, processRefundManually } = useExpertNoShow(
+  onJoinCall?: (appointmentId: string, expertId: string, expertName: string) => void;
+}> = ({ booking, canJoinCall, navigate, getStatusColor, formatTime, onJoinCall }) => {
+  const { noShowData, isChecking, reportNoShow } = useExpertNoShow(
     booking.id,
     booking.appointment_date,
     booking.start_time,
@@ -158,30 +161,14 @@ const BookingCard: React.FC<{
                             {cancelledAt && (
                               <p><span className="font-medium">Cancelled on:</span> {cancelledAt}</p>
                             )}
-                            {isExpertNoShowCancelled && !refundProcessed && (
-                              <div className="mt-2 pt-2 border-t border-red-200">
-                                <p className="text-xs text-red-600 mb-2">
-                                  Refund not processed yet. Click below to process refund manually.
-                                </p>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={async () => {
-                                    const success = await processRefundManually();
-                                    if (success) {
-                                      toast.success('Refund processed successfully!');
-                                    }
-                                  }}
-                                  disabled={isProcessingRefund}
-                                  className="text-xs h-7"
-                                >
-                                  {isProcessingRefund ? 'Processing...' : 'Process Refund Now'}
-                                </Button>
-                              </div>
-                            )}
                             {isExpertNoShowCancelled && refundProcessed && (
                               <p className="text-xs text-green-700 mt-2 font-medium">
-                                ✓ Refund has been processed and credited to your wallet.
+                                ✓ Refund has been processed and credited to your wallet automatically.
+                              </p>
+                            )}
+                            {isExpertNoShowCancelled && !refundProcessed && (
+                              <p className="text-xs text-blue-700 mt-2 font-medium">
+                                Refund will be processed automatically. Please wait a moment.
                               </p>
                             )}
                           </div>
@@ -212,11 +199,23 @@ const BookingCard: React.FC<{
                   <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
                   <div className="flex-1">
                     <p className="text-sm font-medium text-yellow-900">
-                      Waiting for expert to join
+                      {booking.channel_name ? 'Session Ready - Join Now' : 'Waiting for expert to join'}
                     </p>
                     <p className="text-xs text-yellow-700 mt-1">
-                      The expert hasn't joined your session yet. If they don't join within 5 minutes, you'll receive a full refund automatically.
+                      {booking.channel_name 
+                        ? 'Expert has started the session. Click Join to connect.'
+                        : 'The expert hasn\'t joined your session yet. If they don\'t join within 5 minutes, you\'ll receive a full refund automatically.'}
                     </p>
+                    {booking.channel_name && onJoinCall && (
+                      <Button
+                        size="sm"
+                        className="mt-3 w-full sm:w-auto"
+                        onClick={() => onJoinCall(booking.id, booking.expert_id, booking.expert_name)}
+                      >
+                        <Phone className="h-4 w-4 mr-2" />
+                        Join Call
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -233,6 +232,9 @@ const BookingHistorySection: React.FC<BookingHistorySectionProps> = ({ user }) =
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterType>('today');
   const navigate = useNavigate();
+  const [isCallModalOpen, setIsCallModalOpen] = useState(false);
+  const [selectedExpert, setSelectedExpert] = useState<{id: string; authId: string; name: string; avatar?: string} | null>(null);
+  const [appointmentCallData, setAppointmentCallData] = useState<{callSessionId: string; channelName: string; token: string | null; uid: number; callType: 'audio' | 'video'} | null>(null);
 
   useEffect(() => {
     if (user?.id) {
@@ -516,6 +518,44 @@ const BookingHistorySection: React.FC<BookingHistorySectionProps> = ({ user }) =
                       navigate={navigate}
                       getStatusColor={getStatusColor}
                       formatTime={formatTime}
+                      onJoinCall={async (appointmentId, expertId, expertName) => {
+                        try {
+                          // Get call data for appointment
+                          const callData = await joinAppointmentCall(appointmentId);
+                          if (!callData) {
+                            toast.error('Call session not ready. Please wait for expert to start the session.');
+                            return;
+                          }
+
+                          // Get expert details
+                          const { data: expert } = await supabase
+                            .from('experts')
+                            .select('id, auth_id, name, profile_picture')
+                            .eq('auth_id', expertId)
+                            .maybeSingle();
+
+                          // Set selected expert and call data, then open call modal
+                          setSelectedExpert({
+                            id: expert?.id || expertId,
+                            authId: expert?.auth_id || expertId,
+                            name: expert?.name || expertName,
+                            avatar: expert?.profile_picture || undefined
+                          });
+                          
+                          setAppointmentCallData({
+                            callSessionId: callData.callSessionId,
+                            channelName: callData.channelName,
+                            token: callData.token,
+                            uid: callData.uid,
+                            callType: callData.callType
+                          });
+                          
+                          setIsCallModalOpen(true);
+                        } catch (error) {
+                          console.error('Error joining appointment call:', error);
+                          toast.error('Failed to join call. Please try again.');
+                        }
+                      }}
                     />
                   ))}
                 </div>
@@ -541,6 +581,24 @@ const BookingHistorySection: React.FC<BookingHistorySectionProps> = ({ user }) =
           </Tabs>
         </CardContent>
       </Card>
+
+      {/* Call Modal for Appointment Calls */}
+      {selectedExpert && (
+        <UserCallInterface
+          isOpen={isCallModalOpen}
+          onClose={() => {
+            setIsCallModalOpen(false);
+            setSelectedExpert(null);
+            setAppointmentCallData(null);
+          }}
+          expertId={selectedExpert.id}
+          expertAuthId={selectedExpert.authId}
+          expertName={selectedExpert.name}
+          expertAvatar={selectedExpert.avatar}
+          expertPrice={30}
+          existingCallData={appointmentCallData || undefined}
+        />
+      )}
     </div>
   );
 };

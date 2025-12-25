@@ -755,9 +755,17 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
               }
             } else {
               // Check wallet transactions for appointment payment
-              const { data: paymentTransaction } = await supabase
+              // Try multiple ways to find the payment:
+              // 1. Direct reference_id match
+              // 2. Check metadata->>reference_id
+              // 3. Check metadata->>appointment_ids array
+              
+              let paymentTransaction: { amount: number; currency: string } | null = null;
+              
+              // Query 1: Check reference_id column
+              const { data: paymentByRefId } = await supabase
                 .from('wallet_transactions')
-                .select('amount, currency')
+                .select('amount, currency, metadata')
                 .eq('reference_id', sessionId)
                 .eq('reference_type', 'appointment')
                 .eq('type', 'debit')
@@ -765,12 +773,41 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
                 .limit(1)
                 .maybeSingle();
 
+              // Query 2: Check metadata->>reference_id
+              const { data: paymentByMetadata } = await supabase
+                .from('wallet_transactions')
+                .select('amount, currency, metadata')
+                .eq('metadata->>reference_id', sessionId)
+                .eq('reference_type', 'appointment')
+                .eq('type', 'debit')
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+              // Query 3: Check if appointment is in metadata->>appointment_ids array
+              const { data: allAppointmentPayments } = await supabase
+                .from('wallet_transactions')
+                .select('amount, currency, metadata')
+                .eq('reference_type', 'appointment')
+                .eq('type', 'debit')
+                .order('created_at', { ascending: false });
+
+              // Find payment where this appointment ID is in metadata->appointment_ids array
+              const paymentInArray = allAppointmentPayments?.find(transaction => {
+                const metadata = transaction.metadata || {};
+                const appointmentIds = metadata.appointment_ids || [];
+                return Array.isArray(appointmentIds) && appointmentIds.includes(sessionId);
+              });
+
+              // Use the first found payment
+              paymentTransaction = paymentByRefId || paymentByMetadata || paymentInArray || null;
+
               if (paymentTransaction?.amount) {
                 refundAmount = paymentTransaction.amount;
                 currency = paymentTransaction.currency || 'INR';
 
-                // Check if refund already processed
-                const { data: existingRefunds } = await supabase
+                // Check if refund already processed (check all possible reference locations)
+                const { data: existingRefundsByRefId } = await supabase
                   .from('wallet_transactions')
                   .select('id')
                   .eq('reference_id', sessionId)
@@ -778,7 +815,34 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
                   .eq('type', 'credit')
                   .in('reason', ['expert_no_show', 'refund']);
 
-                if (existingRefunds && existingRefunds.length > 0) {
+                const { data: existingRefundsByMetadata } = await supabase
+                  .from('wallet_transactions')
+                  .select('id')
+                  .eq('metadata->>reference_id', sessionId)
+                  .eq('reference_type', 'appointment')
+                  .eq('type', 'credit')
+                  .in('reason', ['expert_no_show', 'refund']);
+
+                const { data: allRefunds } = await supabase
+                  .from('wallet_transactions')
+                  .select('id, metadata')
+                  .eq('reference_type', 'appointment')
+                  .eq('type', 'credit')
+                  .in('reason', ['expert_no_show', 'refund']);
+
+                const refundInArray = allRefunds?.find(refund => {
+                  const metadata = refund.metadata || {};
+                  const appointmentIds = metadata.appointment_ids || [];
+                  return Array.isArray(appointmentIds) && appointmentIds.includes(sessionId);
+                });
+
+                const existingRefunds = [
+                  ...(existingRefundsByRefId || []),
+                  ...(existingRefundsByMetadata || []),
+                  ...(refundInArray ? [refundInArray] : [])
+                ];
+
+                if (existingRefunds.length > 0) {
                   console.log('✅ Refund already processed for appointment');
                 } else {
                   // Process refund via wallet-operations
@@ -796,19 +860,43 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
 
                   if (refundError) {
                     console.error('❌ Error processing appointment refund:', refundError);
+                    toast.error(`Failed to process refund: ${refundError.message || 'Unknown error'}`);
                   } else if (refundResult?.success) {
-                    console.log('✅ Refund processed successfully for cancelled appointment');
+                    console.log('✅ Refund processed successfully for cancelled appointment:', {
+                      amount: refundAmount,
+                      currency: currency,
+                      appointmentId: sessionId
+                    });
                     toast.success(`Refund of ₹${refundAmount.toFixed(2)} has been credited to user wallet.`);
+                  } else {
+                    console.error('❌ Refund failed - wallet-operations returned:', refundResult);
+                    toast.error('Failed to process refund. Please contact support.');
                   }
                 }
               } else {
-                console.log('ℹ️ No payment found to refund for cancelled appointment');
+                console.log('ℹ️ No payment found to refund for cancelled appointment:', {
+                  appointmentId: sessionId,
+                  checkedByRefId: !!paymentByRefId,
+                  checkedByMetadata: !!paymentByMetadata,
+                  checkedInArray: !!paymentInArray,
+                  hasCallSession: !!callSession,
+                  callSessionPaymentStatus: callSession?.payment_status,
+                  callSessionCost: callSession?.cost
+                });
+                // Only show warning if payment was expected but not found
+                // If no call session exists, payment might not have been made yet (normal)
+                if (callSession && callSession.payment_status === 'paid' && !callSession.cost) {
+                  console.warn('⚠️ Call session marked as paid but no cost found');
+                }
+                // Don't show warning if no payment was made (normal for appointments cancelled before payment)
               }
             }
           }
         } catch (refundError) {
           console.error('❌ Error processing refund for cancelled session:', refundError);
-          // Don't fail the cancellation if refund fails - just log it
+          const errorMsg = refundError instanceof Error ? refundError.message : 'Unknown error';
+          toast.error(`Session cancelled, but refund failed: ${errorMsg}. Please contact support.`);
+          // Don't fail the cancellation if refund fails - but show error to user
         }
       }
 
@@ -821,6 +909,223 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
       toast.error('Failed to update session');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Process refund for cancelled session (manual trigger)
+  const processRefundForCancelledSession = async (sessionId: string): Promise<boolean> => {
+    try {
+      console.log('🔄 Manually processing refund for cancelled session:', sessionId);
+      
+      // Get appointment details
+      const { data: appointment } = await supabase
+        .from('appointments')
+        .select('id, user_id, expert_id, status')
+        .eq('id', sessionId)
+        .single();
+
+      if (!appointment) {
+        console.error('❌ Appointment not found:', sessionId);
+        toast.error('Appointment not found');
+        return false;
+      }
+
+      if (appointment.status !== 'cancelled') {
+        console.warn('⚠️ Appointment is not cancelled:', appointment.status);
+        toast.warning('This appointment is not cancelled. Refund only applies to cancelled appointments.');
+        return false;
+      }
+
+      // Check for call session payment
+      const { data: callSession } = await supabase
+        .from('call_sessions')
+        .select('id, cost, user_id, currency, payment_status')
+        .eq('appointment_id', sessionId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      let refundAmount = 0;
+      let currency = 'INR';
+      let paymentReferenceId = sessionId;
+      let paymentReferenceType = 'appointment';
+
+      if (callSession && callSession.payment_status === 'paid' && callSession.cost) {
+        // Payment was made via call session
+        refundAmount = callSession.cost;
+        currency = callSession.currency || 'INR';
+        paymentReferenceId = callSession.id;
+        paymentReferenceType = 'call_session';
+
+        // Check if refund already processed
+        const { data: existingRefunds } = await supabase
+          .from('wallet_transactions')
+          .select('id')
+          .eq('reference_id', callSession.id)
+          .eq('reference_type', 'call_session')
+          .eq('type', 'credit')
+          .in('reason', ['expert_no_show', 'refund']);
+
+        if (existingRefunds && existingRefunds.length > 0) {
+          console.log('✅ Refund already processed for call session');
+          toast.info('Refund has already been processed for this session');
+          return true;
+        }
+
+        // Process refund via call session edge function
+        const { data: refundData, error: refundError } = await supabase.functions.invoke('process-call-refund', {
+          body: {
+            callSessionId: callSession.id,
+            duration: 0,
+            reason: 'refund',
+            refundFullAmount: true
+          }
+        });
+
+        if (refundError) {
+          console.error('❌ Error processing call session refund:', refundError);
+          toast.error(`Failed to process refund: ${refundError.message || 'Unknown error'}`);
+          return false;
+        } else if (refundData?.success) {
+          console.log('✅ Refund processed successfully for cancelled call session');
+          toast.success('Refund has been processed and credited to user wallet.');
+          return true;
+        } else {
+          console.error('❌ Refund failed - process-call-refund returned:', refundData);
+          toast.error('Failed to process refund. Please contact support.');
+          return false;
+        }
+      } else {
+        // Check wallet transactions for appointment payment (same logic as updateSessionStatus)
+        let paymentTransaction: { amount: number; currency: string } | null = null;
+        
+        const { data: paymentByRefId } = await supabase
+          .from('wallet_transactions')
+          .select('amount, currency, metadata')
+          .eq('reference_id', sessionId)
+          .eq('reference_type', 'appointment')
+          .eq('type', 'debit')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        const { data: paymentByMetadata } = await supabase
+          .from('wallet_transactions')
+          .select('amount, currency, metadata')
+          .eq('metadata->>reference_id', sessionId)
+          .eq('reference_type', 'appointment')
+          .eq('type', 'debit')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        const { data: allAppointmentPayments } = await supabase
+          .from('wallet_transactions')
+          .select('amount, currency, metadata')
+          .eq('reference_type', 'appointment')
+          .eq('type', 'debit')
+          .order('created_at', { ascending: false });
+
+        const paymentInArray = allAppointmentPayments?.find(transaction => {
+          const metadata = transaction.metadata || {};
+          const appointmentIds = metadata.appointment_ids || [];
+          return Array.isArray(appointmentIds) && appointmentIds.includes(sessionId);
+        });
+
+        paymentTransaction = paymentByRefId || paymentByMetadata || paymentInArray || null;
+
+        if (paymentTransaction?.amount) {
+          refundAmount = paymentTransaction.amount;
+          currency = paymentTransaction.currency || 'INR';
+
+          // Check if refund already processed
+          const { data: existingRefundsByRefId } = await supabase
+            .from('wallet_transactions')
+            .select('id')
+            .eq('reference_id', sessionId)
+            .eq('reference_type', 'appointment')
+            .eq('type', 'credit')
+            .in('reason', ['expert_no_show', 'refund']);
+
+          const { data: existingRefundsByMetadata } = await supabase
+            .from('wallet_transactions')
+            .select('id')
+            .eq('metadata->>reference_id', sessionId)
+            .eq('reference_type', 'appointment')
+            .eq('type', 'credit')
+            .in('reason', ['expert_no_show', 'refund']);
+
+          const { data: allRefunds } = await supabase
+            .from('wallet_transactions')
+            .select('id, metadata')
+            .eq('reference_type', 'appointment')
+            .eq('type', 'credit')
+            .in('reason', ['expert_no_show', 'refund']);
+
+          const refundInArray = allRefunds?.find(refund => {
+            const metadata = refund.metadata || {};
+            const appointmentIds = metadata.appointment_ids || [];
+            return Array.isArray(appointmentIds) && appointmentIds.includes(sessionId);
+          });
+
+          const existingRefunds = [
+            ...(existingRefundsByRefId || []),
+            ...(existingRefundsByMetadata || []),
+            ...(refundInArray ? [refundInArray] : [])
+          ];
+
+          if (existingRefunds.length > 0) {
+            console.log('✅ Refund already processed for appointment');
+            toast.info('Refund has already been processed for this session');
+            return true;
+          }
+
+          // Process refund via wallet-operations
+          const { data: refundResult, error: refundError } = await supabase.functions.invoke('wallet-operations', {
+            body: {
+              action: 'add_credits',
+              amount: refundAmount,
+              currency: currency,
+              reason: 'refund',
+              reference_id: sessionId,
+              reference_type: 'appointment',
+              description: `Session Cancelled - Full Refund`
+            }
+          });
+
+          if (refundError) {
+            console.error('❌ Error processing appointment refund:', refundError);
+            toast.error(`Failed to process refund: ${refundError.message || 'Unknown error'}`);
+            return false;
+          } else if (refundResult?.success) {
+            console.log('✅ Refund processed successfully for cancelled appointment:', {
+              amount: refundAmount,
+              currency: currency,
+              appointmentId: sessionId
+            });
+            toast.success(`Refund of ₹${refundAmount.toFixed(2)} has been credited to user wallet.`);
+            return true;
+          } else {
+            console.error('❌ Refund failed - wallet-operations returned:', refundResult);
+            toast.error('Failed to process refund. Please contact support.');
+            return false;
+          }
+        } else {
+          console.log('ℹ️ No payment found to refund for cancelled appointment:', {
+            appointmentId: sessionId,
+            checkedByRefId: !!paymentByRefId,
+            checkedByMetadata: !!paymentByMetadata,
+            checkedInArray: !!paymentInArray
+          });
+          toast.warning('No payment found for this appointment. Refund may not be applicable.');
+          return false;
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error processing refund for cancelled session:', error);
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Failed to process refund: ${errorMsg}`);
+      return false;
     }
   };
 

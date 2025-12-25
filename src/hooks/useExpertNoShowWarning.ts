@@ -109,6 +109,21 @@ export const useExpertNoShowWarning = (
     try {
       setIsChecking(true);
 
+      // If appointment status is already 'in-progress' or 'completed', expert definitely joined
+      if (status === 'in-progress' || status === 'completed') {
+        expertJoinedRef.current = true;
+        setWarningData({
+          appointmentId,
+          isWarning: false,
+          isNoShow: false,
+          timeSinceStart: 0,
+          minutesRemaining: 0
+        });
+        hasShownWarningRef.current = false;
+        hasShownNoShowRef.current = false;
+        return;
+      }
+
       // Parse appointment datetime
       const appointmentDateTime = parseISO(`${appointmentDate}T${startTime}`);
       const now = new Date();
@@ -127,8 +142,18 @@ export const useExpertNoShowWarning = (
 
       const timeSinceStart = differenceInMinutes(now, appointmentDateTime);
       
-      // Use the ref value (updated via real-time) or check once
-      const expertJoined = expertJoinedRef.current;
+      // Use the ref value (updated via real-time) or verify against database
+      let expertJoined = expertJoinedRef.current;
+      
+      // If ref says expert hasn't joined, verify against database (only if time has passed)
+      // This handles cases where expert joined before subscription was set up
+      if (!expertJoined && timeSinceStart > 0 && checkExpertJoinedRef.current) {
+        const actualJoined = await checkExpertJoinedRef.current(appointmentId);
+        if (actualJoined) {
+          expertJoinedRef.current = true;
+          expertJoined = true;
+        }
+      }
 
       // If expert has joined, no warning needed
       if (expertJoined) {
@@ -168,13 +193,58 @@ export const useExpertNoShowWarning = (
         });
       }
 
-      // Show no-show notification when 5 minutes passed
+      // Show no-show notification and automatically cancel when 5 minutes passed
       if (isNoShow && !hasShownNoShowRef.current) {
         hasShownNoShowRef.current = true;
         toast.error('Session Not Joined', {
-          description: 'You did not join the session within 5 minutes. The user has been refunded the full amount.',
+          description: 'You did not join the session within 5 minutes. The appointment has been automatically cancelled and the user has been refunded.',
           duration: 10000
         });
+        
+        // Automatically cancel the appointment (user side will process refund)
+        try {
+          console.log('🚨 Auto-cancelling appointment due to expert no-show:', appointmentId);
+          
+          // Get existing notes
+          const { data: existingAppointment } = await supabase
+            .from('appointments')
+            .select('notes')
+            .eq('id', appointmentId)
+            .single();
+
+          let existingNotes = {};
+          try {
+            if (existingAppointment?.notes) {
+              existingNotes = typeof existingAppointment.notes === 'string' 
+                ? JSON.parse(existingAppointment.notes) 
+                : existingAppointment.notes;
+            }
+          } catch {
+            // If parsing fails, use empty object
+          }
+
+          // Update appointment status to cancelled with no-show reason
+          const { error } = await supabase
+            .from('appointments')
+            .update({ 
+              status: 'cancelled',
+              notes: JSON.stringify({
+                ...existingNotes,
+                cancellation_reason: 'expert_no_show',
+                cancelled_at: new Date().toISOString()
+              })
+            })
+            .eq('id', appointmentId);
+
+          if (error) {
+            console.error('❌ Error auto-cancelling appointment:', error);
+            toast.error('Failed to cancel appointment automatically');
+          } else {
+            console.log('✅ Appointment automatically cancelled due to expert no-show');
+          }
+        } catch (error) {
+          console.error('❌ Error in auto-cancellation:', error);
+        }
       }
     } catch (error) {
       console.error('Error checking warning:', error);

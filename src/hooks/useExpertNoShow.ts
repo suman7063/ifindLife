@@ -35,6 +35,7 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const hasProcessedRefundRef = useRef(false);
   const isProcessingRefundRef = useRef(false); // Lock to prevent concurrent processing
+  const expertJoinedRef = useRef<boolean>(false); // Track expert joined status from real-time
 
   // Check if expert has joined the call session
   const checkExpertJoined = useCallback(async (aptId: string): Promise<boolean> => {
@@ -55,6 +56,7 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
 
       // Expert has joined if there's an active call session with start_time
       if (callSession && callSession.status === 'active' && callSession.start_time) {
+        console.log('✅ Expert has joined (call session active with start_time)');
         return true;
       }
 
@@ -66,9 +68,21 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
         .single();
 
       if (appointment && (appointment.status === 'completed' || appointment.status === 'in-progress')) {
+        console.log('✅ Expert has joined (appointment in-progress/completed)');
         return true;
       }
 
+      // If call_session doesn't exist at all, expert never clicked "Start"
+      // If call_session exists but status is 'pending', expert clicked "Start" but didn't join
+      // Both cases mean expert didn't join → return false
+      if (!callSession) {
+        console.log('❌ Expert did not click "Start" button (no call_session exists)');
+      } else if (callSession.status === 'pending') {
+        console.log('❌ Expert clicked "Start" but did not join (call_session status is pending)');
+      } else {
+        console.log('❌ Expert has not joined (call_session status:', callSession.status, ')');
+      }
+      
       return false;
     } catch (error) {
       console.error('Error checking expert joined status:', error);
@@ -761,8 +775,16 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
 
       const timeSinceStart = differenceInMinutes(now, appointmentDateTime);
       
-      // Check if expert has joined
-      const expertJoined = await checkExpertJoined(appointmentId);
+      // Check if expert has joined (use real-time status if available, otherwise check via API)
+      // Real-time subscriptions update expertJoinedRef, so we only check API if ref is false
+      let expertJoined = expertJoinedRef.current;
+      if (!expertJoined) {
+        // Only make API call if real-time hasn't detected join yet
+        expertJoined = await checkExpertJoined(appointmentId);
+        if (expertJoined) {
+          expertJoinedRef.current = true;
+        }
+      }
 
       // Warning state: 3+ minutes passed but expert hasn't joined (not yet a no-show)
       const isWarning = timeSinceStart >= 3 && timeSinceStart < 5 && !expertJoined && (status === 'scheduled' || status === 'confirmed');
@@ -989,39 +1011,191 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
     };
   }, [appointmentId, status, checkNoShow, noShowData?.isNoShow]);
 
-  // Set up periodic checking
+  // Set up real-time subscriptions and time-based checks
   useEffect(() => {
     if (!appointmentId || status === 'completed') {
       return;
     }
 
-    // Initial check (now handles cancelled appointments with expert_no_show)
+    let isMounted = true;
+    let timeCheckInterval: NodeJS.Timeout | null = null;
+    let channelRef: ReturnType<typeof supabase.channel> | null = null;
+
+    // Reset expert joined status when appointment changes
+    expertJoinedRef.current = false;
+    
+    // Initial check
     checkNoShow();
+
+    // Set up real-time subscription on call_sessions table
+    // When expert clicks "Start", call_session is created/updated
+    // When expert joins Agora call, status becomes 'active' with start_time
+    channelRef = supabase
+      .channel(`expert-no-show-${appointmentId}-${Date.now()}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'call_sessions',
+          filter: `appointment_id=eq.${appointmentId}`
+        },
+        (payload) => {
+          if (!isMounted) return;
+          const callSession = payload.new as any;
+          console.log('📥 Call session created (real-time):', callSession.id);
+          
+          // If call session is created with 'active' status and start_time, expert joined
+          if (callSession.status === 'active' && callSession.start_time) {
+            console.log('✅ Expert joined detected via real-time (INSERT)');
+            expertJoinedRef.current = true;
+            // Expert joined - no need to check no-show anymore
+            setNoShowData({
+              appointmentId,
+              isNoShow: false,
+              canReportNoShow: false,
+              timeSinceStart: 0,
+              refundProcessed: false,
+              isWarning: false
+            });
+          } else {
+            // Call session created but not active yet - check no-show status
+            checkNoShow();
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'call_sessions',
+          filter: `appointment_id=eq.${appointmentId}`
+        },
+        (payload) => {
+          if (!isMounted) return;
+          const callSession = payload.new as any;
+          console.log('🔄 Call session updated (real-time):', callSession.id, 'status:', callSession.status);
+          
+          // If call session status becomes 'active' with start_time, expert joined
+          if (callSession.status === 'active' && callSession.start_time) {
+            console.log('✅ Expert joined detected via real-time (UPDATE)');
+            expertJoinedRef.current = true;
+            // Expert joined - no need to check no-show anymore
+            setNoShowData({
+              appointmentId,
+              isNoShow: false,
+              canReportNoShow: false,
+              timeSinceStart: 0,
+              refundProcessed: false,
+              isWarning: false
+            });
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'appointments',
+          filter: `id=eq.${appointmentId}`
+        },
+        (payload) => {
+          if (!isMounted) return;
+          const appointment = payload.new as any;
+          
+          // If appointment status becomes 'in-progress' or 'completed', expert joined
+          if (appointment.status === 'in-progress' || appointment.status === 'completed') {
+            console.log('✅ Expert joined detected via appointment status (real-time)');
+            expertJoinedRef.current = true;
+            setNoShowData({
+              appointmentId,
+              isNoShow: false,
+              canReportNoShow: false,
+              timeSinceStart: 0,
+              refundProcessed: false,
+              isWarning: false
+            });
+          } else if (appointment.status === 'cancelled') {
+            // Appointment cancelled - check refund status
+            checkNoShow();
+          }
+        }
+      )
+      .subscribe();
 
     // For cancelled appointments, check periodically to catch refund updates
     if (status === 'cancelled') {
-      checkIntervalRef.current = setInterval(() => {
+      timeCheckInterval = setInterval(() => {
+        if (!isMounted) return;
         checkNoShow();
-      }, 10000); // Check every 10 seconds for cancelled appointments
+      }, 10000); // Check every 10 seconds for cancelled appointments (refund status)
     } else {
-      // Check more frequently for upcoming/past appointments to catch 5-minute mark quickly
+      // For active appointments, set up a single timeout for exact 5-minute mark
+      // Real-time subscriptions handle expert join detection instantly (no polling needed)
       const appointmentDateTime = parseISO(`${appointmentDate}T${startTime}`);
       const now = new Date();
       
-      // Only set up interval if appointment is today or in the past (check 5 minutes before)
+      // Only set up timeout if appointment time has passed or is very close
       if (!isAfter(appointmentDateTime, addMinutes(now, -5))) {
-        // Check every 10 seconds when close to or past appointment time for faster detection
-        // This ensures we catch the 5-minute mark within 10 seconds
-        checkIntervalRef.current = setInterval(() => {
-          checkNoShow();
-        }, 10000); // Check every 10 seconds for faster automatic cancellation
+        const timeSinceStart = differenceInMinutes(now, appointmentDateTime);
+        
+        if (timeSinceStart < 5) {
+          // Calculate exact time until 5-minute mark
+          const minutesUntil5Min = 5 - timeSinceStart;
+          const millisecondsUntil5Min = minutesUntil5Min * 60 * 1000;
+          
+          console.log(`⏰ Setting timeout for 5-minute no-show check in ${minutesUntil5Min.toFixed(1)} minutes`);
+          
+          // Single timeout for exact 5-minute mark (more efficient than interval)
+          const timeoutId = setTimeout(() => {
+            if (!isMounted || expertJoinedRef.current) {
+              console.log('⏰ 5-minute timeout triggered but expert already joined or component unmounted');
+              return;
+            }
+            console.log('⏰ 5-minute mark reached - checking no-show');
+            checkNoShow();
+          }, millisecondsUntil5Min);
+          
+          // Also set up a fallback interval (every 30 seconds) in case timeout is missed
+          // This ensures we catch the 5-minute mark even if browser tab was inactive
+          timeCheckInterval = setInterval(() => {
+            if (!isMounted || expertJoinedRef.current) return;
+            const currentTime = new Date();
+            const currentTimeSinceStart = differenceInMinutes(currentTime, appointmentDateTime);
+            
+            // Only check if we're past the 5-minute mark
+            if (currentTimeSinceStart >= 5) {
+              console.log('⏰ 5-minute mark detected via interval fallback');
+              checkNoShow();
+              // Clear interval after detecting 5-minute mark
+              if (timeCheckInterval) {
+                clearInterval(timeCheckInterval);
+                timeCheckInterval = null;
+              }
+            }
+          }, 30000); // Check every 30 seconds as fallback
+          
+          // Store timeout ID for cleanup
+          checkIntervalRef.current = timeoutId as any;
+        } else {
+          // Already past 5-minute mark - check immediately
+          if (!expertJoinedRef.current) {
+            console.log('⏰ Already past 5-minute mark - checking no-show immediately');
+            checkNoShow();
+          }
+        }
       }
     }
 
     return () => {
-      if (checkIntervalRef.current) {
-        clearInterval(checkIntervalRef.current);
-        checkIntervalRef.current = null;
+      isMounted = false;
+      if (channelRef) {
+        supabase.removeChannel(channelRef);
+      }
+      if (timeCheckInterval) {
+        clearInterval(timeCheckInterval);
       }
     };
   }, [appointmentId, appointmentDate, startTime, status, checkNoShow]);

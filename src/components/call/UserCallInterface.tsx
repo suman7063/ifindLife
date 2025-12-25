@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { type CallRequestResponse } from '@/services/callService';
 import CallTypeSelectionModal from './modals/CallTypeSelectionModal';
 import CallInterruptionModal from './modals/CallInterruptionModal';
 
@@ -184,6 +185,14 @@ interface UserCallInterfaceProps {
   expertName: string;
   expertAvatar?: string;
   expertPrice?: number;
+  // Optional: For joining existing appointment calls
+  existingCallData?: {
+    callSessionId: string;
+    channelName: string;
+    token: string | null;
+    uid: number;
+    callType: 'audio' | 'video';
+  };
 }
 
 const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
@@ -193,7 +202,8 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
   expertAuthId,
   expertName,
   expertAvatar,
-  expertPrice = 30
+  expertPrice = 30,
+  existingCallData
 }) => {
   const { user } = useSimpleAuth();
   const navigate = useNavigate();
@@ -224,6 +234,7 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
     expertDeclinedCall,
     showExpertDeclinedCallConfirmation,
     startCall,
+    joinAgoraCall,
     stopCall,
     toggleMute,
     toggleVideo,
@@ -661,6 +672,34 @@ console.log('🔄 Setting modalState to connecting...');
     }
   }, [isInCall, callState, callState?.isJoined, modalState]);
 
+  // Auto-join existing appointment call when modal opens with existingCallData
+  useEffect(() => {
+    if (isOpen && existingCallData && !isInCall && !isConnecting) {
+      console.log('📞 Auto-joining existing appointment call:', existingCallData);
+      setModalState('connecting');
+      
+      const callData: CallRequestResponse = {
+        callSessionId: existingCallData.callSessionId,
+        channelName: existingCallData.channelName,
+        token: existingCallData.token,
+        uid: existingCallData.uid,
+        callType: existingCallData.callType,
+        expertId: expertId,
+        expertAuthId: expertAuthId,
+        expertName: expertName,
+        expertAvatar: expertAvatar,
+        duration: 30, // Default duration for appointment calls
+        cost: expertPrice || 30
+      };
+      
+      joinAgoraCall(callData).catch((error) => {
+        console.error('❌ Error auto-joining appointment call:', error);
+        toast.error('Failed to join call. Please try again.');
+        setModalState('selection');
+      });
+    }
+  }, [isOpen, existingCallData, isInCall, isConnecting, joinAgoraCall, expertId, expertAuthId, expertName, expertAvatar, expertPrice]);
+
   // Reset when modal closes and refresh wallet balance when opens
   useEffect(() => {
     if (!isOpen) {
@@ -678,8 +717,8 @@ console.log('🔄 Setting modalState to connecting...');
       // If modalState is 'connecting', 'waiting', or 'incall', DO NOTHING - keep the state
       console.log('🔒 Modal closed (isOpen=false) but keeping modalState:', modalState, 'because we are in call flow');
     } else {
-      // Modal opened - only reset to selection if we're not in a call flow
-      if (modalState === 'selection' || (!isConnecting && !isInCall && modalState !== 'connecting' && modalState !== 'waiting' && modalState !== 'incall')) {
+      // Modal opened - only reset to selection if we're not in a call flow and no existingCallData
+      if (!existingCallData && (modalState === 'selection' || (!isConnecting && !isInCall && modalState !== 'connecting' && modalState !== 'waiting' && modalState !== 'incall'))) {
         setModalState('selection');
       }
       // Refresh wallet balance when modal opens
@@ -688,7 +727,7 @@ console.log('🔄 Setting modalState to connecting...');
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]);
+  }, [isOpen, existingCallData]);
 
   // Cleanup timeout on unmount
   useEffect(() => {

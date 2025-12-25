@@ -1637,6 +1637,7 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
   return {
     ...flowState,
     startCall,
+    joinAgoraCall, // Expose for joining existing calls (e.g., appointment calls)
     stopCall,
     toggleMute,
     toggleVideo,

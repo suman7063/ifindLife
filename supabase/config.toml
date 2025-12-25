@@ -38,3 +38,6 @@ verify_jwt = true
 
 [functions.process-call-refund]
 verify_jwt = true
+
+[functions.send-notification]
+verify_jwt = false

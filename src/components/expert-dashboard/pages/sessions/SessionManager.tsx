@@ -253,6 +253,7 @@ const SessionManager: React.FC = () => {
 
     try {
       isStartingSessionRef.current = true;
+      console.log('🚀 Starting session:', session.id);
       
       // Don't mark as in-progress yet - just prepare the session
       // Status will be updated to in-progress when user actually joins
@@ -267,6 +268,7 @@ const SessionManager: React.FC = () => {
         const shortExpertId = expert?.auth_id?.replace(/-/g, '').substring(0, 8) || 'expert';
         const shortUserId = session.clientId.replace(/-/g, '').substring(0, 8);
         channelName = `session_${shortExpertId}_${shortUserId}_${timestamp}`;
+        console.log('📝 Generated channel name:', channelName);
       }
       
       // Generate Agora tokens if missing
@@ -274,6 +276,7 @@ const SessionManager: React.FC = () => {
         const expertUid = Math.floor(Math.random() * 1000000);
         
         try {
+          console.log('🔑 Generating Agora token...');
           // Generate token for expert
           const { data: tokenData, error: tokenError } = await supabase.functions.invoke('smooth-action', {
             body: {
@@ -286,7 +289,7 @@ const SessionManager: React.FC = () => {
           
           if (tokenError) {
             console.error('❌ Failed to generate Agora token:', tokenError);
-            toast.error('Failed to generate call token. Please try again.');
+            toast.error(`Failed to generate call token: ${tokenError.message || 'Unknown error'}`);
             return;
           } else {
             token = tokenData?.token || null;
@@ -294,13 +297,15 @@ const SessionManager: React.FC = () => {
           }
         } catch (tokenErr) {
           console.error('Error generating token:', tokenErr);
-          toast.error('Failed to generate call token. Please try again.');
+          const errorMsg = tokenErr instanceof Error ? tokenErr.message : 'Unknown error';
+          toast.error(`Failed to generate call token: ${errorMsg}`);
           return;
         }
       }
       
       // Update appointment with channel and token (but keep status as scheduled)
-      await supabase
+      console.log('📝 Updating appointment with channel and token...');
+      const { error: updateError } = await supabase
         .from('appointments')
         .update({
           channel_name: channelName,
@@ -308,12 +313,25 @@ const SessionManager: React.FC = () => {
         })
         .eq('id', session.id);
       
+      if (updateError) {
+        console.error('❌ Error updating appointment:', updateError);
+        toast.error(`Failed to update appointment: ${updateError.message}`);
+        return;
+      }
+      
       // Create call session in 'pending' status (not active yet)
-      const { data: existingCallSession } = await supabase
+      console.log('📝 Creating/updating call session...');
+      const { data: existingCallSession, error: callSessionFetchError } = await supabase
         .from('call_sessions')
         .select('*')
         .eq('appointment_id', session.id)
         .maybeSingle();
+      
+      if (callSessionFetchError && callSessionFetchError.code !== 'PGRST116') {
+        console.error('❌ Error fetching call session:', callSessionFetchError);
+        toast.error(`Failed to check call session: ${callSessionFetchError.message}`);
+        return;
+      }
       
       let callSessionId: string | null = null;
       
@@ -321,10 +339,12 @@ const SessionManager: React.FC = () => {
         // Create new call session
         const newCallSessionId = `call_${session.id}_${Date.now()}`;
         if (!expert?.auth_id) {
+          console.error('❌ Expert auth_id not available');
           toast.error('Expert information not available. Please refresh and try again.');
           return;
         }
         
+        console.log('📝 Creating new call session:', newCallSessionId);
         const { data: newCallSession, error: insertError } = await supabase
           .from('call_sessions')
           .insert({
@@ -342,15 +362,17 @@ const SessionManager: React.FC = () => {
           .single();
         
         if (insertError) {
-          console.error('Error creating call session:', insertError);
-          toast.error('Failed to create call session. Please try again.');
+          console.error('❌ Error creating call session:', insertError);
+          toast.error(`Failed to create call session: ${insertError.message || 'Unknown error'}`);
           return;
         }
         
         callSessionId = newCallSession?.id || null;
+        console.log('✅ Call session created:', callSessionId);
       } else {
         // Update existing call session
-        await supabase
+        console.log('📝 Updating existing call session:', existingCallSession.id);
+        const { error: updateCallSessionError } = await supabase
           .from('call_sessions')
           .update({
             channel_name: channelName,
@@ -358,7 +380,15 @@ const SessionManager: React.FC = () => {
             status: 'pending' // Reset to pending
           })
           .eq('id', existingCallSession.id);
+        
+        if (updateCallSessionError) {
+          console.error('❌ Error updating call session:', updateCallSessionError);
+          toast.error(`Failed to update call session: ${updateCallSessionError.message}`);
+          return;
+        }
+        
         callSessionId = existingCallSession.id;
+        console.log('✅ Call session updated:', callSessionId);
       }
       
       // Send notification to user
@@ -366,32 +396,143 @@ const SessionManager: React.FC = () => {
         const callType = session.type === 'video' ? 'Video' : 'Audio';
         const expertName = expert?.name || 'Your expert';
         
-        const { error: notificationError } = await supabase.functions.invoke('send-notification', {
-          body: {
+        // Validate required fields before sending
+        if (!session.clientId) {
+          console.error('❌ Cannot send notification: clientId is missing');
+          toast.warning('Session prepared, but notification could not be sent (missing user ID)');
+        } else if (!expert?.auth_id) {
+          console.error('❌ Cannot send notification: expert auth_id is missing');
+          toast.warning('Session prepared, but notification could not be sent (missing expert ID)');
+        } else {
+          console.log('📨 Sending notification to user...', {
             userId: session.clientId,
-            type: 'session_ready',
-            title: `${callType} Session Ready`,
-            content: `${expertName} is ready for your scheduled ${callType.toLowerCase()} session. Click to join the call now.`,
-            referenceId: callSessionId || session.id,
-            senderId: expert?.auth_id,
-            data: {
-              sessionId: session.id,
-              callSessionId: callSessionId,
-              channelName: channelName,
-              callType: session.type,
-              expertName: expertName
+            callSessionId: callSessionId || session.id,
+            expertAuthId: expert.auth_id
+          });
+          
+          // Try to send notification with retry logic
+          let notificationSent = false;
+          let lastError: any = null;
+          
+          for (let attempt = 1; attempt <= 2; attempt++) {
+            try {
+              const { data: notificationData, error: notificationError } = await supabase.functions.invoke('send-notification', {
+                body: {
+                  userId: session.clientId,
+                  type: 'session_ready',
+                  title: `${callType} Session Ready`,
+                  content: `${expertName} is ready for your scheduled ${callType.toLowerCase()} session. Click to join the call now.`,
+                  referenceId: callSessionId || session.id,
+                  senderId: expert.auth_id,
+                  data: {
+                    sessionId: session.id,
+                    callSessionId: callSessionId,
+                    channelName: channelName,
+                    callType: session.type,
+                    expertName: expertName
+                  }
+                }
+              });
+              
+              if (notificationError) {
+                lastError = notificationError;
+                // If it's a network error and we have retries left, wait and retry
+                if (attempt < 2 && (notificationError.message?.includes('Failed to fetch') || notificationError.message?.includes('network'))) {
+                  console.warn(`⚠️ Notification attempt ${attempt} failed (network error), retrying...`);
+                  await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second before retry
+                  continue;
+                }
+                throw notificationError;
+              } else {
+                console.log('✅ Notification sent to user successfully:', notificationData);
+                notificationSent = true;
+                break;
+              }
+            } catch (invokeErr: any) {
+              lastError = invokeErr;
+              // If it's a network error and we have retries left, wait and retry
+              if (attempt < 2 && (invokeErr.message?.includes('Failed to fetch') || invokeErr.message?.includes('network'))) {
+                console.warn(`⚠️ Notification attempt ${attempt} failed (network error), retrying...`);
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second before retry
+                continue;
+              }
+              throw invokeErr;
             }
           }
-        });
-        
-        if (notificationError) {
-          console.warn('⚠️ Failed to send notification to user:', notificationError.message || 'Unknown error');
-        } else {
-          console.log('✅ Notification sent to user successfully');
+          
+          if (!notificationSent && lastError) {
+            console.error('❌ Failed to send notification after retries:', {
+              error: lastError,
+              message: lastError.message,
+              context: lastError.context,
+              userId: session.clientId,
+              callSessionId: callSessionId || session.id
+            });
+            
+            // Try alternative: Create notification directly in database as fallback
+            try {
+              console.log('🔄 Attempting fallback: Creating notification directly in database...');
+              const { error: directInsertError } = await supabase
+                .from('notifications')
+                .insert({
+                  user_id: session.clientId,
+                  type: 'session_ready',
+                  title: `${callType} Session Ready`,
+                  content: `${expertName} is ready for your scheduled ${callType.toLowerCase()} session. Click to join the call now.`,
+                  read: false,
+                  sender_id: expert.auth_id,
+                  reference_id: callSessionId || session.id
+                });
+              
+              if (directInsertError) {
+                console.error('❌ Fallback notification insert also failed:', directInsertError);
+                toast.warning('Session prepared. Notification service unavailable - user will see session when they refresh.');
+              } else {
+                console.log('✅ Fallback notification created successfully');
+                toast.success('Session prepared. Notification sent via fallback method.');
+              }
+            } catch (fallbackErr) {
+              console.error('❌ Fallback notification failed:', fallbackErr);
+              toast.warning('Session prepared. Notification service unavailable - user will see session when they refresh.');
+            }
+          }
         }
       } catch (notificationErr: unknown) {
         const errorMessage = notificationErr instanceof Error ? notificationErr.message : 'Unknown error';
-        console.warn('⚠️ Error sending notification to user:', errorMessage);
+        const errorStack = notificationErr instanceof Error ? notificationErr.stack : undefined;
+        console.error('❌ Exception sending notification to user:', {
+          error: notificationErr,
+          message: errorMessage,
+          stack: errorStack,
+          userId: session.clientId
+        });
+        
+        // Try fallback notification
+        try {
+          console.log('🔄 Attempting fallback notification after exception...');
+          const { error: fallbackError } = await supabase
+            .from('notifications')
+            .insert({
+              user_id: session.clientId,
+              type: 'session_ready',
+              title: `${session.type === 'video' ? 'Video' : 'Audio'} Session Ready`,
+              content: `${expert?.name || 'Your expert'} is ready for your scheduled session. Click to join the call now.`,
+              read: false,
+              sender_id: expert?.auth_id,
+              reference_id: callSessionId || session.id
+            });
+          
+          if (fallbackError) {
+            console.error('❌ Fallback notification also failed:', fallbackError);
+            toast.warning('Session prepared. Notification service unavailable.');
+          } else {
+            console.log('✅ Fallback notification created successfully');
+            toast.success('Session prepared. Notification sent.');
+          }
+        } catch (fallbackErr) {
+          console.error('❌ Fallback notification failed:', fallbackErr);
+          toast.warning('Session prepared. Notification service unavailable.');
+        }
       }
       
       // Show warning to expert about 5 minute refund policy
@@ -403,12 +544,16 @@ const SessionManager: React.FC = () => {
       toast.success(`Session prepared. Waiting for ${session.clientName} to join...`);
       
       // Refresh sessions to show updated status
+      console.log('🔄 Refreshing sessions...');
       await fetchSessions();
+      console.log('✅ Session started successfully');
     } catch (error) {
-      console.error('Error starting session:', error);
-      toast.error('Failed to prepare session. Please try again.');
+      console.error('❌ Error starting session:', error);
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Failed to prepare session: ${errorMsg}`);
     } finally {
       isStartingSessionRef.current = false;
+      console.log('🔓 Start session lock released');
     }
   };
 

@@ -733,6 +733,119 @@ export async function checkCallStatus(callSessionId: string): Promise<{
 }
 
 /**
+ * Join an appointment call (when expert has started the session)
+ * Gets appointment details and call session, then returns call data for joining Agora
+ */
+export async function joinAppointmentCall(appointmentId: string): Promise<CallRequestResponse | null> {
+  try {
+    console.log('📞 Joining appointment call:', appointmentId);
+    
+    // Get appointment details
+    const { data: appointment, error: appointmentError } = await supabase
+      .from('appointments')
+      .select('id, channel_name, token, expert_id, user_id, duration')
+      .eq('id', appointmentId)
+      .single();
+
+    if (appointmentError || !appointment) {
+      console.error('❌ Failed to get appointment:', appointmentError);
+      toast.error('Appointment not found');
+      return null;
+    }
+
+    // Check if expert has started the session (channel_name exists)
+    if (!appointment.channel_name) {
+      toast.error('Expert has not started the session yet. Please wait for them to start.');
+      return null;
+    }
+
+    // Get call session for this appointment
+    const { data: callSession, error: callSessionError } = await supabase
+      .from('call_sessions')
+      .select('id, agora_token, agora_uid, call_type')
+      .eq('appointment_id', appointmentId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (callSessionError && callSessionError.code !== 'PGRST116') {
+      console.error('❌ Failed to get call session:', callSessionError);
+    }
+
+    // Use call session token/uid if available, otherwise use appointment token
+    let agoraToken = callSession?.agora_token || appointment.token;
+    let agoraUid = callSession?.agora_uid || Math.floor(Math.random() * 1000000);
+    const callType = (callSession?.call_type === 'video' ? 'video' : 'audio') as 'audio' | 'video';
+
+    // Generate user token if not available (using appointment's channel_name)
+    if (!agoraToken || agoraToken === 'null' || agoraToken === '') {
+      const userUid = Math.floor(Math.random() * 1000000);
+      const { data: tokenData, error: tokenError } = await supabase.functions.invoke('smooth-action', {
+        body: {
+          channelName: appointment.channel_name,
+          uid: userUid,
+          role: 1, // Publisher role
+          expireTime: (appointment.duration || 30 + 5) * 60 // Token expires after session duration + 5 min buffer
+        }
+      });
+
+      if (tokenError) {
+        console.error('❌ Failed to generate Agora token for user:', tokenError);
+        toast.error('Failed to generate call token. Please try again.');
+        return null;
+      }
+
+      agoraToken = tokenData?.token || null;
+      agoraUid = userUid;
+      console.log('✅ Agora token generated for user (UID:', userUid, ')');
+    }
+
+    const callSessionId = callSession?.id || `call_${appointmentId}_${Date.now()}`;
+
+    // If call session doesn't exist, create it
+    if (!callSession) {
+      const { error: insertError } = await supabase
+        .from('call_sessions')
+        .insert({
+          id: callSessionId,
+          expert_id: appointment.expert_id,
+          user_id: appointment.user_id,
+          appointment_id: appointmentId,
+          channel_name: appointment.channel_name,
+          agora_token: agoraToken,
+          agora_uid: agoraUid,
+          call_type: callType,
+          status: 'pending' // Will be updated to 'active' when user joins
+        });
+
+      if (insertError) {
+        console.error('❌ Failed to create call session:', insertError);
+        // Continue anyway - we can still join the call
+      }
+    }
+
+    console.log('✅ Appointment call data ready:', {
+      callSessionId,
+      channelName: appointment.channel_name,
+      callType,
+      hasToken: !!agoraToken
+    });
+
+    return {
+      callRequestId: '', // Not needed for appointment calls
+      channelName: appointment.channel_name,
+      agoraToken: agoraToken,
+      agoraUid: agoraUid,
+      callSessionId: callSessionId
+    };
+  } catch (error) {
+    console.error('❌ Error joining appointment call:', error);
+    toast.error('Failed to join call. Please try again.');
+    return null;
+  }
+}
+
+/**
  * Subscribe to call session status changes to detect when expert ends call
  * @param callSessionId - The call session ID to monitor
  * @param onCallEnded - Callback function when call is ended
