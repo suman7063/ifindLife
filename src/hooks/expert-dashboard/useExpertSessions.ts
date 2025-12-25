@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
@@ -36,9 +36,23 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const callSessionCacheRef = useRef<Map<string, { data: any; timestamp: number }>>(new Map());
+  const CACHE_DURATION = 60000; // Cache call session data for 60 seconds (increased from 30)
+  const fetchCallSessionQueueRef = useRef<Set<string>>(new Set()); // Track pending fetches to prevent duplicates
+
+  // Cache for user profiles to prevent redundant API calls
+  const userProfileCacheRef = useRef<Map<string, { data: any; timestamp: number }>>(new Map());
+  const USER_PROFILE_CACHE_DURATION = 300000; // Cache for 5 minutes
 
   // Fetch user profile data for client information
   const fetchUserProfile = async (userId: string) => {
+    // Check cache first
+    const cached = userProfileCacheRef.current.get(userId);
+    const now = Date.now();
+    if (cached && (now - cached.timestamp) < USER_PROFILE_CACHE_DURATION) {
+      return cached.data;
+    }
+
     try {
       const { data, error } = await supabase
         .from('users')
@@ -78,25 +92,39 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
       }
 
       // If no data found, return minimal data
-      if (!data) {
-        return {
-          id: userId,
-          name: 'User',
-          email: null,
-          profile_picture: null
-        };
-      }
-
-      return data;
-    } catch (err) {
-      console.error('Error fetching user profile:', err);
-      // Return minimal data on error to prevent breaking the session list
-      return {
+      const profileData = data || {
         id: userId,
         name: 'User',
         email: null,
         profile_picture: null
       };
+
+      // Cache the result (cache duration is 5 minutes)
+      const now = Date.now();
+      userProfileCacheRef.current.set(userId, {
+        data: profileData,
+        timestamp: now
+      });
+
+      return profileData;
+    } catch (err) {
+      console.error('Error fetching user profile:', err);
+      // Return minimal data on error to prevent breaking the session list
+      const fallbackData = {
+        id: userId,
+        name: 'User',
+        email: null,
+        profile_picture: null
+      };
+      
+      // Cache fallback data too
+      const now = Date.now();
+      userProfileCacheRef.current.set(userId, {
+        data: fallbackData,
+        timestamp: now
+      });
+      
+      return fallbackData;
     }
   };
 
@@ -132,52 +160,80 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
     return continuous;
   };
 
-  // Fetch call session data if available
-  // Returns the most recent call session (active or completed) for status determination
-  const fetchCallSession = async (appointmentId: string) => {
-    try {
-      if (!expertId) {
-        return null;
-      }
+  // Fetch ALL call sessions for appointments in ONE batch query (not per appointment)
+  // This prevents 500+ API calls - fetches all at once
+  const fetchAllCallSessions = useCallback(async (appointmentIds: string[]) => {
+    if (!expertId || appointmentIds.length === 0) {
+      return new Map<string, any>();
+    }
 
-      // First, try to get any call session (active or completed) to check if expert joined
-      const { data: anyCallSession, error: anyError } = await supabase
+    try {
+      // Fetch all call sessions for these appointments in ONE query
+      const { data: callSessions, error } = await supabase
         .from('call_sessions')
         .select('*')
-        .eq('appointment_id', appointmentId)
-        .eq('expert_id', expertId) // Add expert_id filter for RLS policy
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .eq('expert_id', expertId)
+        .in('appointment_id', appointmentIds)
+        .order('created_at', { ascending: false });
 
-      if (anyError && anyError.code !== 'PGRST116') {
-        // Handle 406 errors gracefully
-        if (anyError.code === '406' || anyError.message?.includes('406')) {
-          console.warn('RLS policy issue when fetching call session (this may be expected):', anyError);
-          return null;
+      if (error && error.code !== 'PGRST116') {
+        if (error.code === '406' || error.message?.includes('406')) {
+          console.warn('RLS policy issue when fetching call sessions:', error);
+          return new Map<string, any>();
         }
-        console.error('Error fetching call session:', anyError);
-        return null;
+        console.error('Error fetching call sessions:', error);
+        return new Map<string, any>();
       }
 
-      // If we found a call session, return it (could be active or completed)
-      if (anyCallSession) {
-        return anyCallSession;
+      // Create a map: appointment_id -> most recent call session
+      const callSessionMap = new Map<string, any>();
+      const now = Date.now();
+
+      if (callSessions) {
+        // Group by appointment_id and get the most recent one for each
+        const grouped = new Map<string, any>();
+        callSessions.forEach(cs => {
+          if (cs.appointment_id) {
+            const existing = grouped.get(cs.appointment_id);
+            if (!existing || new Date(cs.created_at) > new Date(existing.created_at)) {
+              grouped.set(cs.appointment_id, cs);
+            }
+          }
+        });
+
+        // Store in cache and return map
+        grouped.forEach((cs, appointmentId) => {
+          callSessionMap.set(appointmentId, cs);
+          callSessionCacheRef.current.set(appointmentId, {
+            data: cs,
+            timestamp: now
+          });
+        });
       }
 
-      return null;
+      return callSessionMap;
     } catch (err) {
-      console.error('Error fetching call session:', err);
-      return null;
+      console.error('Error fetching call sessions:', err);
+      return new Map<string, any>();
     }
-  };
+  }, [expertId]);
+
+  // Fetch call session for a single appointment (uses cache from batch fetch)
+  const fetchCallSession = useCallback(async (appointmentId: string) => {
+    // Return cached data only - batch fetch will populate cache
+    const cached = callSessionCacheRef.current.get(appointmentId);
+    return cached?.data || null;
+  }, [expertId]);
+
+  // Store mapAppointmentToSession in ref to avoid dependency issues
+  const mapAppointmentToSessionRef = useRef<((appointment: any) => Promise<Session>) | null>(null);
 
   // Map appointment to Session format
-  const mapAppointmentToSession = async (appointment: any): Promise<Session> => {
+  const mapAppointmentToSession = useCallback(async (appointment: any): Promise<Session> => {
     // Fetch user profile for client information
     const userProfile = await fetchUserProfile(appointment.user_id);
     
-    // Fetch call session if available
+    // Fetch call session if available (uses cache to prevent redundant calls)
     const callSession = await fetchCallSession(appointment.id);
 
     // Parse start and end times
@@ -298,8 +354,18 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
       token: appointment.token || callSession?.agora_token || undefined,
       appointmentDate: appointment.appointment_date, // Store original date string for accurate comparison
     };
-  };
+  }, [fetchCallSession]);
 
+  // Update ref when function changes
+  useEffect(() => {
+    mapAppointmentToSessionRef.current = mapAppointmentToSession;
+  }, [mapAppointmentToSession]);
+
+  // Prevent concurrent fetches
+  const isFetchingRef = useRef(false);
+  const lastFetchTimeRef = useRef<number>(0);
+  const MIN_FETCH_INTERVAL = 10000; // Minimum 10 seconds between fetches (aggressive throttling)
+  
   // Fetch sessions from Supabase
   const fetchSessions = useCallback(async () => {
     if (!expertId) {
@@ -307,7 +373,23 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
       return;
     }
 
+    // Prevent concurrent fetches
+    if (isFetchingRef.current) {
+      console.log('⏸️ Fetch already in progress, skipping...');
+      return;
+    }
+
+    // Aggressive throttling - don't allow more than once every 10 seconds
+    const now = Date.now();
+    const timeSinceLastFetch = now - lastFetchTimeRef.current;
+    if (timeSinceLastFetch < MIN_FETCH_INTERVAL) {
+      console.log('⏸️ Throttling fetch - too soon since last one:', timeSinceLastFetch, 'ms');
+      return;
+    }
+
     try {
+      isFetchingRef.current = true;
+      lastFetchTimeRef.current = now;
       setLoading(true);
       setError(null);
 
@@ -328,9 +410,118 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
         return;
       }
 
-      // Map appointments to sessions
+      // STEP 1: Fetch ALL call sessions in ONE batch query (not per appointment)
+      // This replaces 50+ individual API calls with just 1 call
+      const appointmentIds = appointments.map(apt => apt.id);
+      const callSessionMap = await fetchAllCallSessions(appointmentIds);
+      console.log(`✅ Fetched ${callSessionMap.size} call sessions in ONE query (instead of ${appointmentIds.length} separate calls)`);
+
+      // STEP 2: Map appointments to sessions (now uses batch-fetched call session data)
+      // No need for batching since we're not making API calls anymore
       const mappedSessions = await Promise.all(
-        appointments.map(mapAppointmentToSession)
+        appointments.map(async (appointment) => {
+          // Use the batch-fetched call session data (from ONE API call)
+          const callSession = callSessionMap.get(appointment.id) || null;
+          
+          // Fetch user profile (cached, so no redundant calls)
+          const userProfile = await fetchUserProfile(appointment.user_id);
+          
+          // Parse start and end times
+          const appointmentDate = new Date(appointment.appointment_date);
+          const startTime = appointment.start_time
+            ? new Date(`${appointment.appointment_date}T${appointment.start_time}`)
+            : appointmentDate;
+          const endTime = appointment.end_time
+            ? new Date(`${appointment.appointment_date}T${appointment.end_time}`)
+            : new Date(startTime.getTime() + (appointment.duration || 60) * 60000);
+
+          // Determine session type
+          const type: 'video' | 'audio' | 'in-person' = 
+            appointment.channel_name ? 'video' : 'audio';
+
+          // Map status using call session data from batch fetch
+          let status: Session['status'] = 'scheduled';
+          const appointmentStatus = appointment.status?.toLowerCase();
+          const now = new Date();
+          const isPast = endTime < now;
+          const expertJoined = callSession && callSession.start_time;
+
+          // Status determination logic (same as before)
+          if (appointmentStatus === 'completed') {
+            status = 'completed';
+          } else if (appointmentStatus === 'cancelled') {
+            status = 'cancelled';
+          } else if (expertJoined) {
+            if (callSession.status === 'active') {
+              const callSessionTime = new Date(callSession.created_at);
+              const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+              status = callSessionTime >= thirtyMinutesAgo ? 'in-progress' : (isPast ? 'completed' : 'scheduled');
+            } else if (callSession.status === 'completed' || callSession.status === 'ended') {
+              status = 'completed';
+            } else {
+              status = isPast ? 'completed' : 'scheduled';
+            }
+          } else if (isPast && (appointmentStatus === 'scheduled' || appointmentStatus === 'pending' || appointmentStatus === 'confirmed')) {
+            status = 'no-show';
+          } else if (appointmentStatus === 'pending' || appointmentStatus === 'confirmed') {
+            status = 'scheduled';
+          }
+
+          // Calculate actual duration
+          let actualDuration: number | undefined;
+          if (callSession?.start_time && callSession?.end_time) {
+            const start = new Date(callSession.start_time);
+            const end = new Date(callSession.end_time);
+            actualDuration = Math.round((end.getTime() - start.getTime()) / 60000);
+          } else if (callSession?.duration) {
+            actualDuration = callSession.duration;
+          }
+
+          // Parse notes
+          let notes = appointment.notes || '';
+          let goals: string[] = [];
+          let outcomes: string[] = [];
+          let nextSteps: string[] = [];
+
+          try {
+            if (notes) {
+              const parsed = JSON.parse(notes);
+              if (typeof parsed === 'object') {
+                notes = parsed.notes || notes;
+                goals = parsed.goals || [];
+                outcomes = parsed.outcomes || [];
+                nextSteps = parsed.nextSteps || [];
+              }
+            }
+          } catch {
+            // If parsing fails, use notes as-is
+          }
+
+          return {
+            id: appointment.id,
+            clientId: appointment.user_id,
+            clientName: userProfile?.name || 'Unknown Client',
+            clientAvatar: userProfile?.profile_picture || undefined,
+            clientEmail: userProfile?.email || undefined,
+            type,
+            status,
+            startTime,
+            endTime,
+            duration: appointment.duration || 60,
+            actualDuration,
+            notes,
+            goals,
+            outcomes,
+            nextSteps,
+            rating: callSession?.rating || undefined,
+            paymentStatus: (appointment.payment_status as 'pending' | 'paid' | 'refunded') || 'pending',
+            amount: 0,
+            appointmentId: appointment.id,
+            channelName: appointment.channel_name || callSession?.channel_name || undefined,
+            token: appointment.token || callSession?.agora_token || undefined,
+            appointmentDate: appointment.appointment_date,
+          };
+        })
       );
 
       setSessions(mappedSessions);
@@ -340,8 +531,9 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
       toast.error('Failed to load sessions');
     } finally {
       setLoading(false);
+      isFetchingRef.current = false;
     }
-  }, [expertId]);
+  }, [expertId]); // Removed mapAppointmentToSession to prevent infinite loops - use ref instead
 
   // Update session status
   const updateSessionStatus = async (
@@ -498,6 +690,128 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
           .eq('id', sessionId);
       }
 
+      // If cancelling a session, process refund
+      if (status === 'cancelled') {
+        try {
+          // Get appointment details
+          const { data: appointment } = await supabase
+            .from('appointments')
+            .select('id, user_id, expert_id')
+            .eq('id', sessionId)
+            .single();
+
+          if (!appointment) {
+            console.warn('⚠️ Appointment not found for refund processing');
+          } else {
+            // Check for call session payment
+            const { data: callSession } = await supabase
+              .from('call_sessions')
+              .select('id, cost, user_id, currency, payment_status')
+              .eq('appointment_id', sessionId)
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle();
+
+            let refundAmount = 0;
+            let currency = 'INR';
+            let paymentReferenceId = sessionId;
+            let paymentReferenceType = 'appointment';
+
+            if (callSession && callSession.payment_status === 'paid' && callSession.cost) {
+              // Payment was made via call session
+              refundAmount = callSession.cost;
+              currency = callSession.currency || 'INR';
+              paymentReferenceId = callSession.id;
+              paymentReferenceType = 'call_session';
+
+              // Check if refund already processed
+              const { data: existingRefunds } = await supabase
+                .from('wallet_transactions')
+                .select('id')
+                .eq('reference_id', callSession.id)
+                .eq('reference_type', 'call_session')
+                .eq('type', 'credit')
+                .in('reason', ['expert_no_show', 'refund']);
+
+              if (existingRefunds && existingRefunds.length > 0) {
+                console.log('✅ Refund already processed for call session');
+              } else {
+                // Process refund via call session edge function
+                const { data: refundData, error: refundError } = await supabase.functions.invoke('process-call-refund', {
+                  body: {
+                    callSessionId: callSession.id,
+                    duration: 0,
+                    reason: 'refund',
+                    refundFullAmount: true
+                  }
+                });
+
+                if (refundError) {
+                  console.error('❌ Error processing call session refund:', refundError);
+                } else if (refundData?.success) {
+                  console.log('✅ Refund processed successfully for cancelled call session');
+                  toast.success('Refund has been processed and credited to user wallet.');
+                }
+              }
+            } else {
+              // Check wallet transactions for appointment payment
+              const { data: paymentTransaction } = await supabase
+                .from('wallet_transactions')
+                .select('amount, currency')
+                .eq('reference_id', sessionId)
+                .eq('reference_type', 'appointment')
+                .eq('type', 'debit')
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+              if (paymentTransaction?.amount) {
+                refundAmount = paymentTransaction.amount;
+                currency = paymentTransaction.currency || 'INR';
+
+                // Check if refund already processed
+                const { data: existingRefunds } = await supabase
+                  .from('wallet_transactions')
+                  .select('id')
+                  .eq('reference_id', sessionId)
+                  .eq('reference_type', 'appointment')
+                  .eq('type', 'credit')
+                  .in('reason', ['expert_no_show', 'refund']);
+
+                if (existingRefunds && existingRefunds.length > 0) {
+                  console.log('✅ Refund already processed for appointment');
+                } else {
+                  // Process refund via wallet-operations
+                  const { data: refundResult, error: refundError } = await supabase.functions.invoke('wallet-operations', {
+                    body: {
+                      action: 'add_credits',
+                      amount: refundAmount,
+                      currency: currency,
+                      reason: 'refund',
+                      reference_id: sessionId,
+                      reference_type: 'appointment',
+                      description: `Session Cancelled - Full Refund`
+                    }
+                  });
+
+                  if (refundError) {
+                    console.error('❌ Error processing appointment refund:', refundError);
+                  } else if (refundResult?.success) {
+                    console.log('✅ Refund processed successfully for cancelled appointment');
+                    toast.success(`Refund of ₹${refundAmount.toFixed(2)} has been credited to user wallet.`);
+                  }
+                }
+              } else {
+                console.log('ℹ️ No payment found to refund for cancelled appointment');
+              }
+            }
+          }
+        } catch (refundError) {
+          console.error('❌ Error processing refund for cancelled session:', refundError);
+          // Don't fail the cancellation if refund fails - just log it
+        }
+      }
+
       // Refresh sessions
       await fetchSessions();
       toast.success(`Session ${status} successfully`);
@@ -548,54 +862,78 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
     }
   };
 
-  // Set up real-time subscription
+  // Store fetchSessions in ref to avoid dependency issues
+  const fetchSessionsRef = useRef(fetchSessions);
+  useEffect(() => {
+    fetchSessionsRef.current = fetchSessions;
+  }, [fetchSessions]);
+
+  // Set up real-time subscription - ONLY for INSERT events (new bookings)
+  // UPDATE events disabled to prevent infinite calls
   useEffect(() => {
     if (!expertId || !autoFetch) return;
 
     // Initial fetch
-    fetchSessions();
+    fetchSessionsRef.current();
 
-    // Subscribe to appointment changes
+    // Only listen to INSERT events (new bookings) - NOT UPDATE events
+    // This prevents infinite calls while still showing new bookings
+    let refetchTimeout: NodeJS.Timeout | null = null;
+    let lastRefetchTime = 0;
+    const MIN_REFETCH_INTERVAL = 5000; // Minimum 5 seconds between refetches
+    
+    const debouncedRefetch = () => {
+      const now = Date.now();
+      const timeSinceLastRefetch = now - lastRefetchTime;
+      
+      if (timeSinceLastRefetch < MIN_REFETCH_INTERVAL) {
+        return;
+      }
+      
+      if (refetchTimeout) {
+        clearTimeout(refetchTimeout);
+        refetchTimeout = null;
+      }
+      
+      refetchTimeout = setTimeout(() => {
+        const timeSinceLast = Date.now() - lastRefetchTime;
+        if (timeSinceLast >= MIN_REFETCH_INTERVAL) {
+          lastRefetchTime = Date.now();
+          console.log('🔄 Real-time: Refreshing sessions after new booking');
+          fetchSessionsRef.current();
+        }
+        refetchTimeout = null;
+      }, 2000); // Wait 2 seconds before refetching
+    };
+
+    // ONLY listen to INSERT events (new bookings) - NOT UPDATE events
     const appointmentChannel = supabase
-      .channel(`expert-appointments-${expertId}`)
+      .channel(`expert-appointments-insert-${expertId}`)
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT', // Only INSERT, not UPDATE
           schema: 'public',
           table: 'appointments',
           filter: `expert_id=eq.${expertId}`,
         },
-        () => {
-          // Refetch on any change
-          fetchSessions();
-        }
-      )
-      .subscribe();
-
-    // Subscribe to call session changes
-    const callSessionChannel = supabase
-      .channel(`expert-call-sessions-${expertId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'call_sessions',
-          filter: `expert_id=eq.${expertId}`,
-        },
-        () => {
-          // Refetch on any change
-          fetchSessions();
+        (payload) => {
+          console.log('📥 New appointment created:', payload.new?.id);
+          if (payload.new?.id) {
+            callSessionCacheRef.current.delete(payload.new.id);
+          }
+          debouncedRefetch();
         }
       )
       .subscribe();
 
     return () => {
+      if (refetchTimeout) {
+        clearTimeout(refetchTimeout);
+      }
       supabase.removeChannel(appointmentChannel);
-      supabase.removeChannel(callSessionChannel);
     };
-  }, [expertId, autoFetch, fetchSessions]);
+  }, [expertId, autoFetch]); // Only depend on expertId and autoFetch
 
   return {
     sessions,

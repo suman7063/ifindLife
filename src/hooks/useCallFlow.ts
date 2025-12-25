@@ -609,6 +609,14 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
       
       // Update session status to active
       try {
+        // First, get the call session to find appointment_id
+        const { data: callSession } = await supabase
+          .from('call_sessions')
+          .select('appointment_id')
+          .eq('id', callData.callSessionId)
+          .single();
+        
+        // Update call session status to active
         await supabase
           .from('call_sessions')
           .update({ 
@@ -617,6 +625,15 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
           })
           .eq('id', callData.callSessionId);
         console.log('✅ Call session status updated to active');
+        
+        // Update appointment status to in-progress when user joins
+        if (callSession?.appointment_id) {
+          await supabase
+            .from('appointments')
+            .update({ status: 'in-progress' })
+            .eq('id', callSession.appointment_id);
+          console.log('✅ Appointment status updated to in-progress');
+        }
       } catch (dbError) {
         console.error('❌ Error updating session status:', dbError);
       }

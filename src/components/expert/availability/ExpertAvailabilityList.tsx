@@ -15,11 +15,12 @@ interface ExpertAvailabilityListProps {
 const ExpertAvailabilityList: React.FC<ExpertAvailabilityListProps> = ({ user }) => {
   const { availabilities, loading, error, fetchAvailabilities, deleteAvailability } = useAvailabilityManagement(user);
 
+  const expertAuthId = user?.auth_id || user?.id;
   useEffect(() => {
-    if (user?.id) {
+    if (expertAuthId) {
       fetchAvailabilities();
     }
-  }, [user?.id, fetchAvailabilities]);
+  }, [expertAuthId]); // Only depend on expertAuthId, not fetchAvailabilities to prevent loops
 
   const handleDelete = async (availabilityId: string) => {
     if (window.confirm('Are you sure you want to delete this availability?')) {

@@ -154,9 +154,10 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
     setEndDate(nextMonth.toISOString().split('T')[0]);
   }, []);
 
-  // Load existing availability from Supabase
+  // Load existing availability from Supabase - only when user ID changes
+  const expertAuthId = user?.auth_id || user?.id;
   useEffect(() => {
-    if (user && (('auth_id' in user && user.auth_id) || user.id)) {
+    if (expertAuthId) {
       setIsInitialLoad(true);
       fetchAvailabilities().finally(() => {
         setIsInitialLoad(false);
@@ -164,7 +165,7 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
     } else {
       setIsInitialLoad(false);
     }
-  }, [user, fetchAvailabilities]);
+  }, [expertAuthId]); // Only depend on expertAuthId, not the whole user object or fetchAvailabilities
   
   // Track initial load completion
   useEffect(() => {

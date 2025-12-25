@@ -23,13 +23,33 @@ export const useExpertNoShowWarning = (
 ) => {
   const [warningData, setWarningData] = useState<ExpertNoShowWarning | null>(null);
   const [isChecking, setIsChecking] = useState(false);
-  const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const hasShownWarningRef = useRef(false);
   const hasShownNoShowRef = useRef(false);
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const expertJoinedRef = useRef<boolean>(false);
+  const hasCheckedRef = useRef<boolean>(false); // Track if we've already checked
+  const isCheckingRef = useRef<boolean>(false); // Prevent concurrent checks
+  const checkWarningRef = useRef<(() => void) | null>(null);
+  const checkExpertJoinedRef = useRef<((aptId: string) => Promise<boolean>) | null>(null);
 
-  // Check if expert has joined the call session
+  // Check if expert has joined the call session (initial check only)
   const checkExpertJoined = useCallback(async (aptId: string): Promise<boolean> => {
+    // If we've already checked and expert joined, return early without API call
+    if (hasCheckedRef.current && expertJoinedRef.current) {
+      console.log('✅ Already checked - expert joined, skipping API call');
+      return true;
+    }
+    
+    // If we've already checked and expert didn't join, still return early
+    // Real-time subscriptions will update us if status changes
+    if (hasCheckedRef.current && !expertJoinedRef.current) {
+      console.log('⏸️ Already checked - expert not joined, skipping API call (will use real-time updates)');
+      return false;
+    }
+    
     try {
+      console.log('🔍 Checking expert joined status for appointment:', aptId);
+      
       // Check if there's an active call session for this appointment
       const { data: callSession, error } = await supabase
         .from('call_sessions')
@@ -45,21 +65,34 @@ export const useExpertNoShowWarning = (
       }
 
       // Expert has joined if there's an active call session with start_time
-      if (callSession && callSession.status === 'active' && callSession.start_time) {
+      const expertJoined = callSession && callSession.status === 'active' && callSession.start_time;
+      
+      if (expertJoined) {
+        console.log('✅ Expert has joined (call session active)');
+        expertJoinedRef.current = true;
+        hasCheckedRef.current = true;
         return true;
       }
 
-      // Also check appointment status - if it's marked as 'in-progress' or 'completed', expert likely joined
-      const { data: appointment } = await supabase
-        .from('appointments')
-        .select('status')
-        .eq('id', aptId)
-        .single();
+      // Also check appointment status (only if call session check didn't find anything)
+      if (!callSession) {
+        const { data: appointment } = await supabase
+          .from('appointments')
+          .select('status')
+          .eq('id', aptId)
+          .maybeSingle();
 
-      if (appointment && (appointment.status === 'completed' || appointment.status === 'in-progress')) {
-        return true;
+        if (appointment && (appointment.status === 'completed' || appointment.status === 'in-progress')) {
+          console.log('✅ Expert has joined (appointment in-progress/completed)');
+          expertJoinedRef.current = true;
+          hasCheckedRef.current = true;
+          return true;
+        }
       }
 
+      console.log('❌ Expert has not joined yet');
+      expertJoinedRef.current = false;
+      hasCheckedRef.current = true;
       return false;
     } catch (error) {
       console.error('Error checking expert joined status:', error);
@@ -94,8 +127,8 @@ export const useExpertNoShowWarning = (
 
       const timeSinceStart = differenceInMinutes(now, appointmentDateTime);
       
-      // Check if expert has joined
-      const expertJoined = await checkExpertJoined(appointmentId);
+      // Use the ref value (updated via real-time) or check once
+      const expertJoined = expertJoinedRef.current;
 
       // If expert has joined, no warning needed
       if (expertJoined) {
@@ -148,35 +181,117 @@ export const useExpertNoShowWarning = (
     } finally {
       setIsChecking(false);
     }
-  }, [appointmentId, appointmentDate, startTime, status, checkExpertJoined]);
+  }, [appointmentId, appointmentDate, startTime, status]);
 
-  // Set up periodic checking
+  // Reset check flag when appointmentId changes
+  useEffect(() => {
+    hasCheckedRef.current = false;
+    expertJoinedRef.current = false;
+    isCheckingRef.current = false;
+  }, [appointmentId]);
+
+  // Set up real-time subscriptions and periodic time checks
   useEffect(() => {
     if (!appointmentId || status === 'cancelled' || status === 'completed') {
       return;
     }
 
-    // Initial check
-    checkWarning();
+    let isMounted = true;
+    let timeCheckInterval: NodeJS.Timeout | null = null;
 
-    // Check every 30 seconds for upcoming/past appointments
+    // DISABLED: Initial API check - rely only on real-time subscriptions
+    // This prevents the flood of API calls when SessionManager loads
+    // Real-time subscriptions will update us when status changes
+    // Only do time-based calculations without API calls
     const appointmentDateTime = parseISO(`${appointmentDate}T${startTime}`);
     const now = new Date();
     
-    // Only set up interval if appointment is today or in the past (check 5 minutes before)
-    if (!isAfter(appointmentDateTime, addMinutes(now, -5))) {
-      checkIntervalRef.current = setInterval(() => {
-        checkWarning();
-      }, 30000); // Check every 30 seconds for faster detection
+    // If appointment time has passed, do initial time-based check (no API call)
+    if (!isAfter(appointmentDateTime, now) && checkWarningRef.current) {
+      checkWarningRef.current(); // This only calculates time, doesn't make API calls
+    }
+
+    // Set up real-time subscription for call_sessions
+    // Only subscribe to updates, don't make initial API calls
+    const channel = supabase
+      .channel(`expert-no-show-warning-${appointmentId}-${Date.now()}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'call_sessions',
+          filter: `appointment_id=eq.${appointmentId}`
+        },
+        (payload) => {
+          if (!isMounted) return;
+          const callSession = payload.new as any;
+          
+          // Update expert joined status based on call session (no API call needed)
+          if (callSession && callSession.status === 'active' && callSession.start_time) {
+            expertJoinedRef.current = true;
+            hasCheckedRef.current = true;
+            if (checkWarningRef.current) {
+              checkWarningRef.current(); // Only updates UI, no API call
+            }
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'appointments',
+          filter: `id=eq.${appointmentId}`
+        },
+        (payload) => {
+          if (!isMounted) return;
+          const appointment = payload.new as any;
+          
+          // Update expert joined status based on appointment status (no API call needed)
+          if (appointment && (appointment.status === 'in-progress' || appointment.status === 'completed')) {
+            expertJoinedRef.current = true;
+            hasCheckedRef.current = true;
+            if (checkWarningRef.current) {
+              checkWarningRef.current(); // Only updates UI, no API call
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    channelRef.current = channel;
+
+    // Set up interval only for time-based checks (not API calls)
+    // This just checks if time has passed, doesn't make API calls
+    // Only set up interval if appointment is today or in the past
+    if (!isAfter(appointmentDateTime, addMinutes(now, -5)) && 
+        (status === 'scheduled' || status === 'confirmed')) {
+      timeCheckInterval = setInterval(() => {
+        if (!isMounted || expertJoinedRef.current || !checkWarningRef.current) return;
+        // Only update time-based calculations, no API calls
+        checkWarningRef.current();
+      }, 60000); // Check every 60 seconds (reduced frequency)
     }
 
     return () => {
-      if (checkIntervalRef.current) {
-        clearInterval(checkIntervalRef.current);
-        checkIntervalRef.current = null;
+      isMounted = false;
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+      if (timeCheckInterval) {
+        clearInterval(timeCheckInterval);
       }
     };
-  }, [appointmentId, appointmentDate, startTime, status, checkWarning]);
+  }, [appointmentId, appointmentDate, startTime, status]); // Removed function deps to prevent infinite loops
+
+  // Keep refs updated after functions are defined
+  useEffect(() => {
+    checkWarningRef.current = checkWarning;
+    checkExpertJoinedRef.current = checkExpertJoined;
+  }, [checkWarning, checkExpertJoined]);
 
   return {
     warningData,

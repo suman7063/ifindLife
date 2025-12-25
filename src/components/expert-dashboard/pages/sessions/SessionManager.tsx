@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -47,6 +47,7 @@ const SessionManager: React.FC = () => {
   const [outcomesText, setOutcomesText] = useState('');
   const [nextStepsText, setNextStepsText] = useState('');
   const [expertTimezone, setExpertTimezone] = useState<string>('UTC');
+  const isStartingSessionRef = useRef(false); // Prevent multiple simultaneous startSession calls
 
   // Use the expert sessions hook
   const {
@@ -244,12 +245,170 @@ const SessionManager: React.FC = () => {
   };
 
   const startSession = async (session: Session) => {
+    // Prevent multiple simultaneous calls
+    if (isStartingSessionRef.current) {
+      console.log('⏸️ Start session already in progress, skipping...');
+      return;
+    }
+
     try {
-      await updateSessionStatus(session.id, 'in-progress');
-      setSessionTimer({ isRunning: true, elapsed: 0 });
-      toast.success(`Starting ${session.type} session with ${session.clientName}`);
+      isStartingSessionRef.current = true;
+      
+      // Don't mark as in-progress yet - just prepare the session
+      // Status will be updated to in-progress when user actually joins
+      
+      // Generate channel name and tokens if they don't exist
+      let channelName = session.channelName;
+      let token = session.token;
+      
+      if (!channelName) {
+        // Generate unique channel name
+        const timestamp = Date.now();
+        const shortExpertId = expert?.auth_id?.replace(/-/g, '').substring(0, 8) || 'expert';
+        const shortUserId = session.clientId.replace(/-/g, '').substring(0, 8);
+        channelName = `session_${shortExpertId}_${shortUserId}_${timestamp}`;
+      }
+      
+      // Generate Agora tokens if missing
+      if (!token || token === 'null' || token === '') {
+        const expertUid = Math.floor(Math.random() * 1000000);
+        
+        try {
+          // Generate token for expert
+          const { data: tokenData, error: tokenError } = await supabase.functions.invoke('smooth-action', {
+            body: {
+              channelName,
+              uid: expertUid,
+              role: 1, // Publisher role
+              expireTime: (session.duration + 5) * 60 // Token expires after session duration + 5 min buffer
+            }
+          });
+          
+          if (tokenError) {
+            console.error('❌ Failed to generate Agora token:', tokenError);
+            toast.error('Failed to generate call token. Please try again.');
+            return;
+          } else {
+            token = tokenData?.token || null;
+            console.log('✅ Agora token generated for expert');
+          }
+        } catch (tokenErr) {
+          console.error('Error generating token:', tokenErr);
+          toast.error('Failed to generate call token. Please try again.');
+          return;
+        }
+      }
+      
+      // Update appointment with channel and token (but keep status as scheduled)
+      await supabase
+        .from('appointments')
+        .update({
+          channel_name: channelName,
+          token: token
+        })
+        .eq('id', session.id);
+      
+      // Create call session in 'pending' status (not active yet)
+      const { data: existingCallSession } = await supabase
+        .from('call_sessions')
+        .select('*')
+        .eq('appointment_id', session.id)
+        .maybeSingle();
+      
+      let callSessionId: string | null = null;
+      
+      if (!existingCallSession) {
+        // Create new call session
+        const newCallSessionId = `call_${session.id}_${Date.now()}`;
+        if (!expert?.auth_id) {
+          toast.error('Expert information not available. Please refresh and try again.');
+          return;
+        }
+        
+        const { data: newCallSession, error: insertError } = await supabase
+          .from('call_sessions')
+          .insert({
+            id: newCallSessionId,
+            expert_id: expert.auth_id,
+            user_id: session.clientId,
+            appointment_id: session.id,
+            channel_name: channelName,
+            agora_token: token,
+            call_type: session.type === 'video' ? 'video' : 'audio',
+            status: 'pending', // Not active until user joins
+            selected_duration: session.duration
+          })
+          .select()
+          .single();
+        
+        if (insertError) {
+          console.error('Error creating call session:', insertError);
+          toast.error('Failed to create call session. Please try again.');
+          return;
+        }
+        
+        callSessionId = newCallSession?.id || null;
+      } else {
+        // Update existing call session
+        await supabase
+          .from('call_sessions')
+          .update({
+            channel_name: channelName,
+            agora_token: token,
+            status: 'pending' // Reset to pending
+          })
+          .eq('id', existingCallSession.id);
+        callSessionId = existingCallSession.id;
+      }
+      
+      // Send notification to user
+      try {
+        const callType = session.type === 'video' ? 'Video' : 'Audio';
+        const expertName = expert?.name || 'Your expert';
+        
+        const { error: notificationError } = await supabase.functions.invoke('send-notification', {
+          body: {
+            userId: session.clientId,
+            type: 'session_ready',
+            title: `${callType} Session Ready`,
+            content: `${expertName} is ready for your scheduled ${callType.toLowerCase()} session. Click to join the call now.`,
+            referenceId: callSessionId || session.id,
+            senderId: expert?.auth_id,
+            data: {
+              sessionId: session.id,
+              callSessionId: callSessionId,
+              channelName: channelName,
+              callType: session.type,
+              expertName: expertName
+            }
+          }
+        });
+        
+        if (notificationError) {
+          console.warn('⚠️ Failed to send notification to user:', notificationError.message || 'Unknown error');
+        } else {
+          console.log('✅ Notification sent to user successfully');
+        }
+      } catch (notificationErr: unknown) {
+        const errorMessage = notificationErr instanceof Error ? notificationErr.message : 'Unknown error';
+        console.warn('⚠️ Error sending notification to user:', errorMessage);
+      }
+      
+      // Show warning to expert about 5 minute refund policy
+      toast.warning('Session Prepared', {
+        description: `User has been notified. If you don't join within 5 minutes of the session start time, the user will receive a full refund automatically.`,
+        duration: 8000
+      });
+      
+      toast.success(`Session prepared. Waiting for ${session.clientName} to join...`);
+      
+      // Refresh sessions to show updated status
+      await fetchSessions();
     } catch (error) {
       console.error('Error starting session:', error);
+      toast.error('Failed to prepare session. Please try again.');
+    } finally {
+      isStartingSessionRef.current = false;
     }
   };
 
@@ -381,7 +540,7 @@ const SessionManager: React.FC = () => {
             <Badge className={getStatusColor(session.status)}>
               {formatStatusText(session.status)}
             </Badge>
-            {session.status === 'scheduled' && (
+            {session.status === 'scheduled' && new Date() >= session.startTime && (
               <Button size="sm" onClick={onStart}>
                 <Play className="h-4 w-4 mr-1" />
                 Start
@@ -882,7 +1041,7 @@ const SessionManager: React.FC = () => {
                 <Button variant="outline" onClick={() => setSelectedSession(null)}>
                   Close
                 </Button>
-                {selectedSession.status === 'scheduled' && (
+                {selectedSession.status === 'scheduled' && new Date() >= selectedSession.startTime && (
                   <Button onClick={() => startSession(selectedSession)}>
                     <Play className="h-4 w-4 mr-2" />
                     Start Session

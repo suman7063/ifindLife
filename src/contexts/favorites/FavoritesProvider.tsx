@@ -20,7 +20,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   // Load favorites when user is authenticated
   useEffect(() => {
-    if (isAuthenticated && user) {
+    if (isAuthenticated && user?.id) {
       loadFavorites();
     } else {
       setExpertFavorites([]);
@@ -29,7 +29,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setProgramFavoriteDetails([]);
       setLoading(false);
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user?.id]); // Use user.id instead of user object to prevent infinite loops
 
   const loadFavorites = async () => {
     try {

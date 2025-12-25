@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
@@ -14,6 +14,10 @@ export function useAvailabilityManagement(user: any) {
   const [loading, setLoading] = useState(false);
   const [availabilities, setAvailabilities] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const isFetchingRef = useRef(false);
+  const lastFetchTimeRef = useRef<number>(0);
+  const MIN_FETCH_INTERVAL = 5000; // Minimum 5 seconds between fetches
+  const expertAuthIdRef = useRef<string | null>(null);
 
   const createAvailability = async (
     expertAuthId: string,
@@ -106,7 +110,29 @@ export function useAvailabilityManagement(user: any) {
       return;
     }
 
+    // Prevent concurrent fetches
+    if (isFetchingRef.current) {
+      console.log('⏸️ Availability fetch already in progress, skipping...');
+      return;
+    }
+
+    // Throttle fetches - don't allow more than once every 5 seconds
+    const now = Date.now();
+    const timeSinceLastFetch = now - lastFetchTimeRef.current;
+    if (timeSinceLastFetch < MIN_FETCH_INTERVAL) {
+      console.log('⏸️ Throttling availability fetch - too soon since last one:', timeSinceLastFetch, 'ms');
+      return;
+    }
+
+    // If same expert, skip if we just fetched recently
+    if (expertAuthIdRef.current === expertAuthId && timeSinceLastFetch < MIN_FETCH_INTERVAL) {
+      return;
+    }
+
     try {
+      isFetchingRef.current = true;
+      lastFetchTimeRef.current = now;
+      expertAuthIdRef.current = expertAuthId;
       setLoading(true);
       setError(null);
       
@@ -130,12 +156,17 @@ export function useAvailabilityManagement(user: any) {
       setError(err.message);
     } finally {
       setLoading(false);
+      isFetchingRef.current = false;
     }
   }, [user?.auth_id, user?.id]);
 
+  // Only fetch when expertAuthId actually changes, not on every render
+  const expertAuthId = user?.auth_id || user?.id;
   useEffect(() => {
-    fetchAvailabilities();
-  }, [fetchAvailabilities]); // Use fetchAvailabilities as dependency
+    if (expertAuthId && expertAuthIdRef.current !== expertAuthId) {
+      fetchAvailabilities();
+    }
+  }, [expertAuthId, fetchAvailabilities]);
 
   return {
     createAvailability,

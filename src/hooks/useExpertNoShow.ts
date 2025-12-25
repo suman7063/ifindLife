@@ -932,6 +932,12 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
 
       // Auto-mark as no-show and process refund if 5 minutes have passed
       if (isNoShow && !refundProcessed) {
+        console.log('🚨 Expert no-show detected - automatically cancelling and processing refund:', {
+          appointmentId,
+          timeSinceStart,
+          refundAmountDisplay
+        });
+        
         // Show global warning notification
         toast.error('Expert No-Show Detected', {
           description: `The expert did not join your session within 5 minutes. Full refund ${refundAmountDisplay ? `of ${refundAmountDisplay}` : ''} has been processed and credited to your wallet.`,
@@ -945,7 +951,13 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
           }
         });
 
-        await markAsNoShow(appointmentId);
+        // Automatically cancel appointment and process refund
+        const success = await markAsNoShow(appointmentId);
+        if (success) {
+          console.log('✅ Appointment automatically cancelled and refund processed');
+        } else {
+          console.error('❌ Failed to automatically cancel appointment and process refund');
+        }
       } else if (isWarning && !isNoShow) {
         // Show warning notification when 3 minutes passed
         toast.warning('Expert Not Joined Yet', {
@@ -992,15 +1004,17 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
         checkNoShow();
       }, 10000); // Check every 10 seconds for cancelled appointments
     } else {
-      // Check every 30 seconds for upcoming/past appointments
+      // Check more frequently for upcoming/past appointments to catch 5-minute mark quickly
       const appointmentDateTime = parseISO(`${appointmentDate}T${startTime}`);
       const now = new Date();
       
       // Only set up interval if appointment is today or in the past (check 5 minutes before)
       if (!isAfter(appointmentDateTime, addMinutes(now, -5))) {
+        // Check every 10 seconds when close to or past appointment time for faster detection
+        // This ensures we catch the 5-minute mark within 10 seconds
         checkIntervalRef.current = setInterval(() => {
           checkNoShow();
-        }, 30000); // Check every 30 seconds for faster detection
+        }, 10000); // Check every 10 seconds for faster automatic cancellation
       }
     }
 

@@ -9,13 +9,13 @@ export const useUserFavorites = () => {
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    if (isAuthenticated && user) {
+    if (isAuthenticated && user?.id) {
       fetchFavorites();
     } else {
       setFavoriteExperts([]);
       setLoading(false);
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user?.id]); // Use user.id instead of user object
   
   const fetchFavorites = async () => {
     if (!user?.id) return;
