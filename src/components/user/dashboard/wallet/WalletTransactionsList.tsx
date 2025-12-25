@@ -464,9 +464,30 @@ const WalletTransactionsList: React.FC<WalletTransactionsListProps> = ({ user })
                         </Badge>
                       )}
                     </div>
-                    <div className="flex items-center space-x-1 text-sm text-muted-foreground">
+                    <div className="flex items-center space-x-1 text-sm text-muted-foreground flex-wrap">
                       <Calendar className="h-3 w-3" />
-                      <span>{formatDate(transaction.created_at)}</span>
+                      <span>Refund processed: {formatDate(transaction.created_at)}</span>
+                      {transaction.reason === 'expert_no_show' && (() => {
+                        const detailsKey = getAppointmentDetailsKey(transaction);
+                        const details = detailsKey ? appointmentDetails[detailsKey] : null;
+                        if (details) {
+                          const sessionDate = new Date(details.appointment_date).toLocaleDateString('en-IN', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric'
+                          });
+                          const sessionTime = details.start_time ? details.start_time.substring(0, 5) : '';
+                          return (
+                            <>
+                              <span className="mx-1">•</span>
+                              <span className="text-xs">
+                                Session was: {sessionDate} {sessionTime}
+                              </span>
+                            </>
+                          );
+                        }
+                        return null;
+                      })()}
                       {transaction.expires_at && (
                         <>
                           <span className="mx-1">•</span>
