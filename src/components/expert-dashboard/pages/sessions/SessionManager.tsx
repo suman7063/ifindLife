@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -124,78 +124,76 @@ const SessionManager: React.FC = () => {
     }
   };
 
-  // Get today's date in expert's timezone
-  const todayDateString = getTodayDateStringInTimezone(expertTimezone);
+  // Get today's date in expert's timezone (memoized)
+  const todayDateString = useMemo(() => {
+    return getTodayDateStringInTimezone(expertTimezone);
+  }, [expertTimezone]);
   
-  console.log('🔍 Date comparison debug:', {
-    expertTimezone,
-    todayDateString,
-    sessionsCount: sessions.length,
-    sessionsWithDates: sessions.map(s => ({
-      appointmentDate: s.appointmentDate,
-      startTime: s.startTime
-    }))
-  });
-  
-  // Filter sessions by comparing appointment_date directly
+  // Filter sessions by comparing appointment_date directly (memoized)
   // appointment_date is already stored as YYYY-MM-DD in expert's timezone context
-  const todaySessions = sessions.filter(session => {
-    if (session.appointmentDate) {
-      // Direct string comparison - appointment_date is already in expert's timezone context
-      return session.appointmentDate === todayDateString;
-    }
-    // Fallback: compare using startTime converted to expert's timezone
-    try {
-      const formatter = new Intl.DateTimeFormat('en-CA', {
-        timeZone: expertTimezone,
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-      });
-      const sessionDateInTimezone = formatter.format(session.startTime);
-      return sessionDateInTimezone === todayDateString;
-    } catch {
-      // If timezone conversion fails, use simple date comparison
-      const sessionDate = new Date(session.startTime);
-      const today = new Date();
-      return sessionDate.getFullYear() === today.getFullYear() &&
-             sessionDate.getMonth() === today.getMonth() &&
-             sessionDate.getDate() === today.getDate();
-    }
-  });
+  const todaySessions = useMemo(() => {
+    return sessions.filter(session => {
+      if (session.appointmentDate) {
+        // Direct string comparison - appointment_date is already in expert's timezone context
+        return session.appointmentDate === todayDateString;
+      }
+      // Fallback: compare using startTime converted to expert's timezone
+      try {
+        const formatter = new Intl.DateTimeFormat('en-CA', {
+          timeZone: expertTimezone,
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        });
+        const sessionDateInTimezone = formatter.format(session.startTime);
+        return sessionDateInTimezone === todayDateString;
+      } catch {
+        // If timezone conversion fails, use simple date comparison
+        const sessionDate = new Date(session.startTime);
+        const today = new Date();
+        return sessionDate.getFullYear() === today.getFullYear() &&
+               sessionDate.getMonth() === today.getMonth() &&
+               sessionDate.getDate() === today.getDate();
+      }
+    });
+  }, [sessions, todayDateString, expertTimezone]);
 
-  const upcomingSessions = sessions.filter(session => {
+  const upcomingSessions = useMemo(() => {
     const now = new Date();
-    // Use appointmentDate for comparison if available
-    if (session.appointmentDate) {
-      // Direct string comparison - appointment_date is already in expert's timezone context
-      const isToday = session.appointmentDate === todayDateString;
-      return !isToday && session.startTime > now && session.status === 'scheduled';
-    }
-    // Fallback: use date comparison with timezone
-    try {
-      const formatter = new Intl.DateTimeFormat('en-CA', {
-        timeZone: expertTimezone,
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-      });
-      const sessionDateInTimezone = formatter.format(session.startTime);
-      const isToday = sessionDateInTimezone === todayDateString;
-      return !isToday && session.startTime > now && session.status === 'scheduled';
-    } catch {
-      const sessionDate = new Date(session.startTime);
-      const today = new Date();
-      const isToday = sessionDate.getFullYear() === today.getFullYear() &&
-                      sessionDate.getMonth() === today.getMonth() &&
-                      sessionDate.getDate() === today.getDate();
-      return !isToday && session.startTime > now && session.status === 'scheduled';
-    }
-  });
+    return sessions.filter(session => {
+      // Use appointmentDate for comparison if available
+      if (session.appointmentDate) {
+        // Direct string comparison - appointment_date is already in expert's timezone context
+        const isToday = session.appointmentDate === todayDateString;
+        return !isToday && session.startTime > now && session.status === 'scheduled';
+      }
+      // Fallback: use date comparison with timezone
+      try {
+        const formatter = new Intl.DateTimeFormat('en-CA', {
+          timeZone: expertTimezone,
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        });
+        const sessionDateInTimezone = formatter.format(session.startTime);
+        const isToday = sessionDateInTimezone === todayDateString;
+        return !isToday && session.startTime > now && session.status === 'scheduled';
+      } catch {
+        const sessionDate = new Date(session.startTime);
+        const today = new Date();
+        const isToday = sessionDate.getFullYear() === today.getFullYear() &&
+                        sessionDate.getMonth() === today.getMonth() &&
+                        sessionDate.getDate() === today.getDate();
+        return !isToday && session.startTime > now && session.status === 'scheduled';
+      }
+    });
+  }, [sessions, todayDateString, expertTimezone]);
 
-  const historySessions = sessions.filter(session => {
-    return session.status === 'completed' || session.status === 'cancelled';
-  }).sort((a, b) => b.startTime.getTime() - a.startTime.getTime());
+  const historySessions = useMemo(() => {
+    return sessions.filter(session => {
+      return session.status === 'completed' || session.status === 'cancelled';
+    }).sort((a, b) => b.startTime.getTime() - a.startTime.getTime());
+  }, [sessions]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -204,7 +202,7 @@ const SessionManager: React.FC = () => {
       case 'in-progress':
         return 'bg-green-100 text-green-800';
       case 'completed':
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-purple-100 text-purple-800'; // Changed to purple for better distinction
       case 'cancelled':
         return 'bg-red-100 text-red-800';
       case 'no-show':
@@ -212,6 +210,14 @@ const SessionManager: React.FC = () => {
       default:
         return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  // Format status text for display (no-show -> cancelled)
+  const formatStatusText = (status: string) => {
+    if (status === 'no-show') {
+      return 'cancelled';
+    }
+    return status;
   };
 
   const getTypeIcon = (type: string) => {
@@ -373,7 +379,7 @@ const SessionManager: React.FC = () => {
           </div>
           <div className="flex items-center gap-2">
             <Badge className={getStatusColor(session.status)}>
-              {session.status}
+              {formatStatusText(session.status)}
             </Badge>
             {session.status === 'scheduled' && (
               <Button size="sm" onClick={onStart}>
@@ -583,7 +589,7 @@ const SessionManager: React.FC = () => {
                               </div>
                               <div className="flex items-center gap-2">
                                 <Badge className={getStatusColor(session.status)}>
-                                  {session.status}
+                                  {formatStatusText(session.status)}
                                 </Badge>
                                 {session.status === 'scheduled' && (
                                   <Button 
@@ -649,7 +655,7 @@ const SessionManager: React.FC = () => {
                               </div>
                               <div className="flex items-center gap-2">
                                 <Badge className={getStatusColor(session.status)}>
-                                  {session.status}
+                                  {formatStatusText(session.status)}
                                 </Badge>
                                 {session.rating && (
                                   <div className="text-yellow-500 text-sm">
@@ -716,7 +722,7 @@ const SessionManager: React.FC = () => {
                     <span>{formatTime(selectedSession.startTime)} - {formatTime(selectedSession.endTime)}</span>
                   </div>
                   <Badge className={getStatusColor(selectedSession.status)}>
-                    {selectedSession.status}
+                    {formatStatusText(selectedSession.status)}
                   </Badge>
                 </div>
               </div>

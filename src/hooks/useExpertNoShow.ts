@@ -283,7 +283,7 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
             reason: 'expert_no_show',
             reference_id: paymentReferenceId,
             reference_type: paymentReferenceType,
-            description: `Refund for expert no-show - Appointment ${aptId}`
+            description: `Session Cancelled - Full Refund`
           }
         });
 

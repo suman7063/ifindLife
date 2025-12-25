@@ -230,7 +230,7 @@ serve(async (req) => {
     const refundReason = reason === 'expert_no_show' ? 'expert_no_show' : 'refund'
     let refundDescription = ''
     if (refundFullAmount && reason === 'expert_no_show') {
-      refundDescription = `Full refund for expert no-show - Appointment not attended by expert`
+      refundDescription = `Session Cancelled - Full Refund`
     } else if (refundFullAmount) {
       refundDescription = `Full refund processed`
     } else {

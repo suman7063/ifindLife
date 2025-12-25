@@ -44,17 +44,59 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
         .from('users')
         .select('id, name, email, profile_picture')
         .eq('id', userId)
-        .single();
+        .maybeSingle(); // Use maybeSingle to handle no rows gracefully
 
       if (error) {
+        // Handle 406 errors (RLS policy issue) gracefully
+        if (error.code === '406' || error.message?.includes('406')) {
+          console.warn('⚠️ RLS policy issue when fetching user profile (this may be expected):', error);
+          // Return minimal data to allow session to continue
+          return {
+            id: userId,
+            name: 'User',
+            email: null,
+            profile_picture: null
+          };
+        }
+        // Handle PGRST116 (no rows) - this is expected when user doesn't exist
+        if (error.code === 'PGRST116') {
+          console.warn('⚠️ User profile not found:', userId);
+          return {
+            id: userId,
+            name: 'User',
+            email: null,
+            profile_picture: null
+          };
+        }
         console.error('Error fetching user profile:', error);
-        return null;
+        return {
+          id: userId,
+          name: 'User',
+          email: null,
+          profile_picture: null
+        };
+      }
+
+      // If no data found, return minimal data
+      if (!data) {
+        return {
+          id: userId,
+          name: 'User',
+          email: null,
+          profile_picture: null
+        };
       }
 
       return data;
     } catch (err) {
       console.error('Error fetching user profile:', err);
-      return null;
+      // Return minimal data on error to prevent breaking the session list
+      return {
+        id: userId,
+        name: 'User',
+        email: null,
+        profile_picture: null
+      };
     }
   };
 
@@ -91,22 +133,39 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
   };
 
   // Fetch call session data if available
+  // Returns the most recent call session (active or completed) for status determination
   const fetchCallSession = async (appointmentId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('call_sessions')
-        .select('*')
-        .eq('appointment_id', appointmentId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
-        console.error('Error fetching call session:', error);
+      if (!expertId) {
         return null;
       }
 
-      return data;
+      // First, try to get any call session (active or completed) to check if expert joined
+      const { data: anyCallSession, error: anyError } = await supabase
+        .from('call_sessions')
+        .select('*')
+        .eq('appointment_id', appointmentId)
+        .eq('expert_id', expertId) // Add expert_id filter for RLS policy
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (anyError && anyError.code !== 'PGRST116') {
+        // Handle 406 errors gracefully
+        if (anyError.code === '406' || anyError.message?.includes('406')) {
+          console.warn('RLS policy issue when fetching call session (this may be expected):', anyError);
+          return null;
+        }
+        console.error('Error fetching call session:', anyError);
+        return null;
+      }
+
+      // If we found a call session, return it (could be active or completed)
+      if (anyCallSession) {
+        return anyCallSession;
+      }
+
+      return null;
     } catch (err) {
       console.error('Error fetching call session:', err);
       return null;
@@ -135,16 +194,51 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
       appointment.channel_name ? 'video' : 'audio';
 
     // Map status - appointments can have: 'scheduled', 'completed', 'cancelled', 'pending', 'confirmed'
+    // Priority: appointment status > call session check (expert joined?) > past time check
     let status: Session['status'] = 'scheduled';
     const appointmentStatus = appointment.status?.toLowerCase();
     
+    // Check if appointment end time has passed
+    const now = new Date();
+    const isPast = endTime < now;
+    
+    // Check if expert joined (call session exists with start_time)
+    const expertJoined = callSession && callSession.start_time;
+    
+    // First check appointment status (highest priority)
     if (appointmentStatus === 'completed') {
       status = 'completed';
     } else if (appointmentStatus === 'cancelled') {
       status = 'cancelled';
-    } else if (callSession?.status === 'active') {
-      status = 'in-progress';
-    } else if (appointmentStatus === 'pending' || appointmentStatus === 'confirmed') {
+    } 
+    // If expert joined (call session exists), determine status based on call session
+    else if (expertJoined) {
+      // Expert joined - check call session status
+      if (callSession.status === 'active') {
+        // Check if call session is recent (within last 30 minutes) for in-progress
+        const callSessionTime = new Date(callSession.created_at);
+        const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+        if (callSessionTime >= thirtyMinutesAgo) {
+          status = 'in-progress';
+        } else {
+          // Stale active call session - if past appointment time, mark as completed
+          status = isPast ? 'completed' : 'scheduled';
+        }
+      } else if (callSession.status === 'completed' || callSession.status === 'ended') {
+        // Call session completed
+        status = 'completed';
+      } else {
+        // Other call session status - if past, mark as completed
+        status = isPast ? 'completed' : 'scheduled';
+      }
+    }
+    // Expert didn't join - check if appointment time passed
+    else if (isPast && (appointmentStatus === 'scheduled' || appointmentStatus === 'pending' || appointmentStatus === 'confirmed')) {
+      // Appointment time passed and expert didn't join - mark as no-show
+      status = 'no-show';
+    }
+    // Future appointment, no call session yet
+    else if (appointmentStatus === 'pending' || appointmentStatus === 'confirmed') {
       status = 'scheduled';
     } else {
       status = 'scheduled'; // Default
