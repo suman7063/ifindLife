@@ -186,7 +186,6 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
     }
 
     if (availabilities && availabilities.length > 0) {
-      console.log('📅 Loading existing availability into form:', availabilities);
       
       // SIMPLE SCHEMA: Each day is a separate row in expert_availabilities
       // Process ALL rows to get all days

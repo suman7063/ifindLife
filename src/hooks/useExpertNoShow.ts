@@ -56,7 +56,6 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
 
       // Expert has joined if there's an active call session with start_time
       if (callSession && callSession.status === 'active' && callSession.start_time) {
-        console.log('✅ Expert has joined (call session active with start_time)');
         return true;
       }
 
@@ -68,19 +67,7 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
         .single();
 
       if (appointment && (appointment.status === 'completed' || appointment.status === 'in-progress')) {
-        console.log('✅ Expert has joined (appointment in-progress/completed)');
         return true;
-      }
-
-      // If call_session doesn't exist at all, expert never clicked "Start"
-      // If call_session exists but status is 'pending', expert clicked "Start" but didn't join
-      // Both cases mean expert didn't join → return false
-      if (!callSession) {
-        console.log('❌ Expert did not click "Start" button (no call_session exists)');
-      } else if (callSession.status === 'pending') {
-        console.log('❌ Expert clicked "Start" but did not join (call_session status is pending)');
-      } else {
-        console.log('❌ Expert has not joined (call_session status:', callSession.status, ')');
       }
       
       return false;
@@ -94,12 +81,10 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
   const processNoShowRefund = useCallback(async (aptId: string): Promise<boolean> => {
     // Prevent concurrent processing with lock
     if (isProcessingRefundRef.current) {
-      console.log('⚠️ Refund processing already in progress, skipping duplicate call');
       return false;
     }
 
     if (hasProcessedRefundRef.current) {
-      console.log('✅ Refund already processed for this appointment (from ref)');
       return true;
     }
 
@@ -124,10 +109,6 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
       }
 
       if (existingAppointmentRefunds && existingAppointmentRefunds.length > 0) {
-        console.log('⚠️ Refund already processed for appointment:', {
-          count: existingAppointmentRefunds.length,
-          refunds: existingAppointmentRefunds.map(r => ({ id: r.id, amount: r.amount, created_at: r.created_at }))
-        });
         hasProcessedRefundRef.current = true;
         isProcessingRefundRef.current = false;
         setIsProcessingRefund(false);
@@ -142,7 +123,6 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
         .single();
 
       if (!appointment) {
-        console.log('Appointment not found');
         hasProcessedRefundRef.current = true;
         return true;
       }
@@ -181,10 +161,6 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
           .in('reason', ['expert_no_show', 'refund']);
 
         if (existingCallRefunds && existingCallRefunds.length > 0) {
-          console.log('⚠️ Refund already processed for call session:', {
-            count: existingCallRefunds.length,
-            refunds: existingCallRefunds.map(r => ({ id: r.id, amount: r.amount, created_at: r.created_at }))
-          });
           hasProcessedRefundRef.current = true;
           isProcessingRefundRef.current = false;
           setIsProcessingRefund(false);
@@ -206,14 +182,8 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
         if (transaction?.amount) {
           refundAmount = transaction.amount;
           currency = transaction.currency || 'INR';
-          console.log('💰 Found payment transaction for refund:', {
-            amount: refundAmount,
-            currency: currency,
-            transactionId: transaction.id
-          });
         } else {
-          console.warn('⚠️ No payment found to refund for appointment:', aptId);
-          console.log('Checking if payment was made via call session or external gateway...');
+          console.warn('No payment found to refund for appointment:', aptId);
           hasProcessedRefundRef.current = true;
           return true;
         }
@@ -232,15 +202,6 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
         hasProcessedRefundRef.current = true;
         return true;
       }
-
-      console.log('💰 Processing refund:', {
-        appointmentId: aptId,
-        refundAmount,
-        currency,
-        paymentReferenceId,
-        paymentReferenceType,
-        callSessionExists: !!callSession
-      });
 
       // Process refund via edge function if call session exists
       if (callSession && paymentReferenceType === 'call_session') {
@@ -262,15 +223,10 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
         
         // Check if this was a duplicate
         if (data.duplicate) {
-          console.log('⚠️ Duplicate refund prevented:', {
-            existing_count: data.existing_count,
-            refund_id: data.refund_id
-          });
           toast.info('Refund was already processed earlier.');
           return true;
         }
         
-        console.log('✅ Refund processed successfully for expert no-show via call session');
         toast.success('Full refund has been credited to your wallet.');
         
         // Trigger wallet balance refresh via custom event
@@ -308,12 +264,6 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
 
         if (refundResult?.success) {
           hasProcessedRefundRef.current = true;
-          console.log('✅ Refund processed successfully for expert no-show via appointment:', {
-            amount: refundAmount,
-            currency: currency,
-            newBalance: refundResult.new_balance,
-            transactionId: refundResult.transaction?.id
-          });
           toast.success(`Full refund of ₹${refundAmount.toFixed(2)} has been credited to your wallet.`);
           
           // Trigger wallet balance refresh via custom event
@@ -430,7 +380,6 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
           // Use comprehensive check: reference_id column OR metadata->>reference_id
           let refundProcessed = false;
           
-          console.log('🔍 Checking for existing refund for cancelled appointment:', appointmentId);
           
           // Check appointment-level refund - check both reference_id column and metadata
           // Query 1: Check reference_id column
@@ -486,16 +435,6 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
           }
 
           if (appointmentRefunds && appointmentRefunds.length > 0) {
-            console.log('✅ Found appointment-level refund(s):', {
-              count: appointmentRefunds.length,
-              refunds: appointmentRefunds.map(r => ({
-                id: r.id,
-                amount: r.amount,
-                created_at: r.created_at,
-                reference_id: r.reference_id,
-                metadata_ref: r.metadata?.reference_id
-              }))
-            });
             refundProcessed = true;
           } else {
             // Check call session refund
@@ -508,7 +447,6 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
               .maybeSingle();
 
             if (callSession) {
-              console.log('🔍 Checking for call session refund:', callSession.id);
               // Query 1: Check reference_id column
               const { data: callRefundsByRefId } = await supabase
                 .from('wallet_transactions' as never)
@@ -540,22 +478,8 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
               }
 
               if (callRefunds && callRefunds.length > 0) {
-                console.log('✅ Found call session refund(s):', {
-                  count: callRefunds.length,
-                  refunds: callRefunds.map(r => ({
-                    id: r.id,
-                    amount: r.amount,
-                    created_at: r.created_at,
-                    reference_id: r.reference_id,
-                    metadata_ref: r.metadata?.reference_id
-                  }))
-                });
                 refundProcessed = true;
-              } else {
-                console.log('❌ No refund found for call session:', callSession.id);
               }
-            } else {
-              console.log('ℹ️ No call session found for appointment:', appointmentId);
             }
           }
 
@@ -584,13 +508,6 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
                     .limit(20);
 
                   if (recentRefunds && recentRefunds.length > 0) {
-                    console.log('🔍 Checking recent refunds for potential match:', {
-                      appointmentId,
-                      appointmentDate: appointmentDetails.appointment_date,
-                      expertId: appointmentDetails.expert_id,
-                      recentRefundsCount: recentRefunds.length
-                    });
-
                     // Check if any refund:
                     // 1. Has this appointment ID in metadata->appointment_ids array
                     // 2. Has this appointment ID in reference_id or metadata->reference_id
@@ -618,11 +535,6 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
                     });
 
                     if (matchingRefund) {
-                      console.log('✅ Found matching refund in recent transactions:', {
-                        refundId: matchingRefund.id,
-                        amount: matchingRefund.amount,
-                        appointmentIds: matchingRefund.metadata?.appointment_ids
-                      });
                       refundProcessed = true;
                     }
                   }
@@ -634,12 +546,7 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
           }
 
           if (!refundProcessed) {
-            console.log('⚠️ No refund found, will process refund now');
-          }
-
-          if (!refundProcessed) {
             // Refund not processed yet, process it now
-            console.log('💰 Processing refund for cancelled appointment with expert_no_show reason');
             const refundSuccess = await processNoShowRefund(appointmentId);
             if (refundSuccess) {
               // Re-check refund status after processing (comprehensive check)
@@ -690,10 +597,6 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
               );
               
               if (newRefunds && newRefunds.length > 0) {
-                console.log('✅ Refund confirmed after processing:', {
-                  count: newRefunds.length,
-                  refunds: newRefunds.map(r => ({ id: r.id, amount: r.amount, created_at: r.created_at }))
-                });
                 refundProcessed = true;
               } else {
                 // Also check call session refunds
@@ -849,14 +752,7 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
       );
       
       if (appointmentRefunds && appointmentRefunds.length > 0) {
-        console.log('✅ Found appointment-level refund for active appointment:', {
-          count: appointmentRefunds.length,
-          refunds: appointmentRefunds.map(r => ({
-            id: r.id,
-            amount: r.amount,
-            created_at: r.created_at
-          }))
-        });
+        // Refund already processed
         refundProcessed = true;
       } else {
         // Check call session refund
@@ -895,14 +791,7 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
           ); // Remove duplicates
         
           if (callRefunds && callRefunds.length > 0) {
-            console.log('✅ Found call session refund for active appointment:', {
-              count: callRefunds.length,
-              refunds: callRefunds.map(r => ({
-                id: r.id,
-                amount: r.amount,
-                created_at: r.created_at
-              }))
-            });
+            // Refund already processed
             refundProcessed = true;
           }
         }
@@ -954,31 +843,16 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
 
       // Auto-mark as no-show and process refund if 5 minutes have passed
       if (isNoShow && !refundProcessed) {
-        console.log('🚨 Expert no-show detected - automatically cancelling and processing refund:', {
-          appointmentId,
-          timeSinceStart,
-          refundAmountDisplay
-        });
-        
         // Show global warning notification
         toast.error('Expert No-Show Detected', {
           description: `The expert did not join your session within 5 minutes. Full refund ${refundAmountDisplay ? `of ${refundAmountDisplay}` : ''} has been processed and credited to your wallet.`,
-          duration: 10000,
-          action: {
-            label: 'View Details',
-            onClick: () => {
-              // Could navigate to appointment details
-              console.log('Navigate to appointment:', appointmentId);
-            }
-          }
+          duration: 10000
         });
 
         // Automatically cancel appointment and process refund
         const success = await markAsNoShow(appointmentId);
-        if (success) {
-          console.log('✅ Appointment automatically cancelled and refund processed');
-        } else {
-          console.error('❌ Failed to automatically cancel appointment and process refund');
+        if (!success) {
+          console.error('Failed to automatically cancel appointment and process refund');
         }
       } else if (isWarning && !isNoShow) {
         // Show warning notification when 3 minutes passed
@@ -997,7 +871,6 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
   // Listen for wallet balance refresh events (triggered after refunds)
   useEffect(() => {
     const handleWalletRefresh = () => {
-      console.log('💰 Wallet refresh event received, re-checking refund status for appointment:', appointmentId);
       // Re-check refund status when wallet balance is refreshed
       if (appointmentId && (status === 'cancelled' || noShowData?.isNoShow)) {
         checkNoShow();
@@ -1043,11 +916,9 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
         (payload) => {
           if (!isMounted) return;
           const callSession = payload.new as any;
-          console.log('📥 Call session created (real-time):', callSession.id);
           
           // If call session is created with 'active' status and start_time, expert joined
           if (callSession.status === 'active' && callSession.start_time) {
-            console.log('✅ Expert joined detected via real-time (INSERT)');
             expertJoinedRef.current = true;
             // Expert joined - no need to check no-show anymore
             setNoShowData({
@@ -1075,11 +946,9 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
         (payload) => {
           if (!isMounted) return;
           const callSession = payload.new as any;
-          console.log('🔄 Call session updated (real-time):', callSession.id, 'status:', callSession.status);
           
           // If call session status becomes 'active' with start_time, expert joined
           if (callSession.status === 'active' && callSession.start_time) {
-            console.log('✅ Expert joined detected via real-time (UPDATE)');
             expertJoinedRef.current = true;
             // Expert joined - no need to check no-show anymore
             setNoShowData({
@@ -1107,7 +976,6 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
           
           // If appointment status becomes 'in-progress' or 'completed', expert joined
           if (appointment.status === 'in-progress' || appointment.status === 'completed') {
-            console.log('✅ Expert joined detected via appointment status (real-time)');
             expertJoinedRef.current = true;
             setNoShowData({
               appointmentId,
@@ -1146,15 +1014,11 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
           const minutesUntil5Min = 5 - timeSinceStart;
           const millisecondsUntil5Min = minutesUntil5Min * 60 * 1000;
           
-          console.log(`⏰ Setting timeout for 5-minute no-show check in ${minutesUntil5Min.toFixed(1)} minutes`);
-          
           // Single timeout for exact 5-minute mark (more efficient than interval)
           const timeoutId = setTimeout(() => {
             if (!isMounted || expertJoinedRef.current) {
-              console.log('⏰ 5-minute timeout triggered but expert already joined or component unmounted');
               return;
             }
-            console.log('⏰ 5-minute mark reached - checking no-show');
             checkNoShow();
           }, millisecondsUntil5Min);
           
@@ -1167,7 +1031,6 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
             
             // Only check if we're past the 5-minute mark
             if (currentTimeSinceStart >= 5) {
-              console.log('⏰ 5-minute mark detected via interval fallback');
               checkNoShow();
               // Clear interval after detecting 5-minute mark
               if (timeCheckInterval) {
@@ -1182,7 +1045,6 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
         } else {
           // Already past 5-minute mark - check immediately
           if (!expertJoinedRef.current) {
-            console.log('⏰ Already past 5-minute mark - checking no-show immediately');
             checkNoShow();
           }
         }
@@ -1220,7 +1082,6 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
       return false;
     }
     
-    console.log('🔄 Manually triggering refund for appointment:', appointmentId);
     hasProcessedRefundRef.current = false; // Reset to allow retry
     
     const success = await processNoShowRefund(appointmentId);

@@ -84,10 +84,7 @@ const ExpertApprovals = () => {
         ...expert,
         auth_id: expert.auth_id || expert.id || null
       }));
-      
-      console.log('ExpertApprovals: Fetched experts:', expertsWithAuthId.length);
-      console.log('ExpertApprovals: Sample expert:', expertsWithAuthId[0]);
-      
+            
       setExperts(expertsWithAuthId as ExpertProfileWithStatus[]);
       
       // Also fetch deleted experts
@@ -106,7 +103,6 @@ const ExpertApprovals = () => {
   // Fetch deleted experts
   const fetchDeletedExperts = async () => {
     try {
-      console.log('ExpertApprovals: Fetching deleted experts...');
       
       // Use admin_list_all_experts_including_deleted and filter (this function exists and works)
       // Type assertion needed because TypeScript doesn't know about this function yet
@@ -127,7 +123,6 @@ const ExpertApprovals = () => {
         }
         
         if (directData && Array.isArray(directData)) {
-          console.log('ExpertApprovals: Found deleted experts via direct query:', directData.length);
           const deletedWithAuthId = (directData as unknown[]).map((expert: unknown) => {
             const e = expert as ExpertProfileWithStatus & { id?: string; deleted_at?: string };
             return {
@@ -151,18 +146,16 @@ const ExpertApprovals = () => {
         const e = expert as { deleted_at?: string | null };
         const hasDeletedAt = e.deleted_at != null && e.deleted_at !== '';
         if (hasDeletedAt) {
-          console.log('ExpertApprovals: Found deleted expert:', e);
+          console.error('ExpertApprovals: Found deleted expert:', e);
         }
         return hasDeletedAt;
       });
       
-      console.log('ExpertApprovals: Found deleted experts via RPC:', deleted.length, 'out of', rpcData.length);
-      console.log('ExpertApprovals: Deleted experts data:', deleted);
+    
       
       if (deleted.length === 0) {
-        console.warn('ExpertApprovals: No deleted experts found in RPC response. Checking data structure...');
         if (rpcData.length > 0) {
-          console.log('ExpertApprovals: Sample expert from RPC:', rpcData[0]);
+          console.error('ExpertApprovals: Sample expert from RPC:', rpcData[0]);
         }
       }
       
@@ -174,7 +167,6 @@ const ExpertApprovals = () => {
         };
       }) as ExpertProfileWithStatus[];
       
-      console.log('ExpertApprovals: Setting deleted experts state:', deletedWithAuthId.length);
       setDeletedExperts(deletedWithAuthId);
     } catch (error) {
       console.error('ExpertApprovals: Error fetching deleted experts:', error);
@@ -248,11 +240,6 @@ const ExpertApprovals = () => {
     }
     
     try {
-      console.log('ExpertApprovals: Updating expert status:', {
-        auth_id: selectedExpert.auth_id,
-        status: selectedStatus,
-        expert: selectedExpert
-      });
 
       // Call edge function (runs with service role) to update status and save feedback message
       const { data: fnData, error: fnError } = await supabase.functions.invoke('admin-update-expert', {
@@ -287,9 +274,7 @@ const ExpertApprovals = () => {
 
       // Send email notification (non-blocking)
       try {
-        console.log('ExpertApprovals: Attempting to send email notification...');
         const emailResult = await sendStatusUpdateEmail(selectedExpert.email, selectedStatus, feedbackMessage);
-        console.log('ExpertApprovals: Email notification result:', emailResult);
         if (emailResult && !emailResult.error) {
           toast.success('Status updated and email notification sent successfully');
         } else {
@@ -312,7 +297,6 @@ const ExpertApprovals = () => {
       // Use the custom message if provided, otherwise use default
       const emailMessage = message.trim() || getDefaultMessage(status);
       
-      console.log('ExpertApprovals: Sending email notification:', { email, status, message: emailMessage });
       
       const { data, error } = await supabase.functions.invoke('notify-expert-status', {
         body: {
@@ -331,7 +315,6 @@ const ExpertApprovals = () => {
         console.warn('ExpertApprovals: Email function returned unexpected response:', data);
       }
 
-      console.log('ExpertApprovals: Email notification sent successfully');
       return data;
     } catch (error) {
       console.error('ExpertApprovals: Failed to send email notification:', error);

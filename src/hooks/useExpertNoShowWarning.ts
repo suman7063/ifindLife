@@ -36,19 +36,16 @@ export const useExpertNoShowWarning = (
   const checkExpertJoined = useCallback(async (aptId: string): Promise<boolean> => {
     // If we've already checked and expert joined, return early without API call
     if (hasCheckedRef.current && expertJoinedRef.current) {
-      console.log('✅ Already checked - expert joined, skipping API call');
       return true;
     }
     
     // If we've already checked and expert didn't join, still return early
     // Real-time subscriptions will update us if status changes
     if (hasCheckedRef.current && !expertJoinedRef.current) {
-      console.log('⏸️ Already checked - expert not joined, skipping API call (will use real-time updates)');
       return false;
     }
     
     try {
-      console.log('🔍 Checking expert joined status for appointment:', aptId);
       
       // Check if there's an active call session for this appointment
       const { data: callSession, error } = await supabase
@@ -68,7 +65,6 @@ export const useExpertNoShowWarning = (
       const expertJoined = callSession && callSession.status === 'active' && callSession.start_time;
       
       if (expertJoined) {
-        console.log('✅ Expert has joined (call session active)');
         expertJoinedRef.current = true;
         hasCheckedRef.current = true;
         return true;
@@ -83,14 +79,12 @@ export const useExpertNoShowWarning = (
           .maybeSingle();
 
         if (appointment && (appointment.status === 'completed' || appointment.status === 'in-progress')) {
-          console.log('✅ Expert has joined (appointment in-progress/completed)');
           expertJoinedRef.current = true;
           hasCheckedRef.current = true;
           return true;
         }
       }
 
-      console.log('❌ Expert has not joined yet');
       expertJoinedRef.current = false;
       hasCheckedRef.current = true;
       return false;
@@ -203,8 +197,6 @@ export const useExpertNoShowWarning = (
         
         // Automatically cancel the appointment (user side will process refund)
         try {
-          console.log('🚨 Auto-cancelling appointment due to expert no-show:', appointmentId);
-          
           // Get existing notes
           const { data: existingAppointment } = await supabase
             .from('appointments')
@@ -237,10 +229,8 @@ export const useExpertNoShowWarning = (
             .eq('id', appointmentId);
 
           if (error) {
-            console.error('❌ Error auto-cancelling appointment:', error);
+            console.error('Error auto-cancelling appointment:', error);
             toast.error('Failed to cancel appointment automatically');
-          } else {
-            console.log('✅ Appointment automatically cancelled due to expert no-show');
           }
         } catch (error) {
           console.error('❌ Error in auto-cancellation:', error);

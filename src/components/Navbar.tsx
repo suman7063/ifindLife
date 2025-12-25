@@ -56,7 +56,6 @@ const Navbar = () => {
     if (userType !== 'expert') return;
 
     const handleProfileUpdate = async () => {
-      console.log('Navbar: Profile image update received');
       if (user?.id) {
         await refreshProfiles(user.id);
         setProfileUpdateKey(prev => prev + 1); // Force re-render

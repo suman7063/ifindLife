@@ -375,7 +375,6 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
 
     // Prevent concurrent fetches
     if (isFetchingRef.current) {
-      console.log('⏸️ Fetch already in progress, skipping...');
       return;
     }
 
@@ -383,7 +382,6 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
     const now = Date.now();
     const timeSinceLastFetch = now - lastFetchTimeRef.current;
     if (timeSinceLastFetch < MIN_FETCH_INTERVAL) {
-      console.log('⏸️ Throttling fetch - too soon since last one:', timeSinceLastFetch, 'ms');
       return;
     }
 
@@ -414,7 +412,6 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
       // This replaces 50+ individual API calls with just 1 call
       const appointmentIds = appointments.map(apt => apt.id);
       const callSessionMap = await fetchAllCallSessions(appointmentIds);
-      console.log(`✅ Fetched ${callSessionMap.size} call sessions in ONE query (instead of ${appointmentIds.length} separate calls)`);
 
       // STEP 2: Map appointments to sessions (now uses batch-fetched call session data)
       // No need for batching since we're not making API calls anymore
@@ -628,8 +625,6 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
             
             if (insertError) {
               console.error('Error creating call session:', insertError);
-            } else if (newCallSession && continuousSessions.length > 1) {
-              console.log(`✅ Created continuous call session for ${continuousSessions.length} slots (${totalDuration} minutes total)`);
             }
           } else {
             // Update existing call session
@@ -665,7 +660,6 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
               .update({ status: 'completed' })
               .in('id', continuousAppointmentIds);
             
-            console.log(`✅ Marked ${continuousAppointmentIds.length} continuous appointments as completed`);
           }
           const startTime = callSession.start_time 
             ? new Date(callSession.start_time)
@@ -734,7 +728,7 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
                 .in('reason', ['expert_no_show', 'refund']);
 
               if (existingRefunds && existingRefunds.length > 0) {
-                console.log('✅ Refund already processed for call session');
+                // Refund already processed
               } else {
                 // Process refund via call session edge function
                 const { data: refundData, error: refundError } = await supabase.functions.invoke('process-call-refund', {
@@ -747,9 +741,8 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
                 });
 
                 if (refundError) {
-                  console.error('❌ Error processing call session refund:', refundError);
+                  console.error('Error processing call session refund:', refundError);
                 } else if (refundData?.success) {
-                  console.log('✅ Refund processed successfully for cancelled call session');
                   toast.success('Refund has been processed and credited to user wallet.');
                 }
               }
@@ -843,7 +836,7 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
                 ];
 
                 if (existingRefunds.length > 0) {
-                  console.log('✅ Refund already processed for appointment');
+                  // Refund already processed
                 } else {
                   // Process refund via wallet-operations
                   const { data: refundResult, error: refundError } = await supabase.functions.invoke('wallet-operations', {
@@ -862,11 +855,6 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
                     console.error('❌ Error processing appointment refund:', refundError);
                     toast.error(`Failed to process refund: ${refundError.message || 'Unknown error'}`);
                   } else if (refundResult?.success) {
-                    console.log('✅ Refund processed successfully for cancelled appointment:', {
-                      amount: refundAmount,
-                      currency: currency,
-                      appointmentId: sessionId
-                    });
                     toast.success(`Refund of ₹${refundAmount.toFixed(2)} has been credited to user wallet.`);
                   } else {
                     console.error('❌ Refund failed - wallet-operations returned:', refundResult);
@@ -874,19 +862,10 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
                   }
                 }
               } else {
-                console.log('ℹ️ No payment found to refund for cancelled appointment:', {
-                  appointmentId: sessionId,
-                  checkedByRefId: !!paymentByRefId,
-                  checkedByMetadata: !!paymentByMetadata,
-                  checkedInArray: !!paymentInArray,
-                  hasCallSession: !!callSession,
-                  callSessionPaymentStatus: callSession?.payment_status,
-                  callSessionCost: callSession?.cost
-                });
                 // Only show warning if payment was expected but not found
                 // If no call session exists, payment might not have been made yet (normal)
                 if (callSession && callSession.payment_status === 'paid' && !callSession.cost) {
-                  console.warn('⚠️ Call session marked as paid but no cost found');
+                  console.warn('Call session marked as paid but no cost found');
                 }
                 // Don't show warning if no payment was made (normal for appointments cancelled before payment)
               }
@@ -915,7 +894,6 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
   // Process refund for cancelled session (manual trigger)
   const processRefundForCancelledSession = async (sessionId: string): Promise<boolean> => {
     try {
-      console.log('🔄 Manually processing refund for cancelled session:', sessionId);
       
       // Get appointment details
       const { data: appointment } = await supabase
@@ -966,11 +944,10 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
           .eq('type', 'credit')
           .in('reason', ['expert_no_show', 'refund']);
 
-        if (existingRefunds && existingRefunds.length > 0) {
-          console.log('✅ Refund already processed for call session');
-          toast.info('Refund has already been processed for this session');
-          return true;
-        }
+          if (existingRefunds && existingRefunds.length > 0) {
+            toast.info('Refund has already been processed for this session');
+            return true;
+          }
 
         // Process refund via call session edge function
         const { data: refundData, error: refundError } = await supabase.functions.invoke('process-call-refund', {
@@ -983,11 +960,10 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
         });
 
         if (refundError) {
-          console.error('❌ Error processing call session refund:', refundError);
+          console.error('Error processing call session refund:', refundError);
           toast.error(`Failed to process refund: ${refundError.message || 'Unknown error'}`);
           return false;
         } else if (refundData?.success) {
-          console.log('✅ Refund processed successfully for cancelled call session');
           toast.success('Refund has been processed and credited to user wallet.');
           return true;
         } else {
@@ -1075,7 +1051,6 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
           ];
 
           if (existingRefunds.length > 0) {
-            console.log('✅ Refund already processed for appointment');
             toast.info('Refund has already been processed for this session');
             return true;
           }
@@ -1098,11 +1073,6 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
             toast.error(`Failed to process refund: ${refundError.message || 'Unknown error'}`);
             return false;
           } else if (refundResult?.success) {
-            console.log('✅ Refund processed successfully for cancelled appointment:', {
-              amount: refundAmount,
-              currency: currency,
-              appointmentId: sessionId
-            });
             toast.success(`Refund of ₹${refundAmount.toFixed(2)} has been credited to user wallet.`);
             return true;
           } else {
@@ -1110,16 +1080,10 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
             toast.error('Failed to process refund. Please contact support.');
             return false;
           }
-        } else {
-          console.log('ℹ️ No payment found to refund for cancelled appointment:', {
-            appointmentId: sessionId,
-            checkedByRefId: !!paymentByRefId,
-            checkedByMetadata: !!paymentByMetadata,
-            checkedInArray: !!paymentInArray
-          });
-          toast.warning('No payment found for this appointment. Refund may not be applicable.');
-          return false;
-        }
+          } else {
+            toast.warning('No payment found for this appointment. Refund may not be applicable.');
+            return false;
+          }
       }
     } catch (error) {
       console.error('❌ Error processing refund for cancelled session:', error);
@@ -1204,7 +1168,6 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
         const timeSinceLast = Date.now() - lastRefetchTime;
         if (timeSinceLast >= MIN_REFETCH_INTERVAL) {
           lastRefetchTime = Date.now();
-          console.log('🔄 Real-time: Refreshing sessions after new booking');
           fetchSessionsRef.current();
         }
         refetchTimeout = null;
@@ -1223,7 +1186,6 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
           filter: `expert_id=eq.${expertId}`,
         },
         (payload) => {
-          console.log('📥 New appointment created:', payload.new?.id);
           if (payload.new?.id) {
             callSessionCacheRef.current.delete(payload.new.id);
           }
