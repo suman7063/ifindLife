@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -137,6 +137,150 @@ const SessionManager: React.FC = () => {
   const todayDateString = useMemo(() => {
     return getTodayDateStringInTimezone(expertTimezone);
   }, [expertTimezone]);
+
+  // Helper function to group continuous sessions together
+  const groupContinuousSessions = useCallback((sessionsList: Session[]): Session[] => {
+    if (sessionsList.length === 0) return [];
+    
+    // TEMPORARY: Disable grouping for debugging - set to false to enable grouping
+    const ENABLE_GROUPING = true;
+    if (!ENABLE_GROUPING) {
+      console.log('⚠️ Grouping is disabled for debugging');
+      return sessionsList;
+    }
+    
+    // Sort by start time
+    const sorted = [...sessionsList].sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
+    const grouped: Session[] = [];
+    const processed = new Set<string>();
+    
+    console.log('🔍 Grouping sessions:', sorted.length, 'sessions');
+    sorted.forEach((s, idx) => {
+      console.log(`  [${idx}] ${s.id}: ${s.startTime.toLocaleTimeString()} - ${s.endTime.toLocaleTimeString()} (${s.clientName}, ${s.status})`);
+    });
+    
+    for (let i = 0; i < sorted.length; i++) {
+      const session = sorted[i];
+      if (processed.has(session.id)) continue;
+      
+      // Find all continuous sessions for this session
+      const continuous = [session];
+      processed.add(session.id);
+      
+      let currentEndTime = session.endTime;
+      let currentIndex = i;
+      
+      // Look for consecutive sessions - only check sessions that come AFTER current one
+      while (currentIndex < sorted.length - 1) {
+        let foundNext = false;
+        
+        // Look for the IMMEDIATE next session that starts exactly when current ends
+        // We need to find the first unprocessed session that matches our criteria
+        for (let j = currentIndex + 1; j < sorted.length; j++) {
+          const otherSession = sorted[j];
+          
+          // Skip if already processed
+          if (processed.has(otherSession.id)) continue;
+          
+          // Must match: same user, same date, same status
+          if (otherSession.clientId !== session.clientId) {
+            // Different user - stop looking (sessions are sorted, so no more matches)
+            break;
+          }
+          if (otherSession.appointmentDate !== session.appointmentDate) {
+            // Different date - stop looking
+            break;
+          }
+          if (otherSession.status !== session.status) {
+            // Different status - skip this one but continue looking
+            continue;
+          }
+          
+          // Check if next session starts exactly when current ends (within 5 seconds tolerance)
+          // IMPORTANT: next session should start >= current end time (not before)
+          const timeDiff = otherSession.startTime.getTime() - currentEndTime.getTime();
+          const timeDiffSeconds = timeDiff / 1000;
+          
+          console.log(`  🔗 Checking continuity:`, {
+            current: `${currentEndTime.toLocaleTimeString()} (${session.id})`,
+            next: `${otherSession.startTime.toLocaleTimeString()} (${otherSession.id})`,
+            timeDiff: `${timeDiffSeconds.toFixed(1)}s`,
+            isContinuous: timeDiff >= -5000 && timeDiff <= 5000
+          });
+          
+          // Only group if next session starts within 5 seconds of current end time
+          // (very strict tolerance - only truly consecutive sessions)
+          if (timeDiff >= -5000 && timeDiff <= 5000) { // -5s to +5s tolerance
+            // Found a continuous session!
+            console.log(`  ✅ Grouping: ${session.id} + ${otherSession.id}`);
+            continuous.push(otherSession);
+            processed.add(otherSession.id);
+            currentEndTime = otherSession.endTime;
+            currentIndex = j;
+            foundNext = true;
+            break; // Found the next continuous session, break and continue from there
+          } else if (timeDiff > 5000) {
+            // There's a gap - this session starts more than 5 seconds after current ends
+            console.log(`  ❌ Gap detected: ${timeDiffSeconds.toFixed(1)}s gap, stopping`);
+            // Since sessions are sorted, no later session can be continuous either
+            break;
+          } else {
+            // timeDiff < -5000 means next session starts before current ends
+            // This shouldn't happen if sorted correctly, but skip it anyway
+            console.log(`  ⚠️ Next session starts before current ends, skipping`);
+            continue;
+          }
+        }
+        
+        // If no next continuous session found, stop looking
+        if (!foundNext) break;
+      }
+      
+      // If multiple continuous sessions, create a combined session
+      if (continuous.length > 1) {
+        const firstSession = continuous[0];
+        const lastSession = continuous[continuous.length - 1];
+        const totalDuration = continuous.reduce((sum, s) => sum + s.duration, 0);
+        
+        console.log(`  📦 Creating combined session: ${continuous.length} slots`, {
+          first: `${firstSession.startTime.toLocaleTimeString()} - ${firstSession.endTime.toLocaleTimeString()}`,
+          last: `${lastSession.startTime.toLocaleTimeString()} - ${lastSession.endTime.toLocaleTimeString()}`,
+          combined: `${firstSession.startTime.toLocaleTimeString()} - ${lastSession.endTime.toLocaleTimeString()}`,
+          totalDuration: `${totalDuration}min`,
+          ids: continuous.map(s => s.id)
+        });
+        
+        // Create combined session
+        const combinedSession: Session = {
+          ...firstSession,
+          id: `combined_${continuous.map(s => s.id).join('_')}`, // Combined ID
+          endTime: lastSession.endTime, // Use last session's end time
+          duration: totalDuration, // Total combined duration
+          // Store original session IDs for reference
+          appointmentId: firstSession.id, // Primary appointment ID
+        };
+        
+        // Store continuous session IDs in a custom property
+        (combinedSession as any).continuousSessionIds = continuous.map(s => s.id);
+        (combinedSession as any).isCombined = true;
+        (combinedSession as any).slotCount = continuous.length;
+        
+        grouped.push(combinedSession);
+      } else {
+        // Single session, add as-is
+        console.log(`  ➡️ Single session (not grouped): ${session.id}`);
+        grouped.push(session);
+      }
+    }
+    
+    console.log('✅ Grouping complete:', {
+      input: sorted.length,
+      output: grouped.length,
+      grouped: grouped.filter(g => (g as any).isCombined).length
+    });
+    
+    return grouped;
+  }, []);
   
   // Filter sessions by comparing appointment_date directly (memoized)
   // appointment_date is already stored as YYYY-MM-DD in expert's timezone context
@@ -220,21 +364,25 @@ const SessionManager: React.FC = () => {
     // Sort by start time (chronologically)
     .sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
     
+    // Group continuous sessions together
+    const grouped = groupContinuousSessions(filtered);
+    
     // Debug logging
     console.log('📊 Today sessions summary:', {
       totalSessions: sessions.length,
       todayDateString,
       expertTimezone,
       todaySessionsCount: filtered.length,
+      groupedSessionsCount: grouped.length,
       todaySessionIds: filtered.map(s => s.id)
     });
     
-    return filtered;
-  }, [sessions, todayDateString, expertTimezone]);
+    return grouped;
+  }, [sessions, todayDateString, expertTimezone, groupContinuousSessions]);
 
   const upcomingSessions = useMemo(() => {
     const now = new Date();
-    return sessions.filter(session => {
+    const filtered = sessions.filter(session => {
       // First check if session is today - if it is, exclude it from upcoming
       let isToday = false;
       
@@ -271,17 +419,23 @@ const SessionManager: React.FC = () => {
     })
     // Sort by start time (chronologically)
     .sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
-  }, [sessions, todayDateString, expertTimezone]);
+    
+    // Group continuous sessions together
+    return groupContinuousSessions(filtered);
+  }, [sessions, todayDateString, expertTimezone, groupContinuousSessions]);
 
   // Cancelled sessions are now shown in Today tab, so no separate filter needed
 
   const historySessions = useMemo(() => {
-    return sessions.filter(session => {
+    const filtered = sessions.filter(session => {
       return session.status === 'completed';
     })
     // Sort by start time (most recent first)
     .sort((a, b) => b.startTime.getTime() - a.startTime.getTime());
-  }, [sessions]);
+    
+    // Group continuous sessions together
+    return groupContinuousSessions(filtered);
+  }, [sessions, groupContinuousSessions]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -744,6 +898,11 @@ const SessionManager: React.FC = () => {
                 {getTypeIcon(session.type)}
                 <span>{formatTime(session.startTime)} - {formatTime(session.endTime)}</span>
                 <span>({formatDuration(session.duration)})</span>
+                {(session as any).isCombined && (session as any).slotCount > 1 && (
+                  <Badge variant="outline" className="text-xs">
+                    {(session as any).slotCount} slots
+                  </Badge>
+                )}
               </div>
             </div>
           </div>
@@ -986,6 +1145,12 @@ const SessionManager: React.FC = () => {
                                     {getTypeIcon(session.type)}
                                     <span>{session.startTime.toLocaleDateString()}</span>
                                     <span>{formatTime(session.startTime)} - {formatTime(session.endTime)}</span>
+                                    <span>({formatDuration(session.duration)})</span>
+                                    {(session as any).isCombined && (session as any).slotCount > 1 && (
+                                      <Badge variant="outline" className="text-xs">
+                                        {(session as any).slotCount} slots
+                                      </Badge>
+                                    )}
                                   </div>
                                 </div>
                               </div>
@@ -1049,6 +1214,12 @@ const SessionManager: React.FC = () => {
                                     {getTypeIcon(session.type)}
                                     <span>{session.startTime.toLocaleDateString()}</span>
                                     <span>{formatTime(session.startTime)} - {formatTime(session.endTime)}</span>
+                                    <span>({formatDuration(session.duration)})</span>
+                                    {(session as any).isCombined && (session as any).slotCount > 1 && (
+                                      <Badge variant="outline" className="text-xs">
+                                        {(session as any).slotCount} slots
+                                      </Badge>
+                                    )}
                                     {session.actualDuration && (
                                       <span className="text-xs">({formatDuration(session.actualDuration)} actual)</span>
                                     )}

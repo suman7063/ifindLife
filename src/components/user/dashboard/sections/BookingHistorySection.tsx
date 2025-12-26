@@ -88,6 +88,11 @@ const BookingCard: React.FC<{
                   <div className="flex items-center gap-2">
                     <User className="h-4 w-4" />
                     {booking.duration} min
+                    {(booking as any).isCombined && (booking as any).slotCount > 1 && (
+                      <Badge variant="outline" className="text-xs ml-2">
+                        {(booking as any).slotCount} slots
+                      </Badge>
+                    )}
                   </div>
                 </div>
               </div>
@@ -416,53 +421,159 @@ const BookingHistorySection: React.FC<BookingHistorySectionProps> = ({ user }) =
     }
   };
 
-  const filteredBookings = bookings
-    .filter(booking => {
-      if (filter === 'upcoming') return isUpcoming(booking);
-      if (filter === 'past') return isPast(booking);
-      if (filter === 'today') return isToday(booking);
-      return true;
-    })
-    .sort((a, b) => {
-      // Sort by date first (ascending: 15, 16, 17, 18...)
+  // Helper function to group continuous bookings together
+  const groupContinuousBookings = (bookingsList: Booking[]): Booking[] => {
+    if (bookingsList.length === 0) return [];
+    
+    // Sort by date and time
+    const sorted = [...bookingsList].sort((a, b) => {
       const dateA = parseISO(a.appointment_date);
       const dateB = parseISO(b.appointment_date);
       const dateDiff = dateA.getTime() - dateB.getTime();
-      
       if (dateDiff !== 0) return dateDiff;
       
-      // If same date, sort by start time (ascending: 12:00, 12:30, 1:00...)
       try {
-        // Get time in HH:MM format (handle HH:MM:SS)
         const timeA = a.start_time.split(':').slice(0, 2).join(':');
         const timeB = b.start_time.split(':').slice(0, 2).join(':');
-        
-        // Convert time to minutes for comparison (24-hour format)
-        // Handle HH:MM format (e.g., "10:00" -> 600, "23:00" -> 1380)
-        // Handle "24:00" as 1440 minutes (midnight)
         const parseTimeToMinutes = (timeStr: string): number => {
           const parts = timeStr.split(':');
           const hours = parseInt(parts[0] || '0', 10);
           const minutes = parseInt(parts[1] || '0', 10);
-          
-          // Handle 24:00 as midnight (1440 minutes)
-          if (hours === 24 || timeStr.startsWith('24:')) {
-            return 24 * 60; // 1440 minutes
-          }
-          
+          if (hours === 24 || timeStr.startsWith('24:')) return 24 * 60;
           return hours * 60 + minutes;
         };
-        
-        const totalMinutesA = parseTimeToMinutes(timeA);
-        const totalMinutesB = parseTimeToMinutes(timeB);
-        
-        // Ascending order: earliest time first (12:00, 12:30, 1:00, 1:30...)
-        return totalMinutesA - totalMinutesB;
-      } catch (error) {
-        console.error('Error sorting by time:', error, a.start_time, b.start_time);
+        return parseTimeToMinutes(timeA) - parseTimeToMinutes(timeB);
+      } catch {
         return 0;
       }
     });
+    
+    const grouped: Booking[] = [];
+    const processed = new Set<string>();
+    
+    for (const booking of sorted) {
+      if (processed.has(booking.id)) continue;
+      
+      // Find all continuous bookings for this booking
+      const continuous = [booking];
+      processed.add(booking.id);
+      
+      let currentEndTime = booking.end_time;
+      
+      // Look for consecutive bookings with same expert, same date, same status
+      for (const otherBooking of sorted) {
+        if (processed.has(otherBooking.id)) continue;
+        if (otherBooking.expert_id !== booking.expert_id) continue;
+        if (otherBooking.appointment_date !== booking.appointment_date) continue;
+        if (otherBooking.status !== booking.status) continue; // Only group same status
+        
+        // Check if next booking starts when current ends (within 1 minute tolerance)
+        try {
+          const currentEndMinutes = (() => {
+            const parts = currentEndTime.split(':');
+            const hours = parseInt(parts[0] || '0', 10);
+            const minutes = parseInt(parts[1] || '0', 10);
+            if (hours === 24 || currentEndTime.startsWith('24:')) return 24 * 60;
+            return hours * 60 + minutes;
+          })();
+          
+          const nextStartMinutes = (() => {
+            const parts = otherBooking.start_time.split(':');
+            const hours = parseInt(parts[0] || '0', 10);
+            const minutes = parseInt(parts[1] || '0', 10);
+            if (hours === 24 || otherBooking.start_time.startsWith('24:')) return 24 * 60;
+            return hours * 60 + minutes;
+          })();
+          
+          const timeDiff = Math.abs(nextStartMinutes - currentEndMinutes);
+          if (timeDiff <= 1) { // 1 minute tolerance
+            continuous.push(otherBooking);
+            processed.add(otherBooking.id);
+            currentEndTime = otherBooking.end_time;
+          }
+        } catch {
+          // If parsing fails, skip
+        }
+      }
+      
+      // If multiple continuous bookings, create a combined booking
+      if (continuous.length > 1) {
+        const firstBooking = continuous[0];
+        const lastBooking = continuous[continuous.length - 1];
+        const totalDuration = continuous.reduce((sum, b) => sum + (b.duration || 30), 0);
+        
+        // Create combined booking
+        const combinedBooking: Booking = {
+          ...firstBooking,
+          id: `combined_${continuous.map(b => b.id).join('_')}`, // Combined ID
+          end_time: lastBooking.end_time, // Use last booking's end time
+          duration: totalDuration, // Total combined duration
+        };
+        
+        // Store continuous booking IDs in a custom property
+        (combinedBooking as any).continuousBookingIds = continuous.map(b => b.id);
+        (combinedBooking as any).isCombined = true;
+        (combinedBooking as any).slotCount = continuous.length;
+        
+        grouped.push(combinedBooking);
+      } else {
+        // Single booking, add as-is
+        grouped.push(booking);
+      }
+    }
+    
+    return grouped;
+  };
+
+  const filteredBookings = groupContinuousBookings(
+    bookings
+      .filter(booking => {
+        if (filter === 'upcoming') return isUpcoming(booking);
+        if (filter === 'past') return isPast(booking);
+        if (filter === 'today') return isToday(booking);
+        return true;
+      })
+      .sort((a, b) => {
+        // Sort by date first (ascending: 15, 16, 17, 18...)
+        const dateA = parseISO(a.appointment_date);
+        const dateB = parseISO(b.appointment_date);
+        const dateDiff = dateA.getTime() - dateB.getTime();
+        
+        if (dateDiff !== 0) return dateDiff;
+        
+        // If same date, sort by start time (ascending: 12:00, 12:30, 1:00...)
+        try {
+          // Get time in HH:MM format (handle HH:MM:SS)
+          const timeA = a.start_time.split(':').slice(0, 2).join(':');
+          const timeB = b.start_time.split(':').slice(0, 2).join(':');
+          
+          // Convert time to minutes for comparison (24-hour format)
+          // Handle HH:MM format (e.g., "10:00" -> 600, "23:00" -> 1380)
+          // Handle "24:00" as 1440 minutes (midnight)
+          const parseTimeToMinutes = (timeStr: string): number => {
+            const parts = timeStr.split(':');
+            const hours = parseInt(parts[0] || '0', 10);
+            const minutes = parseInt(parts[1] || '0', 10);
+            
+            // Handle 24:00 as midnight (1440 minutes)
+            if (hours === 24 || timeStr.startsWith('24:')) {
+              return 24 * 60; // 1440 minutes
+            }
+            
+            return hours * 60 + minutes;
+          };
+          
+          const totalMinutesA = parseTimeToMinutes(timeA);
+          const totalMinutesB = parseTimeToMinutes(timeB);
+          
+          // Ascending order: earliest time first (12:00, 12:30, 1:00, 1:30...)
+          return totalMinutesA - totalMinutesB;
+        } catch (error) {
+          console.error('Error sorting by time:', error, a.start_time, b.start_time);
+          return 0;
+        }
+      })
+  );
 
   const stats = {
     total: bookings.length,
