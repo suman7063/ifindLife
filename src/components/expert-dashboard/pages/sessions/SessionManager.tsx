@@ -48,8 +48,9 @@ const SessionManager: React.FC = () => {
   const [nextStepsText, setNextStepsText] = useState('');
   const [expertTimezone, setExpertTimezone] = useState<string>('UTC');
   const isStartingSessionRef = useRef(false); // Prevent multiple simultaneous startSession calls
+  const [activeTab, setActiveTab] = useState<string>('today');
 
-  // Use the expert sessions hook
+  // Use the expert sessions hook - disable autoFetch, we'll fetch on tab click
   const {
     sessions,
     loading,
@@ -60,8 +61,16 @@ const SessionManager: React.FC = () => {
     processRefundForCancelledSession,
   } = useExpertSessions({
     expertId: expert?.auth_id,
-    autoFetch: true,
+    autoFetch: false, // Disable auto-fetch, fetch only on tab click
   });
+
+  // Fetch today's sessions on initial load (default tab)
+  useEffect(() => {
+    if (expert?.auth_id && activeTab === 'today') {
+      console.log('🔄 Initial load - Fetching today sessions', { expertId: expert.auth_id });
+      fetchSessions('today');
+    }
+  }, [expert?.auth_id]); // Only depend on expertId to trigger once when expert is available
 
   // Fetch expert timezone
   useEffect(() => {
@@ -132,67 +141,146 @@ const SessionManager: React.FC = () => {
   // Filter sessions by comparing appointment_date directly (memoized)
   // appointment_date is already stored as YYYY-MM-DD in expert's timezone context
   const todaySessions = useMemo(() => {
-    return sessions.filter(session => {
+    const filtered = sessions.filter(session => {
+      // First check if session is today
+      let isToday = false;
+      
       if (session.appointmentDate) {
-        // Direct string comparison - appointment_date is already in expert's timezone context
-        return session.appointmentDate === todayDateString;
-      }
-      // Fallback: compare using startTime converted to expert's timezone
-      try {
-        const formatter = new Intl.DateTimeFormat('en-CA', {
-          timeZone: expertTimezone,
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit'
+        // Normalize appointment date - remove time component and trim
+        let sessionDate = String(session.appointmentDate).trim();
+        // Remove time component if present (format: YYYY-MM-DD or YYYY-MM-DDTHH:mm:ss)
+        if (sessionDate.includes('T')) {
+          sessionDate = sessionDate.split('T')[0];
+        }
+        // Remove any trailing timezone info
+        if (sessionDate.includes(' ')) {
+          sessionDate = sessionDate.split(' ')[0];
+        }
+        
+        // Normalize today's date string
+        let todayDate = String(todayDateString).trim();
+        
+        // Compare normalized dates
+        isToday = sessionDate === todayDate;
+        
+        // Debug logging
+        console.log('🔍 Today check:', {
+          sessionId: session.id,
+          rawAppointmentDate: session.appointmentDate,
+          normalizedSessionDate: sessionDate,
+          todayDateString,
+          normalizedTodayDate: todayDate,
+          isToday,
+          status: session.status,
+          startTime: session.startTime.toISOString()
         });
-        const sessionDateInTimezone = formatter.format(session.startTime);
-        return sessionDateInTimezone === todayDateString;
-      } catch {
-        // If timezone conversion fails, use simple date comparison
-        const sessionDate = new Date(session.startTime);
-        const today = new Date();
-        return sessionDate.getFullYear() === today.getFullYear() &&
-               sessionDate.getMonth() === today.getMonth() &&
-               sessionDate.getDate() === today.getDate();
+      } else {
+        // Fallback: compare using startTime converted to expert's timezone
+        try {
+          const formatter = new Intl.DateTimeFormat('en-CA', {
+            timeZone: expertTimezone,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+          });
+          const sessionDateInTimezone = formatter.format(session.startTime);
+          isToday = sessionDateInTimezone === todayDateString;
+          
+          console.log('🔍 Today check (fallback):', {
+            sessionId: session.id,
+            sessionDateInTimezone,
+            todayDateString,
+            isToday,
+            startTime: session.startTime.toISOString()
+          });
+        } catch (error) {
+          console.error('Error in date comparison:', error);
+          // If timezone conversion fails, use simple date comparison
+          const sessionDate = new Date(session.startTime);
+          const today = new Date();
+          isToday = sessionDate.getFullYear() === today.getFullYear() &&
+                   sessionDate.getMonth() === today.getMonth() &&
+                   sessionDate.getDate() === today.getDate();
+        }
       }
+      
+      // Session must be today (include all statuses including cancelled/no-show)
+      const shouldInclude = isToday;
+      
+      if (isToday) {
+        console.log('✅ Session is today:', {
+          sessionId: session.id,
+          status: session.status,
+          shouldInclude
+        });
+      }
+      
+      return shouldInclude;
+    })
+    // Sort by start time (chronologically)
+    .sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
+    
+    // Debug logging
+    console.log('📊 Today sessions summary:', {
+      totalSessions: sessions.length,
+      todayDateString,
+      expertTimezone,
+      todaySessionsCount: filtered.length,
+      todaySessionIds: filtered.map(s => s.id)
     });
+    
+    return filtered;
   }, [sessions, todayDateString, expertTimezone]);
 
   const upcomingSessions = useMemo(() => {
     const now = new Date();
     return sessions.filter(session => {
-      // Use appointmentDate for comparison if available
+      // First check if session is today - if it is, exclude it from upcoming
+      let isToday = false;
+      
       if (session.appointmentDate) {
         // Direct string comparison - appointment_date is already in expert's timezone context
-        const isToday = session.appointmentDate === todayDateString;
-        return !isToday && session.startTime > now && session.status === 'scheduled';
+        isToday = session.appointmentDate === todayDateString;
+      } else {
+        // Fallback: use date comparison with timezone
+        try {
+          const formatter = new Intl.DateTimeFormat('en-CA', {
+            timeZone: expertTimezone,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+          });
+          const sessionDateInTimezone = formatter.format(session.startTime);
+          isToday = sessionDateInTimezone === todayDateString;
+        } catch {
+          const sessionDate = new Date(session.startTime);
+          const today = new Date();
+          isToday = sessionDate.getFullYear() === today.getFullYear() &&
+                    sessionDate.getMonth() === today.getMonth() &&
+                    sessionDate.getDate() === today.getDate();
+        }
       }
-      // Fallback: use date comparison with timezone
-      try {
-        const formatter = new Intl.DateTimeFormat('en-CA', {
-          timeZone: expertTimezone,
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit'
-        });
-        const sessionDateInTimezone = formatter.format(session.startTime);
-        const isToday = sessionDateInTimezone === todayDateString;
-        return !isToday && session.startTime > now && session.status === 'scheduled';
-      } catch {
-        const sessionDate = new Date(session.startTime);
-        const today = new Date();
-        const isToday = sessionDate.getFullYear() === today.getFullYear() &&
-                        sessionDate.getMonth() === today.getMonth() &&
-                        sessionDate.getDate() === today.getDate();
-        return !isToday && session.startTime > now && session.status === 'scheduled';
+      
+      // If session is today, it should NOT be in upcoming (it should be in todaySessions)
+      if (isToday) {
+        return false;
       }
-    });
+      
+      // For upcoming: session must be in the future and scheduled
+      return session.startTime > now && session.status === 'scheduled';
+    })
+    // Sort by start time (chronologically)
+    .sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
   }, [sessions, todayDateString, expertTimezone]);
+
+  // Cancelled sessions are now shown in Today tab, so no separate filter needed
 
   const historySessions = useMemo(() => {
     return sessions.filter(session => {
-      return session.status === 'completed' || session.status === 'cancelled';
-    }).sort((a, b) => b.startTime.getTime() - a.startTime.getTime());
+      return session.status === 'completed';
+    })
+    // Sort by start time (most recent first)
+    .sort((a, b) => b.startTime.getTime() - a.startTime.getTime());
   }, [sessions]);
 
   const getStatusColor = (status: string) => {
@@ -692,22 +780,22 @@ const SessionManager: React.FC = () => {
     return () => clearInterval(interval);
   }, [sessionTimer.isRunning]);
 
-  // Check and process refunds for cancelled sessions that don't have refunds yet
-  useEffect(() => {
-    if (!processRefundForCancelledSession) return;
-    
-    const cancelledSessions = sessions.filter(s => s.status === 'cancelled');
-    if (cancelledSessions.length > 0) {
-      // Process refunds for cancelled sessions (will check if already processed)
-      cancelledSessions.forEach(async (session) => {
-        try {
-          await processRefundForCancelledSession(session.id);
-        } catch (error) {
-          // Silently fail - refund processing errors are already logged
-        }
-      });
-    }
-  }, [sessions, processRefundForCancelledSession]);
+  // DISABLED: Auto-processing refunds causes too many API calls
+  // Refunds should be processed server-side or on-demand only
+  // This useEffect was causing 400+ API calls on page load
+  // useEffect(() => {
+  //   if (!processRefundForCancelledSession) return;
+  //   const cancelledSessions = sessions.filter(s => s.status === 'cancelled');
+  //   if (cancelledSessions.length > 0) {
+  //     cancelledSessions.forEach(async (session) => {
+  //       try {
+  //         await processRefundForCancelledSession(session.id);
+  //       } catch (error) {
+  //         // Silently fail
+  //       }
+  //     });
+  //   }
+  // }, [sessions, processRefundForCancelledSession]);
 
   // Check if there's an active session
   useEffect(() => {
@@ -791,7 +879,22 @@ const SessionManager: React.FC = () => {
             <CardDescription>Manage your sessions and appointments</CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="today" className="w-full">
+            <Tabs 
+              defaultValue="today" 
+              className="w-full"
+              value={activeTab}
+              onValueChange={(value) => {
+                setActiveTab(value);
+                // Always fetch when tab is clicked (tab-specific data)
+                if (expert?.auth_id) {
+                  console.log('🔄 Tab changed to:', value);
+                  console.log('📡 Fetching sessions for tab:', value);
+                  fetchSessions(value as 'today' | 'upcoming' | 'history');
+                } else {
+                  console.log('❌ Expert ID not available');
+                }
+              }}
+            >
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="today">Today</TabsTrigger>
                 <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
@@ -807,7 +910,7 @@ const SessionManager: React.FC = () => {
                   </Button>
                 </div>
                 
-                {loading ? (
+                {loading && sessions.length === 0 ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
                   </div>
@@ -855,7 +958,7 @@ const SessionManager: React.FC = () => {
 
               <TabsContent value="upcoming" className="space-y-4">
                 <h3 className="text-lg font-medium">Upcoming Sessions</h3>
-                {loading ? (
+                {loading && sessions.length === 0 ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
                   </div>
@@ -918,7 +1021,7 @@ const SessionManager: React.FC = () => {
 
               <TabsContent value="history" className="space-y-4">
                 <h3 className="text-lg font-medium">Session History</h3>
-                {loading ? (
+                {loading && sessions.length === 0 ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
                   </div>

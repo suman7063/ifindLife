@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { setCallSessionCacheBatch } from '@/hooks/useExpertNoShowWarning';
 
 export interface Session {
   id: string;
@@ -164,16 +165,39 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
   // This prevents 500+ API calls - fetches all at once
   const fetchAllCallSessions = useCallback(async (appointmentIds: string[]) => {
     if (!expertId || appointmentIds.length === 0) {
+      console.log('⏭️ Skipping call_sessions fetch - no appointment IDs');
       return new Map<string, any>();
     }
 
+    // Check cache first - if all appointment IDs are in cache, return cached data
+    const cachedMap = new Map<string, any>();
+    const uncachedIds: string[] = [];
+    const now = Date.now();
+    
+    appointmentIds.forEach(id => {
+      const cached = callSessionCacheRef.current.get(id);
+      if (cached && (now - cached.timestamp) < CACHE_DURATION) {
+        cachedMap.set(id, cached.data);
+      } else {
+        uncachedIds.push(id);
+      }
+    });
+
+    // If all are cached, return cached data
+    if (uncachedIds.length === 0) {
+      console.log('✅ All call sessions found in cache, skipping API call');
+      return cachedMap;
+    }
+
+    console.log(`📞 Fetching call_sessions for ${uncachedIds.length} uncached appointments (${cachedMap.size} from cache)`);
+
     try {
-      // Fetch all call sessions for these appointments in ONE query
+      // Fetch all call sessions for uncached appointments in ONE query
       const { data: callSessions, error } = await supabase
         .from('call_sessions')
         .select('*')
         .eq('expert_id', expertId)
-        .in('appointment_id', appointmentIds)
+        .in('appointment_id', uncachedIds)
         .order('created_at', { ascending: false });
 
       if (error && error.code !== 'PGRST116') {
@@ -186,7 +210,8 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
       }
 
       // Create a map: appointment_id -> most recent call session
-      const callSessionMap = new Map<string, any>();
+      // Start with cached data
+      const callSessionMap = new Map(cachedMap);
       const now = Date.now();
 
       if (callSessions) {
@@ -201,7 +226,7 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
           }
         });
 
-        // Store in cache and return map
+        // Store in cache and add to map
         grouped.forEach((cs, appointmentId) => {
           callSessionMap.set(appointmentId, cs);
           callSessionCacheRef.current.set(appointmentId, {
@@ -211,6 +236,7 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
         });
       }
 
+      console.log(`✅ Call sessions map ready: ${callSessionMap.size} total (${cachedMap.size} from cache, ${callSessionMap.size - cachedMap.size} fetched)`);
       return callSessionMap;
     } catch (err) {
       console.error('Error fetching call sessions:', err);
@@ -363,11 +389,11 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
 
   // Prevent concurrent fetches
   const isFetchingRef = useRef(false);
-  const lastFetchTimeRef = useRef<number>(0);
-  const MIN_FETCH_INTERVAL = 10000; // Minimum 10 seconds between fetches (aggressive throttling)
+  const lastFetchTimeRef = useRef<Map<string, number>>(new Map()); // Track last fetch time per tab
+  const MIN_FETCH_INTERVAL = 2000; // Minimum 2 seconds between fetches for same tab
   
   // Fetch sessions from Supabase
-  const fetchSessions = useCallback(async () => {
+  const fetchSessions = useCallback(async (tabFilter?: 'today' | 'upcoming' | 'cancelled' | 'history') => {
     if (!expertId) {
       setSessions([]);
       return;
@@ -375,53 +401,171 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
 
     // Prevent concurrent fetches
     if (isFetchingRef.current) {
+      console.log('⏸️ Fetch already in progress, skipping');
       return;
     }
 
-    // Aggressive throttling - don't allow more than once every 10 seconds
+    // Throttling per tab - allow fetch if it's a different tab or enough time has passed
+    const tabKey = tabFilter || 'all';
     const now = Date.now();
-    const timeSinceLastFetch = now - lastFetchTimeRef.current;
-    if (timeSinceLastFetch < MIN_FETCH_INTERVAL) {
+    const lastFetchTime = lastFetchTimeRef.current.get(tabKey) || 0;
+    const timeSinceLastFetch = now - lastFetchTime;
+    
+    if (timeSinceLastFetch < MIN_FETCH_INTERVAL && lastFetchTime > 0) {
+      console.log(`⏸️ Throttled: Only ${Math.round(timeSinceLastFetch/1000)}s since last fetch for tab: ${tabKey}`);
       return;
     }
+    
+    console.log(`📡 Fetching sessions for tab: ${tabKey || 'all'}`);
 
     try {
       isFetchingRef.current = true;
-      lastFetchTimeRef.current = now;
+      lastFetchTimeRef.current.set(tabKey, now); // Update last fetch time for this tab
       setLoading(true);
       setError(null);
 
-      // Fetch appointments for this expert
-      const { data: appointments, error: appointmentsError } = await supabase
+      // Build query based on tab filter
+      let query = supabase
         .from('appointments')
         .select('*')
-        .eq('expert_id', expertId)
+        .eq('expert_id', expertId);
+
+      // Apply tab-specific filters
+      if (tabFilter === 'today') {
+        // Today's sessions: get today's date (YYYY-MM-DD format)
+        // Note: appointment_date is stored in YYYY-MM-DD format in database
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const todayStr = `${year}-${month}-${day}`;
+        console.log('📅 Today filter:', todayStr);
+        query = query.eq('appointment_date', todayStr);
+      } else if (tabFilter === 'upcoming') {
+        // Upcoming: future dates, scheduled status
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const todayStr = `${year}-${month}-${day}`;
+        console.log('📅 Upcoming filter:', todayStr);
+        query = query
+          .gt('appointment_date', todayStr)
+          .in('status', ['scheduled', 'pending', 'confirmed']);
+      } else if (tabFilter === 'cancelled') {
+        // Cancelled: cancelled status (no-show is determined client-side based on time)
+        console.log('📅 Cancelled filter');
+        query = query.eq('status', 'cancelled');
+      } else if (tabFilter === 'history') {
+        // History: completed sessions
+        console.log('📅 History filter');
+        query = query.eq('status', 'completed');
+      } else {
+        console.log('📅 No filter - fetching all');
+      }
+      // If no filter, fetch all (for backward compatibility)
+
+      console.log('🔍 Executing query for tab:', tabFilter);
+      const { data: appointments, error: appointmentsError } = await query
         .order('appointment_date', { ascending: true })
         .order('start_time', { ascending: true });
+      
+      console.log('📊 Query result:', { 
+        count: appointments?.length || 0, 
+        error: appointmentsError?.message,
+        tabFilter 
+      });
 
       if (appointmentsError) {
         throw appointmentsError;
       }
 
       if (!appointments || appointments.length === 0) {
+        console.log('📭 No appointments found for tab:', tabFilter);
         setSessions([]);
+        setLoading(false);
+        isFetchingRef.current = false;
         return;
       }
 
-      // STEP 1: Fetch ALL call sessions in ONE batch query (not per appointment)
+      console.log(`📊 Found ${appointments.length} appointments for tab: ${tabFilter}`);
+
+      // STEP 1: Fetch ALL call sessions in ONE batch query (only if we have appointments)
       // This replaces 50+ individual API calls with just 1 call
       const appointmentIds = appointments.map(apt => apt.id);
+      console.log(`📞 Fetching call sessions for ${appointmentIds.length} appointments`);
       const callSessionMap = await fetchAllCallSessions(appointmentIds);
+      
+      // Populate shared cache for useExpertNoShowWarning hook
+      // This prevents individual API calls when checking if expert joined
+      setCallSessionCacheBatch(callSessionMap);
 
-      // STEP 2: Map appointments to sessions (now uses batch-fetched call session data)
-      // No need for batching since we're not making API calls anymore
+      // STEP 2: Fetch ALL user profiles in ONE batch query (only if we have appointments)
+      // Collect unique user IDs
+      const uniqueUserIds = [...new Set(appointments.map(apt => apt.user_id).filter(Boolean))];
+      
+      // Check cache first for user profiles
+      const cachedUserProfiles = new Map<string, any>();
+      const uncachedUserIds: string[] = [];
+      const userProfileNow = Date.now();
+      
+      uniqueUserIds.forEach(userId => {
+        const cached = userProfileCacheRef.current.get(userId);
+        if (cached && (userProfileNow - cached.timestamp) < USER_PROFILE_CACHE_DURATION) {
+          cachedUserProfiles.set(userId, cached.data);
+        } else {
+          uncachedUserIds.push(userId);
+        }
+      });
+
+      console.log(`👥 User profiles: ${cachedUserProfiles.size} from cache, ${uncachedUserIds.length} need fetching`);
+      
+      // Start with cached profiles
+      const userProfileMap = new Map(cachedUserProfiles);
+      
+      // Batch fetch only uncached user profiles
+      if (uncachedUserIds.length > 0) {
+        try {
+          const { data: userProfiles, error: userError } = await supabase
+            .from('users')
+            .select('id, name, email, profile_picture')
+            .in('id', uncachedUserIds);
+
+          if (!userError && userProfiles) {
+            console.log(`✅ Fetched ${userProfiles.length} user profiles from API`);
+            // Create map for quick lookup
+            userProfiles.forEach(profile => {
+              if (profile?.id) {
+                userProfileMap.set(profile.id, profile);
+                // Also update cache
+                userProfileCacheRef.current.set(profile.id, {
+                  data: profile,
+                  timestamp: userProfileNow
+                });
+              }
+            });
+          } else if (userError) {
+            console.error('❌ Error fetching user profiles:', userError);
+          }
+        } catch (err) {
+          console.error('❌ Error batch fetching user profiles:', err);
+        }
+      } else {
+        console.log('✅ All user profiles found in cache, skipping API call');
+      }
+
+      // STEP 3: Map appointments to sessions (now uses batch-fetched data)
       const mappedSessions = await Promise.all(
         appointments.map(async (appointment) => {
           // Use the batch-fetched call session data (from ONE API call)
           const callSession = callSessionMap.get(appointment.id) || null;
           
-          // Fetch user profile (cached, so no redundant calls)
-          const userProfile = await fetchUserProfile(appointment.user_id);
+          // Get user profile from batch-fetched map (or cache if not in batch)
+          let userProfile = userProfileMap.get(appointment.user_id);
+          if (!userProfile) {
+            // Fallback to cache or fetch if not in batch
+            userProfile = await fetchUserProfile(appointment.user_id);
+          }
           
           // Parse start and end times
           const appointmentDate = new Date(appointment.appointment_date);
@@ -522,13 +666,15 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
       );
 
       setSessions(mappedSessions);
+      console.log('✅ Sessions fetched successfully:', { count: mappedSessions.length, tabFilter });
     } catch (err: any) {
-      console.error('Error fetching sessions:', err);
+      console.error('❌ Error fetching sessions:', err);
       setError(err.message || 'Failed to fetch sessions');
       toast.error('Failed to load sessions');
     } finally {
       setLoading(false);
       isFetchingRef.current = false;
+      console.log('🏁 Fetch completed, isFetching reset to false');
     }
   }, [expertId]); // Removed mapAppointmentToSession to prevent infinite loops - use ref instead
 

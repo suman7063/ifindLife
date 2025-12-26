@@ -11,6 +11,34 @@ export interface ExpertNoShowWarning {
   minutesRemaining: number; // minutes until refund
 }
 
+// Shared cache for call session data across all hook instances
+// This prevents multiple API calls for the same appointment_id
+const callSessionCache = new Map<string, {
+  data: any;
+  timestamp: number;
+}>();
+
+const CACHE_DURATION = 60000; // Cache for 60 seconds
+
+// Function to set call session data in cache (called from useExpertSessions)
+export const setCallSessionCache = (appointmentId: string, callSession: any) => {
+  callSessionCache.set(appointmentId, {
+    data: callSession,
+    timestamp: Date.now()
+  });
+};
+
+// Function to batch set call session data in cache
+export const setCallSessionCacheBatch = (callSessionMap: Map<string, any>) => {
+  const now = Date.now();
+  callSessionMap.forEach((callSession, appointmentId) => {
+    callSessionCache.set(appointmentId, {
+      data: callSession,
+      timestamp: now
+    });
+  });
+};
+
 /**
  * Hook to warn expert if they haven't joined within 5 minutes
  * Shows warnings to expert about potential refund to user
@@ -46,19 +74,48 @@ export const useExpertNoShowWarning = (
     }
     
     try {
+      // FIRST: Always check shared cache before making API call
+      const cached = callSessionCache.get(aptId);
+      const now = Date.now();
+      let callSession = null;
       
-      // Check if there's an active call session for this appointment
-      const { data: callSession, error } = await supabase
-        .from('call_sessions')
-        .select('id, status, start_time, expert_id')
-        .eq('appointment_id', aptId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      if (cached && (now - cached.timestamp) < CACHE_DURATION) {
+        // Use cached data - no API call needed
+        callSession = cached.data;
+        // Mark as checked since we have data
+        hasCheckedRef.current = true;
+      } else if (!hasCheckedRef.current) {
+        // Cache miss or expired - make API call ONLY if we haven't checked before
+        // This prevents multiple instances from making the same call
+        hasCheckedRef.current = true; // Mark as checking to prevent concurrent calls
+        
+        const { data, error } = await supabase
+          .from('call_sessions')
+          .select('id, status, start_time, expert_id')
+          .eq('appointment_id', aptId)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error checking call session:', error);
-        return false;
+        if (error && error.code !== 'PGRST116') {
+          console.error('Error checking call session:', error);
+          hasCheckedRef.current = false; // Reset on error
+          return false;
+        }
+
+        callSession = data;
+        
+        // Update cache for future use
+        if (callSession) {
+          callSessionCache.set(aptId, {
+            data: callSession,
+            timestamp: now
+          });
+        }
+      } else {
+        // Already checked but no cache - use cached result from previous check
+        // This shouldn't happen often, but handle gracefully
+        return expertJoinedRef.current;
       }
 
       // Expert has joined if there's an active call session with start_time
@@ -286,6 +343,14 @@ export const useExpertNoShowWarning = (
         (payload) => {
           if (!isMounted) return;
           const callSession = payload.new as any;
+          
+          // Update cache with new call session data
+          if (callSession && appointmentId) {
+            callSessionCache.set(appointmentId, {
+              data: callSession,
+              timestamp: Date.now()
+            });
+          }
           
           // Update expert joined status based on call session (no API call needed)
           if (callSession && callSession.status === 'active' && callSession.start_time) {
