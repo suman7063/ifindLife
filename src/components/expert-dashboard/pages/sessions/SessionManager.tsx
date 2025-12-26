@@ -57,6 +57,7 @@ const SessionManager: React.FC = () => {
     fetchSessions,
     updateSessionStatus,
     updateSessionNotes,
+    processRefundForCancelledSession,
   } = useExpertSessions({
     expertId: expert?.auth_id,
     autoFetch: true,
@@ -404,7 +405,7 @@ const SessionManager: React.FC = () => {
                   type: 'session_ready',
                   title: `${callType} Session Ready`,
                   content: `${expertName} is ready for your scheduled ${callType.toLowerCase()} session. Click to join the call now.`,
-                  referenceId: callSessionId || session.id,
+                  referenceId: session.id, // Use appointment ID (UUID) instead of callSessionId
                   senderId: expert.auth_id,
                   data: {
                     sessionId: session.id,
@@ -464,7 +465,7 @@ const SessionManager: React.FC = () => {
                   content: `${expertName} is ready for your scheduled ${callType.toLowerCase()} session. Click to join the call now.`,
                   read: false,
                   sender_id: expert.auth_id,
-                  reference_id: callSessionId || session.id
+                  reference_id: session.id // Use appointment ID (UUID) instead of callSessionId
                 });
               
               if (directInsertError) {
@@ -500,7 +501,7 @@ const SessionManager: React.FC = () => {
               content: `${expert?.name || 'Your expert'} is ready for your scheduled session. Click to join the call now.`,
               read: false,
               sender_id: expert?.auth_id,
-              reference_id: callSessionId || session.id
+              reference_id: session.id // Use appointment ID (UUID) instead of callSessionId
             });
           
           if (fallbackError) {
@@ -690,6 +691,23 @@ const SessionManager: React.FC = () => {
     }
     return () => clearInterval(interval);
   }, [sessionTimer.isRunning]);
+
+  // Check and process refunds for cancelled sessions that don't have refunds yet
+  useEffect(() => {
+    if (!processRefundForCancelledSession) return;
+    
+    const cancelledSessions = sessions.filter(s => s.status === 'cancelled');
+    if (cancelledSessions.length > 0) {
+      // Process refunds for cancelled sessions (will check if already processed)
+      cancelledSessions.forEach(async (session) => {
+        try {
+          await processRefundForCancelledSession(session.id);
+        } catch (error) {
+          // Silently fail - refund processing errors are already logged
+        }
+      });
+    }
+  }, [sessions, processRefundForCancelledSession]);
 
   // Check if there's an active session
   useEffect(() => {

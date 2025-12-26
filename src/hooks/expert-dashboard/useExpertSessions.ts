@@ -687,16 +687,18 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
       // If cancelling a session, process refund
       if (status === 'cancelled') {
         try {
-          // Get appointment details
+          // Get appointment details and check current status
           const { data: appointment } = await supabase
             .from('appointments')
-            .select('id, user_id, expert_id')
+            .select('id, user_id, expert_id, status')
             .eq('id', sessionId)
             .single();
 
           if (!appointment) {
             console.warn('⚠️ Appointment not found for refund processing');
           } else {
+            // Process refund regardless of current status (might have been cancelled elsewhere)
+            // Check if refund already processed first
             // Check for call session payment
             const { data: callSession } = await supabase
               .from('call_sessions')
@@ -719,13 +721,31 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
               paymentReferenceType = 'call_session';
 
               // Check if refund already processed
-              const { data: existingRefunds } = await supabase
-                .from('wallet_transactions')
-                .select('id')
-                .eq('reference_id', callSession.id)
-                .eq('reference_type', 'call_session')
-                .eq('type', 'credit')
-                .in('reason', ['expert_no_show', 'refund']);
+              // Validate UUID before querying
+              const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(callSession.id);
+              
+              let existingRefunds: any[] = [];
+              if (isUUID) {
+                // Query by reference_id if it's a valid UUID
+                const { data } = await supabase
+                  .from('wallet_transactions')
+                  .select('id')
+                  .eq('reference_id', callSession.id)
+                  .eq('reference_type', 'call_session')
+                  .eq('type', 'credit')
+                  .in('reason', ['expert_no_show', 'refund']);
+                existingRefunds = data || [];
+              } else {
+                // Query by metadata if it's not a UUID
+                const { data } = await supabase
+                  .from('wallet_transactions')
+                  .select('id')
+                  .eq('metadata->>reference_id', callSession.id)
+                  .eq('reference_type', 'call_session')
+                  .eq('type', 'credit')
+                  .in('reason', ['expert_no_show', 'refund']);
+                existingRefunds = data || [];
+              }
 
               if (existingRefunds && existingRefunds.length > 0) {
                 // Refund already processed
@@ -1209,6 +1229,7 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
     fetchSessions,
     updateSessionStatus,
     updateSessionNotes,
+    processRefundForCancelledSession,
   };
 };
 

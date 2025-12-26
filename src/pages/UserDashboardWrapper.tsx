@@ -21,6 +21,7 @@ import ProgramsSection from '@/components/user/dashboard/sections/ProgramsSectio
 import BookingHistorySection from '@/components/user/dashboard/sections/BookingHistorySection';
 import ProgressTrackingSection from '@/components/user/dashboard/sections/ProgressTrackingSection';
 import ReviewsSection from '@/components/user/dashboard/sections/ReviewsSection';
+import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 
 const UserDashboardWrapper = () => {
   const simpleAuth = useSimpleAuth();
@@ -137,6 +138,11 @@ const UserDashboardWrapper = () => {
   return (
     <>
       <Navbar />
+      {/* Notification Center - listens for real-time notifications and shows toast popups */}
+      {/* Keep component mounted but visually hidden to ensure toasts work */}
+      <div className="sr-only" style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }}>
+        <NotificationCenter />
+      </div>
       <div className="min-h-screen bg-gray-50">
         <div className="flex">
           {/* Sidebar */}

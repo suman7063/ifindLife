@@ -149,7 +149,6 @@ export function useAvailabilityManagement(user: any) {
         .order('start_time', { ascending: true });
 
       if (fetchError) throw fetchError;
-      console.log('✅ Fetched availabilities:', data);
       setAvailabilities(data || []);
     } catch (err: any) {
       console.error('Error fetching availabilities:', err);

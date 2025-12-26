@@ -29,14 +29,6 @@ export function getProfilePictureUrl(profilePicture: string | null | undefined):
 
   const publicUrl = data?.publicUrl || '';
   
-  // Log for debugging if conversion happens
-  if (publicUrl && !profilePicture.startsWith('http')) {
-    console.log('🔄 Converted profile picture path to URL:', {
-      original: profilePicture,
-      converted: publicUrl
-    });
-  }
-
   return publicUrl;
 }
 

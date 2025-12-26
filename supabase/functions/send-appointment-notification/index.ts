@@ -27,6 +27,47 @@ serve(async (req) => {
       
     if (error) throw error;
     
+    // Check user notification preferences before sending
+    const { data: preferences, error: prefError } = await supabase
+      .from('user_notification_preferences')
+      .select('*')
+      .eq('user_id', appointment.user_id)
+      .single();
+    
+    // Determine which preference to check based on notification type
+    let shouldSend = true;
+    let preferenceField: string | null = null;
+    
+    if (preferences && !prefError) {
+      if (type === 'reminder') {
+        preferenceField = 'appointment_reminders';
+        shouldSend = preferences.appointment_reminders === true;
+      } else {
+        // confirmation, cancelled, etc.
+        preferenceField = 'booking_confirmations';
+        shouldSend = preferences.booking_confirmations === true;
+      }
+      
+      if (!shouldSend) {
+        console.log(`⏭️ Appointment notification skipped - user has disabled ${preferenceField}`, {
+          userId: appointment.user_id,
+          type,
+          preferenceField
+        });
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            skipped: true,
+            reason: `User has disabled ${preferenceField} notifications`,
+            message: 'Notification skipped due to user preferences'
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    } else if (prefError && prefError.code !== 'PGRST116') {
+      console.warn('⚠️ Error fetching preferences, using defaults:', prefError);
+    }
+    
     // Create in-app notification
     await supabase
       .from('notifications')

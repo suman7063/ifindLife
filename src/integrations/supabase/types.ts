@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "13.0.5"
   }
   public: {
     Tables: {
@@ -18,7 +18,7 @@ export type Database = {
         Row: {
           created_at: string
           email: string
-          failed_login_attempts: number | null
+          failed_login_attempts: number
           id: string
           is_active: boolean
           last_login: string | null
@@ -31,7 +31,7 @@ export type Database = {
         Insert: {
           created_at?: string
           email: string
-          failed_login_attempts?: number | null
+          failed_login_attempts?: number
           id?: string
           is_active?: boolean
           last_login?: string | null
@@ -44,7 +44,7 @@ export type Database = {
         Update: {
           created_at?: string
           email?: string
-          failed_login_attempts?: number | null
+          failed_login_attempts?: number
           id?: string
           is_active?: boolean
           last_login?: string | null
@@ -56,76 +56,34 @@ export type Database = {
         }
         Relationships: []
       }
-      admin_reward_items: {
-        Row: {
-          category: string
-          created_at: string
-          current_redemptions: number | null
-          description: string | null
-          external_id: string | null
-          id: string
-          image_url: string | null
-          is_active: boolean
-          max_redemptions: number | null
-          name: string
-          points_required: number
-          updated_at: string
-        }
-        Insert: {
-          category: string
-          created_at?: string
-          current_redemptions?: number | null
-          description?: string | null
-          external_id?: string | null
-          id?: string
-          image_url?: string | null
-          is_active?: boolean
-          max_redemptions?: number | null
-          name: string
-          points_required: number
-          updated_at?: string
-        }
-        Update: {
-          category?: string
-          created_at?: string
-          current_redemptions?: number | null
-          description?: string | null
-          external_id?: string | null
-          id?: string
-          image_url?: string | null
-          is_active?: boolean
-          max_redemptions?: number | null
-          name?: string
-          points_required?: number
-          updated_at?: string
-        }
-        Relationships: []
-      }
       admin_sessions: {
         Row: {
-          admin_id: string | null
+          admin_id: string
           created_at: string
           expires_at: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
+          revoked_at: string | null
           session_token: string
           user_agent: string | null
         }
         Insert: {
-          admin_id?: string | null
+          admin_id: string
           created_at?: string
           expires_at: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
+          revoked_at?: string | null
           session_token: string
           user_agent?: string | null
         }
         Update: {
-          admin_id?: string | null
+          admin_id?: string
           created_at?: string
           expires_at?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
+          revoked_at?: string | null
           session_token?: string
           user_agent?: string | null
         }
@@ -139,29 +97,11 @@ export type Database = {
           },
         ]
       }
-      admin_users: {
-        Row: {
-          created_at: string
-          id: string
-          role: string
-        }
-        Insert: {
-          created_at?: string
-          id: string
-          role: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          role?: string
-        }
-        Relationships: []
-      }
       appointments: {
         Row: {
           appointment_date: string
           channel_name: string | null
-          created_at: string
+          created_at: string | null
           duration: number
           end_time: string | null
           expert_id: string
@@ -169,12 +109,13 @@ export type Database = {
           google_calendar_event_id: string | null
           id: string
           notes: string | null
+          order_id: string | null
           payment_status: string | null
           razorpay_payment_id: string | null
           reminder_sent: boolean | null
           service_id: string | null
           start_time: string | null
-          status: string
+          status: string | null
           time_slot_id: string | null
           token: string | null
           uid: number | null
@@ -184,7 +125,7 @@ export type Database = {
         Insert: {
           appointment_date: string
           channel_name?: string | null
-          created_at?: string
+          created_at?: string | null
           duration: number
           end_time?: string | null
           expert_id: string
@@ -192,12 +133,13 @@ export type Database = {
           google_calendar_event_id?: string | null
           id?: string
           notes?: string | null
+          order_id?: string | null
           payment_status?: string | null
           razorpay_payment_id?: string | null
           reminder_sent?: boolean | null
-          service_id?: number | null
+          service_id?: string | null
           start_time?: string | null
-          status: string
+          status?: string | null
           time_slot_id?: string | null
           token?: string | null
           uid?: number | null
@@ -207,7 +149,7 @@ export type Database = {
         Update: {
           appointment_date?: string
           channel_name?: string | null
-          created_at?: string
+          created_at?: string | null
           duration?: number
           end_time?: string | null
           expert_id?: string
@@ -215,12 +157,13 @@ export type Database = {
           google_calendar_event_id?: string | null
           id?: string
           notes?: string | null
+          order_id?: string | null
           payment_status?: string | null
           razorpay_payment_id?: string | null
           reminder_sent?: boolean | null
-          service_id?: number | null
+          service_id?: string | null
           start_time?: string | null
-          status?: string
+          status?: string | null
           time_slot_id?: string | null
           token?: string | null
           uid?: number | null
@@ -232,96 +175,11 @@ export type Database = {
             foreignKeyName: "appointments_expert_id_fkey"
             columns: ["expert_id"]
             isOneToOne: false
-            referencedRelation: "experts"
-            referencedColumns: ["id"]
+            referencedRelation: "expert_accounts"
+            referencedColumns: ["auth_id"]
           },
           {
             foreignKeyName: "appointments_service_id_fkey"
-            columns: ["service_id"]
-            isOneToOne: false
-            referencedRelation: "services"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "appointments_time_slot_id_fkey"
-            columns: ["time_slot_id"]
-            isOneToOne: false
-            referencedRelation: "expert_time_slots"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      booking_requests: {
-        Row: {
-          created_at: string | null
-          duration_minutes: number
-          estimated_price_inr: number
-          estimated_price_usd: number
-          expert_id: string | null
-          expert_response: string | null
-          expires_at: string | null
-          id: string
-          payment_status: string | null
-          requested_date: string
-          requested_time: string
-          service_id: string | null
-          special_requirements: string | null
-          status: string | null
-          updated_at: string | null
-          urgency_level: string | null
-          user_currency: string | null
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          duration_minutes?: number
-          estimated_price_inr: number
-          estimated_price_usd: number
-          expert_id?: string | null
-          expert_response?: string | null
-          expires_at?: string | null
-          id?: string
-          payment_status?: string | null
-          requested_date: string
-          requested_time: string
-          service_id?: number | null
-          special_requirements?: string | null
-          status?: string | null
-          updated_at?: string | null
-          urgency_level?: string | null
-          user_currency?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          duration_minutes?: number
-          estimated_price_inr?: number
-          estimated_price_usd?: number
-          expert_id?: string | null
-          expert_response?: string | null
-          expires_at?: string | null
-          id?: string
-          payment_status?: string | null
-          requested_date?: string
-          requested_time?: string
-          service_id?: number | null
-          special_requirements?: string | null
-          status?: string | null
-          updated_at?: string | null
-          urgency_level?: string | null
-          user_currency?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "booking_requests_expert_id_fkey"
-            columns: ["expert_id"]
-            isOneToOne: false
-            referencedRelation: "expert_accounts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "booking_requests_service_id_fkey"
             columns: ["service_id"]
             isOneToOne: false
             referencedRelation: "services"
@@ -370,8 +228,8 @@ export type Database = {
           answered_at: string | null
           appointment_id: string | null
           call_direction: string | null
-          call_metadata: Json | null
-          call_type: string
+          call_metadata: Json
+          call_type: string | null
           channel_name: string
           cost: number | null
           cost_eur: number | null
@@ -394,7 +252,7 @@ export type Database = {
           review: string | null
           selected_duration: number | null
           start_time: string | null
-          status: string
+          status: string | null
           updated_at: string | null
           user_id: string
         }
@@ -405,8 +263,8 @@ export type Database = {
           answered_at?: string | null
           appointment_id?: string | null
           call_direction?: string | null
-          call_metadata?: Json | null
-          call_type: string
+          call_metadata?: Json
+          call_type?: string | null
           channel_name: string
           cost?: number | null
           cost_eur?: number | null
@@ -429,7 +287,7 @@ export type Database = {
           review?: string | null
           selected_duration?: number | null
           start_time?: string | null
-          status?: string
+          status?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -440,8 +298,8 @@ export type Database = {
           answered_at?: string | null
           appointment_id?: string | null
           call_direction?: string | null
-          call_metadata?: Json | null
-          call_type?: string
+          call_metadata?: Json
+          call_type?: string | null
           channel_name?: string
           cost?: number | null
           cost_eur?: number | null
@@ -451,7 +309,7 @@ export type Database = {
           end_time?: string | null
           expert_auth_id?: string | null
           expert_category?: string | null
-          expert_id?: number
+          expert_id?: string
           failure_reason?: string | null
           id?: string
           missed_call?: boolean | null
@@ -464,7 +322,7 @@ export type Database = {
           review?: string | null
           selected_duration?: number | null
           start_time?: string | null
-          status?: string
+          status?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -476,37 +334,14 @@ export type Database = {
             referencedRelation: "appointments"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "call_sessions_expert_id_fkey"
+            columns: ["expert_id"]
+            isOneToOne: false
+            referencedRelation: "expert_accounts"
+            referencedColumns: ["auth_id"]
+          },
         ]
-      }
-      contact_submissions: {
-        Row: {
-          created_at: string | null
-          email: string
-          id: number
-          is_read: boolean | null
-          message: string
-          name: string
-          subject: string
-        }
-        Insert: {
-          created_at?: string | null
-          email: string
-          id?: number
-          is_read?: boolean | null
-          message: string
-          name: string
-          subject: string
-        }
-        Update: {
-          created_at?: string | null
-          email?: string
-          id?: number
-          is_read?: boolean | null
-          message?: string
-          name?: string
-          subject?: string
-        }
-        Relationships: []
       }
       expert_accounts: {
         Row: {
@@ -516,13 +351,15 @@ export type Database = {
           average_rating: number | null
           bio: string | null
           category: string | null
-          certificate_urls: string[] | null
+          certificate_urls: string[]
           city: string | null
           country: string | null
           created_at: string | null
+          deleted_at: string | null
           email: string
           experience: string | null
-          languages: string[] | null
+          feedback_message: string | null
+          languages: string[]
           name: string
           onboarding_completed: boolean | null
           phone: string | null
@@ -530,10 +367,10 @@ export type Database = {
           profile_completed: boolean | null
           profile_picture: string | null
           reviews_count: number | null
-          selected_services: number[] | null
           specialization: string | null
           state: string | null
           status: string | null
+          updated_by_admin_at: string | null
           user_id: string | null
           verified: boolean | null
         }
@@ -544,13 +381,15 @@ export type Database = {
           average_rating?: number | null
           bio?: string | null
           category?: string | null
-          certificate_urls?: string[] | null
+          certificate_urls?: string[]
           city?: string | null
           country?: string | null
           created_at?: string | null
+          deleted_at?: string | null
           email: string
           experience?: string | null
-          languages?: string[] | null
+          feedback_message?: string | null
+          languages?: string[]
           name: string
           onboarding_completed?: boolean | null
           phone?: string | null
@@ -558,10 +397,10 @@ export type Database = {
           profile_completed?: boolean | null
           profile_picture?: string | null
           reviews_count?: number | null
-          selected_services?: number[] | null
           specialization?: string | null
           state?: string | null
           status?: string | null
+          updated_by_admin_at?: string | null
           user_id?: string | null
           verified?: boolean | null
         }
@@ -572,13 +411,15 @@ export type Database = {
           average_rating?: number | null
           bio?: string | null
           category?: string | null
-          certificate_urls?: string[] | null
+          certificate_urls?: string[]
           city?: string | null
           country?: string | null
           created_at?: string | null
+          deleted_at?: string | null
           email?: string
           experience?: string | null
-          languages?: string[] | null
+          feedback_message?: string | null
+          languages?: string[]
           name?: string
           onboarding_completed?: boolean | null
           phone?: string | null
@@ -586,10 +427,10 @@ export type Database = {
           profile_completed?: boolean | null
           profile_picture?: string | null
           reviews_count?: number | null
-          selected_services?: number[] | null
           specialization?: string | null
           state?: string | null
           status?: string | null
+          updated_by_admin_at?: string | null
           user_id?: string | null
           verified?: boolean | null
         }
@@ -624,33 +465,53 @@ export type Database = {
       }
       expert_availabilities: {
         Row: {
-          availability_type: string
-          created_at: string | null
-          end_date: string
+          created_at: string
+          day_of_week: number
+          end_date: string | null
+          end_time: string
           expert_id: string
           id: string
-          start_date: string
-          timezone: string | null
+          is_available: boolean
+          start_date: string | null
+          start_time: string
+          timezone: string
+          updated_at: string
         }
         Insert: {
-          availability_type: string
-          created_at?: string | null
-          end_date: string
+          created_at?: string
+          day_of_week: number
+          end_date?: string | null
+          end_time: string
           expert_id: string
           id?: string
-          start_date: string
-          timezone?: string | null
+          is_available?: boolean
+          start_date?: string | null
+          start_time: string
+          timezone?: string
+          updated_at?: string
         }
         Update: {
-          availability_type?: string
-          created_at?: string | null
-          end_date?: string
+          created_at?: string
+          day_of_week?: number
+          end_date?: string | null
+          end_time?: string
           expert_id?: string
           id?: string
-          start_date?: string
-          timezone?: string | null
+          is_available?: boolean
+          start_date?: string | null
+          start_time?: string
+          timezone?: string
+          updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "expert_availabilities_expert_id_fkey"
+            columns: ["expert_id"]
+            isOneToOne: false
+            referencedRelation: "expert_accounts"
+            referencedColumns: ["auth_id"]
+          },
+        ]
       }
       expert_away_messages: {
         Row: {
@@ -737,8 +598,8 @@ export type Database = {
           created_at?: string
           duration_minutes: number
           id?: string
-          price_eur: number
-          price_inr: number
+          price_eur?: number
+          price_inr?: number
         }
         Update: {
           category_id?: string
@@ -760,7 +621,7 @@ export type Database = {
       }
       expert_category_pricing: {
         Row: {
-          active: boolean
+          active: boolean | null
           category: string
           created_at: string
           duration_minutes: number
@@ -770,7 +631,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          active?: boolean
+          active?: boolean | null
           category: string
           created_at?: string
           duration_minutes: number
@@ -780,7 +641,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          active?: boolean
+          active?: boolean | null
           category?: string
           created_at?: string
           duration_minutes?: number
@@ -794,19 +655,19 @@ export type Database = {
       expert_category_services: {
         Row: {
           category_id: string
-          created_at: string
+          created_at: string | null
           id: string
           service_id: string
         }
         Insert: {
           category_id: string
-          created_at?: string
+          created_at?: string | null
           id?: string
           service_id: string
         }
         Update: {
           category_id?: string
-          created_at?: string
+          created_at?: string | null
           id?: string
           service_id?: string
         }
@@ -869,34 +730,31 @@ export type Database = {
       expert_presence: {
         Row: {
           accepting_calls: boolean
-          auto_away_enabled: boolean | null
-          away_timeout_minutes: number | null
           created_at: string
           expert_id: string
           id: string
           last_activity: string
+          previous_status: string | null
           status: string
           updated_at: string
         }
         Insert: {
           accepting_calls?: boolean
-          auto_away_enabled?: boolean | null
-          away_timeout_minutes?: number | null
           created_at?: string
           expert_id: string
           id?: string
           last_activity?: string
-          status?: string
+          previous_status?: string | null
+          status: string
           updated_at?: string
         }
         Update: {
           accepting_calls?: boolean
-          auto_away_enabled?: boolean | null
-          away_timeout_minutes?: number | null
           created_at?: string
           expert_id?: string
           id?: string
           last_activity?: string
+          previous_status?: string | null
           status?: string
           updated_at?: string
         }
@@ -904,7 +762,7 @@ export type Database = {
           {
             foreignKeyName: "expert_presence_expert_id_fkey"
             columns: ["expert_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "expert_accounts"
             referencedColumns: ["auth_id"]
           },
@@ -913,60 +771,36 @@ export type Database = {
       expert_pricing_tiers: {
         Row: {
           category: string
-          consultation_fee_eur: number | null
-          consultation_fee_inr: number | null
-          consultation_fee_usd: number | null
-          created_at: string | null
+          created_at: string
           expert_id: string
           id: string
-          price_per_min_eur: number | null
-          price_per_min_inr: number | null
-          price_per_min_usd: number | null
           session_30_eur: number | null
           session_30_inr: number | null
-          session_30_usd: number | null
           session_60_eur: number | null
           session_60_inr: number | null
-          session_60_usd: number | null
-          updated_at: string | null
+          updated_at: string
         }
         Insert: {
           category: string
-          consultation_fee_eur?: number | null
-          consultation_fee_inr?: number | null
-          consultation_fee_usd?: number | null
-          created_at?: string | null
+          created_at?: string
           expert_id: string
           id?: string
-          price_per_min_eur?: number | null
-          price_per_min_inr?: number | null
-          price_per_min_usd?: number | null
           session_30_eur?: number | null
           session_30_inr?: number | null
-          session_30_usd?: number | null
           session_60_eur?: number | null
           session_60_inr?: number | null
-          session_60_usd?: number | null
-          updated_at?: string | null
+          updated_at?: string
         }
         Update: {
           category?: string
-          consultation_fee_eur?: number | null
-          consultation_fee_inr?: number | null
-          consultation_fee_usd?: number | null
-          created_at?: string | null
+          created_at?: string
           expert_id?: string
           id?: string
-          price_per_min_eur?: number | null
-          price_per_min_inr?: number | null
-          price_per_min_usd?: number | null
           session_30_eur?: number | null
           session_30_inr?: number | null
-          session_30_usd?: number | null
           session_60_eur?: number | null
           session_60_inr?: number | null
-          session_60_usd?: number | null
-          updated_at?: string | null
+          updated_at?: string
         }
         Relationships: [
           {
@@ -974,96 +808,37 @@ export type Database = {
             columns: ["expert_id"]
             isOneToOne: false
             referencedRelation: "expert_accounts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      expert_reports: {
-        Row: {
-          date: string | null
-          details: string | null
-          expert_id: string | null
-          id: string
-          reason: string | null
-          status: string | null
-          user_id: string | null
-          user_name: string | null
-        }
-        Insert: {
-          date?: string | null
-          details?: string | null
-          expert_id?: string | null
-          id?: string
-          reason?: string | null
-          status?: string | null
-          user_id?: string | null
-          user_name?: string | null
-        }
-        Update: {
-          date?: string | null
-          details?: string | null
-          expert_id?: string | null
-          id?: string
-          reason?: string | null
-          status?: string | null
-          user_id?: string | null
-          user_name?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "expert_reports_expert_id_fkey"
-            columns: ["expert_id"]
-            isOneToOne: false
-            referencedRelation: "experts"
-            referencedColumns: ["id"]
+            referencedColumns: ["auth_id"]
           },
         ]
       }
       expert_service_specializations: {
         Row: {
-          certifications: string[] | null
-          created_at: string | null
-          description: string | null
-          expert_id: string | null
-          hourly_rate_inr: number | null
-          hourly_rate_usd: number | null
+          created_at: string
+          expert_id: string
           id: string
           is_available: boolean | null
           is_primary_service: boolean | null
           proficiency_level: string | null
-          service_id: string | null
-          updated_at: string | null
-          years_experience: number | null
+          service_id: string
         }
         Insert: {
-          certifications?: string[] | null
-          created_at?: string | null
-          description?: string | null
-          expert_id?: string | null
-          hourly_rate_inr?: number | null
-          hourly_rate_usd?: number | null
+          created_at?: string
+          expert_id: string
           id?: string
           is_available?: boolean | null
           is_primary_service?: boolean | null
           proficiency_level?: string | null
-          service_id?: number | null
-          updated_at?: string | null
-          years_experience?: number | null
+          service_id: string
         }
         Update: {
-          certifications?: string[] | null
-          created_at?: string | null
-          description?: string | null
-          expert_id?: string | null
-          hourly_rate_inr?: number | null
-          hourly_rate_usd?: number | null
+          created_at?: string
+          expert_id?: string
           id?: string
           is_available?: boolean | null
           is_primary_service?: boolean | null
           proficiency_level?: string | null
-          service_id?: number | null
-          updated_at?: string | null
-          years_experience?: number | null
+          service_id?: string
         }
         Relationships: [
           {
@@ -1071,7 +846,7 @@ export type Database = {
             columns: ["expert_id"]
             isOneToOne: false
             referencedRelation: "expert_accounts"
-            referencedColumns: ["id"]
+            referencedColumns: ["auth_id"]
           },
           {
             foreignKeyName: "expert_service_specializations_service_id_fkey"
@@ -1088,85 +863,57 @@ export type Database = {
           admin_assigned_rate_usd: number | null
           assigned_at: string | null
           assigned_by: string | null
-          created_at: string | null
+          created_at: string
           expert_id: string
           id: string
           is_active: boolean | null
           service_id: string
-          updated_at: string | null
+          updated_at: string
         }
         Insert: {
           admin_assigned_rate_inr?: number | null
           admin_assigned_rate_usd?: number | null
           assigned_at?: string | null
           assigned_by?: string | null
-          created_at?: string | null
+          created_at?: string
           expert_id: string
           id?: string
           is_active?: boolean | null
           service_id: string
-          updated_at?: string | null
+          updated_at?: string
         }
         Update: {
           admin_assigned_rate_inr?: number | null
           admin_assigned_rate_usd?: number | null
           assigned_at?: string | null
           assigned_by?: string | null
-          created_at?: string | null
+          created_at?: string
           expert_id?: string
           id?: string
           is_active?: boolean | null
           service_id?: string
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      expert_time_slots: {
-        Row: {
-          availability_id: string
-          created_at: string | null
-          day_of_week: number | null
-          end_time: string
-          id: string
-          is_booked: boolean | null
-          specific_date: string | null
-          start_time: string
-          timezone: string | null
-        }
-        Insert: {
-          availability_id: string
-          created_at?: string | null
-          day_of_week?: number | null
-          end_time: string
-          id?: string
-          is_booked?: boolean | null
-          specific_date?: string | null
-          start_time: string
-          timezone?: string | null
-        }
-        Update: {
-          availability_id?: string
-          created_at?: string | null
-          day_of_week?: number | null
-          end_time?: string
-          id?: string
-          is_booked?: boolean | null
-          specific_date?: string | null
-          start_time?: string
-          timezone?: string | null
+          updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "expert_time_slots_availability_id_fkey"
-            columns: ["availability_id"]
+            foreignKeyName: "expert_services_expert_id_fkey"
+            columns: ["expert_id"]
             isOneToOne: false
-            referencedRelation: "expert_availabilities"
+            referencedRelation: "expert_accounts"
+            referencedColumns: ["auth_id"]
+          },
+          {
+            foreignKeyName: "expert_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
             referencedColumns: ["id"]
           },
         ]
       }
       expert_user_reports: {
         Row: {
+          call_session_id: string | null
           created_at: string
           details: string | null
           expert_id: string
@@ -1178,6 +925,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          call_session_id?: string | null
           created_at?: string
           details?: string | null
           expert_id: string
@@ -1189,6 +937,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          call_session_id?: string | null
           created_at?: string
           details?: string | null
           expert_id?: string
@@ -1199,109 +948,15 @@ export type Database = {
           status?: string
           updated_at?: string
         }
-        Relationships: []
-      }
-      experts: {
-        Row: {
-          address: string | null
-          average_rating: number | null
-          bio: string | null
-          certificate_urls: string[] | null
-          city: string | null
-          country: string | null
-          created_at: string | null
-          email: string
-          experience: string | null
-          id: string
-          name: string
-          phone: string | null
-          profile_picture: string | null
-          reviews_count: number | null
-          selected_services: number[] | null
-          specialization: string | null
-          state: string | null
-        }
-        Insert: {
-          address?: string | null
-          average_rating?: number | null
-          bio?: string | null
-          certificate_urls?: string[] | null
-          city?: string | null
-          country?: string | null
-          created_at?: string | null
-          email: string
-          experience?: string | null
-          id?: string
-          name: string
-          phone?: string | null
-          profile_picture?: string | null
-          reviews_count?: number | null
-          selected_services?: number[] | null
-          specialization?: string | null
-          state?: string | null
-        }
-        Update: {
-          address?: string | null
-          average_rating?: number | null
-          bio?: string | null
-          certificate_urls?: string[] | null
-          city?: string | null
-          country?: string | null
-          created_at?: string | null
-          email?: string
-          experience?: string | null
-          id?: string
-          name?: string
-          phone?: string | null
-          profile_picture?: string | null
-          reviews_count?: number | null
-          selected_services?: number[] | null
-          specialization?: string | null
-          state?: string | null
-        }
-        Relationships: []
-      }
-      help_tickets: {
-        Row: {
-          admin_notes: string | null
-          category: string
-          created_at: string
-          details: string
-          id: string
-          resolved_at: string | null
-          screenshot_url: string | null
-          status: string
-          ticket_id: string
-          updated_at: string
-          user_id: string | null
-        }
-        Insert: {
-          admin_notes?: string | null
-          category: string
-          created_at?: string
-          details: string
-          id?: string
-          resolved_at?: string | null
-          screenshot_url?: string | null
-          status?: string
-          ticket_id: string
-          updated_at?: string
-          user_id?: string | null
-        }
-        Update: {
-          admin_notes?: string | null
-          category?: string
-          created_at?: string
-          details?: string
-          id?: string
-          resolved_at?: string | null
-          screenshot_url?: string | null
-          status?: string
-          ticket_id?: string
-          updated_at?: string
-          user_id?: string | null
-        }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "expert_user_reports_call_session_id_fkey"
+            columns: ["call_session_id"]
+            isOneToOne: false
+            referencedRelation: "call_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       incoming_call_requests: {
         Row: {
@@ -1311,8 +966,8 @@ export type Database = {
           call_type: string
           channel_name: string
           created_at: string
+          estimated_cost_eur: number | null
           estimated_cost_inr: number | null
-          estimated_cost_usd: number | null
           expert_id: string
           expires_at: string
           id: string
@@ -1328,8 +983,8 @@ export type Database = {
           call_type: string
           channel_name: string
           created_at?: string
+          estimated_cost_eur?: number | null
           estimated_cost_inr?: number | null
-          estimated_cost_usd?: number | null
           expert_id: string
           expires_at: string
           id?: string
@@ -1345,8 +1000,8 @@ export type Database = {
           call_type?: string
           channel_name?: string
           created_at?: string
+          estimated_cost_eur?: number | null
           estimated_cost_inr?: number | null
-          estimated_cost_usd?: number | null
           expert_id?: string
           expires_at?: string
           id?: string
@@ -1399,86 +1054,6 @@ export type Database = {
           receiver_id?: string
           sender_id?: string
           updated_at?: string | null
-        }
-        Relationships: []
-      }
-      moderation_actions: {
-        Row: {
-          action_type: Database["public"]["Enums"]["moderation_action_type"]
-          admin_id: string
-          created_at: string
-          id: string
-          message: string
-          notes: string | null
-          report_id: string
-        }
-        Insert: {
-          action_type: Database["public"]["Enums"]["moderation_action_type"]
-          admin_id: string
-          created_at?: string
-          id?: string
-          message: string
-          notes?: string | null
-          report_id: string
-        }
-        Update: {
-          action_type?: Database["public"]["Enums"]["moderation_action_type"]
-          admin_id?: string
-          created_at?: string
-          id?: string
-          message?: string
-          notes?: string | null
-          report_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "moderation_actions_report_id_fkey"
-            columns: ["report_id"]
-            isOneToOne: false
-            referencedRelation: "moderation_reports"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      moderation_reports: {
-        Row: {
-          created_at: string
-          details: string | null
-          id: string
-          reason: Database["public"]["Enums"]["report_reason"]
-          reporter_id: string
-          reporter_type: string
-          session_id: string | null
-          status: Database["public"]["Enums"]["report_status"]
-          target_id: string
-          target_type: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          details?: string | null
-          id?: string
-          reason: Database["public"]["Enums"]["report_reason"]
-          reporter_id: string
-          reporter_type: string
-          session_id?: string | null
-          status?: Database["public"]["Enums"]["report_status"]
-          target_id: string
-          target_type: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          details?: string | null
-          id?: string
-          reason?: Database["public"]["Enums"]["report_reason"]
-          reporter_id?: string
-          reporter_type?: string
-          session_id?: string | null
-          status?: Database["public"]["Enums"]["report_status"]
-          target_id?: string
-          target_type?: string
-          updated_at?: string
         }
         Relationships: []
       }
@@ -1539,6 +1114,51 @@ export type Database = {
         }
         Relationships: []
       }
+      orders: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          id: string
+          item_type: string | null
+          original_amount: number | null
+          original_currency: string | null
+          razorpay_order_id: string
+          razorpay_payment_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          id?: string
+          item_type?: string | null
+          original_amount?: number | null
+          original_currency?: string | null
+          razorpay_order_id: string
+          razorpay_payment_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          item_type?: string | null
+          original_amount?: number | null
+          original_currency?: string | null
+          razorpay_order_id?: string
+          razorpay_payment_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           city: string | null
@@ -1581,84 +1201,43 @@ export type Database = {
         }
         Relationships: []
       }
-      program_enrollments: {
-        Row: {
-          amount_paid: number
-          enrollment_date: string
-          id: string
-          payment_method: string
-          payment_status: string
-          program_id: number
-          transaction_id: string | null
-          user_id: string
-        }
-        Insert: {
-          amount_paid: number
-          enrollment_date?: string
-          id?: string
-          payment_method: string
-          payment_status: string
-          program_id: number
-          transaction_id?: string | null
-          user_id: string
-        }
-        Update: {
-          amount_paid?: number
-          enrollment_date?: string
-          id?: string
-          payment_method?: string
-          payment_status?: string
-          program_id?: number
-          transaction_id?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "program_enrollments_program_id_fkey"
-            columns: ["program_id"]
-            isOneToOne: false
-            referencedRelation: "programs"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       programs: {
         Row: {
-          category: string
-          created_at: string
+          category: string | null
+          created_at: string | null
           description: string
           duration: string
           enrollments: number | null
           id: number
           image: string
           price: number
-          programType: Database["public"]["Enums"]["program_type"]
+          programtype: string | null
           sessions: number
           title: string
         }
         Insert: {
-          category: string
-          created_at?: string
+          category?: string | null
+          created_at?: string | null
           description: string
           duration: string
           enrollments?: number | null
           id?: number
           image: string
           price: number
-          programType?: Database["public"]["Enums"]["program_type"]
+          programtype?: string | null
           sessions: number
           title: string
         }
         Update: {
-          category?: string
-          created_at?: string
+          category?: string | null
+          created_at?: string | null
           description?: string
           duration?: string
           enrollments?: number | null
           id?: number
           image?: string
           price?: number
-          programType?: Database["public"]["Enums"]["program_type"]
+          programtype?: string | null
           sessions?: number
           title?: string
         }
@@ -1666,28 +1245,25 @@ export type Database = {
       }
       referral_settings: {
         Row: {
-          active: boolean
-          description: string | null
+          currency: string
           id: string
-          referred_reward: number
-          referrer_reward: number
-          updated_at: string | null
+          program_enabled: boolean
+          reward_amount: number
+          updated_at: string
         }
         Insert: {
-          active?: boolean
-          description?: string | null
+          currency?: string
           id?: string
-          referred_reward?: number
-          referrer_reward?: number
-          updated_at?: string | null
+          program_enabled?: boolean
+          reward_amount?: number
+          updated_at?: string
         }
         Update: {
-          active?: boolean
-          description?: string | null
+          currency?: string
           id?: string
-          referred_reward?: number
-          referrer_reward?: number
-          updated_at?: string | null
+          program_enabled?: boolean
+          reward_amount?: number
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1699,8 +1275,8 @@ export type Database = {
           referral_code: string
           referred_id: string
           referrer_id: string
-          reward_claimed: boolean
-          status: string
+          reward_claimed: boolean | null
+          status: string | null
         }
         Insert: {
           completed_at?: string | null
@@ -1709,8 +1285,8 @@ export type Database = {
           referral_code: string
           referred_id: string
           referrer_id: string
-          reward_claimed?: boolean
-          status?: string
+          reward_claimed?: boolean | null
+          status?: string | null
         }
         Update: {
           completed_at?: string | null
@@ -1719,8 +1295,8 @@ export type Database = {
           referral_code?: string
           referred_id?: string
           referrer_id?: string
-          reward_claimed?: boolean
-          status?: string
+          reward_claimed?: boolean | null
+          status?: string | null
         }
         Relationships: []
       }
@@ -1754,7 +1330,7 @@ export type Database = {
           maximum_session_duration?: number | null
           minimum_session_duration?: number | null
           peak_hour_multiplier?: number | null
-          service_id?: number | null
+          service_id?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -1770,7 +1346,7 @@ export type Database = {
           maximum_session_duration?: number | null
           minimum_session_duration?: number | null
           peak_hour_multiplier?: number | null
-          service_id?: number | null
+          service_id?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -1779,7 +1355,7 @@ export type Database = {
             columns: ["expert_id"]
             isOneToOne: false
             referencedRelation: "expert_accounts"
-            referencedColumns: ["id"]
+            referencedColumns: ["auth_id"]
           },
           {
             foreignKeyName: "service_pricing_service_id_fkey"
@@ -1810,7 +1386,7 @@ export type Database = {
           id?: string
           name: string
           rate_eur?: number | null
-          rate_inr: number
+          rate_inr?: number
           rate_usd: number
         }
         Update: {
@@ -1867,7 +1443,7 @@ export type Database = {
       }
       testimonials: {
         Row: {
-          created_at: string
+          created_at: string | null
           date: string
           id: string
           image_url: string
@@ -1875,10 +1451,10 @@ export type Database = {
           name: string
           rating: number
           text: string
-          updated_at: string
+          updated_at: string | null
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           date: string
           id?: string
           image_url: string
@@ -1886,10 +1462,10 @@ export type Database = {
           name: string
           rating: number
           text: string
-          updated_at?: string
+          updated_at?: string | null
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           date?: string
           id?: string
           image_url?: string
@@ -1897,85 +1473,52 @@ export type Database = {
           name?: string
           rating?: number
           text?: string
-          updated_at?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
-      user_courses: {
-        Row: {
-          completed: boolean | null
-          enrollment_date: string
-          expert_id: string
-          expert_name: string
-          id: string
-          progress: number | null
-          title: string
-          user_id: string | null
-        }
-        Insert: {
-          completed?: boolean | null
-          enrollment_date: string
-          expert_id: string
-          expert_name: string
-          id?: string
-          progress?: number | null
-          title: string
-          user_id?: string | null
-        }
-        Update: {
-          completed?: boolean | null
-          enrollment_date?: string
-          expert_id?: number
-          expert_name?: string
-          id?: string
-          progress?: number | null
-          title?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_courses_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       user_expert_services: {
         Row: {
-          amount: number
           created_at: string
           expert_id: string
           id: string
-          service_id: number
-          status: string
+          service_id: string | null
           user_id: string
         }
         Insert: {
-          amount: number
           created_at?: string
           expert_id: string
           id?: string
-          service_id: number
-          status?: string
+          service_id?: string | null
           user_id: string
         }
         Update: {
-          amount?: number
           created_at?: string
           expert_id?: string
           id?: string
-          service_id?: number
-          status?: string
+          service_id?: string | null
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "user_expert_services_expert_id_fkey"
+            columns: ["expert_id"]
+            isOneToOne: false
+            referencedRelation: "expert_accounts"
+            referencedColumns: ["auth_id"]
+          },
           {
             foreignKeyName: "user_expert_services_service_id_fkey"
             columns: ["service_id"]
             isOneToOne: false
             referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_expert_services_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -2007,6 +1550,13 @@ export type Database = {
             referencedRelation: "programs"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_favorite_programs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_favorites: {
@@ -2030,8 +1580,8 @@ export type Database = {
             foreignKeyName: "user_favorites_expert_id_fkey"
             columns: ["expert_id"]
             isOneToOne: false
-            referencedRelation: "experts"
-            referencedColumns: ["id"]
+            referencedRelation: "expert_accounts"
+            referencedColumns: ["auth_id"]
           },
           {
             foreignKeyName: "user_favorites_user_id_fkey"
@@ -2049,7 +1599,7 @@ export type Database = {
           currency: string | null
           detected_at: string | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           user_id: string | null
         }
         Insert: {
@@ -2058,7 +1608,7 @@ export type Database = {
           currency?: string | null
           detected_at?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           user_id?: string | null
         }
         Update: {
@@ -2067,7 +1617,7 @@ export type Database = {
           currency?: string | null
           detected_at?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           user_id?: string | null
         }
         Relationships: []
@@ -2117,51 +1667,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_reports: {
-        Row: {
-          date: string
-          details: string | null
-          expert_id: string | null
-          id: string
-          reason: string
-          status: string
-          user_id: string | null
-        }
-        Insert: {
-          date: string
-          details?: string | null
-          expert_id?: string | null
-          id?: string
-          reason: string
-          status: string
-          user_id?: string | null
-        }
-        Update: {
-          date?: string
-          details?: string | null
-          expert_id?: string | null
-          id?: string
-          reason?: string
-          status?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_reports_expert_id_fkey"
-            columns: ["expert_id"]
-            isOneToOne: false
-            referencedRelation: "expert_accounts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_reports_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       user_reviews: {
         Row: {
           comment: string | null
@@ -2202,139 +1707,10 @@ export type Database = {
             columns: ["expert_id"]
             isOneToOne: false
             referencedRelation: "expert_accounts"
-            referencedColumns: ["id"]
+            referencedColumns: ["auth_id"]
           },
           {
             foreignKeyName: "user_reviews_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      user_reward_redemptions: {
-        Row: {
-          created_at: string
-          fulfilled_date: string | null
-          id: string
-          notes: string | null
-          points_spent: number
-          redemption_date: string
-          reward_item_id: string
-          status: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          fulfilled_date?: string | null
-          id?: string
-          notes?: string | null
-          points_spent: number
-          redemption_date?: string
-          reward_item_id: string
-          status?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          fulfilled_date?: string | null
-          id?: string
-          notes?: string | null
-          points_spent?: number
-          redemption_date?: string
-          reward_item_id?: string
-          status?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_reward_redemptions_reward_item_id_fkey"
-            columns: ["reward_item_id"]
-            isOneToOne: false
-            referencedRelation: "admin_reward_items"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      user_reward_transactions: {
-        Row: {
-          created_at: string | null
-          date: string
-          description: string | null
-          id: string
-          points: number
-          redemption_id: string | null
-          type: string
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          date: string
-          description?: string | null
-          id?: string
-          points: number
-          redemption_id?: string | null
-          type: string
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          date?: string
-          description?: string | null
-          id?: string
-          points?: number
-          redemption_id?: string | null
-          type?: string
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_reward_transactions_redemption_id_fkey"
-            columns: ["redemption_id"]
-            isOneToOne: false
-            referencedRelation: "user_reward_redemptions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      user_transactions: {
-        Row: {
-          amount: number
-          currency: string
-          date: string
-          description: string | null
-          id: string
-          type: string
-          user_id: string | null
-        }
-        Insert: {
-          amount: number
-          currency: string
-          date: string
-          description?: string | null
-          id?: string
-          type: string
-          user_id?: string | null
-        }
-        Update: {
-          amount?: number
-          currency?: string
-          date?: string
-          description?: string | null
-          id?: string
-          type?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_transactions_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
@@ -2356,7 +1732,7 @@ export type Database = {
           name: string | null
           occupation: string | null
           phone: string | null
-          preferences: Json | null
+          preferences: Json
           privacy_accepted: boolean | null
           profile_picture: string | null
           referral_code: string | null
@@ -2374,12 +1750,12 @@ export type Database = {
           date_of_birth?: string | null
           email?: string | null
           gender?: string | null
-          id: string
+          id?: string
           marketing_consent?: boolean | null
           name?: string | null
           occupation?: string | null
           phone?: string | null
-          preferences?: Json | null
+          preferences?: Json
           privacy_accepted?: boolean | null
           profile_picture?: string | null
           referral_code?: string | null
@@ -2402,7 +1778,7 @@ export type Database = {
           name?: string | null
           occupation?: string | null
           phone?: string | null
-          preferences?: Json | null
+          preferences?: Json
           privacy_accepted?: boolean | null
           profile_picture?: string | null
           referral_code?: string | null
@@ -2438,9 +1814,59 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          currency: string
+          description: string | null
+          expires_at: string | null
+          id: string
+          metadata: Json | null
+          reason: string
+          reference_id: string | null
+          reference_type: string | null
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          metadata?: Json | null
+          reason: string
+          reference_id?: string | null
+          reference_type?: string | null
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          metadata?: Json | null
+          reason?: string
+          reference_id?: string | null
+          reference_type?: string | null
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       webhook_logs: {
         Row: {
-          created_at: string
           event_type: string
           id: string
           payload: Json
@@ -2449,16 +1875,14 @@ export type Database = {
           status: string
         }
         Insert: {
-          created_at?: string
           event_type: string
           id?: string
           payload: Json
           processed_at?: string
           provider: string
-          status?: string
+          status: string
         }
         Update: {
-          created_at?: string
           event_type?: string
           id?: string
           payload?: Json
@@ -2473,23 +1897,38 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_wallet_credit: {
+        Args: {
+          p_amount: number
+          p_created_by?: string
+          p_description?: string
+          p_expires_in_months?: number
+          p_metadata?: Json
+          p_reason: string
+          p_reference_id?: string
+          p_reference_type?: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       admin_list_all_experts: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           address: string | null
-          auth_id: string | null
+          auth_id: string
           availability_set: boolean | null
           average_rating: number | null
           bio: string | null
           category: string | null
-          certificate_urls: string[] | null
+          certificate_urls: string[]
           city: string | null
           country: string | null
           created_at: string | null
+          deleted_at: string | null
           email: string
           experience: string | null
-          id: string
-          languages: string[] | null
+          feedback_message: string | null
+          languages: string[]
           name: string
           onboarding_completed: boolean | null
           phone: string | null
@@ -2497,31 +1936,38 @@ export type Database = {
           profile_completed: boolean | null
           profile_picture: string | null
           reviews_count: number | null
-          selected_services: number[] | null
           specialization: string | null
           state: string | null
           status: string | null
+          updated_by_admin_at: string | null
           user_id: string | null
           verified: boolean | null
         }[]
+        SetofOptions: {
+          from: "*"
+          to: "expert_accounts"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
-      admin_list_approved_experts: {
-        Args: Record<PropertyKey, never>
+      admin_list_all_experts_including_deleted: {
+        Args: never
         Returns: {
           address: string | null
-          auth_id: string | null
+          auth_id: string
           availability_set: boolean | null
           average_rating: number | null
           bio: string | null
           category: string | null
-          certificate_urls: string[] | null
+          certificate_urls: string[]
           city: string | null
           country: string | null
           created_at: string | null
+          deleted_at: string | null
           email: string
           experience: string | null
-          id: string
-          languages: string[] | null
+          feedback_message: string | null
+          languages: string[]
           name: string
           onboarding_completed: boolean | null
           phone: string | null
@@ -2529,31 +1975,38 @@ export type Database = {
           profile_completed: boolean | null
           profile_picture: string | null
           reviews_count: number | null
-          selected_services: number[] | null
           specialization: string | null
           state: string | null
           status: string | null
+          updated_by_admin_at: string | null
           user_id: string | null
           verified: boolean | null
         }[]
+        SetofOptions: {
+          from: "*"
+          to: "expert_accounts"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
-      admin_list_pending_experts: {
-        Args: Record<PropertyKey, never>
+      admin_list_deleted_experts: {
+        Args: never
         Returns: {
           address: string | null
-          auth_id: string | null
+          auth_id: string
           availability_set: boolean | null
           average_rating: number | null
           bio: string | null
           category: string | null
-          certificate_urls: string[] | null
+          certificate_urls: string[]
           city: string | null
           country: string | null
           created_at: string | null
+          deleted_at: string | null
           email: string
           experience: string | null
-          id: string
-          languages: string[] | null
+          feedback_message: string | null
+          languages: string[]
           name: string
           onboarding_completed: boolean | null
           phone: string | null
@@ -2561,73 +2014,128 @@ export type Database = {
           profile_completed: boolean | null
           profile_picture: string | null
           reviews_count: number | null
-          selected_services: number[] | null
           specialization: string | null
           state: string | null
           status: string | null
+          updated_by_admin_at: string | null
           user_id: string | null
           verified: boolean | null
         }[]
+        SetofOptions: {
+          from: "*"
+          to: "expert_accounts"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
-      admin_list_users: {
-        Args: Record<PropertyKey, never>
+      admin_restore_expert: {
+        Args: { p_auth_id: string }
         Returns: {
+          address: string | null
+          auth_id: string
+          availability_set: boolean | null
+          average_rating: number | null
+          bio: string | null
+          category: string | null
+          certificate_urls: string[]
           city: string | null
           country: string | null
           created_at: string | null
-          currency: string | null
-          date_of_birth: string | null
-          email: string | null
-          gender: string | null
-          id: string
-          marketing_consent: boolean | null
-          name: string | null
-          occupation: string | null
+          deleted_at: string | null
+          email: string
+          experience: string | null
+          feedback_message: string | null
+          languages: string[]
+          name: string
+          onboarding_completed: boolean | null
           phone: string | null
-          preferences: Json | null
-          privacy_accepted: boolean | null
+          pricing_set: boolean | null
+          profile_completed: boolean | null
           profile_picture: string | null
-          referral_code: string | null
-          referral_link: string | null
-          referred_by: string | null
-          reward_points: number | null
-          terms_accepted: boolean | null
-          wallet_balance: number | null
-        }[]
+          reviews_count: number | null
+          specialization: string | null
+          state: string | null
+          status: string | null
+          updated_by_admin_at: string | null
+          user_id: string | null
+          verified: boolean | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "expert_accounts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      admin_update_expert_status: {
+        Args: { p_auth_id: string; p_status: string }
+        Returns: {
+          address: string | null
+          auth_id: string
+          availability_set: boolean | null
+          average_rating: number | null
+          bio: string | null
+          category: string | null
+          certificate_urls: string[]
+          city: string | null
+          country: string | null
+          created_at: string | null
+          deleted_at: string | null
+          email: string
+          experience: string | null
+          feedback_message: string | null
+          languages: string[]
+          name: string
+          onboarding_completed: boolean | null
+          phone: string | null
+          pricing_set: boolean | null
+          profile_completed: boolean | null
+          profile_picture: string | null
+          reviews_count: number | null
+          specialization: string | null
+          state: string | null
+          status: string | null
+          updated_by_admin_at: string | null
+          user_id: string | null
+          verified: boolean | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "expert_accounts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       authenticate_admin: {
         Args: { p_password: string; p_username: string }
         Returns: Json
       }
-      check_if_table_exists: {
-        Args: { table_name: string }
-        Returns: boolean
-      }
-      check_time_slot_overlap: {
+      check_email_uniqueness_across_accounts: {
         Args: {
-          p_availability_id: string
-          p_day_of_week?: number
-          p_end_time: string
-          p_specific_date?: string
-          p_start_time: string
+          p_email: string
+          p_exclude_admin_id?: string
+          p_exclude_auth_user_id?: string
+          p_exclude_expert_id?: string
+          p_exclude_user_id?: string
         }
         Returns: boolean
       }
-      deduct_reward_points: {
+      check_if_table_exists: { Args: { table_name: string }; Returns: boolean }
+      deduct_wallet_credit: {
         Args: {
-          points_to_deduct: number
-          redemption_description: string
-          user_id: string
+          p_amount: number
+          p_description?: string
+          p_metadata?: Json
+          p_reason: string
+          p_reference_id?: string
+          p_reference_type?: string
+          p_user_id: string
         }
-        Returns: undefined
+        Returns: string
       }
-      expire_old_call_requests: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      get_admin_metrics: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
+      expert_owns_appointment: {
+        Args: { appointment_uuid: string }
+        Returns: boolean
       }
       get_approved_expert_presence: {
         Args: { expert_auth_ids: string[] }
@@ -2639,26 +2147,41 @@ export type Database = {
         }[]
       }
       get_approved_experts: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           auth_id: string
           average_rating: number
           category: string
           experience: string
-          id: string
           languages: string[]
           name: string
+          onboarding_completed: boolean
+          profile_completed: boolean
           profile_picture: string
           reviews_count: number
-          selected_services: number[]
           specialization: string
           status: string
           verified: boolean
         }[]
       }
-      get_expert_onboarding_progress: {
-        Args: { expert_auth_id: string }
-        Returns: Json
+      get_expert_status_by_email: {
+        Args: { p_email: string }
+        Returns: {
+          address: string
+          auth_id: string
+          bio: string
+          category: string
+          city: string
+          country: string
+          email: string
+          experience: string
+          feedback_message: string
+          name: string
+          phone: string
+          specialization: string
+          state: string
+          status: string
+        }[]
       }
       get_public_expert_profile: {
         Args: { p_auth_id: string }
@@ -2668,6 +2191,7 @@ export type Database = {
           average_rating: number
           bio: string
           category: string
+          certificate_urls: string[]
           city: string
           country: string
           created_at: string
@@ -2679,75 +2203,53 @@ export type Database = {
           phone: string
           profile_picture: string
           reviews_count: number
-          selected_services: number[]
+          selected_services: string[]
           specialization: string
           state: string
           status: string
           verified: boolean
         }[]
       }
-      get_user_reviews_with_experts: {
-        Args: { user_id_param: string }
+      get_wallet_balance: { Args: { p_user_id: string }; Returns: number }
+      get_wallet_history: {
+        Args: { p_limit?: number; p_offset?: number; p_user_id: string }
         Returns: {
-          comment: string
-          date: string
-          expert_id: string
-          expert_name: string
-          rating: number
-          review_id: string
-          user_name: string
-          verified: boolean
+          amount: number
+          created_at: string
+          description: string
+          expires_at: string
+          id: string
+          metadata: Json
+          reason: string
+          reference_id: string
+          reference_type: string
+          type: string
         }[]
       }
-      handle_completed_referral: {
-        Args: { p_referral_id: string }
-        Returns: boolean
+      process_wallet_refund: {
+        Args: {
+          p_amount: number
+          p_description?: string
+          p_metadata?: Json
+          p_reason: string
+          p_reference_id: string
+          p_reference_type: string
+          p_user_id: string
+        }
+        Returns: string
       }
-      increment_program_enrollments: {
-        Args: { program_id: number }
-        Returns: undefined
-      }
-      is_admin: {
-        Args: { user_id: string }
-        Returns: boolean
-      }
-      is_any_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_superadmin: {
-        Args: Record<PropertyKey, never> | { user_id: string }
-        Returns: boolean
-      }
-      is_user_admin: {
-        Args: { check_user_id?: string }
-        Returns: boolean
-      }
-      mark_away_message_read: {
-        Args: { message_id: string }
-        Returns: undefined
-      }
-      update_expert_away_status: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
+      sync_wallet_balance_cache: {
+        Args: never
+        Returns: {
+          new_balance: number
+          old_balance: number
+          synced: boolean
+          user_id: string
+        }[]
       }
     }
     Enums: {
-      moderation_action_type: "warning" | "suspension" | "ban" | "no_action"
-      program_type:
-        | "wellness"
-        | "academic"
-        | "business"
-        | "productivity"
-        | "leadership"
-      report_reason:
-        | "misleading_information"
-        | "off_platform_redirection"
-        | "inappropriate_behavior"
-        | "bad_behavior"
-        | "foul_language"
-        | "other"
-      report_status: "pending" | "under_review" | "resolved" | "dismissed"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2874,24 +2376,6 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {
-      moderation_action_type: ["warning", "suspension", "ban", "no_action"],
-      program_type: [
-        "wellness",
-        "academic",
-        "business",
-        "productivity",
-        "leadership",
-      ],
-      report_reason: [
-        "misleading_information",
-        "off_platform_redirection",
-        "inappropriate_behavior",
-        "bad_behavior",
-        "foul_language",
-        "other",
-      ],
-      report_status: ["pending", "under_review", "resolved", "dismissed"],
-    },
+    Enums: {},
   },
 } as const

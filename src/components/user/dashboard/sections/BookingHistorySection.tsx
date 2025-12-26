@@ -243,6 +243,86 @@ const BookingHistorySection: React.FC<BookingHistorySectionProps> = ({ user }) =
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
+  // Handle join call from notification
+  const handleJoinCallFromNotification = async (appointmentId: string, expertId: string, expertName: string) => {
+    try {
+      // Get call data for appointment
+      const callData = await joinAppointmentCall(appointmentId);
+      if (!callData) {
+        toast.error('Call session not ready. Please wait for expert to start the session.');
+        return;
+      }
+
+      // Get expert details
+      const { data: expert } = await supabase
+        .from('experts')
+        .select('id, auth_id, name, profile_picture')
+        .eq('auth_id', expertId)
+        .maybeSingle();
+
+      // Set selected expert and call data, then open call modal
+      setSelectedExpert({
+        id: expert?.id || expertId,
+        authId: expert?.auth_id || expertId,
+        name: expert?.name || expertName,
+        avatar: expert?.profile_picture || undefined
+      });
+      
+      setAppointmentCallData({
+        callSessionId: callData.callSessionId,
+        channelName: callData.channelName,
+        token: callData.token,
+        uid: callData.uid,
+        callType: callData.callType
+      });
+      
+      setIsCallModalOpen(true);
+    } catch (error) {
+      console.error('Error joining appointment call:', error);
+      toast.error('Failed to join call. Please try again.');
+    }
+  };
+
+  // Listen for join call events from notifications
+  useEffect(() => {
+    const handleJoinCall = async (event: CustomEvent) => {
+      const { appointmentId } = event.detail;
+      if (appointmentId) {
+        // Find the booking
+        const booking = bookings.find(b => b.id === appointmentId);
+        if (booking && booking.channel_name) {
+          // Trigger join call
+          handleJoinCallFromNotification(appointmentId, booking.expert_id, booking.expert_name);
+        } else {
+          // Fetch booking if not found
+          const { data: appointment } = await supabase
+            .from('appointments')
+            .select('id, expert_id, expert_name, channel_name')
+            .eq('id', appointmentId)
+            .single();
+          
+          if (appointment && appointment.channel_name) {
+            // Get expert details
+            const { data: expert } = await supabase
+              .from('experts')
+              .select('auth_id, name, profile_picture')
+              .eq('id', appointment.expert_id)
+              .maybeSingle();
+            
+            if (expert) {
+              handleJoinCallFromNotification(appointmentId, expert.auth_id, expert.name || appointment.expert_name);
+            }
+          }
+        }
+      }
+    };
+
+    window.addEventListener('joinAppointmentCall', handleJoinCall as EventListener);
+    return () => {
+      window.removeEventListener('joinAppointmentCall', handleJoinCall as EventListener);
+    };
+  }, [bookings]);
+
   const fetchBookingHistory = async () => {
     try {
       setLoading(true);
@@ -518,44 +598,7 @@ const BookingHistorySection: React.FC<BookingHistorySectionProps> = ({ user }) =
                       navigate={navigate}
                       getStatusColor={getStatusColor}
                       formatTime={formatTime}
-                      onJoinCall={async (appointmentId, expertId, expertName) => {
-                        try {
-                          // Get call data for appointment
-                          const callData = await joinAppointmentCall(appointmentId);
-                          if (!callData) {
-                            toast.error('Call session not ready. Please wait for expert to start the session.');
-                            return;
-                          }
-
-                          // Get expert details
-                          const { data: expert } = await supabase
-                            .from('experts')
-                            .select('id, auth_id, name, profile_picture')
-                            .eq('auth_id', expertId)
-                            .maybeSingle();
-
-                          // Set selected expert and call data, then open call modal
-                          setSelectedExpert({
-                            id: expert?.id || expertId,
-                            authId: expert?.auth_id || expertId,
-                            name: expert?.name || expertName,
-                            avatar: expert?.profile_picture || undefined
-                          });
-                          
-                          setAppointmentCallData({
-                            callSessionId: callData.callSessionId,
-                            channelName: callData.channelName,
-                            token: callData.token,
-                            uid: callData.uid,
-                            callType: callData.callType
-                          });
-                          
-                          setIsCallModalOpen(true);
-                        } catch (error) {
-                          console.error('Error joining appointment call:', error);
-                          toast.error('Failed to join call. Please try again.');
-                        }
-                      }}
+                      onJoinCall={handleJoinCallFromNotification}
                     />
                   ))}
                 </div>

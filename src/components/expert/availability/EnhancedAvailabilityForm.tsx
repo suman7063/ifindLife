@@ -253,7 +253,6 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
         setSelectedTimezone(availabilities[0].timezone);
       }
 
-      console.log('✅ Populated weekly schedule:', newSchedule);
       setWeeklySchedule(newSchedule);
     } else {
       console.log('ℹ️ No availabilities found - form will remain blank for new entry');

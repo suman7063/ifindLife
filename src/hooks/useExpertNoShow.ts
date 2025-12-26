@@ -36,6 +36,7 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
   const hasProcessedRefundRef = useRef(false);
   const isProcessingRefundRef = useRef(false); // Lock to prevent concurrent processing
   const expertJoinedRef = useRef<boolean>(false); // Track expert joined status from real-time
+  const hasCancelledRef = useRef<boolean>(false); // Track if appointment has been cancelled to prevent duplicate cancellation
 
   // Check if expert has joined the call session
   const checkExpertJoined = useCallback(async (aptId: string): Promise<boolean> => {
@@ -151,14 +152,31 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
 
         // Check if refund already processed for call session
         // Check for both 'expert_no_show' and 'refund' reasons
-        // Use .select() to check ALL existing refunds
-        const { data: existingCallRefunds } = await supabase
-          .from('wallet_transactions' as never)
-          .select('id, amount, created_at')
-          .eq('reference_id', callSession.id)
-          .eq('reference_type', 'call_session')
-          .eq('type', 'credit')
-          .in('reason', ['expert_no_show', 'refund']);
+        // Validate UUID before querying
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(callSession.id);
+        
+        let existingCallRefunds: any[] = [];
+        if (isUUID) {
+          // Query by reference_id if it's a valid UUID
+          const { data } = await supabase
+            .from('wallet_transactions' as never)
+            .select('id, amount, created_at')
+            .eq('reference_id', callSession.id)
+            .eq('reference_type', 'call_session')
+            .eq('type', 'credit')
+            .in('reason', ['expert_no_show', 'refund']);
+          existingCallRefunds = data || [];
+        } else {
+          // Query by metadata if it's not a UUID
+          const { data } = await supabase
+            .from('wallet_transactions' as never)
+            .select('id, amount, created_at')
+            .eq('metadata->>reference_id', callSession.id)
+            .eq('reference_type', 'call_session')
+            .eq('type', 'credit')
+            .in('reason', ['expert_no_show', 'refund']);
+          existingCallRefunds = data || [];
+        }
 
         if (existingCallRefunds && existingCallRefunds.length > 0) {
           hasProcessedRefundRef.current = true;
@@ -299,26 +317,42 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
 
   // Mark appointment as no-show
   const markAsNoShow = useCallback(async (aptId: string): Promise<boolean> => {
+    // Prevent duplicate cancellation
+    if (hasCancelledRef.current) {
+      // Still check if refund needs to be processed
+      await processNoShowRefund(aptId);
+      return true;
+    }
+
     try {
-      // Get existing notes
-      const { data: existingAppointment } = await supabase
+      // Check if appointment is already cancelled
+      const { data: currentAppointment } = await supabase
         .from('appointments')
-        .select('notes')
+        .select('status, notes')
         .eq('id', aptId)
         .single();
 
+      if (currentAppointment?.status === 'cancelled') {
+        hasCancelledRef.current = true;
+        // Still process refund if not already processed
+        await processNoShowRefund(aptId);
+        return true;
+      }
+
+      // Get existing notes
       let existingNotes = {};
       try {
-        if (existingAppointment?.notes) {
-          existingNotes = typeof existingAppointment.notes === 'string' 
-            ? JSON.parse(existingAppointment.notes) 
-            : existingAppointment.notes;
+        if (currentAppointment?.notes) {
+          existingNotes = typeof currentAppointment.notes === 'string' 
+            ? JSON.parse(currentAppointment.notes) 
+            : currentAppointment.notes;
         }
       } catch {
         // If parsing fails, use empty object
       }
 
       // Update appointment status to cancelled (no-show maps to cancelled in appointments table)
+      // Only update if status is not already cancelled
       const { error } = await supabase
         .from('appointments')
         .update({ 
@@ -329,11 +363,21 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
             cancelled_at: new Date().toISOString()
           })
         })
-        .eq('id', aptId);
+        .eq('id', aptId)
+        .neq('status', 'cancelled'); // Only update if not already cancelled
 
       if (error) {
+        // If error is because status is already cancelled (no rows updated), that's okay
+        if (error.code === 'PGRST116' || error.message?.includes('No rows')) {
+          hasCancelledRef.current = true;
+          // Still process refund if not already processed
+          await processNoShowRefund(aptId);
+          return true;
+        }
         throw error;
       }
+
+      hasCancelledRef.current = true;
 
       // Process refund
       await processNoShowRefund(aptId);
@@ -447,23 +491,33 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
               .maybeSingle();
 
             if (callSession) {
-              // Query 1: Check reference_id column
-              const { data: callRefundsByRefId } = await supabase
-                .from('wallet_transactions' as never)
-                .select('id, amount, created_at, reference_id, metadata')
-                .eq('reference_type', 'call_session')
-                .eq('type', 'credit')
-                .in('reason', ['expert_no_show', 'refund'])
-                .eq('reference_id', callSession.id);
-
-              // Query 2: Check metadata->>reference_id
-              const { data: callRefundsByMetadata } = await supabase
+              // Validate UUID before querying
+              const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(callSession.id);
+              
+              let callRefundsByRefId: any[] = [];
+              let callRefundsByMetadata: any[] = [];
+              
+              if (isUUID) {
+                // Query 1: Check reference_id column (only if UUID)
+                const { data } = await supabase
+                  .from('wallet_transactions' as never)
+                  .select('id, amount, created_at, reference_id, metadata')
+                  .eq('reference_type', 'call_session')
+                  .eq('type', 'credit')
+                  .in('reason', ['expert_no_show', 'refund'])
+                  .eq('reference_id', callSession.id);
+                callRefundsByRefId = data || [];
+              }
+              
+              // Query 2: Check metadata->>reference_id (always check metadata)
+              const { data } = await supabase
                 .from('wallet_transactions' as never)
                 .select('id, amount, created_at, reference_id, metadata')
                 .eq('reference_type', 'call_session')
                 .eq('type', 'credit')
                 .in('reason', ['expert_no_show', 'refund'])
                 .eq('metadata->>reference_id', callSession.id);
+              callRefundsByMetadata = data || [];
 
               const callRefunds = [
                 ...(callRefundsByRefId || []),
@@ -842,7 +896,8 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
       });
 
       // Auto-mark as no-show and process refund if 5 minutes have passed
-      if (isNoShow && !refundProcessed) {
+      // Only trigger once - check if already cancelled or refund processed
+      if (isNoShow && !refundProcessed && !hasCancelledRef.current) {
         // Show global warning notification
         toast.error('Expert No-Show Detected', {
           description: `The expert did not join your session within 5 minutes. Full refund ${refundAmountDisplay ? `of ${refundAmountDisplay}` : ''} has been processed and credited to your wallet.`,
@@ -896,6 +951,7 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
 
     // Reset expert joined status when appointment changes
     expertJoinedRef.current = false;
+    hasCancelledRef.current = false; // Reset cancellation flag when appointment changes
     
     // Initial check
     checkNoShow();
