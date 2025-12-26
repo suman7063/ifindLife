@@ -10,13 +10,17 @@ export interface TimeSlot {
   timezone?: string;
 }
 
+// Cache for availability data to prevent unnecessary refetches
+const availabilityCache = new Map<string, { data: any[]; timestamp: number }>();
+const CACHE_DURATION = 30000; // Cache for 30 seconds
+
 export function useAvailabilityManagement(user: any) {
   const [loading, setLoading] = useState(false);
   const [availabilities, setAvailabilities] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
   const isFetchingRef = useRef(false);
   const lastFetchTimeRef = useRef<number>(0);
-  const MIN_FETCH_INTERVAL = 5000; // Minimum 5 seconds between fetches
+  const MIN_FETCH_INTERVAL = 2000; // Reduced to 2 seconds for better UX
   const expertAuthIdRef = useRef<string | null>(null);
 
   const createAvailability = async (
@@ -37,6 +41,9 @@ export function useAvailabilityManagement(user: any) {
         .from('expert_availabilities')
         .delete()
         .eq('expert_id', expertAuthId);
+
+      // Invalidate cache
+      availabilityCache.delete(expertAuthId);
 
       // De-duplicate slots to prevent identical entries
       const uniqueMap = new Map<string, TimeSlot>();
@@ -68,6 +75,14 @@ export function useAvailabilityManagement(user: any) {
 
       if (insertError) throw insertError;
 
+      // Update cache with new data
+      const now = Date.now();
+      availabilityCache.set(expertAuthId, {
+        data: availabilityRecords,
+        timestamp: now
+      });
+      setAvailabilities(availabilityRecords);
+
       console.log('✅ Availability created successfully:', availabilityRecords.length, 'records');
       return true;
     } catch (error) {
@@ -91,6 +106,14 @@ export function useAvailabilityManagement(user: any) {
 
       if (error) throw error;
 
+      // Invalidate cache and update local state
+      const expertAuthId = user?.auth_id || user?.id;
+      if (expertAuthId) {
+        availabilityCache.delete(expertAuthId);
+        // Update local state by removing deleted item
+        setAvailabilities(prev => prev.filter(av => av.id !== availabilityId));
+      }
+
       toast.success('Availability deleted successfully');
       return true;
     } catch (error) {
@@ -102,12 +125,24 @@ export function useAvailabilityManagement(user: any) {
     }
   };
 
-  const fetchAvailabilities = useCallback(async () => {
+  const fetchAvailabilities = useCallback(async (forceRefresh = false) => {
     // Get auth_id from user object - try auth_id first, then fallback to id
     const expertAuthId = user?.auth_id || user?.id;
     if (!expertAuthId) {
       console.log('🚫 No auth_id or id found for user:', user);
       return;
+    }
+
+    // Check cache first (unless force refresh)
+    if (!forceRefresh) {
+      const cached = availabilityCache.get(expertAuthId);
+      const now = Date.now();
+      if (cached && (now - cached.timestamp) < CACHE_DURATION) {
+        console.log('✅ Using cached availability data');
+        setAvailabilities(cached.data);
+        setLoading(false);
+        return;
+      }
     }
 
     // Prevent concurrent fetches
@@ -116,16 +151,19 @@ export function useAvailabilityManagement(user: any) {
       return;
     }
 
-    // Throttle fetches - don't allow more than once every 5 seconds
+    // Throttle fetches - but allow initial load immediately
     const now = Date.now();
     const timeSinceLastFetch = now - lastFetchTimeRef.current;
-    if (timeSinceLastFetch < MIN_FETCH_INTERVAL) {
+    const isInitialLoad = expertAuthIdRef.current !== expertAuthId;
+    
+    // Only throttle if not initial load and within interval
+    if (!isInitialLoad && timeSinceLastFetch < MIN_FETCH_INTERVAL) {
       console.log('⏸️ Throttling availability fetch - too soon since last one:', timeSinceLastFetch, 'ms');
-      return;
-    }
-
-    // If same expert, skip if we just fetched recently
-    if (expertAuthIdRef.current === expertAuthId && timeSinceLastFetch < MIN_FETCH_INTERVAL) {
+      // Use cached data if available
+      const cached = availabilityCache.get(expertAuthId);
+      if (cached) {
+        setAvailabilities(cached.data);
+      }
       return;
     }
 
@@ -138,21 +176,35 @@ export function useAvailabilityManagement(user: any) {
       
       console.log('🔍 Fetching availabilities for auth_id:', expertAuthId);
 
-      // Fetch from expert_availabilities table (simple schema)
-      // Each row = one day with time range
+      // Optimized query - select only needed fields
       const { data, error: fetchError } = await supabase
         .from('expert_availabilities')
-        .select('*')
+        .select('id, expert_id, day_of_week, start_time, end_time, start_date, end_date, is_available, timezone')
         .eq('expert_id', expertAuthId)
         .eq('is_available', true)
         .order('day_of_week', { ascending: true })
         .order('start_time', { ascending: true });
 
       if (fetchError) throw fetchError;
-      setAvailabilities(data || []);
+      
+      const availabilityData = data || [];
+      
+      // Update cache
+      availabilityCache.set(expertAuthId, {
+        data: availabilityData,
+        timestamp: now
+      });
+      
+      setAvailabilities(availabilityData);
     } catch (err: any) {
       console.error('Error fetching availabilities:', err);
       setError(err.message);
+      // Try to use cached data on error
+      const cached = availabilityCache.get(expertAuthId);
+      if (cached) {
+        console.log('⚠️ Using cached data due to error');
+        setAvailabilities(cached.data);
+      }
     } finally {
       setLoading(false);
       isFetchingRef.current = false;

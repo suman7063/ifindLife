@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import EnhancedAvailabilityForm from './EnhancedAvailabilityForm';
 import ExpertAvailabilityList from './ExpertAvailabilityList';
 
-const AvailabilityManagement: React.FC = () => {
+const AvailabilityManagement: React.FC = memo(() => {
   const { expert, userProfile, isLoading } = useSimpleAuth();
   const [refreshKey, setRefreshKey] = useState(0);
   
@@ -60,6 +60,8 @@ const AvailabilityManagement: React.FC = () => {
       </Tabs> */}
     </div>
   );
-};
+});
+
+AvailabilityManagement.displayName = 'AvailabilityManagement';
 
 export default AvailabilityManagement;

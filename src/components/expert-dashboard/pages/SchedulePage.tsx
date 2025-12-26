@@ -1,39 +1,25 @@
 
-import React, { useRef } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import SessionManager from './sessions/SessionManager';
-import AvailabilityManagement from '@/components/expert/availability/AvailabilityManagement';
-import BookingCalendar from './schedule/BookingCalendar';
-import GoogleCalendarIntegration from './schedule/GoogleCalendarIntegration';
+import { Loader2 } from 'lucide-react';
+
+// Lazy load heavy components - only load when tab is active
+const SessionManager = lazy(() => import('./sessions/SessionManager'));
+const AvailabilityManagement = lazy(() => import('@/components/expert/availability/AvailabilityManagement').then(module => ({ default: module.default })));
+const BookingCalendar = lazy(() => import('./schedule/BookingCalendar'));
+
+// Loading fallback component
+const TabLoadingFallback: React.FC = () => (
+  <div className="flex items-center justify-center p-12">
+    <div className="flex flex-col items-center gap-3">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <p className="text-sm text-muted-foreground">Loading...</p>
+    </div>
+  </div>
+);
 
 const SchedulePage: React.FC = () => {
-  const formRef = useRef<HTMLDivElement>(null);
-
-  const handleCreateAvailability = () => {
-    // Scroll to the form
-    if (formRef.current) {
-      formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      // Trigger form submission
-      const form = formRef.current.querySelector('form');
-      if (form) {
-        const submitButton = form.querySelector('button[type="submit"]') as HTMLButtonElement;
-        if (submitButton && !submitButton.disabled) {
-          submitButton.click();
-        }
-      }
-    } else {
-      // Fallback: find form by selector
-      const form = document.querySelector('#availability-form');
-      if (form) {
-        form.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        const submitButton = form.querySelector('button[type="submit"]') as HTMLButtonElement;
-        if (submitButton && !submitButton.disabled) {
-          submitButton.click();
-        }
-      }
-    }
-  };
+  const [activeTab, setActiveTab] = useState('availability');
 
   return (
     <div className="space-y-6">
@@ -43,37 +29,41 @@ const SchedulePage: React.FC = () => {
           <p className="text-muted-foreground">
             Manage your availability, appointments, and sessions
           </p>
-         
         </div>
-        <Button 
-          onClick={handleCreateAvailability}
-          className="bg-primary hover:bg-primary/90 whitespace-nowrap"
-          size="lg"
-        >
-          Manage Slot Availability
-        </Button>
       </div>
       
-      <Tabs defaultValue="availability" className="w-full">
+      <Tabs defaultValue="availability" className="w-full" onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="availability">Availability Management</TabsTrigger>
           <TabsTrigger value="sessions">Session Management</TabsTrigger>
           <TabsTrigger value="calendar">Calendar View</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="availability">
-          <div className="space-y-6" ref={formRef}>
-            <AvailabilityManagement />
-            {/* <GoogleCalendarIntegration /> */}
-          </div>
+        {/* Only render active tab content - lazy loaded */}
+        <TabsContent value="availability" className="mt-6">
+          {activeTab === 'availability' && (
+            <Suspense fallback={<TabLoadingFallback />}>
+              <div className="space-y-6">
+                <AvailabilityManagement />
+              </div>
+            </Suspense>
+          )}
         </TabsContent>
 
-        <TabsContent value="sessions">
-          <SessionManager />
+        <TabsContent value="sessions" className="mt-6">
+          {activeTab === 'sessions' && (
+            <Suspense fallback={<TabLoadingFallback />}>
+              <SessionManager />
+            </Suspense>
+          )}
         </TabsContent>
 
-        <TabsContent value="calendar">
-          <BookingCalendar />
+        <TabsContent value="calendar" className="mt-6">
+          {activeTab === 'calendar' && (
+            <Suspense fallback={<TabLoadingFallback />}>
+              <BookingCalendar />
+            </Suspense>
+          )}
         </TabsContent>
       </Tabs>
     </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday, addMonths, subMonths } from 'date-fns';
 import { ChevronLeft, ChevronRight, Clock, User, Calendar as CalendarIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -53,35 +53,51 @@ const BookingCalendar: React.FC = () => {
     fetchAppointments();
   }, [expert?.auth_id, currentDate]);
 
-  const monthStart = startOfMonth(currentDate);
-  const monthEnd = endOfMonth(currentDate);
-  const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
+  // Memoize expensive date calculations
+  const monthStart = useMemo(() => startOfMonth(currentDate), [currentDate]);
+  const monthEnd = useMemo(() => endOfMonth(currentDate), [currentDate]);
+  const daysInMonth = useMemo(() => eachDayOfInterval({ start: monthStart, end: monthEnd }), [monthStart, monthEnd]);
 
-  const navigateMonth = (direction: 'prev' | 'next') => {
+  // Memoize appointments map for faster lookups
+  const appointmentsByDate = useMemo(() => {
+    const map = new Map<string, Appointment[]>();
+    appointments.forEach(apt => {
+      const dateStr = apt.appointment_date;
+      if (!map.has(dateStr)) {
+        map.set(dateStr, []);
+      }
+      map.get(dateStr)!.push(apt);
+    });
+    return map;
+  }, [appointments]);
+
+  const navigateMonth = useCallback((direction: 'prev' | 'next') => {
     setCurrentDate(direction === 'prev' ? subMonths(currentDate, 1) : addMonths(currentDate, 1));
     setSelectedDate(null);
-  };
+  }, [currentDate]);
 
-  const getAppointmentsForDate = (date: Date) => {
+  // Memoize date lookup functions
+  const getAppointmentsForDate = useCallback((date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
-    return appointments.filter(apt => apt.appointment_date === dateStr);
-  };
+    return appointmentsByDate.get(dateStr) || [];
+  }, [appointmentsByDate]);
 
-  const getAvailabilityForDate = (date: Date) => {
+  const getAvailabilityForDate = useCallback((date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
     const slots = getAvailableSlots(dateStr);
     const isAvailable = isAvailableOnDate(dateStr);
     return { slots, isAvailable };
-  };
+  }, [getAvailableSlots, isAvailableOnDate]);
 
-  const getDayStatus = (date: Date) => {
+  // Memoize day status calculation
+  const getDayStatus = useCallback((date: Date) => {
     const dateAppointments = getAppointmentsForDate(date);
     const { isAvailable } = getAvailabilityForDate(date);
     
     if (!isAvailable) return 'unavailable';
     if (dateAppointments.length > 0) return 'booked';
     return 'available';
-  };
+  }, [getAppointmentsForDate, getAvailabilityForDate]);
 
   const getDayStatusColor = (status: string) => {
     switch (status) {
@@ -92,8 +108,30 @@ const BookingCalendar: React.FC = () => {
     }
   };
 
-  const selectedDateAppointments = selectedDate ? getAppointmentsForDate(selectedDate) : [];
-  const selectedDateAvailability = selectedDate ? getAvailabilityForDate(selectedDate) : { slots: [], isAvailable: false };
+  // Memoize selected date data
+  const selectedDateAppointments = useMemo(() => 
+    selectedDate ? getAppointmentsForDate(selectedDate) : [], 
+    [selectedDate, getAppointmentsForDate]
+  );
+  const selectedDateAvailability = useMemo(() => 
+    selectedDate ? getAvailabilityForDate(selectedDate) : { slots: [], isAvailable: false },
+    [selectedDate, getAvailabilityForDate]
+  );
+
+  // Memoize month stats
+  const monthStats = useMemo(() => {
+    const confirmedCount = appointments.filter(apt => apt.status === 'confirmed').length;
+    const availableDays = daysInMonth.filter(date => {
+      const dateStr = format(date, 'yyyy-MM-dd');
+      return isAvailableOnDate(dateStr) && getAppointmentsForDate(date).length === 0;
+    }).length;
+    
+    return {
+      totalAppointments: appointments.length,
+      confirmed: confirmedCount,
+      availableDays
+    };
+  }, [appointments, daysInMonth, isAvailableOnDate, getAppointmentsForDate]);
 
   if (loading) {
     return (
@@ -286,22 +324,15 @@ const BookingCalendar: React.FC = () => {
           <CardContent className="space-y-2">
             <div className="flex justify-between">
               <span className="text-sm">Total Appointments</span>
-              <span className="font-medium">{appointments.length}</span>
+              <span className="font-medium">{monthStats.totalAppointments}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-sm">Confirmed</span>
-              <span className="font-medium">
-                {appointments.filter(apt => apt.status === 'confirmed').length}
-              </span>
+              <span className="font-medium">{monthStats.confirmed}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-sm">Available Days</span>
-              <span className="font-medium">
-                {daysInMonth.filter(date => {
-                  const dateStr = format(date, 'yyyy-MM-dd');
-                  return isAvailableOnDate(dateStr) && getAppointmentsForDate(date).length === 0;
-                }).length}
-              </span>
+              <span className="font-medium">{monthStats.availableDays}</span>
             </div>
           </CardContent>
         </Card>

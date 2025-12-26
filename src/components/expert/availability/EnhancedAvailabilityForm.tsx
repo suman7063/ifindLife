@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAvailabilityManagement } from '@/hooks/useAvailabilityManagement';
 import { toast } from 'sonner';
-import { Calendar, Clock, Globe, Plus, X, Info } from 'lucide-react';
+import { Calendar, Clock, Globe, Plus, X, Info, Loader2 } from 'lucide-react';
 import { validateTimeSlots, validateDateRange, normalizeExpertId } from '@/utils/availabilityValidation';
 import AvailabilityErrorBoundary from './AvailabilityErrorBoundary';
 import { ExpertProfile, UserProfile } from '@/types/database/unified';
@@ -158,10 +158,17 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
   const expertAuthId = user?.auth_id || user?.id;
   useEffect(() => {
     if (expertAuthId) {
-      setIsInitialLoad(true);
-      fetchAvailabilities().finally(() => {
+      // Check if we have cached data first
+      if (availabilities && availabilities.length > 0) {
+        // We have data, process it immediately
         setIsInitialLoad(false);
-      });
+      } else {
+        // No cached data, show loading and fetch
+        setIsInitialLoad(true);
+        fetchAvailabilities().finally(() => {
+          setIsInitialLoad(false);
+        });
+      }
     } else {
       setIsInitialLoad(false);
     }
@@ -177,87 +184,88 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
   // Track if form has been manually edited to prevent auto-reset
   const [formEdited, setFormEdited] = useState(false);
 
-  // Populate form with existing availability when loaded (only if not manually edited)
-  useEffect(() => {
-    // Don't auto-populate if user has manually edited the form
-    if (formEdited) {
-      console.log('📝 Form was manually edited, skipping auto-populate');
-      return;
+  // Memoize processed schedule from availabilities for better performance
+  const processedSchedule = useMemo(() => {
+    if (formEdited || !availabilities || availabilities.length === 0) {
+      return null;
     }
 
-    if (availabilities && availabilities.length > 0) {
+    // SIMPLE SCHEMA: Each day is a separate row in expert_availabilities
+    // Process ALL rows to get all days
+    const newSchedule: Record<string, DaySchedule> = DAYS.reduce((acc, day) => ({
+      ...acc,
+      [day]: {
+        enabled: false,
+        slots: []
+      }
+    }), {});
+
+    // Group availability by day_of_week and merge time ranges
+    const dayAvailabilityMap = new Map<number, Array<{start: string, end: string}>>();
+    
+    availabilities.forEach((availability: {
+      day_of_week?: number;
+      start_time?: string;
+      end_time?: string;
+      timezone?: string;
+    }) => {
+      if (availability.day_of_week !== undefined && availability.start_time && availability.end_time) {
+        const dayOfWeek = availability.day_of_week;
+        // Convert database times back to display format (23:59:59 -> 24:00)
+        const startTime = convertTimeFromDB(availability.start_time);
+        const endTime = convertTimeFromDB(availability.end_time);
+        
+        if (!dayAvailabilityMap.has(dayOfWeek)) {
+          dayAvailabilityMap.set(dayOfWeek, []);
+        }
+        
+        dayAvailabilityMap.get(dayOfWeek)!.push({ start: startTime, end: endTime });
+      }
+    });
+
+    // Convert to weekly schedule format
+    dayAvailabilityMap.forEach((timeRanges, dayOfWeek) => {
+      // Handle day_of_week: Database uses 0-6 (Sunday=0, Monday=1, ..., Saturday=6)
+      // But our DAYS array is ['Monday', 'Tuesday', ..., 'Sunday'] (index 0 = Monday)
+      let dayIndex: number;
       
-      // SIMPLE SCHEMA: Each day is a separate row in expert_availabilities
-      // Process ALL rows to get all days
-      const newSchedule: Record<string, DaySchedule> = DAYS.reduce((acc, day) => ({
-        ...acc,
-        [day]: {
-          enabled: false,
-          slots: []
-        }
-      }), {});
-
-      // Group availability by day_of_week and merge time ranges
-      const dayAvailabilityMap = new Map<number, Array<{start: string, end: string}>>();
+      if (dayOfWeek === 0) {
+        // Sunday = last day in our array (index 6)
+        dayIndex = 6;
+      } else {
+        // Monday-Saturday: day_of_week 1-6 maps to array index 0-5
+        dayIndex = dayOfWeek - 1;
+      }
       
-      availabilities.forEach((availability: {
-        day_of_week?: number;
-        start_time?: string;
-        end_time?: string;
-        timezone?: string;
-      }) => {
-        if (availability.day_of_week !== undefined && availability.start_time && availability.end_time) {
-          const dayOfWeek = availability.day_of_week;
-          // Convert database times back to display format (23:59:59 -> 24:00)
-          const startTime = convertTimeFromDB(availability.start_time);
-          const endTime = convertTimeFromDB(availability.end_time);
-          
-          if (!dayAvailabilityMap.has(dayOfWeek)) {
-            dayAvailabilityMap.set(dayOfWeek, []);
-          }
-          
-          dayAvailabilityMap.get(dayOfWeek)!.push({ start: startTime, end: endTime });
-        }
-      });
+      const dayName = DAYS[dayIndex];
+      
+      if (dayName) {
+        newSchedule[dayName] = {
+          enabled: true,
+          slots: timeRanges.map(range => ({
+            start: range.start,
+            end: range.end,
+            enabled: true
+          }))
+        };
+      }
+    });
 
-      // Convert to weekly schedule format
-      dayAvailabilityMap.forEach((timeRanges, dayOfWeek) => {
-        // Handle day_of_week: Database uses 0-6 (Sunday=0, Monday=1, ..., Saturday=6)
-        // But our DAYS array is ['Monday', 'Tuesday', ..., 'Sunday'] (index 0 = Monday)
-        let dayIndex: number;
-        
-        if (dayOfWeek === 0) {
-          // Sunday = last day in our array (index 6)
-          dayIndex = 6;
-        } else {
-          // Monday-Saturday: day_of_week 1-6 maps to array index 0-5
-          dayIndex = dayOfWeek - 1;
-        }
-        
-        const dayName = DAYS[dayIndex];
-        
-        if (dayName) {
-          newSchedule[dayName] = {
-            enabled: true,
-            slots: timeRanges.map(range => ({
-              start: range.start,
-              end: range.end,
-              enabled: true
-            }))
-          };
-        }
-      });
+    return newSchedule;
+  }, [availabilities, formEdited]);
 
+  // Populate form with processed schedule
+  useEffect(() => {
+    if (processedSchedule) {
+      setWeeklySchedule(processedSchedule);
       // Set timezone from first record if available
-      if (availabilities[0]?.timezone) {
+      if (availabilities && availabilities[0]?.timezone) {
         setSelectedTimezone(availabilities[0].timezone);
       }
-
-      setWeeklySchedule(newSchedule);
-    } else {
+    } else if (!formEdited && availabilities && availabilities.length === 0) {
       console.log('ℹ️ No availabilities found - form will remain blank for new entry');
     }
-  }, [availabilities, formEdited]);
+  }, [processedSchedule, availabilities, formEdited]);
 
   const addTimeSlot = (day: string) => {
     setFormEdited(true);
@@ -517,7 +525,9 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
       console.log('📝 Form submission started. Weekly schedule:', weeklySchedule);
       console.log('📝 Enabled days:', enabledDays.length);
       
-      // Convert schedule to database format
+      // Convert schedule to database format - TIME-WISE APPROACH
+      // Store time ranges directly (not individual 30-min slots)
+      // Slots will be generated dynamically at booking time
       const timeSlots = enabledDays.flatMap(([day, schedule]) => {
         // Convert DAYS array index to database day_of_week (0-6)
         // DAYS: ['Monday', 'Tuesday', ..., 'Sunday'] (0-6)
@@ -525,69 +535,43 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
         const arrayIndex = DAYS.indexOf(day);
         const dayOfWeek = arrayIndex === 6 ? 0 : arrayIndex + 1; // Sunday=0, Monday=1, etc.
         
-        return schedule.slots.flatMap(slot => {
-          // Skip disabled slots
-          if (!slot.enabled) {
-            return [];
-          }
-          
-          // Skip slots where start >= end (handle 24:00 specially)
-          // Allow 24:00 as a valid end time
-          if (slot.end === '24:00') {
-            // 24:00 is valid as end time, check if start is before it
-            const startMinutes = timeToMinutes(slot.start);
-            const endMinutes = 24 * 60; // 1440 minutes for 24:00
-            if (startMinutes >= endMinutes) {
-              console.warn(`Skipping invalid slot: ${slot.start} - ${slot.end}`);
-              return [];
+        return schedule.slots
+          .filter(slot => slot.enabled) // Only process enabled slots
+          .map(slot => {
+            // Skip invalid time ranges
+            if (slot.end === '24:00') {
+              // 24:00 is valid as end time, check if start is before it
+              const startMinutes = timeToMinutes(slot.start);
+              const endMinutes = 24 * 60; // 1440 minutes for 24:00
+              if (startMinutes >= endMinutes) {
+                console.warn(`Skipping invalid time range: ${slot.start} - ${slot.end}`);
+                return null;
+              }
+            } else if (slot.start >= slot.end) {
+              console.warn(`Skipping invalid time range: ${slot.start} - ${slot.end}`);
+              return null;
             }
-          } else if (slot.start >= slot.end) {
-            console.warn(`Skipping invalid slot: ${slot.start} - ${slot.end}`);
-            return [];
-          }
-          
-          // Generate 30-minute slots for each time range
-          const thirtyMinSlots = generate30MinuteSlots(slot.start, slot.end);
-          console.log(`Generated time points for ${slot.start} - ${slot.end}:`, thirtyMinSlots);
-          
-          // If no slots generated, skip
-          if (thirtyMinSlots.length < 2) {
-            console.warn(`No slots generated for ${slot.start} - ${slot.end}`);
-            return [];
-          }
-          
-          // Create 30-minute time slots from the generated time points
-          const slots = [];
-          for (let i = 0; i < thirtyMinSlots.length - 1; i++) {
-            const startTime = thirtyMinSlots[i];
-            const endTime = thirtyMinSlots[i + 1];
             
-            // Convert times to database format (handles 24:00 -> 23:59:59 automatically)
-            const dbStartTime = convertTimeForDB(startTime);
-            const dbEndTime = convertTimeForDB(endTime);
+            // TIME-WISE: Store time range directly (e.g., 9:00-17:00)
+            // Don't split into 30-min slots here - that happens at booking time
+            const dbStartTime = convertTimeForDB(slot.start);
+            const dbEndTime = convertTimeForDB(slot.end);
             
-            // Validate: start must be before end (using numeric comparison)
-            const startMinutes = timeToMinutes(startTime);
-            const endMinutes = timeToMinutes(endTime);
+            console.log(`Storing time range for ${day}: ${slot.start} - ${slot.end} (${dbStartTime} - ${dbEndTime})`);
             
-            if (startMinutes < endMinutes) {
-              slots.push({
-                start_time: dbStartTime,
-                end_time: dbEndTime,
-                day_of_week: dayOfWeek,
-                specific_date: null,
-                timezone: selectedTimezone
-              });
-            }
-          }
-          
-          console.log(`Generated ${slots.length} slots for ${day} from ${slot.start} to ${slot.end}`);
-          return slots;
-        });
+            return {
+              start_time: dbStartTime,
+              end_time: dbEndTime,
+              day_of_week: dayOfWeek,
+              specific_date: null,
+              timezone: selectedTimezone
+            };
+          })
+          .filter(Boolean); // Remove null entries
       }).filter(Boolean);
 
-      console.log('📝 Total time slots generated:', timeSlots.length);
-      console.log('📝 Sample slots:', timeSlots.slice(0, 5));
+      console.log('📝 Total time ranges to save:', timeSlots.length);
+      console.log('📝 Sample time ranges:', timeSlots.slice(0, 5));
 
       // Validate time slots before submission
       const slotsValidation = validateTimeSlots(timeSlots);
@@ -611,7 +595,7 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
         expertId,
         startDate,
         endDate,
-        timeSlotsCount: timeSlots.length,
+        timeRangesCount: timeSlots.length, // Now storing time ranges (TIME-WISE approach)
         timezone: selectedTimezone
       });
 
@@ -643,7 +627,7 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
           }
         }
         
-        toast.success('Availability created successfully! Users can now book 30-minute slots.');
+        toast.success('Availability created successfully! Your time ranges are saved. Users can book 30-minute slots from your available times.');
         
         // Call onAvailabilityUpdated callback (for onboarding step completion)
         if (onAvailabilityUpdated) {
@@ -692,7 +676,7 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="max-w-xs">
-                  <p className="text-sm font-medium text-green-400">Set your availability with 30-minute time slots that users can book on the frontend.</p>
+                  <p className="text-sm font-medium text-green-400">Set your time ranges (e.g., 9:00 AM - 5:00 PM). Users will be able to book 30-minute slots from your available times.</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -814,13 +798,13 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
                           </Label>
                           {weeklySchedule[day].enabled && (
                             <Badge variant="secondary" className="text-xs">
-                              {weeklySchedule[day].slots.length} slot{weeklySchedule[day].slots.length !== 1 ? 's' : ''}
+                              {weeklySchedule[day].slots.length} time range{weeklySchedule[day].slots.length !== 1 ? 's' : ''}
                             </Badge>
                           )}
                         </div>
                       </div>
 
-                      {/* Time Slots */}
+                      {/* Time Ranges */}
                       {weeklySchedule[day].enabled && (
                         <div className="space-y-3 pl-6">
                           {weeklySchedule[day].slots.map((slot, slotIndex) => (
@@ -859,7 +843,7 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
                                 </Select>
                                 
                                 <Badge variant="outline" className="text-xs">
-                                  {generate30MinuteSlots(slot.start, slot.end).length - 1} × 30min slots
+                                  {generate30MinuteSlots(slot.start, slot.end).length - 1} bookable slots
                                 </Badge>
                               </div>
 
@@ -869,23 +853,23 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
                                 size="sm"
                                 onClick={() => removeTimeSlot(day, slotIndex)}
                                 className="text-destructive hover:text-destructive"
-                                title="Remove slot"
+                                title="Remove time range"
                               >
                                 <X className="h-4 w-4" />
                               </Button>
                             </div>
                           ))}
                           
-                          {/* Add Slot Button at bottom of slots list */}
+                          {/* Add Time Range Button */}
                           <div className="pt-2">
                             {(() => {
-                              // Check if there's already a slot ending at 24:00
+                              // Check if there's already a time range ending at 24:00
                               const hasMidnightSlot = weeklySchedule[day].slots.some(
                                 slot => slot.end === '24:00' || slot.end === '00:00'
                               );
                               
-                              // Only disable if there's already a slot ending at 24:00
-                              // Allow adding slots until we reach 24:00
+                              // Only disable if there's already a time range ending at 24:00
+                              // Allow adding time ranges until we reach 24:00
                               const cannotAddMore = hasMidnightSlot;
                               
                               return (
@@ -896,10 +880,10 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
                                   onClick={() => addTimeSlot(day)}
                                   className="w-full gap-2 border-dashed"
                                   disabled={cannotAddMore}
-                                  title={cannotAddMore ? 'Cannot add more slots after midnight (24:00)' : 'Add another time slot'}
+                                  title={cannotAddMore ? 'Cannot add more time ranges after midnight (24:00)' : 'Add another time range'}
                                 >
                                   <Plus className="h-4 w-4" />
-                                  Add Another Slot
+                                  Add Another Time Range
                                 </Button>
                               );
                             })()}
@@ -969,30 +953,63 @@ const EnhancedAvailabilityForm: React.FC<EnhancedAvailabilityFormProps> = ({
     );
   }
 
+  const handleQuickSave = () => {
+    // Scroll to form and trigger submission
+    const form = document.querySelector('#availability-form');
+    if (form) {
+      form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const submitButton = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+      if (submitButton && !submitButton.disabled) {
+        submitButton.click();
+      }
+    }
+  };
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Calendar className="h-5 w-5" />
-          {title}
-          <TooltipProvider delayDuration={200}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button type="button" className="inline-flex items-center">
-                  <Info className="h-4 w-4 text-muted-foreground cursor-help hover:text-foreground transition-colors" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-xs">
-                <p className="text-sm font-medium text-green-400">Set your availability with 30-minute time slots that users can book on the frontend.</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {formContent}
-      </CardContent>
-    </Card>
+    <>
+      <Card className="relative">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            {title}
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button type="button" className="inline-flex items-center">
+                    <Info className="h-4 w-4 text-muted-foreground cursor-help hover:text-foreground transition-colors" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs">
+                  <p className="text-sm font-medium text-green-400">Set your time ranges (e.g., 9:00 AM - 5:00 PM). Users will be able to book 30-minute slots from your available times.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {formContent}
+        </CardContent>
+      </Card>
+      
+      {/* Fixed floating save button - always visible */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <Button 
+          onClick={handleQuickSave}
+          className="bg-primary hover:bg-primary/90 whitespace-nowrap shadow-lg"
+          size="lg"
+          disabled={loading}
+        >
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            'Save Availability'
+          )}
+        </Button>
+      </div>
+    </>
   );
 };
 
