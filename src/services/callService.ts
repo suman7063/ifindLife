@@ -24,6 +24,7 @@ export interface CallRequestResponse {
   agoraToken: string | null;
   agoraUid: number;
   callSessionId: string;
+  start_time?: string; // For timer resume
 }
 
 /**
@@ -759,10 +760,10 @@ export async function joinAppointmentCall(appointmentId: string): Promise<CallRe
       return null;
     }
 
-    // Get call session for this appointment
+    // Get call session for this appointment (include start_time for timer resume)
     const { data: callSession, error: callSessionError } = await supabase
       .from('call_sessions')
-      .select('id, agora_token, agora_uid, call_type')
+      .select('id, agora_token, call_type, call_metadata, start_time')
       .eq('appointment_id', appointmentId)
       .order('created_at', { ascending: false })
       .limit(1)
@@ -773,8 +774,10 @@ export async function joinAppointmentCall(appointmentId: string): Promise<CallRe
     }
 
     // Use call session token/uid if available, otherwise use appointment token
+    // call_sessions table doesn't have agora_uid column - it's stored in call_metadata
     let agoraToken = callSession?.agora_token || appointment.token;
-    let agoraUid = callSession?.agora_uid || Math.floor(Math.random() * 1000000);
+    const callMetadata = (callSession?.call_metadata as Record<string, any>) || {};
+    let agoraUid = callMetadata.user_uid || Math.floor(Math.random() * 1000000);
     const callType = (callSession?.call_type === 'video' ? 'video' : 'audio') as 'audio' | 'video';
 
     // Generate user token if not available (using appointment's channel_name)
@@ -813,9 +816,12 @@ export async function joinAppointmentCall(appointmentId: string): Promise<CallRe
           appointment_id: appointmentId,
           channel_name: appointment.channel_name,
           agora_token: agoraToken,
-          agora_uid: agoraUid,
           call_type: callType,
-          status: 'pending' // Will be updated to 'active' when user joins
+          status: 'pending', // Will be updated to 'active' when user joins
+          call_metadata: {
+            user_uid: agoraUid,
+            created_at: new Date().toISOString()
+          }
         });
 
       if (insertError) {
@@ -828,7 +834,10 @@ export async function joinAppointmentCall(appointmentId: string): Promise<CallRe
       callSessionId,
       channelName: appointment.channel_name,
       callType,
-      hasToken: !!agoraToken
+      hasToken: !!agoraToken,
+      tokenLength: agoraToken ? agoraToken.length : 0,
+      tokenPreview: agoraToken ? agoraToken.substring(0, 30) + '...' : 'null',
+      agoraUid
     });
 
     return {
@@ -836,7 +845,9 @@ export async function joinAppointmentCall(appointmentId: string): Promise<CallRe
       channelName: appointment.channel_name,
       agoraToken: agoraToken,
       agoraUid: agoraUid,
-      callSessionId: callSessionId
+      callSessionId: callSessionId,
+      // Include start_time for timer resume if call session exists and has start_time
+      start_time: callSession?.start_time || undefined
     };
   } catch (error) {
     console.error('❌ Error joining appointment call:', error);

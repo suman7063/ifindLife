@@ -35,6 +35,83 @@ const CallChat: React.FC<CallChatProps> = ({
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const storageKeyRef = useRef<string | null>(null);
+  const [storageKey, setStorageKey] = useState<string | null>(null); // State to trigger re-renders
+
+  // Get storage key from call session ID (stored in sessionStorage) or use channel name as fallback
+  useEffect(() => {
+    if (!client) return;
+
+    // Try to get call session ID from sessionStorage (used by both user and expert)
+    // Check both user and expert session storage
+    const userSessionId = sessionStorage.getItem('user_call_session');
+    const expertSessionId = sessionStorage.getItem('expert_call_session');
+    const storedSession = userSessionId || expertSessionId;
+    
+    let newStorageKey: string;
+    if (storedSession) {
+      newStorageKey = `call_chat_messages_${storedSession}`;
+      console.log('📨 Using call session ID for chat storage:', storedSession);
+    } else {
+      // Fallback: Try to get channel name from client or use client UID
+      // This ensures messages persist even if session ID is not available
+      let fallbackKey = 'unknown';
+      if ((client as any).channelName) {
+        fallbackKey = (client as any).channelName;
+      } else if (client.uid) {
+        fallbackKey = `uid_${client.uid}`;
+      }
+      newStorageKey = `call_chat_messages_${fallbackKey}`;
+      console.log('📨 Using fallback key for chat storage:', fallbackKey);
+    }
+    
+    storageKeyRef.current = newStorageKey;
+    setStorageKey(newStorageKey); // Update state to trigger message loading
+  }, [client]);
+
+  // Load messages from sessionStorage when storage key changes
+  useEffect(() => {
+    if (!client || !storageKey) return;
+
+    try {
+      const storedMessages = sessionStorage.getItem(storageKey);
+      if (storedMessages) {
+        const parsedMessages = JSON.parse(storedMessages) as ChatMessage[];
+        console.log('📨 Loaded', parsedMessages.length, 'chat messages from sessionStorage for key:', storageKey);
+        // Only set messages if we don't already have them (avoid overwriting new messages)
+        setMessages(prev => {
+          // If we already have messages, merge them (avoid duplicates)
+          if (prev.length > 0) {
+            const merged = [...prev];
+            parsedMessages.forEach(msg => {
+              if (!merged.find(m => m.id === msg.id)) {
+                merged.push(msg);
+              }
+            });
+            // Sort by timestamp
+            merged.sort((a, b) => a.timestamp - b.timestamp);
+            return merged;
+          }
+          return parsedMessages;
+        });
+      } else {
+        console.log('📨 No stored messages found for key:', storageKey);
+      }
+    } catch (error) {
+      console.warn('⚠️ Error loading chat messages from sessionStorage:', error);
+    }
+  }, [client, storageKey]);
+
+  // Save messages to sessionStorage whenever messages change
+  useEffect(() => {
+    if (!storageKeyRef.current || messages.length === 0) return;
+
+    try {
+      sessionStorage.setItem(storageKeyRef.current, JSON.stringify(messages));
+    } catch (error) {
+      console.warn('⚠️ Error saving chat messages to sessionStorage:', error);
+    }
+  }, [messages]);
 
   // Setup message listener when client is available (always listen, not just when visible)
   useEffect(() => {
@@ -46,7 +123,16 @@ const CallChat: React.FC<CallChatProps> = ({
         if (prev.find(m => m.id === message.id)) {
           return prev;
         }
-        return [...prev, message];
+        const updated = [...prev, message];
+        // Save to sessionStorage immediately
+        if (storageKeyRef.current) {
+          try {
+            sessionStorage.setItem(storageKeyRef.current, JSON.stringify(updated));
+          } catch (error) {
+            console.warn('⚠️ Error saving message to sessionStorage:', error);
+          }
+        }
+        return updated;
       });
     };
 

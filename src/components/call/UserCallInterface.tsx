@@ -192,6 +192,7 @@ interface UserCallInterfaceProps {
     token: string | null;
     uid: number;
     callType: 'audio' | 'video';
+    start_time?: string; // For timer resume
   };
 }
 
@@ -220,6 +221,8 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
   const pendingCallCostRef = useRef<{ amount: number; currency: 'INR' | 'EUR' } | null>(null);
   // Track if payment response was received - skip balance check if true
   const paymentResponseReceivedRef = useRef<boolean>(false);
+  // Track if we've attempted to auto-join to prevent infinite retries
+  const autoJoinAttemptedRef = useRef<string | null>(null);
 
   const {
     isConnecting,
@@ -323,13 +326,37 @@ const UserCallInterface: React.FC<UserCallInterfaceProps> = ({
           // TRIPLE CHECK: Check if wallet transaction already exists for this session
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const supabaseAny = supabase as any;
-          const { data: existingTransaction, error: transactionCheckError } = await supabaseAny
-            .from('wallet_transactions')
-            .select('id, amount, type')
-            .eq('reference_id', sessionId)
-            .eq('reference_type', 'call_session')
-            .eq('type', 'debit')
-            .maybeSingle();
+          // Validate UUID before querying - if not UUID, query by metadata instead
+          const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sessionId);
+          
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          let existingTransaction: any = null;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          let transactionCheckError: any = null;
+          
+          if (isUUID) {
+            // Query by reference_id if it's a valid UUID
+            const result = await supabaseAny
+              .from('wallet_transactions')
+              .select('id, amount, type')
+              .eq('reference_id', sessionId)
+              .eq('reference_type', 'call_session')
+              .eq('type', 'debit')
+              .maybeSingle();
+            existingTransaction = result.data;
+            transactionCheckError = result.error;
+          } else {
+            // Query by metadata if it's not a UUID
+            const result = await supabaseAny
+              .from('wallet_transactions')
+              .select('id, amount, type')
+              .eq('metadata->>reference_id', sessionId)
+              .eq('reference_type', 'call_session')
+              .eq('type', 'debit')
+              .maybeSingle();
+            existingTransaction = result.data;
+            transactionCheckError = result.error;
+          }
 
           if (!transactionCheckError && existingTransaction) {
             console.log('🚫 WALLET TRANSACTION ALREADY EXISTS - Skipping deduction', {
@@ -672,33 +699,22 @@ console.log('🔄 Setting modalState to connecting...');
     }
   }, [isInCall, callState, callState?.isJoined, modalState]);
 
-  // Auto-join existing appointment call when modal opens with existingCallData
+  // Show "Join Call" modal when expert has started the session (existingCallData exists)
+  // User must manually click "Join" button - no auto-join
   useEffect(() => {
     if (isOpen && existingCallData && !isInCall && !isConnecting) {
-      console.log('📞 Auto-joining existing appointment call:', existingCallData);
-      setModalState('connecting');
-      
-      const callData: CallRequestResponse = {
+      console.log('📞 Expert has started the session. Showing join prompt to user:', {
         callSessionId: existingCallData.callSessionId,
         channelName: existingCallData.channelName,
-        token: existingCallData.token,
-        uid: existingCallData.uid,
         callType: existingCallData.callType,
-        expertId: expertId,
-        expertAuthId: expertAuthId,
-        expertName: expertName,
-        expertAvatar: expertAvatar,
-        duration: 30, // Default duration for appointment calls
-        cost: expertPrice || 30
-      };
-      
-      joinAgoraCall(callData).catch((error) => {
-        console.error('❌ Error auto-joining appointment call:', error);
-        toast.error('Failed to join call. Please try again.');
-        setModalState('selection');
+        expertName
       });
+      
+      // Set modal state to 'waiting' to show join prompt
+      // This will show a modal with "Join Call" button
+      setModalState('waiting');
     }
-  }, [isOpen, existingCallData, isInCall, isConnecting, joinAgoraCall, expertId, expertAuthId, expertName, expertAvatar, expertPrice]);
+  }, [isOpen, existingCallData, isInCall, isConnecting, expertName]);
 
   // Reset when modal closes and refresh wallet balance when opens
   useEffect(() => {
@@ -747,17 +763,18 @@ console.log('🔄 Setting modalState to connecting...');
 
   // This useEffect is now handled in the isOpen useEffect above
 
-  // Debug: Log current state
-  console.log('🔍 UserCallInterface render:', { 
-    isOpen, 
-    modalState, 
-    isConnecting, 
-    isInCall, 
-    hasCallState: !!callState,
-    showInterruptionModal,
-    wasDisconnected,
-    callStateConnectionState: callState?.client?.connectionState
-  });
+  // Debug: Log current state (only in development and when state changes significantly)
+  // Removed excessive logging - uncomment for debugging if needed
+  // console.log('🔍 UserCallInterface render:', { 
+  //   isOpen, 
+  //   modalState, 
+  //   isConnecting, 
+  //   isInCall, 
+  //   hasCallState: !!callState,
+  //   showInterruptionModal,
+  //   wasDisconnected,
+  //   callStateConnectionState: callState?.client?.connectionState
+  // });
   
   // Debug: Log when showInterruptionModal changes
   useEffect(() => {
@@ -921,12 +938,84 @@ console.log('🔄 Setting modalState to connecting...');
     );
   }
 
+  // Handler for joining call when user clicks "Join Call" button
+  const handleJoinExistingCall = async () => {
+    if (!existingCallData) {
+      console.error('❌ No existing call data to join');
+      return;
+    }
+
+    console.log('📞 User manually joining appointment call:', {
+      callSessionId: existingCallData.callSessionId,
+      channelName: existingCallData.channelName,
+      callType: existingCallData.callType
+    });
+
+    setModalState('connecting');
+
+    // Generate fresh token for joining
+    let tokenToUse: string | null = null;
+    const uidToUse = existingCallData.uid;
+
+    try {
+      const { data: tokenData, error: tokenError } = await supabase.functions.invoke('smooth-action', {
+        body: {
+          channelName: existingCallData.channelName,
+          uid: existingCallData.uid,
+          role: 1, // Publisher role
+          expireTime: 3600 // 1 hour expiration
+        }
+      });
+
+      if (tokenError || !tokenData?.token) {
+        console.error('❌ Failed to generate Agora token:', tokenError);
+        toast.error('Failed to generate call token. Please try again.');
+        setModalState('waiting');
+        return;
+      }
+
+      tokenToUse = tokenData.token;
+      console.log('✅ Agora token generated for user:', {
+        uid: uidToUse,
+        channelName: existingCallData.channelName,
+        tokenLength: tokenToUse.length
+      });
+    } catch (tokenErr) {
+      console.error('❌ Error generating token:', tokenErr);
+      toast.error('Failed to generate call token. Please try again.');
+      setModalState('waiting');
+      return;
+    }
+
+    const callData: CallRequestResponse = {
+      callRequestId: '',
+      callSessionId: existingCallData.callSessionId,
+      channelName: existingCallData.channelName,
+      agoraToken: tokenToUse,
+      agoraUid: uidToUse,
+      // IMPORTANT: Include start_time for timer resume if available
+      start_time: existingCallData.start_time || undefined
+    };
+
+    joinAgoraCall(callData).catch((error) => {
+      console.error('❌ Error joining appointment call:', error);
+      toast.error('Failed to join call. Please try again.');
+      setModalState('waiting');
+    });
+  };
+
   if (modalState === 'waiting') {
+    // Check if this is an existing call (expert has started) or waiting for expert to accept
+    const isExistingCall = !!existingCallData;
+    
     return (
       <>
         <WaitingForExpertModal
           isOpen={true}
           expertName={expertName}
+          onJoinCall={isExistingCall ? handleJoinExistingCall : undefined}
+          showJoinButton={isExistingCall}
+          callType={existingCallData?.callType || 'video'}
         />
         {/* Expert Declined Call Confirmation Dialog - shown even in waiting state */}
         <AlertDialog open={showExpertDeclinedCallConfirmation} onOpenChange={() => {}}>

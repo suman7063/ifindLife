@@ -5,8 +5,8 @@ import { parseISO, isAfter, addMinutes, differenceInMinutes } from 'date-fns';
 
 export interface ExpertNoShowWarning {
   appointmentId: string;
-  isWarning: boolean; // true if 3+ minutes passed but expert hasn't joined yet
-  isNoShow: boolean; // true if 5+ minutes passed
+  isWarning: boolean; // true if 65+ minutes passed but expert hasn't joined yet
+  isNoShow: boolean; // true if 70+ minutes passed
   timeSinceStart: number; // minutes
   minutesRemaining: number; // minutes until refund
 }
@@ -40,7 +40,7 @@ export const setCallSessionCacheBatch = (callSessionMap: Map<string, any>) => {
 };
 
 /**
- * Hook to warn expert if they haven't joined within 5 minutes
+ * Hook to warn expert if they haven't joined within 70 minutes
  * Shows warnings to expert about potential refund to user
  */
 export const useExpertNoShowWarning = (
@@ -220,12 +220,12 @@ export const useExpertNoShowWarning = (
         return;
       }
 
-      // Warning state: 3+ minutes passed but expert hasn't joined (not yet a no-show)
-      const isWarning = timeSinceStart >= 3 && timeSinceStart < 5 && (status === 'scheduled' || status === 'confirmed');
+      // Warning state: 65+ minutes passed but expert hasn't joined (not yet a no-show)
+      const isWarning = timeSinceStart >= 65 && timeSinceStart < 70 && (status === 'scheduled' || status === 'confirmed');
       
-      // No-show state: 5+ minutes passed
-      const isNoShow = timeSinceStart >= 5 && (status === 'scheduled' || status === 'confirmed');
-      const minutesRemaining = Math.max(0, 5 - timeSinceStart);
+      // No-show state: 70+ minutes passed
+      const isNoShow = timeSinceStart >= 70 && (status === 'scheduled' || status === 'confirmed');
+      const minutesRemaining = Math.max(0, 70 - timeSinceStart);
 
       setWarningData({
         appointmentId,
@@ -244,11 +244,11 @@ export const useExpertNoShowWarning = (
         });
       }
 
-      // Show no-show notification and automatically cancel when 5 minutes passed
+      // Show no-show notification and automatically cancel when 70 minutes passed
       if (isNoShow && !hasShownNoShowRef.current) {
         hasShownNoShowRef.current = true;
         toast.error('Session Not Joined', {
-          description: 'You did not join the session within 5 minutes. The appointment has been automatically cancelled and the user has been refunded.',
+          description: 'You did not join the session within 70 minutes. The appointment has been automatically cancelled and the user has been refunded.',
           duration: 10000
         });
         
@@ -391,7 +391,7 @@ export const useExpertNoShowWarning = (
     // Set up interval only for time-based checks (not API calls)
     // This just checks if time has passed, doesn't make API calls
     // Only set up interval if appointment is today or in the past
-    if (!isAfter(appointmentDateTime, addMinutes(now, -5)) && 
+    if (!isAfter(appointmentDateTime, addMinutes(now, -70)) && 
         (status === 'scheduled' || status === 'confirmed')) {
       timeCheckInterval = setInterval(() => {
         if (!isMounted || expertJoinedRef.current || !checkWarningRef.current) return;

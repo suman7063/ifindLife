@@ -34,6 +34,51 @@ import { useExpertNoShowWarning } from '@/hooks/useExpertNoShowWarning';
 import { supabase } from '@/integrations/supabase/client';
 import { AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
+import ExpertInCallModal from '@/components/expert-dashboard/call/ExpertInCallModal';
+
+// Helper function to extract first valid UUID from combined ID
+const extractAppointmentId = (sessionId: string | undefined, appointmentId: string | undefined, isCombined: boolean): string => {
+  // If session has appointmentId and isCombined, use appointmentId
+  if (isCombined && appointmentId) {
+    // Check if appointmentId is still a combined ID (starts with 'combined_')
+    if (appointmentId.startsWith('combined_')) {
+      // Extract first UUID from combined ID
+      const uuidPattern = /([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i;
+      const match = appointmentId.match(uuidPattern);
+      if (match && match[1]) {
+        console.log('🔍 Extracted UUID from combined appointmentId:', match[1], 'from:', appointmentId);
+        return match[1];
+      }
+    }
+    // Validate UUID format
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(appointmentId);
+    if (isUUID) {
+      return appointmentId;
+    }
+  }
+  
+  // If sessionId is provided, check if it's a combined ID
+  if (sessionId) {
+    if (sessionId.startsWith('combined_')) {
+      // Extract first UUID from combined ID
+      const uuidPattern = /([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i;
+      const match = sessionId.match(uuidPattern);
+      if (match && match[1]) {
+        console.log('🔍 Extracted UUID from combined sessionId:', match[1], 'from:', sessionId);
+        return match[1];
+      }
+    }
+    // Validate UUID format
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sessionId);
+    if (isUUID) {
+      return sessionId;
+    }
+  }
+  
+  // Fallback: return the provided ID (will cause error but at least we tried)
+  console.warn('⚠️ Could not extract valid UUID from:', { sessionId, appointmentId, isCombined });
+  return appointmentId || sessionId || '';
+};
 
 const SessionManager: React.FC = () => {
   const { expert } = useSimpleAuth();
@@ -49,6 +94,22 @@ const SessionManager: React.FC = () => {
   const [expertTimezone, setExpertTimezone] = useState<string>('UTC');
   const isStartingSessionRef = useRef(false); // Prevent multiple simultaneous startSession calls
   const [activeTab, setActiveTab] = useState<string>('today');
+  const [showCallTypeModal, setShowCallTypeModal] = useState(false);
+  const [sessionToStart, setSessionToStart] = useState<Session | null>(null);
+  const [selectedCallType, setSelectedCallType] = useState<'audio' | 'video'>('video');
+  const [activeCallRequest, setActiveCallRequest] = useState<{
+    id: string;
+    user_id: string;
+    call_type: 'audio' | 'video';
+    channel_name: string;
+    agora_token: string | null;
+    agora_uid: number | null;
+    user_metadata: {
+      name?: string;
+      avatar?: string;
+    };
+    call_session_id?: string | null;
+  } | null>(null);
 
   // Use the expert sessions hook - disable autoFetch, we'll fetch on tab click
   const {
@@ -182,7 +243,9 @@ const SessionManager: React.FC = () => {
           // Skip if already processed
           if (processed.has(otherSession.id)) continue;
           
-          // Must match: same user, same date, same status
+          // Must match: same user, same date
+          // IMPORTANT: Don't check status - group all statuses together for slot count consistency
+          // Status filtering happens after grouping
           if (otherSession.clientId !== session.clientId) {
             // Different user - stop looking (sessions are sorted, so no more matches)
             break;
@@ -191,10 +254,7 @@ const SessionManager: React.FC = () => {
             // Different date - stop looking
             break;
           }
-          if (otherSession.status !== session.status) {
-            // Different status - skip this one but continue looking
-            continue;
-          }
+          // Removed status check - group all statuses together for accurate slot count
           
           // Check if next session starts exactly when current ends (within 5 seconds tolerance)
           // IMPORTANT: next session should start >= current end time (not before)
@@ -282,10 +342,16 @@ const SessionManager: React.FC = () => {
     return grouped;
   }, []);
   
+  // IMPORTANT: Group sessions FIRST, then filter
+  // This ensures slot count is consistent regardless of status filtering
+  const groupedSessions = useMemo(() => {
+    return groupContinuousSessions(sessions);
+  }, [sessions, groupContinuousSessions]);
+  
   // Filter sessions by comparing appointment_date directly (memoized)
   // appointment_date is already stored as YYYY-MM-DD in expert's timezone context
   const todaySessions = useMemo(() => {
-    const filtered = sessions.filter(session => {
+    const filtered = groupedSessions.filter(session => {
       // First check if session is today
       let isToday = false;
       
@@ -348,41 +414,44 @@ const SessionManager: React.FC = () => {
         }
       }
       
-      // Session must be today (include all statuses including cancelled/no-show)
-      const shouldInclude = isToday;
-      
-      if (isToday) {
-        console.log('✅ Session is today:', {
-          sessionId: session.id,
-          status: session.status,
-          shouldInclude
-        });
+      // Session must be today
+      // IMPORTANT: Exclude cancelled/completed sessions if time hasn't passed yet
+      // If session is cancelled/completed but time is still in future, don't show in Today tab
+      if (!isToday) {
+        return false;
       }
       
-      return shouldInclude;
+      // IMPORTANT: Show all sessions for today, including cancelled/completed
+      // This allows expert to see all sessions scheduled for today
+      // The UI will handle showing/hiding Start button based on status
+      
+      console.log('✅ Session is today:', {
+        sessionId: session.id,
+        status: session.status,
+        shouldInclude: true
+      });
+      
+      return true;
     })
     // Sort by start time (chronologically)
     .sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
     
-    // Group continuous sessions together
-    const grouped = groupContinuousSessions(filtered);
-    
     // Debug logging
     console.log('📊 Today sessions summary:', {
       totalSessions: sessions.length,
+      groupedSessions: groupedSessions.length,
       todayDateString,
       expertTimezone,
       todaySessionsCount: filtered.length,
-      groupedSessionsCount: grouped.length,
       todaySessionIds: filtered.map(s => s.id)
     });
     
-    return grouped;
-  }, [sessions, todayDateString, expertTimezone, groupContinuousSessions]);
+    return filtered;
+  }, [groupedSessions, todayDateString, expertTimezone]);
 
   const upcomingSessions = useMemo(() => {
     const now = new Date();
-    const filtered = sessions.filter(session => {
+    const filtered = groupedSessions.filter(session => {
       // First check if session is today - if it is, exclude it from upcoming
       let isToday = false;
       
@@ -420,24 +489,31 @@ const SessionManager: React.FC = () => {
     // Sort by start time (chronologically)
     .sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
     
-    // Group continuous sessions together
-    return groupContinuousSessions(filtered);
-  }, [sessions, todayDateString, expertTimezone, groupContinuousSessions]);
+    return filtered;
+  }, [groupedSessions, todayDateString, expertTimezone]);
 
   // Cancelled sessions are now shown in Today tab, so no separate filter needed
 
   const historySessions = useMemo(() => {
-    const filtered = sessions.filter(session => {
+    const filtered = groupedSessions.filter(session => {
       return session.status === 'completed';
     })
     // Sort by start time (most recent first)
     .sort((a, b) => b.startTime.getTime() - a.startTime.getTime());
     
-    // Group continuous sessions together
-    return groupContinuousSessions(filtered);
-  }, [sessions, groupContinuousSessions]);
+    return filtered;
+  }, [groupedSessions]);
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string, session?: Session) => {
+    // If cancelled or scheduled but time is still available, use blue color (like scheduled)
+    // This handles cases where call was disconnected but time slot is still available
+    if ((status === 'cancelled' || status === 'scheduled') && session) {
+      const now = new Date();
+      if ((now >= session.startTime && now < session.endTime) || now < session.startTime) {
+        return 'bg-blue-100 text-blue-800'; // Show as available/scheduled
+      }
+    }
+    
     switch (status) {
       case 'scheduled':
         return 'bg-blue-100 text-blue-800';
@@ -455,10 +531,37 @@ const SessionManager: React.FC = () => {
   };
 
   // Format status text for display (no-show -> cancelled)
-  const formatStatusText = (status: string) => {
+  // Logic:
+  // 1. First time (no call_session exists) → "scheduled"
+  // 2. After disconnect (call_session exists with status 'ended') → "Available" (if time is still available)
+  // 3. Otherwise → show status as-is
+  const formatStatusText = (status: string, session?: Session) => {
     if (status === 'no-show') {
       return 'cancelled';
     }
+    
+    // Check if time slot is still available
+    if (session) {
+      const now = new Date();
+      const isTimeAvailable = (now >= session.startTime && now < session.endTime) || now < session.startTime;
+      
+      // Check if call_session exists and was disconnected (status 'ended')
+      // This indicates the call was started but then disconnected
+      const hasDisconnectedCall = (session as any).callSessionStatus === 'ended' || 
+                                  (session as any).callSessionStatus === 'completed';
+      
+      // If call was disconnected and time is still available, show "Available"
+      if (hasDisconnectedCall && isTimeAvailable && (status === 'scheduled' || status === 'cancelled')) {
+        return 'Available';
+      }
+      
+      // If no call_session exists (first time) and time is available, show "scheduled" (not "Available")
+      // Only show "Available" if call was disconnected
+      if (!hasDisconnectedCall && status === 'scheduled' && isTimeAvailable) {
+        return 'scheduled'; // First time - show "scheduled"
+      }
+    }
+    
     return status;
   };
 
@@ -485,7 +588,7 @@ const SessionManager: React.FC = () => {
     return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
   };
 
-  const startSession = async (session: Session) => {
+  const startSession = async (session: Session, callType?: 'audio' | 'video') => {
     // Prevent multiple simultaneous calls
     if (isStartingSessionRef.current) {
       return;
@@ -493,6 +596,17 @@ const SessionManager: React.FC = () => {
 
     try {
       isStartingSessionRef.current = true;
+      
+      // Use provided callType or default to session.type
+      const actualCallType = callType || (session.type === 'video' ? 'video' : 'audio');
+      
+      // For combined sessions, use the primary appointmentId for database operations
+      // The combined ID is not a valid UUID and will cause database query errors
+      const actualSessionId = extractAppointmentId(
+        session.id,
+        (session as any).appointmentId,
+        !!(session as any).isCombined
+      );
       
       // Don't mark as in-progress yet - just prepare the session
       // Status will be updated to in-progress when user actually joins
@@ -509,69 +623,213 @@ const SessionManager: React.FC = () => {
         channelName = `session_${shortExpertId}_${shortUserId}_${timestamp}`;
       }
       
-      // Generate Agora tokens if missing
-      if (!token || token === 'null' || token === '') {
-        const expertUid = Math.floor(Math.random() * 1000000);
-        
-        try {
-          // Generate token for expert
-          const { data: tokenData, error: tokenError } = await supabase.functions.invoke('smooth-action', {
-            body: {
-              channelName,
-              uid: expertUid,
-              role: 1, // Publisher role
-              expireTime: (session.duration + 5) * 60 // Token expires after session duration + 5 min buffer
-            }
-          });
-          
-          if (tokenError) {
-            console.error('Failed to generate Agora token:', tokenError);
-            toast.error(`Failed to generate call token: ${tokenError.message || 'Unknown error'}`);
-            return;
-          } else {
-            token = tokenData?.token || null;
+      // ALWAYS generate fresh token when expert starts session
+      // This ensures token is valid and matches current channel name and UID
+      const expertUid = Math.floor(Math.random() * 1000000);
+      
+      console.log('🔄 Generating fresh Agora token for expert session start...', {
+        channelName,
+        uid: expertUid,
+        role: 1,
+        expireTime: (session.duration + 5) * 60
+      });
+      
+      try {
+        // Always generate fresh token for expert
+        const { data: tokenData, error: tokenError } = await supabase.functions.invoke('smooth-action', {
+          body: {
+            channelName,
+            uid: expertUid,
+            role: 1, // Publisher role
+            expireTime: (session.duration + 5) * 60 // Token expires after session duration + 5 min buffer
           }
-        } catch (tokenErr) {
-          console.error('Error generating token:', tokenErr);
-          const errorMsg = tokenErr instanceof Error ? tokenErr.message : 'Unknown error';
-          toast.error(`Failed to generate call token: ${errorMsg}`);
+        });
+        
+        if (tokenError) {
+          console.error('❌ Failed to generate Agora token:', tokenError);
+          toast.error(`Failed to generate call token: ${tokenError.message || 'Unknown error'}`);
+          return;
+        }
+        
+        if (!tokenData?.token) {
+          console.error('❌ Token generation returned no token');
+          toast.error('Failed to generate call token: No token received');
+          return;
+        }
+        
+        token = tokenData.token;
+        console.log('✅ Fresh Agora token generated for expert:', {
+          uid: expertUid,
+          channelName,
+          tokenLength: token.length,
+          tokenPreview: token.substring(0, 30) + '...'
+        });
+      } catch (tokenErr) {
+        console.error('❌ Error generating token:', tokenErr);
+        const errorMsg = tokenErr instanceof Error ? tokenErr.message : 'Unknown error';
+        toast.error(`Failed to generate call token: ${errorMsg}`);
+        return;
+      }
+      
+      // IMPORTANT: If session is cancelled but time is still available, reactivate it
+      // Update status from 'cancelled' to 'scheduled' before starting
+      if (session.status === 'cancelled') {
+        console.log('🔄 Reactivating cancelled session:', actualSessionId);
+        
+        // For combined sessions, update ALL appointments in the group
+        if ((session as any).isCombined && (session as any).continuousSessionIds) {
+          const appointmentIds = (session as any).continuousSessionIds;
+          const { error: statusUpdateError } = await supabase
+            .from('appointments')
+            .update({ status: 'scheduled' })
+            .in('id', appointmentIds)
+            .eq('status', 'cancelled'); // Only update if currently cancelled
+          
+          if (statusUpdateError) {
+            console.error('Error reactivating combined appointments:', statusUpdateError);
+            toast.error(`Failed to reactivate session: ${statusUpdateError.message}`);
+            return;
+          }
+        } else {
+          // Single appointment - update status
+          const { error: statusUpdateError } = await supabase
+            .from('appointments')
+            .update({ status: 'scheduled' })
+            .eq('id', actualSessionId)
+            .eq('status', 'cancelled'); // Only update if currently cancelled
+          
+          if (statusUpdateError) {
+            console.error('Error reactivating appointment:', statusUpdateError);
+            toast.error(`Failed to reactivate session: ${statusUpdateError.message}`);
+            return;
+          }
+        }
+        
+        console.log('✅ Session reactivated from cancelled to scheduled');
+      }
+      
+      // Update appointment(s) with channel and token (but keep status as scheduled)
+      // For combined sessions, update ALL appointments in the group so user can join from any slot
+      if ((session as any).isCombined && (session as any).continuousSessionIds) {
+        // Update all appointments in the combined group
+        const appointmentIds = (session as any).continuousSessionIds;
+        console.log('📝 Updating all appointments in combined session:', appointmentIds);
+        
+        const { error: updateError } = await supabase
+          .from('appointments')
+          .update({
+            channel_name: channelName,
+            token: token
+          })
+          .in('id', appointmentIds);
+        
+        if (updateError) {
+          console.error('Error updating combined appointments:', updateError);
+          toast.error(`Failed to update appointments: ${updateError.message}`);
+          return;
+        }
+      } else {
+        // Single appointment - update normally
+        const { error: updateError } = await supabase
+          .from('appointments')
+          .update({
+            channel_name: channelName,
+            token: token
+          })
+          .eq('id', actualSessionId);
+        
+        if (updateError) {
+          console.error('Error updating appointment:', updateError);
+          toast.error(`Failed to update appointment: ${updateError.message}`);
           return;
         }
       }
       
-      // Update appointment with channel and token (but keep status as scheduled)
-      const { error: updateError } = await supabase
-        .from('appointments')
-        .update({
-          channel_name: channelName,
-          token: token
-        })
-        .eq('id', session.id);
-      
-      if (updateError) {
-        console.error('Error updating appointment:', updateError);
-        toast.error(`Failed to update appointment: ${updateError.message}`);
+      // Validate UUID format before querying
+      if (!actualSessionId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(actualSessionId)) {
+        console.error('❌ Invalid appointment ID format:', actualSessionId);
+        toast.error('Invalid session ID. Please try again.');
         return;
       }
       
-      // Create call session in 'pending' status (not active yet)
+      // First verify appointment exists to avoid foreign key errors
+      const { data: appointmentCheck, error: appointmentCheckError } = await supabase
+        .from('appointments')
+        .select('id')
+        .eq('id', actualSessionId)
+        .maybeSingle();
+      
+      if (appointmentCheckError) {
+        console.error('❌ Error checking appointment:', appointmentCheckError);
+        toast.error(`Failed to verify appointment: ${appointmentCheckError.message}`);
+        return;
+      }
+      
+      if (!appointmentCheck) {
+        console.error('❌ Appointment not found:', actualSessionId);
+        toast.error('Appointment not found. Please refresh and try again.');
+        return;
+      }
+      
+      // IMPORTANT: Check for existing active/pending call session first
+      // If exists, resume that session instead of creating new one
+      // For combined sessions, check using the primary appointment ID
       const { data: existingCallSession, error: callSessionFetchError } = await supabase
         .from('call_sessions')
-        .select('*')
-        .eq('appointment_id', session.id)
+        .select('*, start_time') // Include start_time for timer resume
+        .eq('appointment_id', actualSessionId)
+        .in('status', ['active', 'pending']) // Check for active or pending sessions
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
       
       if (callSessionFetchError && callSessionFetchError.code !== 'PGRST116') {
-        console.error('Error fetching call session:', callSessionFetchError);
+        console.error('❌ Error fetching call session:', callSessionFetchError);
         toast.error(`Failed to check call session: ${callSessionFetchError.message}`);
         return;
       }
       
       let callSessionId: string | null = null;
+      let isResuming = false;
       
-      if (!existingCallSession) {
-        // Create new call session
-        const newCallSessionId = `call_${session.id}_${Date.now()}`;
+      if (existingCallSession && (existingCallSession.status === 'active' || existingCallSession.status === 'pending')) {
+        // RESUME existing call session - don't create new one
+        console.log('🔄 Resuming existing call session:', {
+          callSessionId: existingCallSession.id,
+          status: existingCallSession.status,
+          channelName: existingCallSession.channel_name
+        });
+        
+        callSessionId = existingCallSession.id;
+        isResuming = true;
+        
+        // Use existing channel name if available, otherwise use new one
+        if (existingCallSession.channel_name) {
+          channelName = existingCallSession.channel_name;
+          console.log('✅ Using existing channel name:', channelName);
+        }
+        
+        // Update call session with fresh token and ensure status is active/pending
+        const { error: updateError } = await supabase
+          .from('call_sessions')
+          .update({
+            agora_token: token, // Update with fresh token
+            channel_name: channelName, // Update channel name if changed
+            call_type: actualCallType, // Update call type if changed
+            status: existingCallSession.status === 'active' ? 'active' : 'pending' // Keep existing status
+          })
+          .eq('id', callSessionId);
+        
+        if (updateError) {
+          console.error('❌ Error updating call session:', updateError);
+          toast.error(`Failed to update call session: ${updateError.message || 'Unknown error'}`);
+          return;
+        }
+        
+        console.log('✅ Call session resumed successfully');
+      } else {
+        // Create new call session only if no active/pending session exists
+        const newCallSessionId = `call_${actualSessionId}_${Date.now()}`;
         if (!expert?.auth_id) {
           console.error('Expert auth_id not available');
           toast.error('Expert information not available. Please refresh and try again.');
@@ -584,10 +842,10 @@ const SessionManager: React.FC = () => {
             id: newCallSessionId,
             expert_id: expert.auth_id,
             user_id: session.clientId,
-            appointment_id: session.id,
+            appointment_id: actualSessionId,
             channel_name: channelName,
             agora_token: token,
-            call_type: session.type === 'video' ? 'video' : 'audio',
+            call_type: actualCallType,
             status: 'pending', // Not active until user joins
             selected_duration: session.duration
           })
@@ -601,29 +859,15 @@ const SessionManager: React.FC = () => {
         }
         
         callSessionId = newCallSession?.id || null;
-      } else {
-        // Update existing call session
-        const { error: updateCallSessionError } = await supabase
-          .from('call_sessions')
-          .update({
-            channel_name: channelName,
-            agora_token: token,
-            status: 'pending' // Reset to pending
-          })
-          .eq('id', existingCallSession.id);
-        
-        if (updateCallSessionError) {
-          console.error('Error updating call session:', updateCallSessionError);
-          toast.error(`Failed to update call session: ${updateCallSessionError.message}`);
-          return;
-        }
-        
-        callSessionId = existingCallSession.id;
+        console.log('✅ New call session created:', callSessionId);
       }
       
-      // Send notification to user
-      try {
-        const callType = session.type === 'video' ? 'Video' : 'Audio';
+      // IMPORTANT: Only send notification if NOT resuming (new session)
+      // If resuming, don't send notification - call is already active
+      if (!isResuming) {
+        // Send notification to user
+        try {
+        const callType = actualCallType === 'video' ? 'Video' : 'Audio';
         const expertName = expert?.name || 'Your expert';
         
         // Validate required fields before sending
@@ -635,6 +879,21 @@ const SessionManager: React.FC = () => {
           toast.warning('Session prepared, but notification could not be sent (missing expert ID)');
         } else {
           
+          // For combined sessions, send notification with info about all slots
+          const slotInfo = (session as any).isCombined && (session as any).slotCount > 1
+            ? ` (${(session as any).slotCount} slots combined)`
+            : '';
+          
+          console.log('📧 Preparing to send notification:', {
+            userId: session.clientId,
+            appointmentId: actualSessionId,
+            isCombined: (session as any).isCombined,
+            slotCount: (session as any).slotCount,
+            allAppointmentIds: (session as any).continuousSessionIds || [actualSessionId],
+            channelName,
+            callSessionId
+          });
+          
           // Try to send notification with retry logic
           let notificationSent = false;
           let lastError: unknown = null;
@@ -645,18 +904,29 @@ const SessionManager: React.FC = () => {
                 body: {
                   userId: session.clientId,
                   type: 'session_ready',
-                  title: `${callType} Session Ready`,
-                  content: `${expertName} is ready for your scheduled ${callType.toLowerCase()} session. Click to join the call now.`,
-                  referenceId: session.id, // Use appointment ID (UUID) instead of callSessionId
+                  title: `${callType} Session Ready${slotInfo}`,
+                  content: `${expertName} is ready for your scheduled ${callType.toLowerCase()} session${slotInfo}. Click to join the call now.`,
+                  referenceId: actualSessionId, // Use primary appointment ID for notification
                   senderId: expert.auth_id,
                   data: {
-                    sessionId: session.id,
+                    sessionId: actualSessionId,
                     callSessionId: callSessionId,
                     channelName: channelName,
-                    callType: session.type,
-                    expertName: expertName
+                    callType: actualCallType,
+                    expertName: expertName,
+                    // Include all appointment IDs so user can join from any slot
+                    allAppointmentIds: (session as any).isCombined && (session as any).continuousSessionIds
+                      ? (session as any).continuousSessionIds
+                      : [actualSessionId]
                   }
                 }
+              });
+              
+              console.log('📧 Notification send attempt:', {
+                attempt,
+                success: !notificationError,
+                error: notificationError?.message,
+                notificationData
               });
               
               if (notificationError) {
@@ -670,6 +940,12 @@ const SessionManager: React.FC = () => {
                 throw notificationError;
                 } else {
                 notificationSent = true;
+                console.log('✅ Notification sent successfully:', {
+                  notificationId: notificationData?.id,
+                  referenceId: actualSessionId,
+                  userId: session.clientId,
+                  type: 'session_ready'
+                });
                 break;
               }
             } catch (invokeErr: unknown) {
@@ -707,7 +983,7 @@ const SessionManager: React.FC = () => {
                   content: `${expertName} is ready for your scheduled ${callType.toLowerCase()} session. Click to join the call now.`,
                   read: false,
                   sender_id: expert.auth_id,
-                  reference_id: session.id // Use appointment ID (UUID) instead of callSessionId
+                  reference_id: actualSessionId // Use appointment ID (UUID) instead of callSessionId
                 });
               
               if (directInsertError) {
@@ -756,15 +1032,52 @@ const SessionManager: React.FC = () => {
           console.error('Fallback notification failed:', fallbackErr);
           toast.warning('Session prepared. Notification service unavailable.');
         }
+        }
       }
       
-      // Show warning to expert about 5 minute refund policy
-      toast.warning('Session Prepared', {
-        description: `User has been notified. If you don't join within 5 minutes of the session start time, the user will receive a full refund automatically.`,
-        duration: 8000
+      // Show appropriate message based on whether resuming or new session
+      if (isResuming) {
+        toast.success(`Call session resumed. Continue waiting for ${session.clientName} to join...`);
+      } else {
+        // Show warning to expert about 5 minute refund policy
+        toast.warning('Session Prepared', {
+          description: `User has been notified. If you don't join within 5 minutes of the session start time, the user will receive a full refund automatically.`,
+          duration: 8000
+        });
+        
+        toast.success(`Session prepared. Waiting for ${session.clientName} to join...`);
+      }
+      
+      // Open Agora call interface for expert
+      // Create call request object from session data
+      const finalExpertUid = expertUid || Math.floor(Math.random() * 1000000);
+      const callRequestData = {
+        id: callSessionId || `session_${actualSessionId}`,
+        user_id: session.clientId,
+        call_type: actualCallType,
+        channel_name: channelName,
+        agora_token: token,
+        agora_uid: finalExpertUid,
+        user_metadata: {
+          name: session.clientName,
+          avatar: session.clientAvatar || undefined
+        },
+        call_session_id: callSessionId || null,
+        // Include start_time for timer resume if resuming existing session
+        start_time: isResuming && existingCallSession?.start_time 
+          ? existingCallSession.start_time 
+          : undefined
+      };
+      
+      console.log('🎬 Opening Agora call interface for expert:', {
+        callSessionId,
+        channelName,
+        callType: actualCallType,
+        clientName: session.clientName,
+        expertUid: finalExpertUid
       });
       
-      toast.success(`Session prepared. Waiting for ${session.clientName} to join...`);
+      setActiveCallRequest(callRequestData);
       
       // Refresh sessions to show updated status
       await fetchSessions();
@@ -832,10 +1145,19 @@ const SessionManager: React.FC = () => {
     formatTime: (date: Date) => string;
     formatDuration: (minutes: number) => string;
     getTypeIcon: (type: string) => React.ReactNode;
-    getStatusColor: (status: string) => string;
-  }> = ({ session, appointmentDate, startTime, onSelect, onStart, onEnd, formatTime, formatDuration, getTypeIcon, getStatusColor }) => {
-    const { warningData } = useExpertNoShowWarning(
+    getStatusColor: (status: string, session?: Session) => string;
+    formatStatusText: (status: string, session?: Session) => string;
+  }> = ({ session, appointmentDate, startTime, onSelect, onStart, onEnd, formatTime, formatDuration, getTypeIcon, getStatusColor, formatStatusText }) => {
+    // For combined sessions, use the primary appointmentId instead of the combined ID
+    // The combined ID is not a valid UUID and will cause database query errors
+    const appointmentId = extractAppointmentId(
       session.id,
+      (session as any).appointmentId,
+      !!(session as any).isCombined
+    );
+    
+    const { warningData } = useExpertNoShowWarning(
+      appointmentId,
       appointmentDate,
       startTime,
       session.status
@@ -907,10 +1229,18 @@ const SessionManager: React.FC = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Badge className={getStatusColor(session.status)}>
-              {formatStatusText(session.status)}
+            <Badge className={getStatusColor(session.status, session)}>
+              {formatStatusText(session.status, session)}
             </Badge>
-            {session.status === 'scheduled' && new Date() >= session.startTime && (
+            {/* Show Start button if:
+                1. Status is 'scheduled' AND current time >= start time, OR
+                2. Status is 'cancelled' BUT time slot is still available (current time < end time)
+                   This allows expert to start a call even if session was cancelled earlier
+            */}
+            {(
+              (session.status === 'scheduled' && new Date() >= session.startTime) ||
+              (session.status === 'cancelled' && new Date() >= session.startTime && new Date() < session.endTime)
+            ) && (
               <Button size="sm" onClick={onStart}>
                 <Play className="h-4 w-4 mr-1" />
                 Start
@@ -956,8 +1286,153 @@ const SessionManager: React.FC = () => {
   //   }
   // }, [sessions, processRefundForCancelledSession]);
 
-  // Check if there's an active session
+  // Check if there's an active session and resume call if needed
+  // Also check if refund was processed and update status accordingly
   useEffect(() => {
+    const checkAndUpdateRefundedSessions = async () => {
+      for (const session of sessions) {
+        // Check if session is in-progress but refund was processed
+        if (session.status === 'in-progress') {
+          const actualSessionId = extractAppointmentId(
+            session.id,
+            (session as any).appointmentId,
+            !!(session as any).isCombined
+          );
+          
+          // Check if refund exists for this appointment
+          const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(actualSessionId);
+          
+          let hasRefund = false;
+          if (isUUID) {
+            const { data: refunds } = await supabase
+              .from('wallet_transactions')
+              .select('id')
+              .eq('reference_id', actualSessionId)
+              .eq('reference_type', 'appointment')
+              .eq('type', 'credit')
+              .in('reason', ['expert_no_show', 'refund'])
+              .limit(1);
+            hasRefund = (refunds && refunds.length > 0) || false;
+          } else {
+            const { data: refunds } = await supabase
+              .from('wallet_transactions')
+              .select('id')
+              .eq('metadata->>reference_id', actualSessionId)
+              .eq('reference_type', 'appointment')
+              .eq('type', 'credit')
+              .in('reason', ['expert_no_show', 'refund'])
+              .limit(1);
+            hasRefund = (refunds && refunds.length > 0) || false;
+          }
+          
+          // Also check call session refunds
+          if (!hasRefund) {
+            // First verify appointment exists to avoid foreign key errors
+            const { data: appointmentCheck } = await supabase
+              .from('appointments')
+              .select('id')
+              .eq('id', actualSessionId)
+              .maybeSingle();
+            
+            if (!appointmentCheck) {
+              console.warn('⚠️ Appointment not found, skipping call session refund check:', actualSessionId);
+              continue; // Skip this session
+            }
+            
+            const { data: callSession, error: callSessionError } = await supabase
+              .from('call_sessions')
+              .select('id')
+              .eq('appointment_id', actualSessionId)
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle();
+            
+            if (callSessionError && callSessionError.code !== 'PGRST116') {
+              console.error('❌ Error fetching call session for refund check:', callSessionError);
+              continue; // Skip this session
+            }
+            
+            if (callSession) {
+              const callSessionIsUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(callSession.id);
+              if (callSessionIsUUID) {
+                const { data: callRefunds } = await supabase
+                  .from('wallet_transactions')
+                  .select('id')
+                  .eq('reference_id', callSession.id)
+                  .eq('reference_type', 'call_session')
+                  .eq('type', 'credit')
+                  .in('reason', ['expert_no_show', 'refund'])
+                  .limit(1);
+                hasRefund = (callRefunds && callRefunds.length > 0) || false;
+              } else {
+                const { data: callRefunds } = await supabase
+                  .from('wallet_transactions')
+                  .select('id')
+                  .eq('metadata->>reference_id', callSession.id)
+                  .eq('reference_type', 'call_session')
+                  .eq('type', 'credit')
+                  .in('reason', ['expert_no_show', 'refund'])
+                  .limit(1);
+                hasRefund = (callRefunds && callRefunds.length > 0) || false;
+              }
+            }
+          }
+          
+          // If refund exists but session is still in-progress, update status
+          if (hasRefund) {
+            console.log('🔄 Refund detected for in-progress session, updating status:', actualSessionId);
+            
+            // Update appointment status to cancelled
+            await supabase
+              .from('appointments')
+              .update({ status: 'cancelled' })
+              .eq('id', actualSessionId)
+              .neq('status', 'cancelled');
+            
+            // Update call session status to ended if exists
+            // First verify appointment exists to avoid foreign key errors
+            const { data: appointmentCheck } = await supabase
+              .from('appointments')
+              .select('id')
+              .eq('id', actualSessionId)
+              .maybeSingle();
+            
+            if (!appointmentCheck) {
+              console.warn('⚠️ Appointment not found, skipping call session update:', actualSessionId);
+              continue; // Skip this session
+            }
+            
+            const { data: callSession, error: callSessionError } = await supabase
+              .from('call_sessions')
+              .select('id, status')
+              .eq('appointment_id', actualSessionId)
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle();
+            
+            if (callSessionError && callSessionError.code !== 'PGRST116') {
+              console.error('❌ Error fetching call session for refund check:', callSessionError);
+              continue; // Skip this session
+            }
+            
+            if (callSession && (callSession.status === 'active' || callSession.status === 'pending')) {
+              await supabase
+                .from('call_sessions')
+                .update({ 
+                  status: 'ended',
+                  end_time: new Date().toISOString()
+                })
+                .eq('id', callSession.id);
+            }
+            
+            // Refresh sessions to reflect updated status
+            await fetchSessions();
+            console.log('✅ Updated session status after refund detection');
+          }
+        }
+      }
+    };
+    
     const activeSession = sessions.find(s => s.status === 'in-progress');
     if (activeSession) {
       setSessionTimer({ isRunning: true, elapsed: 0 });
@@ -966,10 +1441,112 @@ const SessionManager: React.FC = () => {
         const elapsed = Math.floor((new Date().getTime() - activeSession.startTime.getTime()) / 1000);
         setSessionTimer({ isRunning: true, elapsed: Math.max(0, elapsed) });
       }
+      
+      // Check for refunds and update status if needed
+      checkAndUpdateRefundedSessions();
+      
+      // Resume call if session is in-progress but call interface is not open
+      if (!activeCallRequest && activeSession.channelName) {
+        console.log('🔄 Resuming active session after page refresh:', {
+          sessionId: activeSession.id,
+          channelName: activeSession.channelName,
+          callType: activeSession.type
+        });
+        
+        // Get call session data
+        const resumeCall = async () => {
+          try {
+            // Get call session for this appointment
+            const actualSessionId = extractAppointmentId(
+              activeSession.id,
+              (activeSession as any).appointmentId,
+              !!(activeSession as any).isCombined
+            );
+            
+            // Validate UUID format before querying
+            if (!actualSessionId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(actualSessionId)) {
+              console.error('❌ Invalid appointment ID format:', actualSessionId);
+              return;
+            }
+            
+            // First verify appointment exists
+            const { data: appointment, error: appointmentError } = await supabase
+              .from('appointments')
+              .select('id')
+              .eq('id', actualSessionId)
+              .maybeSingle();
+            
+            if (appointmentError) {
+              console.error('❌ Error checking appointment:', appointmentError);
+              return;
+            }
+            
+            if (!appointment) {
+              console.warn('⚠️ Appointment not found:', actualSessionId);
+              return;
+            }
+            
+            const { data: callSession, error: callSessionError } = await supabase
+              .from('call_sessions')
+              .select('id, agora_token, call_type, channel_name, call_metadata')
+              .eq('appointment_id', actualSessionId)
+              .eq('status', 'active')
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle();
+            
+            if (callSessionError) {
+              console.error('❌ Error fetching call session:', callSessionError);
+              // Don't throw - just log and return
+              return;
+            }
+            
+            if (callSession && callSession.channel_name) {
+              // Get expert UID from call_metadata or generate new one
+              // call_sessions table doesn't have agora_uid column - it's stored in call_metadata
+              const callMetadata = (callSession.call_metadata as Record<string, any>) || {};
+              const expertUid = callMetadata.expert_uid || Math.floor(Math.random() * 1000000);
+              const { data: tokenData, error: tokenError } = await supabase.functions.invoke('smooth-action', {
+                body: {
+                  channelName: callSession.channel_name,
+                  uid: expertUid,
+                  role: 1,
+                  expireTime: 3600
+                }
+              });
+              
+              if (!tokenError && tokenData?.token) {
+                const callRequestData = {
+                  id: callSession.id,
+                  user_id: activeSession.clientId,
+                  call_type: (callSession.call_type === 'video' ? 'video' : 'audio') as 'audio' | 'video',
+                  channel_name: callSession.channel_name,
+                  agora_token: tokenData.token,
+                  agora_uid: expertUid,
+                  user_metadata: {
+                    name: activeSession.clientName,
+                    avatar: activeSession.clientAvatar || undefined
+                  },
+                  call_session_id: callSession.id
+                };
+                
+                console.log('✅ Resuming call interface for active session');
+                setActiveCallRequest(callRequestData);
+              } else {
+                console.error('❌ Failed to generate token for resume:', tokenError);
+              }
+            }
+          } catch (error) {
+            console.error('❌ Error resuming call:', error);
+          }
+        };
+        
+        resumeCall();
+      }
     } else {
       setSessionTimer({ isRunning: false, elapsed: 0 });
     }
-  }, [sessions]);
+  }, [sessions, activeCallRequest]);
 
   // Show loading or error state if expert is not available
   if (!expert?.auth_id) {
@@ -1091,7 +1668,9 @@ const SessionManager: React.FC = () => {
                               onSelect={() => setSelectedSession(session)}
                               onStart={(e) => {
                                 e.stopPropagation();
-                                startSession(session);
+                                setSessionToStart(session);
+                                setSelectedCallType(session.type === 'video' ? 'video' : 'audio');
+                                setShowCallTypeModal(true);
                               }}
                               onEnd={(e) => {
                                 e.stopPropagation();
@@ -1102,6 +1681,7 @@ const SessionManager: React.FC = () => {
                               formatDuration={formatDuration}
                               getTypeIcon={getTypeIcon}
                               getStatusColor={getStatusColor}
+                              formatStatusText={formatStatusText}
                             />
                           );
                         })
@@ -1155,8 +1735,8 @@ const SessionManager: React.FC = () => {
                                 </div>
                               </div>
                               <div className="flex items-center gap-2">
-                                <Badge className={getStatusColor(session.status)}>
-                                  {formatStatusText(session.status)}
+                                <Badge className={getStatusColor(session.status, session)}>
+                                  {formatStatusText(session.status, session)}
                                 </Badge>
                                 {session.status === 'scheduled' && (
                                   <Button 
@@ -1227,8 +1807,8 @@ const SessionManager: React.FC = () => {
                                 </div>
                               </div>
                               <div className="flex items-center gap-2">
-                                <Badge className={getStatusColor(session.status)}>
-                                  {formatStatusText(session.status)}
+                                <Badge className={getStatusColor(session.status, session)}>
+                                  {formatStatusText(session.status, session)}
                                 </Badge>
                                 {session.rating && (
                                   <div className="text-yellow-500 text-sm">
@@ -1294,8 +1874,8 @@ const SessionManager: React.FC = () => {
                     <span>{selectedSession.startTime.toLocaleDateString()}</span>
                     <span>{formatTime(selectedSession.startTime)} - {formatTime(selectedSession.endTime)}</span>
                   </div>
-                  <Badge className={getStatusColor(selectedSession.status)}>
-                    {formatStatusText(selectedSession.status)}
+                  <Badge className={getStatusColor(selectedSession.status, selectedSession)}>
+                    {formatStatusText(selectedSession.status, selectedSession)}
                   </Badge>
                 </div>
               </div>
@@ -1456,7 +2036,11 @@ const SessionManager: React.FC = () => {
                   Close
                 </Button>
                 {selectedSession.status === 'scheduled' && new Date() >= selectedSession.startTime && (
-                  <Button onClick={() => startSession(selectedSession)}>
+                  <Button onClick={() => {
+                    setSessionToStart(selectedSession);
+                    setSelectedCallType(selectedSession.type === 'video' ? 'video' : 'audio');
+                    setShowCallTypeModal(true);
+                  }}>
                     <Play className="h-4 w-4 mr-2" />
                     Start Session
                   </Button>
@@ -1465,6 +2049,79 @@ const SessionManager: React.FC = () => {
             </div>
           </DialogContent>
         </Dialog>
+      )}
+
+      {/* Call Type Selection Modal */}
+      <Dialog open={showCallTypeModal} onOpenChange={setShowCallTypeModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Select Call Type</DialogTitle>
+            <DialogDescription>
+              Choose whether you want to start an audio or video call with {sessionToStart?.clientName || 'the user'}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-4 py-4">
+            <button
+              onClick={() => setSelectedCallType('audio')}
+              className={`p-6 border-2 rounded-lg transition-all ${
+                selectedCallType === 'audio'
+                  ? 'border-primary bg-primary/5'
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              <Phone className={`h-8 w-8 mx-auto mb-2 ${selectedCallType === 'audio' ? 'text-primary' : 'text-gray-400'}`} />
+              <h3 className="font-semibold text-center">Audio Call</h3>
+              <p className="text-sm text-gray-500 text-center mt-1">Voice only</p>
+            </button>
+            <button
+              onClick={() => setSelectedCallType('video')}
+              className={`p-6 border-2 rounded-lg transition-all ${
+                selectedCallType === 'video'
+                  ? 'border-primary bg-primary/5'
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              <Video className={`h-8 w-8 mx-auto mb-2 ${selectedCallType === 'video' ? 'text-primary' : 'text-gray-400'}`} />
+              <h3 className="font-semibold text-center">Video Call</h3>
+              <p className="text-sm text-gray-500 text-center mt-1">With video</p>
+            </button>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setShowCallTypeModal(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={async () => {
+                if (sessionToStart) {
+                  setShowCallTypeModal(false);
+                  await startSession(sessionToStart, selectedCallType);
+                  setSessionToStart(null);
+                }
+              }}
+            >
+              <Play className="h-4 w-4 mr-2" />
+              Start {selectedCallType === 'video' ? 'Video' : 'Audio'} Call
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Agora Call Interface Modal - Opens when expert starts session */}
+      {activeCallRequest && (
+        <ExpertInCallModal
+          isOpen={true}
+          onClose={() => {
+            setActiveCallRequest(null);
+            toast.info('Call ended');
+          }}
+          callRequest={activeCallRequest}
+          onCallEnd={() => {
+            setActiveCallRequest(null);
+            toast.info('Call ended');
+            // Refresh sessions to update status
+            fetchSessions();
+          }}
+        />
       )}
     </div>
   );

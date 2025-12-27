@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import AgoraCallInterface from '@/components/expert-dashboard/call/AgoraCallInterface';
 
 interface ExpertInCallModalProps {
@@ -42,6 +42,7 @@ const ExpertInCallModal: React.FC<ExpertInCallModalProps> = ({
       }
     }}>
       <DialogContent className="max-w-[95vw] w-full h-[95vh] max-h-[95vh] p-0 overflow-hidden [&>button]:hidden">
+        <DialogTitle className="sr-only">Call with {callRequest.user_metadata?.name || 'User'}</DialogTitle>
         <div className="h-full flex flex-col overflow-hidden">
           <AgoraCallInterface
             callRequest={callRequest}

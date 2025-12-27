@@ -26,10 +26,6 @@ import { toast } from 'sonner';
 import IncomingCallDialog from '@/components/expert-dashboard/call/IncomingCallDialog';
 import { acceptCall, declineCall as declineCallService } from '@/services/callService';
 import DashboardLoader from '@/components/expert/dashboard/DashboardLoader';
-// Import test utility (only in development)
-if (import.meta.env.DEV) {
-  import('@/utils/testNotification');
-}
 
 const NewExpertDashboard: React.FC = () => {
   const { expert, isAuthenticated, isLoading, userType } = useSimpleAuth();

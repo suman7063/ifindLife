@@ -276,7 +276,7 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
       appointment.channel_name ? 'video' : 'audio';
 
     // Map status - appointments can have: 'scheduled', 'completed', 'cancelled', 'pending', 'confirmed'
-    // Priority: appointment status > call session check (expert joined?) > past time check
+    // Priority: appointment status > refund check > call session check (expert joined?) > past time check
     let status: Session['status'] = 'scheduled';
     const appointmentStatus = appointment.status?.toLowerCase();
     
@@ -303,15 +303,19 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
         if (callSessionTime >= thirtyMinutesAgo) {
           status = 'in-progress';
         } else {
-          // Stale active call session - if past appointment time, mark as completed
-          status = isPast ? 'completed' : 'scheduled';
+          // Stale active call session - keep as scheduled, don't auto-complete
+          // IMPORTANT: Don't auto-complete sessions just because time passed
+          // Only mark as completed if explicitly set in database
+          status = 'scheduled';
         }
       } else if (callSession.status === 'completed' || callSession.status === 'ended') {
         // Call session completed
         status = 'completed';
       } else {
-        // Other call session status - if past, mark as completed
-        status = isPast ? 'completed' : 'scheduled';
+        // Other call session status - keep as scheduled, don't auto-complete
+        // IMPORTANT: Don't auto-complete sessions just because time passed
+        // Only mark as completed if explicitly set in database
+        status = 'scheduled';
       }
     }
     // Expert didn't join - check if appointment time passed
@@ -324,6 +328,67 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
       status = 'scheduled';
     } else {
       status = 'scheduled'; // Default
+    }
+    
+    // IMPORTANT: Override status to 'cancelled' if refund was processed (even if status is 'in-progress')
+    // This ensures refunded sessions show as cancelled, not in-progress
+    if (status === 'in-progress' || (callSession && callSession.status === 'active')) {
+      // Quick check for refund - only if status would be in-progress
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(appointment.id);
+      
+      let hasRefund = false;
+      if (isUUID) {
+        const { data: refunds } = await supabase
+          .from('wallet_transactions')
+          .select('id')
+          .eq('reference_id', appointment.id)
+          .eq('reference_type', 'appointment')
+          .eq('type', 'credit')
+          .in('reason', ['expert_no_show', 'refund'])
+          .limit(1);
+        hasRefund = (refunds && refunds.length > 0) || false;
+      } else {
+        const { data: refunds } = await supabase
+          .from('wallet_transactions')
+          .select('id')
+          .eq('metadata->>reference_id', appointment.id)
+          .eq('reference_type', 'appointment')
+          .eq('type', 'credit')
+          .in('reason', ['expert_no_show', 'refund'])
+          .limit(1);
+        hasRefund = (refunds && refunds.length > 0) || false;
+      }
+      
+      // Also check call session refunds
+      if (!hasRefund && callSession) {
+        const callSessionIsUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(callSession.id);
+        if (callSessionIsUUID) {
+          const { data: callRefunds } = await supabase
+            .from('wallet_transactions')
+            .select('id')
+            .eq('reference_id', callSession.id)
+            .eq('reference_type', 'call_session')
+            .eq('type', 'credit')
+            .in('reason', ['expert_no_show', 'refund'])
+            .limit(1);
+          hasRefund = (callRefunds && callRefunds.length > 0) || false;
+        } else {
+          const { data: callRefunds } = await supabase
+            .from('wallet_transactions')
+            .select('id')
+            .eq('metadata->>reference_id', callSession.id)
+            .eq('reference_type', 'call_session')
+            .eq('type', 'credit')
+            .in('reason', ['expert_no_show', 'refund'])
+            .limit(1);
+          hasRefund = (callRefunds && callRefunds.length > 0) || false;
+        }
+      }
+      
+      if (hasRefund) {
+        console.log('🔄 Refund detected for appointment, overriding status to cancelled:', appointment.id);
+        status = 'cancelled';
+      }
     }
 
     // Calculate actual duration from call session
@@ -379,7 +444,10 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
       channelName: appointment.channel_name || callSession?.channel_name || undefined,
       token: appointment.token || callSession?.agora_token || undefined,
       appointmentDate: appointment.appointment_date, // Store original date string for accurate comparison
-    };
+      // IMPORTANT: Include call_session status to detect if call was disconnected
+      // This helps differentiate between "first time scheduled" vs "disconnected and available"
+      callSessionStatus: callSession?.status || undefined
+    } as Session & { callSessionStatus?: string };
   }, [fetchCallSession]);
 
   // Update ref when function changes
@@ -596,16 +664,80 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
             if (callSession.status === 'active') {
               const callSessionTime = new Date(callSession.created_at);
               const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
-              status = callSessionTime >= thirtyMinutesAgo ? 'in-progress' : (isPast ? 'completed' : 'scheduled');
+              // IMPORTANT: Don't auto-complete sessions just because time passed
+              // Only mark as in-progress if recently started, otherwise keep as scheduled
+              status = callSessionTime >= thirtyMinutesAgo ? 'in-progress' : 'scheduled';
             } else if (callSession.status === 'completed' || callSession.status === 'ended') {
               status = 'completed';
             } else {
-              status = isPast ? 'completed' : 'scheduled';
+              // IMPORTANT: Don't auto-complete sessions just because time passed
+              // Only mark as completed if explicitly set in database
+              status = 'scheduled';
             }
           } else if (isPast && (appointmentStatus === 'scheduled' || appointmentStatus === 'pending' || appointmentStatus === 'confirmed')) {
             status = 'no-show';
           } else if (appointmentStatus === 'pending' || appointmentStatus === 'confirmed') {
             status = 'scheduled';
+          }
+          
+          // IMPORTANT: Override status to 'cancelled' if refund was processed
+          // Check refund only if status would be in-progress to avoid unnecessary queries
+          if (status === 'in-progress' || (callSession && callSession.status === 'active')) {
+            const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(appointment.id);
+            
+            let hasRefund = false;
+            if (isUUID) {
+              const { data: refunds } = await supabase
+                .from('wallet_transactions')
+                .select('id')
+                .eq('reference_id', appointment.id)
+                .eq('reference_type', 'appointment')
+                .eq('type', 'credit')
+                .in('reason', ['expert_no_show', 'refund'])
+                .limit(1);
+              hasRefund = (refunds && refunds.length > 0) || false;
+            } else {
+              const { data: refunds } = await supabase
+                .from('wallet_transactions')
+                .select('id')
+                .eq('metadata->>reference_id', appointment.id)
+                .eq('reference_type', 'appointment')
+                .eq('type', 'credit')
+                .in('reason', ['expert_no_show', 'refund'])
+                .limit(1);
+              hasRefund = (refunds && refunds.length > 0) || false;
+            }
+            
+            // Also check call session refunds
+            if (!hasRefund && callSession) {
+              const callSessionIsUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(callSession.id);
+              if (callSessionIsUUID) {
+                const { data: callRefunds } = await supabase
+                  .from('wallet_transactions')
+                  .select('id')
+                  .eq('reference_id', callSession.id)
+                  .eq('reference_type', 'call_session')
+                  .eq('type', 'credit')
+                  .in('reason', ['expert_no_show', 'refund'])
+                  .limit(1);
+                hasRefund = (callRefunds && callRefunds.length > 0) || false;
+              } else {
+                const { data: callRefunds } = await supabase
+                  .from('wallet_transactions')
+                  .select('id')
+                  .eq('metadata->>reference_id', callSession.id)
+                  .eq('reference_type', 'call_session')
+                  .eq('type', 'credit')
+                  .in('reason', ['expert_no_show', 'refund'])
+                  .limit(1);
+                hasRefund = (callRefunds && callRefunds.length > 0) || false;
+              }
+            }
+            
+            if (hasRefund) {
+              console.log('🔄 Refund detected in batch fetch, overriding status to cancelled:', appointment.id);
+              status = 'cancelled';
+            }
           }
 
           // Calculate actual duration
@@ -848,7 +980,7 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
             // Check for call session payment
             const { data: callSession } = await supabase
               .from('call_sessions')
-              .select('id, cost, user_id, currency, payment_status')
+              .select('id, cost, user_id, currency, payment_status, status')
               .eq('appointment_id', sessionId)
               .order('created_at', { ascending: false })
               .limit(1)
@@ -894,7 +1026,29 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
               }
 
               if (existingRefunds && existingRefunds.length > 0) {
-                // Refund already processed
+                // Refund already processed - but check if status needs to be updated
+                console.log('ℹ️ Refund already processed, checking if status needs update');
+                
+                // Check if call session is still active but refund was processed
+                if (callSession && (callSession.status === 'active' || callSession.status === 'pending')) {
+                  // Update call session status to ended
+                  await supabase
+                    .from('call_sessions')
+                    .update({ 
+                      status: 'ended',
+                      end_time: new Date().toISOString()
+                    })
+                    .eq('id', callSession.id);
+                  
+                  // Update appointment status to cancelled
+                  await supabase
+                    .from('appointments')
+                    .update({ status: 'cancelled' })
+                    .eq('id', sessionId)
+                    .neq('status', 'cancelled');
+                  
+                  console.log('✅ Updated session status to ended/cancelled after refund check');
+                }
               } else {
                 // Process refund via call session edge function
                 const { data: refundData, error: refundError } = await supabase.functions.invoke('process-call-refund', {
@@ -910,6 +1064,7 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
                   console.error('Error processing call session refund:', refundError);
                 } else if (refundData?.success) {
                   toast.success('Refund has been processed and credited to user wallet.');
+                  // Status will be updated by the edge function
                 }
               }
             } else {
@@ -953,7 +1108,8 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
 
               // Find payment where this appointment ID is in metadata->appointment_ids array
               const paymentInArray = allAppointmentPayments?.find(transaction => {
-                const metadata = transaction.metadata || {};
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const metadata = (transaction.metadata as any) || {};
                 const appointmentIds = metadata.appointment_ids || [];
                 return Array.isArray(appointmentIds) && appointmentIds.includes(sessionId);
               });
@@ -990,7 +1146,8 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
                   .in('reason', ['expert_no_show', 'refund']);
 
                 const refundInArray = allRefunds?.find(refund => {
-                  const metadata = refund.metadata || {};
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  const metadata = (refund.metadata as any) || {};
                   const appointmentIds = metadata.appointment_ids || [];
                   return Array.isArray(appointmentIds) && appointmentIds.includes(sessionId);
                 });
@@ -1102,13 +1259,31 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
         paymentReferenceType = 'call_session';
 
         // Check if refund already processed
-        const { data: existingRefunds } = await supabase
-          .from('wallet_transactions')
-          .select('id')
-          .eq('reference_id', callSession.id)
-          .eq('reference_type', 'call_session')
-          .eq('type', 'credit')
-          .in('reason', ['expert_no_show', 'refund']);
+        // Validate UUID before querying
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(callSession.id);
+        
+        let existingRefunds: any[] = [];
+        if (isUUID) {
+          // Query by reference_id if it's a valid UUID
+          const { data } = await supabase
+            .from('wallet_transactions')
+            .select('id')
+            .eq('reference_id', callSession.id)
+            .eq('reference_type', 'call_session')
+            .eq('type', 'credit')
+            .in('reason', ['expert_no_show', 'refund']);
+          existingRefunds = data || [];
+        } else {
+          // Query by metadata if it's not a UUID
+          const { data } = await supabase
+            .from('wallet_transactions')
+            .select('id')
+            .eq('metadata->>reference_id', callSession.id)
+            .eq('reference_type', 'call_session')
+            .eq('type', 'credit')
+            .in('reason', ['expert_no_show', 'refund']);
+          existingRefunds = data || [];
+        }
 
           if (existingRefunds && existingRefunds.length > 0) {
             toast.info('Refund has already been processed for this session');
@@ -1169,7 +1344,8 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
           .order('created_at', { ascending: false });
 
         const paymentInArray = allAppointmentPayments?.find(transaction => {
-          const metadata = transaction.metadata || {};
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const metadata = (transaction.metadata as any) || {};
           const appointmentIds = metadata.appointment_ids || [];
           return Array.isArray(appointmentIds) && appointmentIds.includes(sessionId);
         });
@@ -1205,7 +1381,8 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
             .in('reason', ['expert_no_show', 'refund']);
 
           const refundInArray = allRefunds?.find(refund => {
-            const metadata = refund.metadata || {};
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const metadata = (refund.metadata as any) || {};
             const appointmentIds = metadata.appointment_ids || [];
             return Array.isArray(appointmentIds) && appointmentIds.includes(sessionId);
           });

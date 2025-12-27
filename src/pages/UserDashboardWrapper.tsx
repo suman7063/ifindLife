@@ -23,6 +23,7 @@ import ProgressTrackingSection from '@/components/user/dashboard/sections/Progre
 import ReviewsSection from '@/components/user/dashboard/sections/ReviewsSection';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 
+
 const UserDashboardWrapper = () => {
   const simpleAuth = useSimpleAuth();
   const navigate = useNavigate();

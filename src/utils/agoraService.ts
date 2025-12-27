@@ -72,25 +72,39 @@ export const joinCall = async (
   
   // Validate App ID
   if (!resolvedAppId || resolvedAppId.trim() === '') {
-    throw new Error('App ID is required to join call. Set VITE_AGORA_APP_ID in .env file');
+    const errorMsg = 'App ID is required to join call. Set VITE_AGORA_APP_ID in .env file';
+    console.error('❌', errorMsg);
+    console.error('📋 Current AGORA_CONFIG:', AGORA_CONFIG);
+    throw new Error(errorMsg);
   }
   
   if (resolvedAppId.length !== 32) {
-    throw new Error(`Invalid App ID format: expected 32 characters, got ${resolvedAppId.length}. Check VITE_AGORA_APP_ID in .env file`);
+    const errorMsg = `Invalid App ID format: expected 32 characters, got ${resolvedAppId.length}. Check VITE_AGORA_APP_ID in .env file`;
+    console.error('❌', errorMsg);
+    console.error('📋 App ID value:', resolvedAppId.substring(0, 8) + '...');
+    throw new Error(errorMsg);
   }
   
   const userId = uid || Math.floor(Math.random() * 1000000);
   
   // Handle token: if null/undefined/empty, pass null to SDK for tokenless mode
+  // BUT: If App ID requires token-based auth, we need a valid token
   const tokenForJoin = token && token !== 'null' && token !== '' && token !== 'undefined' 
     ? token 
     : null;
   
+  // Warn if token is missing but might be required
+  if (!tokenForJoin) {
+    console.warn('⚠️ No token provided - using tokenless mode. If your Agora App ID requires token-based auth, this may fail.');
+  }
+  
   console.log('🔍 Joining Agora call:', {
-    appId: resolvedAppId,
+    appId: resolvedAppId.substring(0, 8) + '...' + resolvedAppId.substring(24), // Show first 8 and last 8 chars
+    appIdLength: resolvedAppId.length,
     channelName,
     uid: userId,
     hasToken: !!tokenForJoin,
+    tokenLength: tokenForJoin ? tokenForJoin.length : 0,
     callType
   });
   
@@ -112,8 +126,101 @@ export const joinCall = async (
     }
     
     // Join the channel
-    await client.join(resolvedAppId, channelName, tokenForJoin, userId);
-    console.log('✅ Agora: Joined channel:', channelName, 'with App ID:', resolvedAppId, 'User ID:', userId);
+    try {
+      console.log('🔗 Attempting to join Agora channel...', {
+        appId: resolvedAppId.substring(0, 8) + '...' + resolvedAppId.substring(24),
+        channelName,
+        uid: userId,
+        hasToken: !!tokenForJoin,
+        tokenLength: tokenForJoin ? tokenForJoin.length : 0
+      });
+      
+      await client.join(resolvedAppId, channelName, tokenForJoin, userId);
+      console.log('✅ Agora: Successfully joined channel:', channelName, 'User ID:', userId);
+    } catch (joinError: any) {
+      console.error('❌ Agora join failed:', {
+        error: joinError,
+        message: joinError?.message,
+        code: joinError?.code,
+        name: joinError?.name,
+        appId: resolvedAppId.substring(0, 8) + '...',
+        appIdLength: resolvedAppId.length,
+        channelName,
+        hasToken: !!tokenForJoin,
+        tokenLength: tokenForJoin ? tokenForJoin.length : 0,
+        uid: userId
+      });
+      
+      // Provide helpful error message based on error type
+      // Check for various connection error patterns
+      const errorMessage = joinError?.message || '';
+      const errorCode = joinError?.code || '';
+      const errorName = joinError?.name || '';
+      
+      // Check for "invalid token" or "authorized failed" errors (case insensitive)
+      const errorMessageLower = errorMessage.toLowerCase();
+      if (errorMessageLower.includes('invalid token') || 
+          errorMessageLower.includes('authorized failed') ||
+          errorMessageLower.includes('authorization failed') ||
+          errorMessageLower.includes('token invalid') ||
+          errorMessageLower.includes('token error')) {
+        const errorMsg = 'Invalid Agora token. The token may be expired, incorrectly generated, or doesn\'t match the channel/user. Please ensure:\n1. Token is generated with correct AGORA_APP_CERTIFICATE\n2. Token is not expired (check expireTime parameter)\n3. Token matches the exact channel name and user ID\n4. Token role matches your usage (publisher/subscriber)\n5. AGORA_APP_CERTIFICATE is correctly set in Supabase Edge Function';
+        console.error('❌', errorMsg);
+        console.error('📋 Token details:', {
+          hasToken: !!tokenForJoin,
+          tokenLength: tokenForJoin ? tokenForJoin.length : 0,
+          tokenPreview: tokenForJoin ? tokenForJoin.substring(0, 30) + '...' : 'null',
+          channelName,
+          uid: userId,
+          appId: resolvedAppId.substring(0, 8) + '...'
+        });
+        throw new Error(errorMsg);
+      }
+      
+      // Check for "dynamic use static key" error - App ID requires token but token is missing/invalid
+      if (errorMessage.includes('dynamic use static key') || 
+          (errorMessage.includes('CAN_NOT_GET_GATEWAY_SERVER') && errorMessage.includes('dynamic'))) {
+        const errorMsg = 'Your Agora App ID requires token-based authentication, but no valid token was provided. Please ensure:\n1. Token is generated correctly using AGORA_APP_CERTIFICATE\n2. Token is not expired\n3. Token matches the channel name and user ID\n4. AGORA_APP_CERTIFICATE is set in your Supabase Edge Function environment';
+        console.error('❌', errorMsg);
+        console.error('📋 Token status:', {
+          hasToken: !!tokenForJoin,
+          tokenLength: tokenForJoin ? tokenForJoin.length : 0,
+          tokenPreview: tokenForJoin ? tokenForJoin.substring(0, 20) + '...' : 'null'
+        });
+        throw new Error(errorMsg);
+      }
+      
+      // Check for connection/gateway errors (but skip if it's a token error)
+      if ((errorMessage.includes('CAN_NOT_GET_GATEWAY_SERVER') || 
+          errorMessage.includes('gateway') ||
+          errorMessage.includes('network') ||
+          errorMessage.includes('connection') ||
+          errorCode === 'CAN_NOT_GET_GATEWAY_SERVER' ||
+          errorCode === 'INVALID_APP_ID' ||
+          errorCode === 'INVALID_CHANNEL_NAME' ||
+          errorName === 'NetworkError' ||
+          errorName === 'ConnectionError') &&
+          !errorMessageLower.includes('token') && 
+          !errorMessageLower.includes('authorized') &&
+          !errorMessageLower.includes('authorization')) {
+        const errorMsg = 'Failed to connect to Agora servers. Please check:\n1. VITE_AGORA_APP_ID is set correctly in .env file (32 characters)\n2. Your internet connection is stable\n3. Agora App ID is valid and active\n4. Token is generated correctly (if App ID requires token-based auth)';
+        console.error('❌', errorMsg);
+        throw new Error(errorMsg);
+      }
+      
+      // Check for token-related errors
+      if (errorMessage.includes('token') || errorCode === 'INVALID_TOKEN' || errorCode === 'TOKEN_EXPIRED') {
+        const errorMsg = 'Token authentication failed. Please check:\n1. Token is valid and not expired\n2. Token was generated with correct App ID and channel name\n3. Token role matches your usage (publisher/subscriber)';
+        console.error('❌', errorMsg);
+        throw new Error(errorMsg);
+      }
+      
+      // Generic error - include original message if available
+      const genericErrorMsg = errorMessage 
+        ? `Failed to join Agora call: ${errorMessage}`
+        : 'Failed to connect to Agora servers. Please check your internet connection and Agora configuration.';
+      throw new Error(genericErrorMsg);
+    }
     
     // Create local audio track
     const localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack({

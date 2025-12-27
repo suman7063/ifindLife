@@ -84,22 +84,27 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
   const lastModalTriggerTimeRef = useRef<number>(0); // Track last time modal was triggered
   const callActiveStartTimeRef = useRef<number>(0); // Track when call became active (to prevent showing on first connection)
 
-  // Start duration timer
-  const startDurationTimer = useCallback(() => {
+  // Start duration timer (with optional start time for resume)
+  const startDurationTimer = useCallback((startTime?: Date) => {
     if (durationTimerRef.current) {
       clearInterval(durationTimerRef.current);
     }
 
-    if (!callStartTimeRef.current) {
+    // Use provided start time (for resume) or current time (new call)
+    if (startTime) {
+      callStartTimeRef.current = startTime;
+      console.log('🔄 User: Resuming timer from provided start_time:', startTime.toISOString());
+    } else if (!callStartTimeRef.current) {
       callStartTimeRef.current = new Date();
+      console.log('🆕 User: Starting new timer from current time:', callStartTimeRef.current.toISOString());
     }
 
     const updateDuration = () => {
       if (!callStartTimeRef.current) return;
       
       const now = Date.now();
-      const startTime = callStartTimeRef.current.getTime();
-      const duration = Math.floor((now - startTime) / 1000);
+      const startTimeMs = callStartTimeRef.current.getTime();
+      const duration = Math.floor((now - startTimeMs) / 1000);
       
       setFlowState(prev => ({ ...prev, duration }));
     };
@@ -174,6 +179,21 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
             clearTimeout(reconnectingTimeoutRef.current);
             reconnectingTimeoutRef.current = null;
           }
+          
+          // IMPORTANT: If call is connected and "Call ended by expert" message is shown,
+          // clear it immediately - this handles expert rejoin scenario
+          // Use functional update to ensure we have the latest state
+          setFlowState(prev => {
+            if (prev.showExpertEndCallConfirmation || prev.expertEndedCall) {
+              console.log('✅ Call connected - clearing "Call ended by expert" message (expert may have rejoined)');
+              return {
+                ...prev,
+                showExpertEndCallConfirmation: false,
+                expertEndedCall: false
+              };
+            }
+            return prev;
+          });
           
           // IMPORTANT: If we're rejoining, close modal and reset flags
           if (isRejoiningRef.current) {
@@ -292,16 +312,48 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
             reconnectingTimeoutRef.current = null;
           }
           
-          // IMPORTANT: Prevent auto-reconnect by leaving the channel
-          // User must manually click "Rejoin" button
-          console.log('🚫 Preventing auto-reconnect - user must manually rejoin');
-          if (clientRef.current) {
-            // Leave channel to prevent auto-reconnect (fire and forget)
-            clientRef.current.leave().then(() => {
-              console.log('✅ Left channel to prevent auto-reconnect');
-            }).catch((leaveError) => {
-              console.warn('⚠️ Error leaving channel:', leaveError);
-            });
+          // IMPORTANT: For appointment calls, allow auto-reconnect
+          // For manual calls, prevent auto-reconnect (user must manually rejoin)
+          // Check if this is an appointment call by checking if call session has appointment_id
+          // We need to check the database to be sure, but for now check callSessionId format
+          // Appointment calls have callSessionId starting with 'call_' (format: call_<appointment_id>_<timestamp>)
+          // Manual calls have UUID format callSessionId
+          let isAppointmentCall = false;
+          if (flowState.callSessionId) {
+            // Check format: appointment calls start with 'call_'
+            isAppointmentCall = flowState.callSessionId.startsWith('call_');
+            
+            // Also check if we have appointment_id stored in sessionStorage or state
+            // This is more reliable than format checking
+            try {
+              const storedCallData = sessionStorage.getItem('user_call_data');
+              if (storedCallData) {
+                const parsed = JSON.parse(storedCallData);
+                if (parsed.appointmentId || parsed.isAppointment) {
+                  isAppointmentCall = true;
+                }
+              }
+            } catch {
+              // Ignore parse errors
+            }
+          }
+          
+          if (isAppointmentCall) {
+            // Appointment call - allow Agora to auto-reconnect automatically
+            console.log('🔄 Appointment call detected - allowing auto-reconnect (user side)');
+            // Don't leave channel - let Agora SDK handle automatic reconnection
+            // Agora will automatically try to reconnect when connection is restored
+          } else {
+            // Manual call - prevent auto-reconnect, user must manually rejoin
+            console.log('🚫 Manual call detected - preventing auto-reconnect - user must manually rejoin');
+            if (clientRef.current) {
+              // Leave channel to prevent auto-reconnect (fire and forget)
+              clientRef.current.leave().then(() => {
+                console.log('✅ Left channel to prevent auto-reconnect');
+              }).catch((leaveError) => {
+                console.warn('⚠️ Error leaving channel:', leaveError);
+              });
+            }
           }
           
           // Mark as disconnected
@@ -361,7 +413,21 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
 
       // Set up event listeners
       client.on('user-published', async (user, mediaType) => {
-        console.log('👤 User published:', user.uid, mediaType);
+        console.log('👤 Expert published (may have rejoined):', user.uid, mediaType);
+        
+        // IMPORTANT: If expert republishes (rejoins), clear "Call ended by expert" message immediately
+        // This is the most reliable way to detect expert rejoin
+        setFlowState(prev => {
+          if (prev.showExpertEndCallConfirmation || prev.expertEndedCall) {
+            console.log('✅ Expert republished (rejoined) - forcefully clearing "Call ended by expert" message');
+            return {
+              ...prev,
+              showExpertEndCallConfirmation: false,
+              expertEndedCall: false
+            };
+          }
+          return prev;
+        });
         
         await client.subscribe(user, mediaType);
         
@@ -497,6 +563,14 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
 
       // Join the call
       const actualCallType = flowState.callType || 'video';
+      console.log('🔗 User joining Agora call with:', {
+        channelName: callData.channelName,
+        callType: actualCallType,
+        uid: callData.agoraUid,
+        hasToken: !!callData.agoraToken,
+        tokenLength: callData.agoraToken ? callData.agoraToken.length : 0
+      });
+      
       const { localAudioTrack, localVideoTrack } = await joinCall(
         {
           channelName: callData.channelName,
@@ -506,6 +580,75 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
         },
         client
       );
+      
+      // IMPORTANT: Check for users already in the channel after joining
+      // This handles the case where the expert joined before the user
+      // Use a small delay to ensure remoteUsers array is populated
+      setTimeout(() => {
+        console.log('🔍 Checking for users already in channel...');
+        const remoteUsers = client.remoteUsers || [];
+        console.log('📊 Current remote users count:', remoteUsers.length);
+        
+        if (remoteUsers.length > 0) {
+          console.log('✅ Found', remoteUsers.length, 'user(s) already in channel:', remoteUsers.map(u => ({ uid: u.uid, hasAudio: u.hasAudio, hasVideo: u.hasVideo })));
+          // Subscribe to already published tracks
+          remoteUsers.forEach(async (remoteUser) => {
+            try {
+              if (remoteUser.hasAudio) {
+                console.log('📢 Subscribing to existing audio track from user:', remoteUser.uid);
+                await client.subscribe(remoteUser, 'audio');
+                
+                // Play remote audio
+                if (remoteUser.audioTrack) {
+                  try {
+                    remoteUser.audioTrack.setVolume(100);
+                    let audioElement = document.getElementById(`remote-audio-${remoteUser.uid}`) as HTMLAudioElement;
+                    if (!audioElement) {
+                      audioElement = document.createElement('audio');
+                      audioElement.id = `remote-audio-${remoteUser.uid}`;
+                      audioElement.autoplay = true;
+                      audioElement.setAttribute('playsinline', 'true');
+                      document.body.appendChild(audioElement);
+                    }
+                    await remoteUser.audioTrack.play();
+                    console.log('✅ Playing existing remote audio track from user:', remoteUser.uid);
+                  } catch (audioError) {
+                    console.warn('⚠️ Could not play existing remote audio:', audioError);
+                  }
+                }
+              }
+              
+              if (remoteUser.hasVideo) {
+                console.log('📹 Subscribing to existing video track from user:', remoteUser.uid);
+                await client.subscribe(remoteUser, 'video');
+                
+                // Play remote video
+                if (remoteUser.videoTrack && remoteVideoRef.current && actualCallType === 'video') {
+                  try {
+                    await remoteUser.videoTrack.play(remoteVideoRef.current);
+                    console.log('✅ Playing existing remote video track from user:', remoteUser.uid);
+                  } catch (videoError) {
+                    console.warn('⚠️ Could not play existing remote video:', videoError);
+                  }
+                }
+              }
+              
+              // Add to remote users state
+              setFlowState(prev => ({
+                ...prev,
+                callState: prev.callState ? {
+                  ...prev.callState,
+                  remoteUsers: [...prev.callState.remoteUsers.filter(u => u.uid !== remoteUser.uid), remoteUser]
+                } : null
+              }));
+            } catch (subscribeError) {
+              console.error('❌ Error subscribing to existing user:', subscribeError);
+            }
+          });
+        } else {
+          console.log('ℹ️ No users found in channel yet - waiting for expert to join...');
+        }
+      }, 500); // Small delay to ensure remoteUsers is populated
 
       // Play local video if video call - ensure it plays immediately if ref is ready
         if (localVideoTrack && actualCallType === 'video') {
@@ -585,8 +728,16 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
         console.error('❌ localAudioTrack is null!');
       }
 
-      // Set call start time
-      callStartTimeRef.current = new Date();
+      // IMPORTANT: Resume timer from call session start_time if available (for resume scenario)
+      // Otherwise use current time (new call)
+      if (callData.start_time) {
+        callStartTimeRef.current = new Date(callData.start_time);
+        console.log('🔄 User: Resuming timer from call session start_time:', callStartTimeRef.current.toISOString());
+      } else {
+        callStartTimeRef.current = new Date();
+        console.log('🆕 User: Starting new timer from current time:', callStartTimeRef.current.toISOString());
+      }
+      
       hasBeenConnectedRef.current = true;
       
       // IMPORTANT: Mark payment as processed when call successfully connects
@@ -604,8 +755,8 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
         duration: 0
       }));
 
-      // Start timer
-      startDurationTimer();
+      // Start timer with correct start time (resume or new)
+      startDurationTimer(callStartTimeRef.current);
       
       // Update session status to active
       try {
@@ -1158,7 +1309,7 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
 
       const callData = JSON.parse(storedData);
       
-      // Verify session is still active
+      // Verify session is still active and get start_time for timer resume
       const { data: session } = await supabase
         .from('call_sessions')
         .select('status, start_time, selected_duration')
@@ -1178,11 +1329,22 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
         return false;
       }
 
-      // Check 10-minute grace window
-      if (callData.callStartTime) {
-        const callStartTime = new Date(callData.callStartTime);
+      // IMPORTANT: Use start_time from call_sessions table (source of truth)
+      // This ensures timer continues from where it left off, not from beginning
+      let actualStartTime: Date | null = null;
+      if (session.start_time) {
+        actualStartTime = new Date(session.start_time);
+        console.log('🔄 User rejoin: Using start_time from call_sessions:', actualStartTime.toISOString());
+      } else if (callData.callStartTime) {
+        // Fallback to stored start time if call_sessions doesn't have it yet
+        actualStartTime = new Date(callData.callStartTime);
+        console.log('🔄 User rejoin: Using stored callStartTime:', actualStartTime.toISOString());
+      }
+
+      // Check 10-minute grace window (only if we have a start time)
+      if (actualStartTime) {
         const now = new Date();
-        const timeDiff = now.getTime() - callStartTime.getTime();
+        const timeDiff = now.getTime() - actualStartTime.getTime();
         const minutesDiff = timeDiff / (1000 * 60);
         
         // Check if more than 10 minutes have passed since call start
@@ -1200,9 +1362,11 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
         }
       }
 
-      // Restore call start time
-      if (callData.callStartTime) {
-        callStartTimeRef.current = new Date(callData.callStartTime);
+      // IMPORTANT: Update callData with start_time from database for timer resume
+      if (actualStartTime) {
+        callData.start_time = actualStartTime.toISOString();
+        callStartTimeRef.current = actualStartTime;
+        console.log('✅ User rejoin: Updated callData with start_time for timer resume');
       }
 
       // IMPORTANT: Mark payment as already processed for rejoin (prevents duplicate deduction)
@@ -1263,8 +1427,90 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
           console.log('📡 Call session status update received:', payload);
           const updatedSession = payload.new as { status: string; end_time?: string };
           
+          // IMPORTANT: If call session status changes back to 'active', clear "Call ended" message
+          // This handles the case when expert rejoins - the call becomes active again
+          if (updatedSession.status === 'active') {
+            console.log('✅ Call session became active again (expert may have rejoined) - forcefully clearing "Call ended" message');
+            // Forcefully clear the "Call ended" message and dialog - ALWAYS clear, don't check condition
+            setFlowState(prev => {
+              console.log('🔄 Clearing "Call ended by expert" message because call is active again', {
+                wasShowing: prev.showExpertEndCallConfirmation || prev.expertEndedCall,
+                isInCall: prev.isInCall,
+                isJoined: prev.callState?.isJoined
+              });
+              return {
+                ...prev,
+                showExpertEndCallConfirmation: false,
+                expertEndedCall: false
+              };
+            });
+            return;
+          }
+          
+          // IMPORTANT: Also check if status is 'pending' (expert preparing to join)
+          // This can happen during rejoin when status temporarily changes
+          if (updatedSession.status === 'pending') {
+            console.log('✅ Call session status is pending (expert may be rejoining) - clearing "Call ended" message');
+            setFlowState(prev => {
+              if (prev.showExpertEndCallConfirmation || prev.expertEndedCall) {
+                console.log('🔄 Clearing "Call ended by expert" message because call is pending (expert rejoining)');
+                return {
+                  ...prev,
+                  showExpertEndCallConfirmation: false,
+                  expertEndedCall: false
+                };
+              }
+              return prev;
+            });
+            // Don't return - continue to check for 'ended' status below
+          }
+          
           if (updatedSession.status === 'ended') {
-            console.log('🔴 Call ended by expert (detected via real-time)');
+            // IMPORTANT: Only show "Call ended by expert" if call was actually active
+            // Prevent false positives from race conditions or immediate status updates
+            // This is especially important when expert rejoins - the status might temporarily
+            // be updated to 'ended' during the rejoin process
+            const callActiveDuration = callActiveStartTimeRef.current > 0 
+              ? Date.now() - callActiveStartTimeRef.current 
+              : 0;
+            
+            // If call was active for less than 2 seconds, it might be a false positive
+            // This prevents showing "Call ended by expert" immediately after joining or during rejoin
+            if (callActiveDuration < 2000 && callActiveDuration > 0) {
+              console.warn('⚠️ Call ended notification received but call was active for less than 2 seconds - might be false positive (expert rejoin?), ignoring', {
+                callActiveDuration,
+                isInCall: flowState.isInCall,
+                isJoined: flowState.callState?.isJoined
+              });
+              return;
+            }
+            
+            // Also check if we're currently in the process of rejoining
+            // If expert is rejoining, don't show "Call ended" message
+            if (isRejoiningRef.current) {
+              console.warn('⚠️ Call ended notification received but user is rejoining - might be false positive, ignoring');
+              return;
+            }
+            
+            // IMPORTANT: Also check if call is still connected
+            // If call is still connected, it might be a false positive (expert rejoin scenario)
+            if (flowState.isInCall && flowState.callState?.isJoined && clientRef.current) {
+              const connectionState = clientRef.current.connectionState;
+              if (connectionState === 'CONNECTED' || connectionState === 'CONNECTING') {
+                console.warn('⚠️ Call ended notification received but call is still connected - might be false positive (expert rejoin?), ignoring', {
+                  connectionState,
+                  callActiveDuration
+                });
+                return;
+              }
+            }
+            
+            console.log('🔴 Call ended by expert (detected via real-time)', {
+              callActiveDuration,
+              wasActive: callActiveDuration > 0,
+              isInCall: flowState.isInCall,
+              isJoined: flowState.callState?.isJoined
+            });
             
             // Stop timer
             if (durationTimerRef.current) {
@@ -1288,6 +1534,42 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
       supabase.removeChannel(sessionChannel);
     };
   }, [flowState.callSessionId, flowState.isInCall, options]);
+
+  // IMPORTANT: Periodic check to clear "Call ended by expert" message if call is actually active
+  // This is a safety net in case the real-time subscription misses the status update
+  useEffect(() => {
+    if (!flowState.callSessionId || !flowState.isInCall) return;
+
+    const checkInterval = setInterval(async () => {
+      // Only check if "Call ended" message is currently shown
+      if (!flowState.showExpertEndCallConfirmation && !flowState.expertEndedCall) {
+        return;
+      }
+
+      // Check if call session is actually active
+      try {
+        const { data: callSession } = await supabase
+          .from('call_sessions')
+          .select('status')
+          .eq('id', flowState.callSessionId)
+          .maybeSingle();
+
+        if (callSession && (callSession.status === 'active' || callSession.status === 'pending')) {
+          // Call is active but message is still showing - clear it
+          console.log('🔄 Periodic check: Call is active but "Call ended" message is showing - clearing it');
+          setFlowState(prev => ({
+            ...prev,
+            showExpertEndCallConfirmation: false,
+            expertEndedCall: false
+          }));
+        }
+      } catch (error) {
+        console.warn('⚠️ Error checking call session status in periodic check:', error);
+      }
+    }, 2000); // Check every 2 seconds
+
+    return () => clearInterval(checkInterval);
+  }, [flowState.callSessionId, flowState.isInCall, flowState.showExpertEndCallConfirmation, flowState.expertEndedCall]);
 
   // Track if we were disconnected when offline
   const wasDisconnectedWhenOfflineRef = useRef<boolean>(false);
@@ -1388,7 +1670,8 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
     const checkConnection = setInterval(() => {
       if (clientRef.current) {
         const connectionState = clientRef.current.connectionState;
-        console.log('🔍 Periodic connection check (user side):', connectionState);
+        // Removed excessive logging - uncomment for debugging if needed
+        // console.log('🔍 Periodic connection check (user side):', connectionState);
         
         // If disconnected or reconnecting for too long, show modal
         // IMPORTANT: Only if call was actually active

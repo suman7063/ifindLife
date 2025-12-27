@@ -69,6 +69,7 @@ interface AgoraCallInterfaceProps {
     agora_uid: number | null;
     user_metadata: UserMetadata;
     call_session_id?: string | null;
+    start_time?: string; // For timer resume
   };
   onCallEnd: () => void;
 }
@@ -173,8 +174,30 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
         call_type: callRequest.call_type,
         has_token: !!callRequest.agora_token,
         has_uid: !!callRequest.agora_uid,
-        call_session_id: callRequest.call_session_id
+        call_session_id: callRequest.call_session_id,
+        has_start_time: !!callRequest.start_time
       });
+
+      // IMPORTANT: If call_session_id exists, fetch start_time from database for timer resume
+      // This ensures timer continues from where it left off when rejoining after disconnect
+      let actualStartTime: string | undefined = callRequest.start_time;
+      if (callRequest.call_session_id && !actualStartTime) {
+        try {
+          const { data: callSession } = await supabase
+            .from('call_sessions')
+            .select('start_time')
+            .eq('id', callRequest.call_session_id)
+            .maybeSingle();
+          
+          if (callSession?.start_time) {
+            actualStartTime = callSession.start_time;
+            console.log('🔄 Expert: Fetched start_time from call_sessions for timer resume:', actualStartTime);
+          }
+        } catch (error) {
+          console.warn('⚠️ Error fetching start_time from call_sessions:', error);
+          // Continue without start_time - will use current time
+        }
+      }
 
       let token = callRequest.agora_token;
       const uid = callRequest.agora_uid || Math.floor(Math.random() * 1000000);
@@ -338,16 +361,28 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
             reconnectingTimeoutRef.current = null;
           }
           
-          // IMPORTANT: Prevent auto-reconnect by leaving the channel
-          // Expert must manually click "Rejoin" button
-          console.log('🚫 Preventing auto-reconnect - expert must manually rejoin');
-          if (clientRef.current) {
-            // Leave channel to prevent auto-reconnect (fire and forget)
-            clientRef.current.leave().then(() => {
-              console.log('✅ Left channel to prevent auto-reconnect');
-            }).catch((leaveError) => {
-              console.warn('⚠️ Error leaving channel:', leaveError);
-            });
+          // IMPORTANT: For appointment calls, allow auto-reconnect
+          // For manual calls, prevent auto-reconnect (expert must manually rejoin)
+          // Check if this is an appointment call by checking if call_session_id exists
+          // Appointment calls have call_session_id, manual calls don't
+          const isAppointmentCall = !!callRequest.call_session_id;
+          
+          if (isAppointmentCall) {
+            // Appointment call - allow Agora to auto-reconnect automatically
+            console.log('🔄 Appointment call detected - allowing auto-reconnect (expert side)');
+            // Don't leave channel - let Agora SDK handle automatic reconnection
+            // Agora will automatically try to reconnect when connection is restored
+          } else {
+            // Manual call - prevent auto-reconnect, expert must manually rejoin
+            console.log('🚫 Manual call detected - preventing auto-reconnect - expert must manually rejoin');
+            if (clientRef.current) {
+              // Leave channel to prevent auto-reconnect (fire and forget)
+              clientRef.current.leave().then(() => {
+                console.log('✅ Left channel to prevent auto-reconnect');
+              }).catch((leaveError) => {
+                console.warn('⚠️ Error leaving channel:', leaveError);
+              });
+            }
           }
           
           // Mark as disconnected
@@ -543,6 +578,14 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
         }
       });
 
+      console.log('🔗 Expert joining Agora call with:', {
+        channelName: callRequest.channel_name,
+        callType: callRequest.call_type,
+        uid: uid,
+        hasToken: !!token,
+        tokenLength: token ? token.length : 0
+      });
+      
       const { localAudioTrack, localVideoTrack } = await joinCall(
         {
           channelName: callRequest.channel_name,
@@ -553,12 +596,78 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
         client
       );
 
-      console.log('✅ Successfully joined Agora channel:', {
+      console.log('✅ Expert successfully joined Agora channel:', {
         channelName: callRequest.channel_name,
         hasAudioTrack: !!localAudioTrack,
         hasVideoTrack: !!localVideoTrack,
         uid
       });
+      
+      // IMPORTANT: Check for users already in the channel after joining
+      // This handles the case where the user joined before the expert
+      // Use a small delay to ensure remoteUsers array is populated
+      setTimeout(() => {
+        console.log('🔍 Expert: Checking for users already in channel...');
+        const remoteUsers = client.remoteUsers || [];
+        console.log('📊 Expert: Current remote users count:', remoteUsers.length);
+        
+        if (remoteUsers.length > 0) {
+          console.log('✅ Expert: Found', remoteUsers.length, 'user(s) already in channel:', remoteUsers.map(u => ({ uid: u.uid, hasAudio: u.hasAudio, hasVideo: u.hasVideo })));
+          // Subscribe to already published tracks
+          remoteUsers.forEach(async (remoteUser) => {
+            try {
+              if (remoteUser.hasAudio) {
+                console.log('📢 Expert: Subscribing to existing audio track from user:', remoteUser.uid);
+                await client.subscribe(remoteUser, 'audio');
+                
+                // Play remote audio
+                if (remoteUser.audioTrack) {
+                  try {
+                    remoteUser.audioTrack.setVolume(100);
+                    let audioElement = document.getElementById(`remote-audio-${remoteUser.uid}`) as HTMLAudioElement;
+                    if (!audioElement) {
+                      audioElement = document.createElement('audio');
+                      audioElement.id = `remote-audio-${remoteUser.uid}`;
+                      audioElement.autoplay = true;
+                      audioElement.setAttribute('playsinline', 'true');
+                      document.body.appendChild(audioElement);
+                    }
+                    await remoteUser.audioTrack.play();
+                    console.log('✅ Expert: Playing existing remote audio track from user:', remoteUser.uid);
+                  } catch (audioError) {
+                    console.warn('⚠️ Expert: Could not play existing remote audio:', audioError);
+                  }
+                }
+              }
+              
+              if (remoteUser.hasVideo) {
+                console.log('📹 Expert: Subscribing to existing video track from user:', remoteUser.uid);
+                await client.subscribe(remoteUser, 'video');
+                
+                // Play remote video
+                if (remoteUser.videoTrack && remoteVideoRef.current && callRequest.call_type === 'video') {
+                  try {
+                    await remoteUser.videoTrack.play(remoteVideoRef.current);
+                    console.log('✅ Expert: Playing existing remote video track from user:', remoteUser.uid);
+                  } catch (videoError) {
+                    console.warn('⚠️ Expert: Could not play existing remote video:', videoError);
+                  }
+                }
+              }
+              
+              // Add to remote users state
+              setCallState(prev => ({
+                ...prev,
+                remoteUsers: [...prev.remoteUsers.filter(u => u.uid !== remoteUser.uid), remoteUser]
+              }));
+            } catch (subscribeError) {
+              console.error('❌ Expert: Error subscribing to existing user:', subscribeError);
+            }
+          });
+        } else {
+          console.log('ℹ️ Expert: No users found in channel yet - waiting for user to join...');
+        }
+      }, 500); // Small delay to ensure remoteUsers is populated
       
       // Play local video if video call
       if (localVideoTrack && callRequest.call_type === 'video' && localVideoRef.current) {
@@ -583,8 +692,21 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
 
       setCallState(newCallState);
       setIsConnecting(false);
-      const startTime = new Date();
+      
+      // IMPORTANT: Resume timer from call session start_time if available (for resume scenario)
+      // Otherwise use current time (new call)
+      // Use actualStartTime fetched from database if callRequest.start_time is not available
+      let startTime: Date;
+      if (actualStartTime) {
+        startTime = new Date(actualStartTime);
+        console.log('🔄 Expert: Resuming timer from call session start_time:', startTime.toISOString());
+      } else {
+        startTime = new Date();
+        console.log('🆕 Expert: Starting new timer from current time:', startTime.toISOString());
+      }
+      
       setCallStartTime(startTime);
+      startDurationTimer(startTime); // Start timer with correct start time
       currentSessionIdRef.current = callRequest.call_session_id || null;
       console.log('✅ Call joined - Session ID set to:', currentSessionIdRef.current);
       console.log('✅ Call request session ID:', callRequest.call_session_id);
@@ -608,7 +730,23 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
               const updatedSession = payload.new as { status: string; end_time?: string };
               
               if (updatedSession.status === 'ended') {
-                console.log('🔴 Call ended by user (detected via real-time)');
+                // IMPORTANT: Only show "Call ended by user" if call was actually active
+                // Prevent false positives from race conditions or immediate status updates
+                const callActiveDuration = callActiveStartTimeRef.current > 0 
+                  ? Date.now() - callActiveStartTimeRef.current 
+                  : 0;
+                
+                // If call was active for less than 2 seconds, it might be a false positive
+                // This prevents showing "Call ended" immediately after joining
+                if (callActiveDuration < 2000 && callActiveDuration > 0) {
+                  console.warn('⚠️ Call ended notification received but call was active for less than 2 seconds - might be false positive, ignoring');
+                  return;
+                }
+                
+                console.log('🔴 Call ended by user (detected via real-time)', {
+                  callActiveDuration,
+                  wasActive: callActiveDuration > 0
+                });
                 
                 // Stop timer
                 if (durationTimerRef.current) {
@@ -666,6 +804,10 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
       // Update session status to active
       if (callRequest.call_session_id) {
         try {
+          // Store call session ID in sessionStorage for chat messages persistence
+          sessionStorage.setItem('expert_call_session', callRequest.call_session_id);
+          console.log('✅ Stored expert call session ID in sessionStorage:', callRequest.call_session_id);
+          
           await supabase
             .from('call_sessions')
             .update({ 
@@ -723,7 +865,12 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
                 : disconnectionReason === 'expert_emergency' 
                   ? 'expert_emergency' 
                   : 'expert_ended');
-          const result = await endCall(currentSessionIdRef.current, finalDuration, 'expert', finalDisconnectionReason as any);
+          const result = await endCall(
+            currentSessionIdRef.current, 
+            finalDuration, 
+            'expert', 
+            finalDisconnectionReason as 'network_error' | 'normal' | 'user_ended' | 'expert_ended' | 'user_misbehaving' | 'expert_emergency'
+          );
           console.log('🔴 Step 8: Database update result:', result);
           if (!result) {
             console.error('❌ Database update returned false!');
@@ -927,10 +1074,15 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
         }
       }
 
-      // Restore call start time if available
+      // IMPORTANT: Update callRequest with start_time from database for timer resume
+      // This ensures timer continues from where it left off, not from beginning
       if (session.start_time) {
-        setCallStartTime(new Date(session.start_time));
-        startDurationTimer(new Date(session.start_time));
+        const actualStartTime = new Date(session.start_time);
+        // Update callRequest to include start_time so handleJoinCall uses it
+        callRequest.start_time = actualStartTime.toISOString();
+        setCallStartTime(actualStartTime);
+        startDurationTimer(actualStartTime);
+        console.log('🔄 Expert rejoin: Using start_time from call_sessions for timer resume:', actualStartTime.toISOString());
       }
 
       // Set rejoining flag to prevent duplicate modals
@@ -942,7 +1094,7 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
       setShowInterruptionModal(false);
       setWasDisconnected(false);
       
-      // Rejoin the call
+      // Rejoin the call (will use start_time from callRequest for timer resume)
       await handleJoinCall();
       
       // Flag will be reset when CONNECTED state is reached
@@ -1117,7 +1269,10 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
     };
   }, []);
 
-  // Auto-join on mount if not already joined
+  // IMPORTANT: Don't auto-join on mount - expert should manually join via button
+  // Auto-join is completely disabled - expert must always manually click "Join Call" button
+  // This prevents accidental auto-joins when starting a new session
+  // Auto-join was causing issues where call would join and immediately end
   useEffect(() => {
     // Prevent duplicate joins - check if client already exists and is connecting/connected
     if (clientRef.current) {
@@ -1128,16 +1283,22 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
       }
     }
 
-    if (!callState.isJoined && !isConnecting && callRequest.channel_name) {
-      console.log('🚀 Auto-joining call on mount...', {
+    // IMPORTANT: Never auto-join - expert must always manually click "Join Call" button
+    // This useEffect only logs - it does NOT trigger handleJoinCall
+    // The "Join Call" button (line 1368) is the ONLY way to join
+    if (callRequest.channel_name) {
+      console.log('⏸️ Expert: Auto-join disabled - expert must manually click "Join Call" button', {
         channel_name: callRequest.channel_name,
-        has_token: !!callRequest.agora_token,
-        has_uid: !!callRequest.agora_uid
+        has_call_session_id: !!callRequest.call_session_id,
+        isJoined: callState.isJoined,
+        isConnecting: isConnecting
       });
-      handleJoinCall();
     }
+    
+    // EXPLICITLY DO NOT CALL handleJoinCall HERE
+    // The only way to join is via the "Join Call" button click handler
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [callRequest.channel_name]);
+  }, [callRequest.channel_name, callRequest.call_session_id]);
 
   // Subscribe to call session status changes (to detect when user ends call)
   // Note: Subscription is set up in handleJoinCall when session ID is available
@@ -1230,8 +1391,23 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
       )}
       
       {!callState.isJoined && !isConnecting && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
-          <p className="text-red-800">⚠️ Not connected. Please wait...</p>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center space-y-4">
+          <p className="text-blue-800 font-medium">
+            {callRequest.call_session_id ? 'Ready to rejoin the call' : 'Ready to join the call'}
+          </p>
+          <p className="text-blue-600 text-sm">
+            {callRequest.call_session_id 
+              ? 'Click the button below to rejoin the call and continue where you left off.'
+              : 'Click the button below to join the call and wait for the user to connect.'}
+          </p>
+          <Button
+            onClick={handleJoinCall}
+            size="lg"
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            <Phone className="w-5 h-5 mr-2" />
+            {callRequest.call_session_id ? 'Rejoin Call' : 'Join Call'}
+          </Button>
         </div>
       )}
       

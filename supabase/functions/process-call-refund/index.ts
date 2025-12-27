@@ -299,31 +299,52 @@ serve(async (req) => {
       console.warn('⚠️ Failed to update wallet_balance field:', updateError)
     }
 
-    // Update call session metadata with refund info
+    // Update call session metadata with refund info AND update status to ended/cancelled
     const { data: existingSession } = await supabaseAdmin
       .from('call_sessions')
-      .select('call_metadata')
+      .select('call_metadata, status, appointment_id')
       .eq('id', callSessionId)
       .single()
 
     const existingMetadata = (existingSession?.call_metadata as Record<string, any>) || {}
     
+    // Update call session with refund info and set status to 'ended' if still active
+    const updateData: any = {
+      call_metadata: {
+        ...existingMetadata,
+        refund: {
+          amount: roundedRefund,
+          status: 'processed',
+          processed_at: new Date().toISOString(),
+          remaining_minutes: remainingMinutes,
+          new_balance: newBalance,
+          transaction_id: transactionData.id
+        }
+      }
+    };
+
+    // If call session is still active, mark it as ended
+    if (existingSession?.status === 'active' || existingSession?.status === 'pending') {
+      updateData.status = 'ended';
+      updateData.end_time = new Date().toISOString();
+      console.log('🔄 Updating call session status to ended after refund');
+    }
+    
     await supabaseAdmin
       .from('call_sessions')
-      .update({
-        call_metadata: {
-          ...existingMetadata,
-          refund: {
-            amount: roundedRefund,
-            status: 'processed',
-            processed_at: new Date().toISOString(),
-            remaining_minutes: remainingMinutes,
-            new_balance: newBalance,
-            transaction_id: transactionData.id
-          }
-        }
-      })
+      .update(updateData)
       .eq('id', callSessionId)
+
+    // Also update appointment status to cancelled if refund was processed
+    if (existingSession?.appointment_id) {
+      await supabaseAdmin
+        .from('appointments')
+        .update({ status: 'cancelled' })
+        .eq('id', existingSession.appointment_id)
+        .neq('status', 'cancelled') // Only update if not already cancelled
+      
+      console.log('🔄 Updated appointment status to cancelled after refund');
+    }
 
     return new Response(
       JSON.stringify({ 

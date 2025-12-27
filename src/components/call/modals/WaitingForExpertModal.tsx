@@ -5,16 +5,23 @@
 
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { UserCheck, Clock, Sparkles, Radio } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { UserCheck, Clock, Sparkles, Radio, Phone } from 'lucide-react';
 
 interface WaitingForExpertModalProps {
   isOpen: boolean;
   expertName: string;
+  onJoinCall?: () => void;
+  showJoinButton?: boolean;
+  callType?: 'audio' | 'video';
 }
 
 const WaitingForExpertModal: React.FC<WaitingForExpertModalProps> = ({
   isOpen,
-  expertName
+  expertName,
+  onJoinCall,
+  showJoinButton = false,
+  callType = 'video'
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
@@ -51,11 +58,13 @@ const WaitingForExpertModal: React.FC<WaitingForExpertModalProps> = ({
               </div>
               
               <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                Waiting for {expertName}
+                {showJoinButton ? `${callType === 'video' ? 'Video' : 'Audio'} Call Ready` : `Waiting for ${expertName}`}
               </DialogTitle>
               
               <DialogDescription className="text-base font-medium text-foreground/80">
-                Your call request has been sent. Waiting for expert to accept...
+                {showJoinButton 
+                  ? `${expertName} has started the ${callType} session. Click "Join Call" to connect.`
+                  : 'Your call request has been sent. Waiting for expert to accept...'}
               </DialogDescription>
             </DialogHeader>
 
@@ -87,13 +96,29 @@ const WaitingForExpertModal: React.FC<WaitingForExpertModalProps> = ({
               </div>
             </div>
 
-            {/* Animated Status Indicator */}
-            <div className="mt-6 flex items-center justify-center gap-2">
-              <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full border border-primary/20">
-                <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-                <span className="text-xs font-medium text-primary">Request Pending</span>
+            {/* Join Call Button or Status Indicator */}
+            {showJoinButton && onJoinCall ? (
+              <div className="mt-6 flex flex-col items-center gap-4">
+                <Button
+                  onClick={onJoinCall}
+                  size="lg"
+                  className="w-full sm:w-auto px-8 py-6 text-lg font-semibold bg-primary hover:bg-primary/90"
+                >
+                  <Phone className="h-5 w-5 mr-2" />
+                  Join {callType === 'video' ? 'Video' : 'Audio'} Call
+                </Button>
+                <p className="text-xs text-muted-foreground text-center">
+                  Click to connect with {expertName}
+                </p>
               </div>
-            </div>
+            ) : (
+              <div className="mt-6 flex items-center justify-center gap-2">
+                <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full border border-primary/20">
+                  <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+                  <span className="text-xs font-medium text-primary">Request Pending</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </DialogContent>

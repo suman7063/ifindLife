@@ -46,6 +46,7 @@ import BlogPost from './pages/BlogPost';
 import UnifiedAssessment from './pages/UnifiedAssessment';
 import AuthTestPage from './pages/AuthTestPage';
 import { Toaster } from '@/components/ui/toaster';
+import { Toaster as SonnerToaster } from 'sonner';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { UserDashboard } from '@/components/user/UserDashboard';
 import { EnhancedExpertSearch } from '@/components/expert/EnhancedExpertSearch';
@@ -208,6 +209,7 @@ function App(): JSX.Element {
   return (
     <QueryClientProvider client={queryClient}>
       <Toaster />
+      <SonnerToaster position="top-right" richColors />
       <BrowserRouter>
         <ScrollToTop />
         <Routes>

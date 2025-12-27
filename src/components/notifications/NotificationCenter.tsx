@@ -53,6 +53,35 @@ export const NotificationCenter: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  // Track which notifications have already triggered popup to prevent infinite loops
+  // Use localStorage to persist across page refreshes
+  const getProcessedNotifications = (): Set<string> => {
+    if (typeof window === 'undefined') return new Set();
+    const stored = localStorage.getItem('processed_notifications');
+    if (stored) {
+      try {
+        const ids = JSON.parse(stored) as string[];
+        // Only keep IDs from last 24 hours to prevent localStorage from growing too large
+        return new Set(ids);
+      } catch {
+        return new Set();
+      }
+    }
+    return new Set();
+  };
+  
+  const addProcessedNotification = (id: string) => {
+    if (typeof window === 'undefined') return;
+    const processed = getProcessedNotifications();
+    processed.add(id);
+    // Store only last 100 notification IDs to prevent localStorage from growing too large
+    const idsArray = Array.from(processed).slice(-100);
+    localStorage.setItem('processed_notifications', JSON.stringify(idsArray));
+  };
+  
+  const isNotificationProcessed = (id: string): boolean => {
+    return getProcessedNotifications().has(id);
+  };
 
   useEffect(() => {
     if (userId) {
@@ -70,14 +99,20 @@ export const NotificationCenter: React.FC = () => {
             table: 'notifications',
             filter: `user_id=eq.${userId}`
           },
-          (payload) => {
+          async (payload) => {
             const newNotif = payload.new as Notification;
-            console.log('🔔 New notification received:', {
+            console.log('🔔 New notification received (real-time):', {
+              id: newNotif.id,
               type: newNotif.type,
               title: newNotif.title,
               reference_id: newNotif.reference_id,
-              hasContent: !!newNotif.content
+              hasContent: !!newNotif.content,
+              userId: userId,
+              timestamp: new Date().toISOString()
             });
+            
+            // Mark as processed to prevent duplicate popups (persists across page refreshes)
+            addProcessedNotification(newNotif.id);
             
             setNotifications(prev => [newNotif, ...prev]);
             setUnreadCount(prev => prev + 1);
@@ -92,15 +127,43 @@ export const NotificationCenter: React.FC = () => {
               // reference_id contains the appointment ID which we can use to join the call
               const sessionId = newNotif.reference_id;
               
-              if (!sessionId) {
-                console.warn('⚠️ session_ready notification missing reference_id (appointment ID)');
-              }
-              
-              console.log('📞 Showing join call popup for session_ready notification:', {
+              console.log('📞 Processing session_ready notification:', {
                 sessionId,
                 title: notificationTitle,
-                content: notificationContent
+                content: notificationContent,
+                notificationId: newNotif.id
               });
+              
+              if (!sessionId) {
+                console.warn('⚠️ session_ready notification missing reference_id (appointment ID)');
+                toast.error('Session ID missing in notification');
+                return;
+              }
+              
+              // Check if user is already in a call for this appointment
+              // If they are, don't show the notification
+              try {
+                // Check if there's an active call session for this appointment
+                const { data: callSession } = await supabase
+                  .from('call_sessions')
+                  .select('id, status, channel_name')
+                  .eq('appointment_id', sessionId)
+                  .eq('status', 'active')
+                  .order('created_at', { ascending: false })
+                  .limit(1)
+                  .maybeSingle();
+                
+                if (callSession) {
+                  console.log('ℹ️ User already has active call session for this appointment, skipping notification:', {
+                    callSessionId: callSession.id,
+                    channelName: callSession.channel_name
+                  });
+                  return; // Don't show notification if already in call
+                }
+              } catch (error) {
+                console.warn('⚠️ Error checking call session:', error);
+                // On error, continue to show notification
+              }
               
               // Dispatch custom event to trigger call interface
               const joinCallEvent = new CustomEvent('joinAppointmentCall', {
@@ -109,10 +172,17 @@ export const NotificationCenter: React.FC = () => {
                   notificationId: newNotif.id
                 }
               });
+              
+              console.log('📡 Dispatching joinAppointmentCall event:', {
+                appointmentId: sessionId,
+                notificationId: newNotif.id
+              });
+              
               window.dispatchEvent(joinCallEvent);
               
               // Show interactive toast with Join button
-              toast.success(notificationTitle, {
+              console.log('🎨 Showing toast notification...');
+              const toastId = toast.success(notificationTitle, {
                 description: notificationContent,
                 duration: 30000, // Show for 30 seconds
                 action: {
@@ -145,9 +215,10 @@ export const NotificationCenter: React.FC = () => {
                 }
               });
               
-              console.log('✅ Join call toast displayed');
+              console.log('✅ Join call toast displayed with ID:', toastId);
             } else {
               // Regular notification - show simple toast
+              console.log('📬 Showing regular notification toast');
               toast.info(notificationTitle, {
                 description: notificationContent,
                 duration: 5000
@@ -182,19 +253,37 @@ export const NotificationCenter: React.FC = () => {
             }
           }
         )
-        .subscribe();
+        .subscribe((status) => {
+          console.log('📡 Notification channel subscription status:', status);
+          if (status === 'SUBSCRIBED') {
+            console.log('✅ Successfully subscribed to real-time notifications for user:', userId);
+          } else if (status === 'CHANNEL_ERROR') {
+            console.error('❌ Notification channel error for user:', userId);
+          } else if (status === 'TIMED_OUT') {
+            console.warn('⏱️ Notification channel timed out for user:', userId);
+          } else if (status === 'CLOSED') {
+            console.warn('🔒 Notification channel closed for user:', userId);
+          }
+        });
 
       return () => {
+        console.log('🧹 Cleaning up notification channel for user:', userId);
         supabase.removeChannel(channel);
       };
+    } else {
+      console.log('⚠️ NotificationCenter: No userId, skipping setup');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   const fetchNotifications = async () => {
-    if (!userId) return;
+    if (!userId) {
+      console.log('⚠️ fetchNotifications: No userId');
+      return;
+    }
 
     try {
+      console.log('📥 Fetching notifications for user:', userId);
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
@@ -202,12 +291,164 @@ export const NotificationCenter: React.FC = () => {
         .order('created_at', { ascending: false })
         .limit(50);
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error fetching notifications:', error);
+        throw error;
+      }
+
+      console.log('✅ Fetched notifications:', data?.length || 0, 'notifications');
+      if (data && data.length > 0) {
+        console.log('📋 Sample notifications:', data.slice(0, 3).map(n => ({
+          id: n.id,
+          type: n.type,
+          title: n.title,
+          read: n.read
+        })));
+        
+        // Check for unread session_ready notifications and trigger popup (only once per notification)
+        const allSessionReady = data.filter(n => n.type === 'session_ready');
+        const unreadSessionReady = allSessionReady.filter(n => 
+          !n.read && 
+          !isNotificationProcessed(n.id) // Only process if not already processed
+        );
+        
+        console.log('📞 Session ready notifications check:', {
+          totalSessionReady: allSessionReady.length,
+          unreadNotProcessed: unreadSessionReady.length,
+          allSessionReadyDetails: allSessionReady.map(n => ({
+            id: n.id,
+            read: n.read,
+            processed: isNotificationProcessed(n.id),
+            reference_id: n.reference_id,
+            title: n.title
+          }))
+        });
+        
+        if (unreadSessionReady.length > 0) {
+          console.log('📞 Found unread session_ready notifications:', unreadSessionReady.length);
+          // Process the most recent one
+          const latestSessionReady = unreadSessionReady[0];
+          console.log('📞 Processing latest session_ready notification:', {
+            id: latestSessionReady.id,
+            reference_id: latestSessionReady.reference_id,
+            title: latestSessionReady.title,
+            read: latestSessionReady.read
+          });
+          
+          // Mark as processed to prevent infinite loops (persists across page refreshes)
+          addProcessedNotification(latestSessionReady.id);
+          console.log('✅ Marked notification as processed:', latestSessionReady.id);
+          
+          // Trigger popup for this notification (same logic as real-time handler)
+          const sessionId = latestSessionReady.reference_id;
+          if (sessionId) {
+            // Check if user is already in a call for this appointment
+            const checkIfAlreadyInCall = async () => {
+              try {
+                // Check if there's an active call session for this appointment
+                const { data: callSession } = await supabase
+                  .from('call_sessions')
+                  .select('id, status, channel_name')
+                  .eq('appointment_id', sessionId)
+                  .eq('status', 'active')
+                  .order('created_at', { ascending: false })
+                  .limit(1)
+                  .maybeSingle();
+                
+                if (callSession) {
+                  console.log('ℹ️ User already has active call session for this appointment, skipping notification:', {
+                    callSessionId: callSession.id,
+                    channelName: callSession.channel_name
+                  });
+                  return true; // Already in call
+                }
+                return false; // Not in call
+              } catch (error) {
+                console.warn('⚠️ Error checking call session:', error);
+                return false; // On error, show notification anyway
+              }
+            };
+            
+            // Check if already in call before showing notification
+            const isAlreadyInCall = await checkIfAlreadyInCall();
+            if (isAlreadyInCall) {
+              console.log('✅ User already in call for this appointment, notification skipped');
+              return; // Don't show notification if already in call
+            }
+            
+            const notificationTitle = latestSessionReady.title || 'Video Session Ready';
+            const notificationContent = latestSessionReady.content || '';
+            
+            console.log('📞 Triggering popup for session_ready notification:', {
+              sessionId,
+              title: notificationTitle,
+              content: notificationContent,
+              notificationId: latestSessionReady.id
+            });
+            
+            // Dispatch custom event to trigger call interface
+            const joinCallEvent = new CustomEvent('joinAppointmentCall', {
+              detail: {
+                appointmentId: sessionId,
+                notificationId: latestSessionReady.id
+              }
+            });
+            
+            console.log('📡 Dispatching joinAppointmentCall event with detail:', joinCallEvent.detail);
+            window.dispatchEvent(joinCallEvent);
+            
+            // Show interactive toast with Join button
+            console.log('🎨 Showing toast popup...');
+            const toastId = toast.success(notificationTitle, {
+              description: notificationContent,
+              duration: 30000,
+              action: {
+                label: 'Join Call',
+                onClick: async () => {
+                  console.log('🔘 Join Call button clicked');
+                  window.dispatchEvent(joinCallEvent);
+                  setTimeout(() => {
+                    window.location.href = '/user-dashboard/booking-history';
+                  }, 500);
+                }
+              },
+              cancel: {
+                label: 'Dismiss',
+                onClick: () => {
+                  console.log('❌ Popup dismissed');
+                }
+              }
+            });
+            
+            console.log('✅ Popup triggered for unread session_ready notification, toast ID:', toastId);
+          } else {
+            console.warn('⚠️ Session ready notification missing reference_id:', {
+              id: latestSessionReady.id,
+              title: latestSessionReady.title,
+              reference_id: latestSessionReady.reference_id
+            });
+          }
+        } else if (allSessionReady.length > 0) {
+          console.log('ℹ️ Found session_ready notifications but all are already processed or read:', {
+            total: allSessionReady.length,
+            unread: allSessionReady.filter(n => !n.read).length,
+            processed: allSessionReady.filter(n => isNotificationProcessed(n.id)).length
+          });
+          console.log('💡 To show popup again, clear localStorage: localStorage.removeItem("processed_notifications")');
+        } else {
+          console.log('ℹ️ No session_ready notifications found in fetched notifications');
+          // Log all notification types for debugging
+          const notificationTypes = [...new Set(data.map(n => n.type))];
+          console.log('📋 Available notification types:', notificationTypes);
+        }
+      }
       
       setNotifications(data || []);
-      setUnreadCount(data?.filter(n => !n.read).length || 0);
+      const unread = data?.filter(n => !n.read).length || 0;
+      setUnreadCount(unread);
+      console.log('📊 Unread count:', unread);
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      console.error('❌ Error fetching notifications:', error);
       toast.error('Failed to load notifications');
     } finally {
       setLoading(false);

@@ -46,8 +46,13 @@ const BookingCard: React.FC<{
   formatTime: (timeStr: string) => string;
   onJoinCall?: (appointmentId: string, expertId: string, expertName: string) => void;
 }> = ({ booking, canJoinCall, navigate, getStatusColor, formatTime, onJoinCall }) => {
+  // For combined bookings, use the actual appointment ID (first booking's ID) instead of combined ID
+  const actualAppointmentId = (booking as any).isCombined && (booking as any).appointmentId
+    ? (booking as any).appointmentId
+    : booking.id;
+  
   const { noShowData, isChecking, reportNoShow } = useExpertNoShow(
-    booking.id,
+    actualAppointmentId,
     booking.appointment_date,
     booking.start_time,
     booking.status
@@ -215,7 +220,13 @@ const BookingCard: React.FC<{
                       <Button
                         size="sm"
                         className="mt-3 w-full sm:w-auto"
-                        onClick={() => onJoinCall(booking.id, booking.expert_id, booking.expert_name)}
+                        onClick={() => {
+                          // Use actual appointment ID for combined bookings
+                          const appointmentIdToUse = (booking as any).isCombined && (booking as any).appointmentId
+                            ? (booking as any).appointmentId
+                            : booking.id;
+                          onJoinCall(appointmentIdToUse, booking.expert_id, booking.expert_name);
+                        }}
                       >
                         <Phone className="h-4 w-4 mr-2" />
                         Join Call
@@ -239,29 +250,159 @@ const BookingHistorySection: React.FC<BookingHistorySectionProps> = ({ user }) =
   const navigate = useNavigate();
   const [isCallModalOpen, setIsCallModalOpen] = useState(false);
   const [selectedExpert, setSelectedExpert] = useState<{id: string; authId: string; name: string; avatar?: string} | null>(null);
-  const [appointmentCallData, setAppointmentCallData] = useState<{callSessionId: string; channelName: string; token: string | null; uid: number; callType: 'audio' | 'video'} | null>(null);
+  const [appointmentCallData, setAppointmentCallData] = useState<{callSessionId: string; channelName: string; token: string | null; uid: number; callType: 'audio' | 'video'; start_time?: string} | null>(null);
 
   useEffect(() => {
     if (user?.id) {
       fetchBookingHistory();
+      checkActiveCallSession();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
+  // Check for active call session on page load/refresh
+  const checkActiveCallSession = async () => {
+    if (!user?.id) return;
+
+    try {
+      // Check if there's an active call session for this user
+      const { data: activeCallSession } = await supabase
+        .from('call_sessions')
+        .select('id, appointment_id, channel_name, call_type, status, start_time')
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (activeCallSession && activeCallSession.appointment_id) {
+        console.log('🔄 Found active call session after page refresh:', {
+          callSessionId: activeCallSession.id,
+          appointmentId: activeCallSession.appointment_id,
+          channelName: activeCallSession.channel_name
+        });
+
+        // Get appointment details
+        const { data: appointment } = await supabase
+          .from('appointments')
+          .select('id, expert_id, channel_name, token')
+          .eq('id', activeCallSession.appointment_id)
+          .maybeSingle();
+
+        if (appointment) {
+          // Get expert details
+          const { data: expert } = await supabase
+            .from('expert_accounts')
+            .select('auth_id, name, profile_picture')
+            .eq('auth_id', appointment.expert_id)
+            .maybeSingle();
+
+          if (expert) {
+            // Set up call data and open modal
+            setSelectedExpert({
+              id: expert.id || expert.auth_id,
+              authId: expert.auth_id,
+              name: expert.name || 'Expert',
+              avatar: expert.profile_picture || undefined
+            });
+
+            const callType = (activeCallSession.call_type === 'video' ? 'video' : 'audio') as 'audio' | 'video';
+            
+            setAppointmentCallData({
+              callSessionId: activeCallSession.id,
+              channelName: activeCallSession.channel_name || appointment.channel_name || '',
+              token: appointment.token,
+              uid: Math.floor(Math.random() * 1000000), // Generate new UID for resume
+              callType: callType,
+              // IMPORTANT: Include start_time for timer resume
+              start_time: activeCallSession.start_time || undefined
+            });
+
+            // IMPORTANT: If call is already active, directly join instead of showing "waiting" modal
+            // User should be able to rejoin the active call immediately
+            setIsCallModalOpen(true);
+            console.log('✅ Opened call modal for active session resume with start_time:', activeCallSession.start_time);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error checking active call session:', error);
+    }
+  };
+
+  // Set up real-time subscription to listen for appointment updates (e.g., when channel_name is added)
+  useEffect(() => {
+    if (!user?.id) return;
+
+    console.log('📡 Setting up real-time subscription for user appointments');
+    
+    const appointmentChannel = supabase
+      .channel(`user-appointments-updates-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'appointments',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          console.log('📡 Appointment updated (real-time):', {
+            appointmentId: payload.new?.id,
+            hasChannelName: !!payload.new?.channel_name,
+            status: payload.new?.status
+          });
+          
+          // Refresh booking history when appointments are updated
+          // This ensures user sees join button when expert starts session
+          fetchBookingHistory();
+        }
+      )
+      .subscribe((status, err) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Real-time subscription active for user appointments');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Real-time subscription error:', err);
+        }
+      });
+
+    return () => {
+      console.log('🧹 Cleaning up real-time subscription for user appointments');
+      supabase.removeChannel(appointmentChannel);
+    };
   }, [user?.id]);
 
   // Handle join call from notification
   const handleJoinCallFromNotification = async (appointmentId: string, expertId: string, expertName: string) => {
     try {
+      // Extract actual appointment ID if it's a combined ID
+      let actualAppointmentId = appointmentId;
+      if (appointmentId.startsWith('combined_')) {
+        // Extract first UUID from combined ID
+        // Format: combined_uuid1_uuid2_uuid3...
+        const uuidPattern = /([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i;
+        const match = appointmentId.match(uuidPattern);
+        if (match && match[1]) {
+          actualAppointmentId = match[1];
+          console.log('🔍 Extracted actual appointment ID from combined ID:', actualAppointmentId, 'from:', appointmentId);
+        } else {
+          console.error('❌ Could not extract UUID from combined ID:', appointmentId);
+          toast.error('Invalid appointment ID. Please try again.');
+          return;
+        }
+      }
+      
       // Get call data for appointment
-      const callData = await joinAppointmentCall(appointmentId);
+      const callData = await joinAppointmentCall(actualAppointmentId);
       if (!callData) {
         toast.error('Call session not ready. Please wait for expert to start the session.');
         return;
       }
 
-      // Get expert details
+      // Get expert details from expert_accounts table
       const { data: expert } = await supabase
-        .from('experts')
-        .select('id, auth_id, name, profile_picture')
+        .from('expert_accounts')
+        .select('auth_id, name, profile_picture')
         .eq('auth_id', expertId)
         .maybeSingle();
 
@@ -273,12 +414,21 @@ const BookingHistorySection: React.FC<BookingHistorySectionProps> = ({ user }) =
         avatar: expert?.profile_picture || undefined
       });
       
+      // Get call type from call session
+      const { data: callSession } = await supabase
+        .from('call_sessions')
+        .select('call_type')
+        .eq('id', callData.callSessionId)
+        .maybeSingle();
+      
+      const callType = (callSession?.call_type === 'video' ? 'video' : 'audio') as 'audio' | 'video';
+      
       setAppointmentCallData({
         callSessionId: callData.callSessionId,
         channelName: callData.channelName,
-        token: callData.token,
-        uid: callData.uid,
-        callType: callData.callType
+        token: callData.agoraToken, // Map agoraToken to token
+        uid: callData.agoraUid, // Map agoraUid to uid
+        callType: callType
       });
       
       setIsCallModalOpen(true);
@@ -293,29 +443,51 @@ const BookingHistorySection: React.FC<BookingHistorySectionProps> = ({ user }) =
     const handleJoinCall = async (event: CustomEvent) => {
       const { appointmentId } = event.detail;
       if (appointmentId) {
-        // Find the booking
-        const booking = bookings.find(b => b.id === appointmentId);
+        // Extract actual appointment ID if it's a combined ID
+        let actualAppointmentId = appointmentId;
+        if (appointmentId.startsWith('combined_')) {
+          // Extract first UUID from combined ID
+          // Format: combined_uuid1_uuid2_uuid3...
+          const uuidPattern = /([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i;
+          const match = appointmentId.match(uuidPattern);
+          if (match && match[1]) {
+            actualAppointmentId = match[1];
+            console.log('🔍 Extracted actual appointment ID from combined ID:', actualAppointmentId);
+          } else {
+            console.warn('⚠️ Could not extract UUID from combined ID:', appointmentId);
+            // Don't proceed if we can't extract a valid UUID
+            return;
+          }
+        }
+        
+        // Find the booking (check both combined ID and actual ID)
+        const booking = bookings.find(b => 
+          b.id === appointmentId || 
+          b.id === actualAppointmentId ||
+          ((b as any).appointmentId === actualAppointmentId)
+        );
+        
         if (booking && booking.channel_name) {
-          // Trigger join call
-          handleJoinCallFromNotification(appointmentId, booking.expert_id, booking.expert_name);
+          // Use the extracted actual appointment ID (already extracted above)
+          handleJoinCallFromNotification(actualAppointmentId, booking.expert_id, booking.expert_name);
         } else {
-          // Fetch booking if not found
+          // Fetch booking if not found - use actual appointment ID
           const { data: appointment } = await supabase
             .from('appointments')
             .select('id, expert_id, expert_name, channel_name')
-            .eq('id', appointmentId)
+            .eq('id', actualAppointmentId)
             .single();
           
           if (appointment && appointment.channel_name) {
-            // Get expert details
+            // Get expert details from expert_accounts table
             const { data: expert } = await supabase
-              .from('experts')
+              .from('expert_accounts')
               .select('auth_id, name, profile_picture')
-              .eq('id', appointment.expert_id)
+              .eq('auth_id', appointment.expert_id)
               .maybeSingle();
             
             if (expert) {
-              handleJoinCallFromNotification(appointmentId, expert.auth_id, expert.name || appointment.expert_name);
+              handleJoinCallFromNotification(actualAppointmentId, expert.auth_id, expert.name || appointment.expert_name);
             }
           }
         }
@@ -460,12 +632,14 @@ const BookingHistorySection: React.FC<BookingHistorySectionProps> = ({ user }) =
       
       let currentEndTime = booking.end_time;
       
-      // Look for consecutive bookings with same expert, same date, same status
+      // Look for consecutive bookings with same expert, same date
+      // IMPORTANT: Don't check status - group all statuses together for slot count consistency
+      // Status filtering happens after grouping
       for (const otherBooking of sorted) {
         if (processed.has(otherBooking.id)) continue;
         if (otherBooking.expert_id !== booking.expert_id) continue;
         if (otherBooking.appointment_date !== booking.appointment_date) continue;
-        if (otherBooking.status !== booking.status) continue; // Only group same status
+        // Removed status check - group all statuses together for accurate slot count
         
         // Check if next booking starts when current ends (within 1 minute tolerance)
         try {
@@ -505,7 +679,7 @@ const BookingHistorySection: React.FC<BookingHistorySectionProps> = ({ user }) =
         // Create combined booking
         const combinedBooking: Booking = {
           ...firstBooking,
-          id: `combined_${continuous.map(b => b.id).join('_')}`, // Combined ID
+          id: `combined_${continuous.map(b => b.id).join('_')}`, // Combined ID for display
           end_time: lastBooking.end_time, // Use last booking's end time
           duration: totalDuration, // Total combined duration
         };
@@ -514,6 +688,8 @@ const BookingHistorySection: React.FC<BookingHistorySectionProps> = ({ user }) =
         (combinedBooking as any).continuousBookingIds = continuous.map(b => b.id);
         (combinedBooking as any).isCombined = true;
         (combinedBooking as any).slotCount = continuous.length;
+        // Store the actual appointment ID (first booking's ID) for database queries
+        (combinedBooking as any).appointmentId = firstBooking.id;
         
         grouped.push(combinedBooking);
       } else {
@@ -525,8 +701,11 @@ const BookingHistorySection: React.FC<BookingHistorySectionProps> = ({ user }) =
     return grouped;
   };
 
-  const filteredBookings = groupContinuousBookings(
-    bookings
+  // IMPORTANT: Group bookings FIRST, then filter
+  // This ensures slot count is consistent regardless of status filtering
+  const groupedBookings = groupContinuousBookings(bookings);
+  
+  const filteredBookings = groupedBookings
       .filter(booking => {
         if (filter === 'upcoming') return isUpcoming(booking);
         if (filter === 'past') return isPast(booking);
@@ -572,8 +751,7 @@ const BookingHistorySection: React.FC<BookingHistorySectionProps> = ({ user }) =
           console.error('Error sorting by time:', error, a.start_time, b.start_time);
           return 0;
         }
-      })
-  );
+      });
 
   const stats = {
     total: bookings.length,
