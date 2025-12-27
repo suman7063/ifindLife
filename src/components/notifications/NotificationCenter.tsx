@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -46,6 +47,7 @@ interface NotificationPreferences {
 }
 
 export const NotificationCenter: React.FC = () => {
+  const navigate = useNavigate();
   const simpleAuth = useSimpleAuth();
   const userId = simpleAuth.user?.id || simpleAuth.userProfile?.id;
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -166,10 +168,12 @@ export const NotificationCenter: React.FC = () => {
               }
               
               // Dispatch custom event to trigger call interface
+              // Mark as fromNotification so it opens directly without showing "Session Ready" message
               const joinCallEvent = new CustomEvent('joinAppointmentCall', {
                 detail: {
                   appointmentId: sessionId,
-                  notificationId: newNotif.id
+                  notificationId: newNotif.id,
+                  fromNotification: true // Flag to indicate this is from notification
                 }
               });
               
@@ -188,15 +192,24 @@ export const NotificationCenter: React.FC = () => {
                 action: {
                   label: 'Join Call',
                   onClick: async () => {
-                    console.log('🔘 Join Call button clicked');
+                    console.log('🔘 Join Call button clicked from notification');
                     if (sessionId) {
                       try {
-                        // Dispatch event to open call interface
-                        window.dispatchEvent(joinCallEvent);
-                        // Also navigate to booking history as fallback
-                        setTimeout(() => {
-                          window.location.href = '/user-dashboard/booking-history';
-                        }, 500);
+                        // Ensure user is on booking-history page (without refresh) so event handler is available
+                        const currentPath = window.location.pathname;
+                        if (!currentPath.includes('/booking-history')) {
+                          console.log('📍 Navigating to booking-history page (without refresh)');
+                          navigate('/user-dashboard/booking-history', { replace: false });
+                          // Wait a bit for the page to mount, then dispatch event
+                          setTimeout(() => {
+                            window.dispatchEvent(joinCallEvent);
+                            console.log('✅ Dispatched joinAppointmentCall event - call interface should open directly');
+                          }, 100);
+                        } else {
+                          // Already on booking-history page, dispatch event immediately
+                          window.dispatchEvent(joinCallEvent);
+                          console.log('✅ Dispatched joinAppointmentCall event - call interface should open directly');
+                        }
                       } catch (error) {
                         console.error('Error joining call:', error);
                         toast.error('Failed to join call. Please try again.');

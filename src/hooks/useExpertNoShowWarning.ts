@@ -9,6 +9,7 @@ export interface ExpertNoShowWarning {
   isNoShow: boolean; // true if 70+ minutes passed
   timeSinceStart: number; // minutes
   minutesRemaining: number; // minutes until refund
+  refundProcessed?: boolean; // true if refund was already processed
 }
 
 // Shared cache for call session data across all hook instances
@@ -153,7 +154,74 @@ export const useExpertNoShowWarning = (
 
   // Check warning status
   const checkWarning = useCallback(async () => {
-    if (!appointmentId || status === 'cancelled' || status === 'completed') {
+    if (!appointmentId) {
+      return;
+    }
+    
+    // For cancelled or completed sessions, only check if refund was processed
+    if (status === 'cancelled' || status === 'completed') {
+      // Check if refund was already processed
+      let refundProcessed = false;
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(appointmentId);
+      
+      if (isUUID) {
+        // Check appointment-level refunds
+        const { data: appointmentRefunds } = await supabase
+          .from('wallet_transactions')
+          .select('id')
+          .eq('reference_id', appointmentId)
+          .eq('reference_type', 'appointment')
+          .eq('type', 'credit')
+          .in('reason', ['expert_no_show', 'refund'])
+          .limit(1);
+        
+        if (appointmentRefunds && appointmentRefunds.length > 0) {
+          refundProcessed = true;
+        } else {
+          // Check call session refunds
+          const { data: callSession } = await supabase
+            .from('call_sessions')
+            .select('id')
+            .eq('appointment_id', appointmentId)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          
+          if (callSession) {
+            const callSessionIsUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(callSession.id);
+            if (callSessionIsUUID) {
+              const { data: callRefunds } = await supabase
+                .from('wallet_transactions')
+                .select('id')
+                .eq('reference_id', callSession.id)
+                .eq('reference_type', 'call_session')
+                .eq('type', 'credit')
+                .in('reason', ['expert_no_show', 'refund'])
+                .limit(1);
+              refundProcessed = (callRefunds && callRefunds.length > 0) || false;
+            } else {
+              const { data: callRefunds } = await supabase
+                .from('wallet_transactions')
+                .select('id')
+                .eq('metadata->>reference_id', callSession.id)
+                .eq('reference_type', 'call_session')
+                .eq('type', 'credit')
+                .in('reason', ['expert_no_show', 'refund'])
+                .limit(1);
+              refundProcessed = (callRefunds && callRefunds.length > 0) || false;
+            }
+          }
+        }
+      }
+      
+      setWarningData({
+        appointmentId,
+        isWarning: false,
+        isNoShow: false,
+        timeSinceStart: 0,
+        minutesRemaining: 0,
+        refundProcessed
+      });
       return;
     }
 
@@ -220,6 +288,60 @@ export const useExpertNoShowWarning = (
         return;
       }
 
+      // Check if refund was already processed
+      let refundProcessed = false;
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(appointmentId);
+      
+      if (isUUID) {
+        // Check appointment-level refunds
+        const { data: appointmentRefunds } = await supabase
+          .from('wallet_transactions')
+          .select('id')
+          .eq('reference_id', appointmentId)
+          .eq('reference_type', 'appointment')
+          .eq('type', 'credit')
+          .in('reason', ['expert_no_show', 'refund'])
+          .limit(1);
+        
+        if (appointmentRefunds && appointmentRefunds.length > 0) {
+          refundProcessed = true;
+        } else {
+          // Check call session refunds
+          const { data: callSession } = await supabase
+            .from('call_sessions')
+            .select('id')
+            .eq('appointment_id', appointmentId)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          
+          if (callSession) {
+            const callSessionIsUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(callSession.id);
+            if (callSessionIsUUID) {
+              const { data: callRefunds } = await supabase
+                .from('wallet_transactions')
+                .select('id')
+                .eq('reference_id', callSession.id)
+                .eq('reference_type', 'call_session')
+                .eq('type', 'credit')
+                .in('reason', ['expert_no_show', 'refund'])
+                .limit(1);
+              refundProcessed = (callRefunds && callRefunds.length > 0) || false;
+            } else {
+              const { data: callRefunds } = await supabase
+                .from('wallet_transactions')
+                .select('id')
+                .eq('metadata->>reference_id', callSession.id)
+                .eq('reference_type', 'call_session')
+                .eq('type', 'credit')
+                .in('reason', ['expert_no_show', 'refund'])
+                .limit(1);
+              refundProcessed = (callRefunds && callRefunds.length > 0) || false;
+            }
+          }
+        }
+      }
+
       // Warning state: 65+ minutes passed but expert hasn't joined (not yet a no-show)
       const isWarning = timeSinceStart >= 65 && timeSinceStart < 70 && (status === 'scheduled' || status === 'confirmed');
       
@@ -232,7 +354,8 @@ export const useExpertNoShowWarning = (
         isWarning,
         isNoShow,
         timeSinceStart,
-        minutesRemaining
+        minutesRemaining,
+        refundProcessed
       });
 
       // Show warning notification when 3 minutes passed
@@ -306,6 +429,113 @@ export const useExpertNoShowWarning = (
     expertJoinedRef.current = false;
     isCheckingRef.current = false;
   }, [appointmentId]);
+
+  // For cancelled/completed sessions, check refund status immediately
+  useEffect(() => {
+    if (!appointmentId || (status !== 'cancelled' && status !== 'completed')) {
+      return;
+    }
+
+    // Immediately check if refund was processed for cancelled/completed sessions
+    const checkRefundForCancelled = async () => {
+      let refundProcessed = false;
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(appointmentId);
+      
+      console.log('🔍 Checking refund for cancelled session:', { appointmentId, isUUID, status });
+      
+      if (isUUID) {
+        // Check appointment-level refunds - check both reference_id column and metadata
+        const { data: appointmentRefundsByRefId } = await supabase
+          .from('wallet_transactions')
+          .select('id')
+          .eq('reference_id', appointmentId)
+          .eq('reference_type', 'appointment')
+          .eq('type', 'credit')
+          .in('reason', ['expert_no_show', 'refund'])
+          .limit(1);
+        
+        const { data: appointmentRefundsByMetadata } = await supabase
+          .from('wallet_transactions')
+          .select('id')
+          .eq('metadata->>reference_id', appointmentId)
+          .eq('reference_type', 'appointment')
+          .eq('type', 'credit')
+          .in('reason', ['expert_no_show', 'refund'])
+          .limit(1);
+        
+        // Also check if appointment is in metadata->>appointment_ids array (for combined bookings)
+        const { data: allAppointmentRefunds } = await supabase
+          .from('wallet_transactions')
+          .select('id, metadata')
+          .eq('reference_type', 'appointment')
+          .eq('type', 'credit')
+          .in('reason', ['expert_no_show', 'refund']);
+        
+        const refundInArray = allAppointmentRefunds?.find((refund: any) => {
+          const metadata = refund.metadata || {};
+          const appointmentIds = metadata.appointment_ids || [];
+          return Array.isArray(appointmentIds) && appointmentIds.includes(appointmentId);
+        });
+        
+        if ((appointmentRefundsByRefId && appointmentRefundsByRefId.length > 0) ||
+            (appointmentRefundsByMetadata && appointmentRefundsByMetadata.length > 0) ||
+            refundInArray) {
+          refundProcessed = true;
+          console.log('✅ Refund found for appointment:', appointmentId);
+        } else {
+          // Check call session refunds
+          const { data: callSession } = await supabase
+            .from('call_sessions')
+            .select('id')
+            .eq('appointment_id', appointmentId)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          
+          if (callSession) {
+            const callSessionIsUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(callSession.id);
+            if (callSessionIsUUID) {
+              const { data: callRefunds } = await supabase
+                .from('wallet_transactions')
+                .select('id')
+                .eq('reference_id', callSession.id)
+                .eq('reference_type', 'call_session')
+                .eq('type', 'credit')
+                .in('reason', ['expert_no_show', 'refund'])
+                .limit(1);
+              refundProcessed = (callRefunds && callRefunds.length > 0) || false;
+            } else {
+              const { data: callRefunds } = await supabase
+                .from('wallet_transactions')
+                .select('id')
+                .eq('metadata->>reference_id', callSession.id)
+                .eq('reference_type', 'call_session')
+                .eq('type', 'credit')
+                .in('reason', ['expert_no_show', 'refund'])
+                .limit(1);
+              refundProcessed = (callRefunds && callRefunds.length > 0) || false;
+            }
+            if (refundProcessed) {
+              console.log('✅ Refund found for call session:', callSession.id);
+            }
+          }
+        }
+      }
+      
+      console.log('💰 Refund check result:', { appointmentId, refundProcessed });
+      
+      setWarningData({
+        appointmentId,
+        isWarning: false,
+        isNoShow: false,
+        timeSinceStart: 0,
+        minutesRemaining: 0,
+        refundProcessed
+      });
+    };
+
+    checkRefundForCancelled();
+  }, [appointmentId, status]);
 
   // Set up real-time subscriptions and periodic time checks
   useEffect(() => {

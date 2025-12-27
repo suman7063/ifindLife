@@ -826,7 +826,7 @@ console.log('🔄 Setting modalState to connecting...');
                   The expert has ended the call. Duration: <strong>{formatDuration(duration)}</strong>
                   <br />
                   <br />
-                  Click "OK" to disconnect from the call channel.
+                  You have been automatically disconnected from the call.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>

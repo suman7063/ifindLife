@@ -495,11 +495,55 @@ const SessionManager: React.FC = () => {
   // Cancelled sessions are now shown in Today tab, so no separate filter needed
 
   const historySessions = useMemo(() => {
+    const now = new Date();
     const filtered = groupedSessions.filter(session => {
-      return session.status === 'completed';
+      // Include in history if:
+      // 1. Status is 'completed'
+      // 2. OR session end time has passed AND call session exists with status 'ended' or 'completed'
+      // 3. OR session end time has passed AND appointment status is 'completed'
+      // 4. OR session end time has passed AND call session has duration > 0 (expert attended)
+      
+      if (session.status === 'completed') {
+        return true;
+      }
+      
+      // Check if session time has passed
+      const isPast = session.endTime < now;
+      
+      if (!isPast) {
+        return false; // Future sessions shouldn't be in history
+      }
+      
+      // Check if there's a call session that ended
+      const callSessionStatus = (session as any).callSessionStatus;
+      if (callSessionStatus === 'ended' || callSessionStatus === 'completed') {
+        return true;
+      }
+      
+      // Check if call session has duration (expert attended)
+      const callSessionDuration = (session as any).callSessionDuration;
+      if (callSessionDuration && callSessionDuration > 0) {
+        return true;
+      }
+      
+      // If session is past and status is not 'scheduled', include it
+      // This catches cancelled, no-show, in-progress (if past), and other past sessions
+      if (session.status !== 'scheduled') {
+        return true;
+      }
+      
+      return false;
     })
     // Sort by start time (most recent first)
     .sort((a, b) => b.startTime.getTime() - a.startTime.getTime());
+    
+    console.log('📚 History sessions:', {
+      total: filtered.length,
+      byStatus: filtered.reduce((acc, s) => {
+        acc[s.status] = (acc[s.status] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>)
+    });
     
     return filtered;
   }, [groupedSessions]);
@@ -1166,6 +1210,19 @@ const SessionManager: React.FC = () => {
     const isWarning = warningData?.isWarning || false;
     const isNoShow = warningData?.isNoShow || false;
     const minutesRemaining = warningData?.minutesRemaining || 0;
+    // IMPORTANT: Don't use || false here - we need to distinguish between:
+    // - undefined = not checked yet (should NOT show button)
+    // - false = checked, no refund (should show button)
+    // - true = checked, refund found (should NOT show button)
+    const refundProcessed = warningData?.refundProcessed;
+    
+    // CRITICAL: For cancelled sessions, only show Start button if:
+    // 1. warningData exists (refund check has completed)
+    // 2. refundProcessed is explicitly false (no refund found)
+    // This ensures we don't show the button while the check is in progress or if refund was found
+    const canShowStartForCancelled = session.status === 'cancelled' 
+      ? (warningData !== null && refundProcessed === false)
+      : true; // For non-cancelled sessions, use normal logic
 
     return (
       <div
@@ -1234,12 +1291,18 @@ const SessionManager: React.FC = () => {
             </Badge>
             {/* Show Start button if:
                 1. Status is 'scheduled' AND current time >= start time, OR
-                2. Status is 'cancelled' BUT time slot is still available (current time < end time)
-                   This allows expert to start a call even if session was cancelled earlier
+                2. Status is 'cancelled' BUT:
+                   - Time slot is still available (current time >= start time and < end time)
+                   - Refund check has completed (warningData exists)
+                   - No refund was found (refundProcessed is explicitly false)
+                   This ensures we don't show Start button if refund check hasn't completed yet or if refund was found
             */}
             {(
               (session.status === 'scheduled' && new Date() >= session.startTime) ||
-              (session.status === 'cancelled' && new Date() >= session.startTime && new Date() < session.endTime)
+              (session.status === 'cancelled' && 
+               new Date() >= session.startTime && 
+               new Date() < session.endTime && 
+               canShowStartForCancelled)
             ) && (
               <Button size="sm" onClick={onStart}>
                 <Play className="h-4 w-4 mr-1" />
@@ -1404,7 +1467,7 @@ const SessionManager: React.FC = () => {
             
             const { data: callSession, error: callSessionError } = await supabase
               .from('call_sessions')
-              .select('id, status')
+              .select('id, status, duration')
               .eq('appointment_id', actualSessionId)
               .order('created_at', { ascending: false })
               .limit(1)
@@ -1413,6 +1476,18 @@ const SessionManager: React.FC = () => {
             if (callSessionError && callSessionError.code !== 'PGRST116') {
               console.error('❌ Error fetching call session for refund check:', callSessionError);
               continue; // Skip this session
+            }
+            
+            // CRITICAL: Do NOT update status to 'ended' if expert attended the call (duration > 0)
+            // If a refund was processed but the expert attended, this is an error - don't mark as ended
+            if (callSession && callSession.duration && callSession.duration > 0) {
+              console.log('⚠️ Refund detected but expert attended the call (duration > 0). Not updating status to ended.', {
+                callSessionId: callSession.id,
+                duration: callSession.duration,
+                status: callSession.status
+              });
+              // Don't update status - expert attended, so session should remain active/in-progress
+              continue; // Skip updating status
             }
             
             if (callSession && (callSession.status === 'active' || callSession.status === 'pending')) {

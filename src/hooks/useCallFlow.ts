@@ -1518,12 +1518,84 @@ export function useCallFlow(options: UseCallFlowOptions = {}) {
               durationTimerRef.current = null;
             }
             
-            // Show confirmation dialog instead of immediately cleaning up
+            // IMPORTANT: Automatically disconnect user when expert ends the call
+            // Don't wait for user confirmation - expert has already ended the call
+            console.log('🔄 Expert ended call - automatically disconnecting user...');
+            
+            // Leave Agora channel immediately
+            if (clientRef.current && flowState.callState?.localAudioTrack) {
+              try {
+                await leaveCall(
+                  clientRef.current,
+                  flowState.callState.localAudioTrack,
+                  flowState.callState.localVideoTrack
+                );
+                console.log('✅ Left Agora channel after expert ended call');
+              } catch (agoraError) {
+                console.error('❌ Error leaving Agora call:', agoraError);
+                // Try fallback
+                if (clientRef.current) {
+                  try {
+                    await clientRef.current.leave();
+                  } catch (e) {
+                    console.error('❌ Fallback leave failed:', e);
+                  }
+                }
+              }
+            }
+            
+            // Stop remote tracks
+            if (flowState.callState?.remoteUsers.length > 0) {
+              flowState.callState.remoteUsers.forEach(user => {
+                try {
+                  user.audioTrack?.stop();
+                  user.videoTrack?.stop();
+                } catch (err) {
+                  console.warn('⚠️ Error stopping remote track:', err);
+                }
+              });
+            }
+            
+            // Clear session storage
+            sessionStorage.removeItem('user_call_session');
+            sessionStorage.removeItem('user_call_data');
+            
+            // Reset state and close call interface immediately
+            // Don't show confirmation dialog - expert already ended the call, just close
             setFlowState(prev => ({
               ...prev,
-              showExpertEndCallConfirmation: true,
+              isConnecting: false,
+              isInCall: false,
+              callState: null,
+              callSessionId: null,
+              callRequestId: null,
+              channelName: null,
+              agoraToken: null,
+              agoraUid: null,
+              callType: null,
+              duration: 0,
+              showExpertEndCallConfirmation: false, // Don't show dialog - just close
               expertEndedCall: true
             }));
+            
+            // Clear client ref
+            clientRef.current = null;
+            callStartTimeRef.current = null;
+            
+            // Call the callback to close the call interface immediately
+            options.onCallEnded?.();
+            
+            // Show a toast notification instead of a blocking dialog
+            const formatDuration = (seconds: number) => {
+              const mins = Math.floor(seconds / 60);
+              const secs = seconds % 60;
+              return `${mins}:${secs.toString().padStart(2, '0')}`;
+            };
+            
+            toast.info('Call ended by expert', {
+              description: `Duration: ${formatDuration(flowState.duration)}`,
+              duration: 5000
+            });
           }
         }
       )

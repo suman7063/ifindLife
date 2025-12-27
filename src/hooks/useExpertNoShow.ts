@@ -44,7 +44,7 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
       // Check if there's an active call session for this appointment
       const { data: callSession, error } = await supabase
         .from('call_sessions')
-        .select('id, status, start_time, expert_id')
+        .select('id, status, start_time, expert_id, duration')
         .eq('appointment_id', aptId)
         .order('created_at', { ascending: false })
         .limit(1)
@@ -53,6 +53,13 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
       if (error && error.code !== 'PGRST116') {
         console.error('Error checking call session:', error);
         return false;
+      }
+
+      // CRITICAL: Expert has attended if call session has duration > 0
+      // This is the most reliable indicator that the expert actually joined and the call happened
+      if (callSession && callSession.duration && callSession.duration > 0) {
+        console.log('✅ Expert attended - call session has duration:', callSession.duration);
+        return true;
       }
 
       // Expert has joined if there's an active call session with start_time
@@ -131,11 +138,20 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
       // Check for call session payment
       const { data: callSession } = await supabase
         .from('call_sessions')
-        .select('id, cost, user_id, currency, payment_status')
+        .select('id, cost, user_id, currency, payment_status, duration, status')
         .eq('appointment_id', aptId)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
+
+      // CRITICAL: Do NOT process refund if expert attended the call (duration > 0)
+      if (callSession && callSession.duration && callSession.duration > 0) {
+        console.log('🚫 Refund blocked - expert attended the call. Duration:', callSession.duration, 'seconds');
+        hasProcessedRefundRef.current = true;
+        isProcessingRefundRef.current = false;
+        setIsProcessingRefund(false);
+        return true; // Exit early - no refund for attended calls
+      }
 
       // Determine payment amount and method
       let refundAmount = 0;

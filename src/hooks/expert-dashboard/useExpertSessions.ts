@@ -446,8 +446,10 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
       appointmentDate: appointment.appointment_date, // Store original date string for accurate comparison
       // IMPORTANT: Include call_session status to detect if call was disconnected
       // This helps differentiate between "first time scheduled" vs "disconnected and available"
-      callSessionStatus: callSession?.status || undefined
-    } as Session & { callSessionStatus?: string };
+      callSessionStatus: callSession?.status || undefined,
+      // Include call session duration to check if expert attended
+      callSessionDuration: callSession?.duration || undefined
+    } as Session & { callSessionStatus?: string; callSessionDuration?: number };
   }, [fetchCallSession]);
 
   // Update ref when function changes

@@ -466,7 +466,22 @@ const WalletTransactionsList: React.FC<WalletTransactionsListProps> = ({ user })
                     </div>
                     <div className="flex items-center space-x-1 text-sm text-muted-foreground flex-wrap">
                       <Calendar className="h-3 w-3" />
-                      <span>Refund processed: {formatDate(transaction.created_at)}</span>
+                      <span>
+                        {(() => {
+                          // Show appropriate label based on transaction type and reason
+                          if (transaction.type === 'credit' && (transaction.reason === 'expert_no_show' || transaction.reason === 'refund')) {
+                            return `Refund processed: ${formatDate(transaction.created_at)}`;
+                          } else if (transaction.type === 'debit' && transaction.reference_type === 'appointment') {
+                            return `Booked on: ${formatDate(transaction.created_at)}`;
+                          } else if (transaction.type === 'debit') {
+                            return `Payment made: ${formatDate(transaction.created_at)}`;
+                          } else if (transaction.type === 'credit') {
+                            return `Credited on: ${formatDate(transaction.created_at)}`;
+                          } else {
+                            return formatDate(transaction.created_at);
+                          }
+                        })()}
+                      </span>
                       {transaction.reason === 'expert_no_show' && (() => {
                         const detailsKey = getAppointmentDetailsKey(transaction);
                         const details = detailsKey ? appointmentDetails[detailsKey] : null;

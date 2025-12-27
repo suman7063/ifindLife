@@ -33,6 +33,9 @@ interface Booking {
   channel_name?: string;
   token?: string;
   created_at: string;
+  call_session_status?: string; // Status of call_session (active, ended, completed)
+  call_session_duration?: number; // Duration of call in seconds
+  call_session_end_time?: string; // When call ended
 }
 
 type FilterType = 'all' | 'upcoming' | 'past' | 'today';
@@ -44,8 +47,9 @@ const BookingCard: React.FC<{
   navigate: (path: string) => void;
   getStatusColor: (status: string, isNoShow?: boolean) => string;
   formatTime: (timeStr: string) => string;
+  formatCallDuration: (seconds: number) => string;
   onJoinCall?: (appointmentId: string, expertId: string, expertName: string) => void;
-}> = ({ booking, canJoinCall, navigate, getStatusColor, formatTime, onJoinCall }) => {
+}> = ({ booking, canJoinCall, navigate, getStatusColor, formatTime, formatCallDuration, onJoinCall }) => {
   // For combined bookings, use the actual appointment ID (first booking's ID) instead of combined ID
   const actualAppointmentId = (booking as any).isCombined && (booking as any).appointmentId
     ? (booking as any).appointmentId
@@ -202,39 +206,58 @@ const BookingCard: React.FC<{
               </div>
             )}
 
-            {/* Show waiting warning when appointment time has arrived but expert hasn't joined */}
-            {canJoinCall && !isNoShow && !isWarning && (
-              <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+            {/* Show message if expert ended the call */}
+            {booking.call_session_status === 'ended' || booking.call_session_status === 'completed' ? (
+              <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
                 <div className="flex items-start gap-2">
-                  <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                  <AlertTriangle className="h-5 w-5 text-blue-600 mt-0.5" />
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-yellow-900">
-                      {booking.channel_name ? 'Session Ready - Join Now' : 'Waiting for expert to join'}
+                    <p className="text-sm font-medium text-blue-900">
+                      Call Ended by Expert
                     </p>
-                    <p className="text-xs text-yellow-700 mt-1">
-                      {booking.channel_name 
-                        ? 'Expert has started the session. Click Join to connect.'
-                        : 'The expert hasn\'t joined your session yet. If they don\'t join within 5 minutes, you\'ll receive a full refund automatically.'}
+                    <p className="text-xs text-blue-700 mt-1">
+                      {booking.call_session_duration 
+                        ? `Expert has ended the call. Duration: ${formatCallDuration(booking.call_session_duration)}`
+                        : 'Expert has ended the call.'}
                     </p>
-                    {booking.channel_name && onJoinCall && (
-                      <Button
-                        size="sm"
-                        className="mt-3 w-full sm:w-auto"
-                        onClick={() => {
-                          // Use actual appointment ID for combined bookings
-                          const appointmentIdToUse = (booking as any).isCombined && (booking as any).appointmentId
-                            ? (booking as any).appointmentId
-                            : booking.id;
-                          onJoinCall(appointmentIdToUse, booking.expert_id, booking.expert_name);
-                        }}
-                      >
-                        <Phone className="h-4 w-4 mr-2" />
-                        Join Call
-                      </Button>
-                    )}
                   </div>
                 </div>
               </div>
+            ) : (
+              /* Show waiting warning when appointment time has arrived but expert hasn't joined */
+              canJoinCall && !isNoShow && !isWarning && (
+                <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-yellow-900">
+                        {booking.channel_name ? 'Session Ready - Join Now' : 'Waiting for expert to join'}
+                      </p>
+                      <p className="text-xs text-yellow-700 mt-1">
+                        {booking.channel_name 
+                          ? 'Expert has started the session. Click Join to connect.'
+                          : 'The expert hasn\'t joined your session yet. If they don\'t join within 5 minutes, you\'ll receive a full refund automatically.'}
+                      </p>
+                      {booking.channel_name && onJoinCall && (
+                        <Button
+                          size="sm"
+                          className="mt-3 w-full sm:w-auto"
+                          onClick={() => {
+                            // Use actual appointment ID for combined bookings
+                            const appointmentIdToUse = (booking as any).isCombined && (booking as any).appointmentId
+                              ? (booking as any).appointmentId
+                              : booking.id;
+                            onJoinCall(appointmentIdToUse, booking.expert_id, booking.expert_name);
+                          }}
+                        >
+                          <Phone className="h-4 w-4 mr-2" />
+                          Join Call
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )
             )}
           </div>
         </div>
@@ -441,7 +464,9 @@ const BookingHistorySection: React.FC<BookingHistorySectionProps> = ({ user }) =
   // Listen for join call events from notifications
   useEffect(() => {
     const handleJoinCall = async (event: CustomEvent) => {
-      const { appointmentId } = event.detail;
+      const { appointmentId, fromNotification } = event.detail;
+      console.log('📞 Join call event received:', { appointmentId, fromNotification });
+      
       if (appointmentId) {
         // Extract actual appointment ID if it's a combined ID
         let actualAppointmentId = appointmentId;
@@ -457,6 +482,32 @@ const BookingHistorySection: React.FC<BookingHistorySectionProps> = ({ user }) =
             console.warn('⚠️ Could not extract UUID from combined ID:', appointmentId);
             // Don't proceed if we can't extract a valid UUID
             return;
+          }
+        }
+        
+        // If coming from notification, directly open call interface without showing "Session Ready" message
+        if (fromNotification) {
+          console.log('📱 Opening call interface directly from notification');
+          // Fetch appointment and expert details
+          const { data: appointment } = await supabase
+            .from('appointments')
+            .select('id, expert_id, expert_name, channel_name')
+            .eq('id', actualAppointmentId)
+            .single();
+          
+          if (appointment && appointment.channel_name) {
+            // Get expert details from expert_accounts table
+            const { data: expert } = await supabase
+              .from('expert_accounts')
+              .select('auth_id, name, profile_picture')
+              .eq('auth_id', appointment.expert_id)
+              .maybeSingle();
+            
+            if (expert) {
+              // Directly open call interface - skip "Session Ready" message
+              handleJoinCallFromNotification(actualAppointmentId, expert.auth_id, expert.name || appointment.expert_name);
+              return;
+            }
           }
         }
         
@@ -513,14 +564,37 @@ const BookingHistorySection: React.FC<BookingHistorySectionProps> = ({ user }) =
       if (error) throw error;
       
       console.log('📅 Fetched appointments:', data?.length, 'appointments');
-      console.log('📅 Sample appointments:', data?.slice(0, 3).map(a => ({
+      
+      // Fetch call_session data for each appointment to check if call was ended
+      const bookingsWithCallSession = await Promise.all(
+        (data || []).map(async (appointment) => {
+          // Get the latest call_session for this appointment
+          const { data: callSession } = await supabase
+            .from('call_sessions')
+            .select('status, duration, end_time')
+            .eq('appointment_id', appointment.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          
+          return {
+            ...appointment,
+            call_session_status: callSession?.status || null,
+            call_session_duration: callSession?.duration || null,
+            call_session_end_time: callSession?.end_time || null
+          };
+        })
+      );
+      
+      console.log('📅 Sample appointments:', bookingsWithCallSession.slice(0, 3).map(a => ({
         id: a.id,
         date: a.appointment_date,
         time: `${a.start_time} - ${a.end_time}`,
-        status: a.status
+        status: a.status,
+        call_session_status: a.call_session_status
       })));
       
-      setBookings(data || []);
+      setBookings(bookingsWithCallSession);
     } catch (error) {
       console.error('Error fetching booking history:', error);
       toast.error('Failed to load booking history');
@@ -555,6 +629,22 @@ const BookingHistorySection: React.FC<BookingHistorySectionProps> = ({ user }) =
       return `${displayHour}:${minutes} ${ampm}`;
     } catch {
       return timeStr;
+    }
+  };
+
+  const formatCallDuration = (seconds: number): string => {
+    if (!seconds || seconds === 0) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    const hours = Math.floor(mins / 60);
+    const remainingMins = mins % 60;
+    
+    if (hours > 0) {
+      return `${hours}h ${remainingMins}m ${secs}s`;
+    } else if (mins > 0) {
+      return `${mins}m ${secs}s`;
+    } else {
+      return `${secs}s`;
     }
   };
 
@@ -762,7 +852,21 @@ const BookingHistorySection: React.FC<BookingHistorySectionProps> = ({ user }) =
   };
 
   const canJoinCall = (booking: Booking): boolean => {
-    if (booking.status !== 'scheduled' && booking.status !== 'confirmed' && booking.status !== 'in-progress') return false;
+    // IMPORTANT: Never show Join button if call session is ended or completed
+    if (booking.call_session_status === 'ended' || booking.call_session_status === 'completed') {
+      return false;
+    }
+    
+    // IMPORTANT: Never show Join button for completed or cancelled bookings
+    if (booking.status === 'completed' || booking.status === 'cancelled') {
+      return false;
+    }
+    
+    // Only allow join for scheduled, confirmed, or in-progress bookings
+    if (booking.status !== 'scheduled' && booking.status !== 'confirmed' && booking.status !== 'in-progress') {
+      return false;
+    }
+    
     try {
       // Handle HH:MM:SS format (take only HH:MM for parsing)
       const startTime = booking.start_time.split(':').slice(0, 2).join(':');
@@ -772,7 +876,7 @@ const BookingHistorySection: React.FC<BookingHistorySectionProps> = ({ user }) =
       
       // Can join only when:
       // 1. Appointment has started (timeDiff <= 0) - not before
-      // 2. And within the session duration (30 minutes after start)
+      // 2. And within the session duration
       const sessionEndTime = appointmentDateTime.getTime() + (booking.duration || 30) * 60 * 1000;
       const isWithinSession = now.getTime() <= sessionEndTime;
       
@@ -887,6 +991,7 @@ const BookingHistorySection: React.FC<BookingHistorySectionProps> = ({ user }) =
                       navigate={navigate}
                       getStatusColor={getStatusColor}
                       formatTime={formatTime}
+                      formatCallDuration={formatCallDuration}
                       onJoinCall={handleJoinCallFromNotification}
                     />
                   ))}
