@@ -351,6 +351,7 @@ const SessionManager: React.FC = () => {
   // Filter sessions by comparing appointment_date directly (memoized)
   // appointment_date is already stored as YYYY-MM-DD in expert's timezone context
   const todaySessions = useMemo(() => {
+    const now = new Date();
     const filtered = groupedSessions.filter(session => {
       // First check if session is today
       let isToday = false;
@@ -382,7 +383,9 @@ const SessionManager: React.FC = () => {
           normalizedTodayDate: todayDate,
           isToday,
           status: session.status,
-          startTime: session.startTime.toISOString()
+          startTime: session.startTime.toISOString(),
+          endTime: session.endTime.toISOString(),
+          hasEnded: session.endTime < now
         });
       } else {
         // Fallback: compare using startTime converted to expert's timezone
@@ -401,7 +404,9 @@ const SessionManager: React.FC = () => {
             sessionDateInTimezone,
             todayDateString,
             isToday,
-            startTime: session.startTime.toISOString()
+            startTime: session.startTime.toISOString(),
+            endTime: session.endTime.toISOString(),
+            hasEnded: session.endTime < now
           });
         } catch (error) {
           console.error('Error in date comparison:', error);
@@ -415,17 +420,24 @@ const SessionManager: React.FC = () => {
       }
       
       // Session must be today
-      // IMPORTANT: Exclude cancelled/completed sessions if time hasn't passed yet
-      // If session is cancelled/completed but time is still in future, don't show in Today tab
       if (!isToday) {
         return false;
       }
       
-      // IMPORTANT: Show all sessions for today, including cancelled/completed
-      // This allows expert to see all sessions scheduled for today
-      // The UI will handle showing/hiding Start button based on status
+      // IMPORTANT: If session has already ended (endTime < now), it should be in History, not Today
+      // Only show sessions in Today tab if they haven't ended yet
+      if (session.endTime < now) {
+        console.log('⏰ Session is today but has ended, excluding from Today tab:', {
+          sessionId: session.id,
+          endTime: session.endTime.toISOString(),
+          now: now.toISOString()
+        });
+        return false;
+      }
       
-      console.log('✅ Session is today:', {
+      // Show all sessions for today that haven't ended yet
+      // This includes scheduled, in-progress, and future sessions for today
+      console.log('✅ Session is today and not ended:', {
         sessionId: session.id,
         status: session.status,
         shouldInclude: true

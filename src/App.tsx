@@ -1,6 +1,6 @@
 
 import * as React from 'react';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom';
 import { SimpleAuthProvider } from '@/contexts/SimpleAuthContext';
 import { ExpertPresenceProvider } from '@/contexts/ExpertPresenceContext';
 import { FavoritesProvider } from '@/contexts/favorites/FavoritesProvider';
@@ -125,7 +125,7 @@ const UserRoutes: React.FC = () => {
         <Route path="/user-login" element={<UserLogin />} />
         <Route path="/user-signup" element={<UserSignup />} />
         <Route path="/user-dashboard/*" element={<UserDashboardWrapper />} />
-        <Route path="/dashboard" element={<UserDashboard />} />
+        <Route path="/dashboard" element={<Navigate to="/user-dashboard" replace />} />
         {/* TODO: Re-implement call page if needed */}
         {/* <Route path="/call/:appointmentId" element={<CallPage />} /> */}
         <Route path="/messaging" element={<MessagingPage />} />

@@ -653,8 +653,25 @@ const BookingHistorySection: React.FC<BookingHistorySectionProps> = ({ user }) =
       // Handle HH:MM:SS format (take only HH:MM for parsing)
       const startTime = booking.start_time.split(':').slice(0, 2).join(':');
       const appointmentDateTime = parseISO(`${booking.appointment_date}T${startTime}`);
-      return isAfter(appointmentDateTime, new Date()) && (booking.status === 'scheduled' || booking.status === 'confirmed');
-    } catch {
+      const isFuture = isAfter(appointmentDateTime, new Date());
+      const isValidStatus = booking.status === 'scheduled' || booking.status === 'confirmed';
+      const result = isFuture && isValidStatus;
+      
+      // Debug log for troubleshooting
+      if (result && filter === 'upcoming') {
+        console.log('Upcoming booking found:', {
+          id: booking.id,
+          date: booking.appointment_date,
+          time: booking.start_time,
+          status: booking.status,
+          isFuture,
+          isValidStatus
+        });
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('Error in isUpcoming:', error, booking);
       return false;
     }
   };
@@ -791,9 +808,19 @@ const BookingHistorySection: React.FC<BookingHistorySectionProps> = ({ user }) =
     return grouped;
   };
 
-  // IMPORTANT: Group bookings FIRST, then filter
+  // IMPORTANT: Group bookings FIRST, then calculate stats and filter
   // This ensures slot count is consistent regardless of status filtering
   const groupedBookings = groupContinuousBookings(bookings);
+  
+  // Calculate stats from grouped bookings to match what's displayed
+  // IMPORTANT: Use groupedBookings for all stats to ensure consistency
+  const stats = {
+    total: groupedBookings.length, // Use grouped count, not original bookings.length
+    upcoming: groupedBookings.filter(isUpcoming).length,
+    completed: bookings.filter(b => b.status === 'completed').length, // Keep original for completed count
+    cancelled: bookings.filter(b => b.status === 'cancelled').length, // Keep original for cancelled count
+    today: groupedBookings.filter(isToday).length,
+  };
   
   const filteredBookings = groupedBookings
       .filter(booking => {
@@ -842,14 +869,6 @@ const BookingHistorySection: React.FC<BookingHistorySectionProps> = ({ user }) =
           return 0;
         }
       });
-
-  const stats = {
-    total: bookings.length,
-    upcoming: bookings.filter(isUpcoming).length,
-    completed: bookings.filter(b => b.status === 'completed').length,
-    cancelled: bookings.filter(b => b.status === 'cancelled').length,
-    today: bookings.filter(isToday).length,
-  };
 
   const canJoinCall = (booking: Booking): boolean => {
     // IMPORTANT: Never show Join button if call session is ended or completed

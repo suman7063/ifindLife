@@ -18,17 +18,46 @@ import {
   Settings
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/hooks/useAuth';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { useNavigate } from 'react-router-dom';
 // TODO: Re-implement appointment to call hook
 // import { useAppointmentToCall } from '@/hooks/useAppointmentToCall';
 import { toast } from 'sonner';
 
+interface ExpertInfo {
+  auth_id: string;
+  name: string;
+  profile_picture?: string | null;
+  specialization?: string | null;
+  average_rating?: number | null;
+  reviews_count?: number | null;
+}
+
+interface AppointmentWithExpert {
+  id: string;
+  user_id: string;
+  expert_id: string;
+  expert_name: string;
+  appointment_date: string;
+  start_time?: string | null;
+  end_time?: string | null;
+  duration: number;
+  status: string;
+  notes?: string | null;
+  service_id?: number | string | null;
+  channel_name?: string | null;
+  token?: string | null;
+  uid?: number | null;
+  created_at: string | null;
+  expert: ExpertInfo | null;
+  [key: string]: unknown; // Allow additional properties from database
+}
+
 interface UserDashboardData {
-  profile: any;
-  recentAppointments: any[];
-  favoriteExperts: any[];
-  upcomingAppointments: any[];
+  profile: Record<string, unknown> | null;
+  recentAppointments: AppointmentWithExpert[];
+  favoriteExperts: ExpertInfo[];
+  upcomingAppointments: AppointmentWithExpert[];
   stats: {
     totalSessions: number;
     totalSpent: number;
@@ -37,24 +66,22 @@ interface UserDashboardData {
 }
 
 export const UserDashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user } = useSimpleAuth();
   const navigate = useNavigate();
   // TODO: Re-implement appointment to call functionality
   // const { initiateCallFromAppointment, getAppointmentStatus } = useAppointmentToCall();
-  const initiateCallFromAppointment = async () => {
+  const initiateCallFromAppointment = async (_appointmentId: string, _callType: 'video' | 'audio') => {
     toast.error('Call functionality not available yet');
   };
-  const getAppointmentStatus = async () => ({ canJoin: false, isExpired: false, timeUntilJoin: 0 });
+  const getAppointmentStatus = async (_appointmentId: string) => ({ 
+    canJoin: false, 
+    isExpired: false, 
+    timeUntilJoin: 0 
+  });
   const [data, setData] = useState<UserDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user) {
-      fetchDashboardData();
-    }
-  }, [user]);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = React.useCallback(async () => {
     try {
       setLoading(true);
       
@@ -65,45 +92,81 @@ export const UserDashboard: React.FC = () => {
         .eq('id', user?.id)
         .single();
 
-      // Fetch recent appointments
-      const { data: recentAppointments } = await supabase
+      // Fetch recent appointments (fetch separately to avoid join issues)
+      const { data: recentAppointmentsData, error: recentError } = await supabase
         .from('appointments')
-        .select(`
-          *,
-          expert:experts(name, profile_picture, specialization)
-        `)
+        .select('*')
         .eq('user_id', user?.id)
         .order('created_at', { ascending: false })
         .limit(5);
 
+      // Fetch expert details for recent appointments
+      const recentExpertIds = recentAppointmentsData?.map(apt => apt.expert_id).filter(Boolean) || [];
+      const { data: recentExpertsData } = recentExpertIds.length > 0 ? await supabase
+        .from('expert_accounts')
+        .select('auth_id, name, profile_picture, specialization')
+        .in('auth_id', recentExpertIds) : { data: null };
+
+      // Map appointments with expert data
+      const recentAppointments = recentAppointmentsData?.map(apt => {
+        const expert = recentExpertsData?.find(e => e.auth_id === apt.expert_id);
+        return {
+          ...apt,
+          expert: expert ? {
+            auth_id: expert.auth_id,
+            name: expert.name,
+            profile_picture: expert.profile_picture,
+            specialization: expert.specialization
+          } : null
+        };
+      }) || [];
+
       // Fetch upcoming appointments
-      const { data: upcomingAppointments } = await supabase
+      const { data: upcomingAppointmentsData, error: upcomingError } = await supabase
         .from('appointments')
-        .select(`
-          *,
-          expert:experts(name, profile_picture, specialization)
-        `)
+        .select('*')
         .eq('user_id', user?.id)
         .eq('status', 'confirmed')
         .gte('appointment_date', new Date().toISOString().split('T')[0])
         .order('appointment_date', { ascending: true })
         .limit(3);
 
+      // Fetch expert details for upcoming appointments
+      const upcomingExpertIds = upcomingAppointmentsData?.map(apt => apt.expert_id).filter(Boolean) || [];
+      const { data: upcomingExpertsData } = upcomingExpertIds.length > 0 ? await supabase
+        .from('expert_accounts')
+        .select('auth_id, name, profile_picture, specialization')
+        .in('auth_id', upcomingExpertIds) : { data: null };
+
+      // Map appointments with expert data
+      const upcomingAppointments = upcomingAppointmentsData?.map(apt => {
+        const expert = upcomingExpertsData?.find(e => e.auth_id === apt.expert_id);
+        return {
+          ...apt,
+          expert: expert ? {
+            auth_id: expert.auth_id,
+            name: expert.name,
+            profile_picture: expert.profile_picture,
+            specialization: expert.specialization
+          } : null
+        };
+      }) || [];
+
       // Fetch favorite experts
-      const { data: favoriteExperts } = await supabase
+      const { data: favoriteExpertsData, error: favoritesError } = await supabase
         .from('user_favorites')
-        .select(`
-          expert:experts(
-            id,
-            name,
-            profile_picture,
-            specialization,
-            average_rating,
-            reviews_count
-          )
-        `)
+        .select('expert_id')
         .eq('user_id', user?.id)
         .limit(6);
+
+      // Fetch expert details for favorites
+      const favoriteExpertIds = favoriteExpertsData?.map(f => f.expert_id).filter(Boolean) || [];
+      const { data: favoriteExpertsDetails } = favoriteExpertIds.length > 0 ? await supabase
+        .from('expert_accounts')
+        .select('auth_id, name, profile_picture, specialization, average_rating, reviews_count')
+        .in('auth_id', favoriteExpertIds) : { data: null };
+
+      const favoriteExperts = favoriteExpertsDetails || [];
 
       // Calculate stats
       const { data: sessions } = await supabase
@@ -112,11 +175,17 @@ export const UserDashboard: React.FC = () => {
         .eq('user_id', user?.id)
         .eq('status', 'completed');
 
-      const { data: transactions } = await supabase
-        .from('user_transactions')
+      // Check for wallet_transactions table instead (user_transactions doesn't exist)
+      const { data: transactions, error: transactionsError } = await supabase
+        .from('wallet_transactions')
         .select('amount')
         .eq('user_id', user?.id)
         .eq('type', 'payment');
+      
+      // If wallet_transactions doesn't work, try alternative or set to empty
+      if (transactionsError) {
+        console.warn('Could not fetch transactions:', transactionsError);
+      }
 
       const totalSessions = sessions?.length || 0;
       const totalSpent = transactions?.reduce((sum, t) => sum + Number(t.amount), 0) || 0;
@@ -124,7 +193,7 @@ export const UserDashboard: React.FC = () => {
       setData({
         profile,
         recentAppointments: recentAppointments || [],
-        favoriteExperts: favoriteExperts?.map(f => f.expert).filter(Boolean) || [],
+        favoriteExperts: favoriteExperts || [],
         upcomingAppointments: upcomingAppointments || [],
         stats: {
           totalSessions,
@@ -138,7 +207,13 @@ export const UserDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      fetchDashboardData();
+    }
+  }, [user, fetchDashboardData]);
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-US', {
@@ -216,7 +291,7 @@ export const UserDashboard: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Welcome back, {data.profile?.name || 'User'}!</h1>
+          <h1 className="text-3xl font-bold">Welcome back, {(data.profile?.name as string) || 'User'}!</h1>
           <p className="text-muted-foreground">Here's what's happening with your wellness journey</p>
         </div>
         <div className="flex gap-2">
