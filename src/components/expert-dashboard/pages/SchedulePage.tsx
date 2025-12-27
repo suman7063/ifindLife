@@ -1,5 +1,6 @@
 
-import React, { useState, Suspense, lazy } from 'react';
+import React, { useState, Suspense, lazy, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2 } from 'lucide-react';
 
@@ -19,7 +20,33 @@ const TabLoadingFallback: React.FC = () => (
 );
 
 const SchedulePage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('availability');
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  // Initialize active tab from URL params or default to 'availability'
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    const tabFromUrl = searchParams.get('tab');
+    // Validate that the tab from URL is one of the valid tabs
+    if (tabFromUrl && ['availability', 'sessions', 'calendar'].includes(tabFromUrl)) {
+      return tabFromUrl;
+    }
+    return 'availability';
+  });
+
+  // Update URL params when tab changes
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    const newSearchParams = new URLSearchParams(searchParams);
+    newSearchParams.set('tab', value);
+    setSearchParams(newSearchParams, { replace: true });
+  };
+
+  // Sync with URL params if they change externally
+  useEffect(() => {
+    const tabFromUrl = searchParams.get('tab');
+    if (tabFromUrl && ['availability', 'sessions', 'calendar'].includes(tabFromUrl) && tabFromUrl !== activeTab) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [searchParams, activeTab]);
 
   return (
     <div className="space-y-6">
@@ -32,7 +59,7 @@ const SchedulePage: React.FC = () => {
         </div>
       </div>
       
-      <Tabs defaultValue="availability" className="w-full" onValueChange={setActiveTab}>
+      <Tabs value={activeTab} className="w-full" onValueChange={handleTabChange}>
         <TabsList>
           <TabsTrigger value="availability">Availability Management</TabsTrigger>
           <TabsTrigger value="sessions">Session Management</TabsTrigger>
