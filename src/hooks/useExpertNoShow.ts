@@ -20,12 +20,12 @@ export interface ExpertNoShowCheck {
   canReportNoShow: boolean;
   timeSinceStart: number; // minutes
   refundProcessed: boolean;
-  isWarning: boolean; // true if 65+ minutes passed but expert hasn't joined yet
+  isWarning: boolean; // true if 1+ minutes passed but expert hasn't joined yet
 }
 
 /**
  * Hook to detect and handle expert no-show scenarios
- * Checks if expert hasn't joined within 70 minutes of session start time
+ * Checks if expert hasn't joined within 5 minutes of session start time
  * Automatically processes full refund to user's wallet
  */
 export const useExpertNoShow = (appointmentId: string | null, appointmentDate: string, startTime: string, status: string) => {
@@ -769,15 +769,15 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
         }
       }
 
-      // Warning state: 65+ minutes passed but expert hasn't joined (not yet a no-show)
-      const isWarning = timeSinceStart >= 65 && timeSinceStart < 70 && !expertJoined && (status === 'scheduled' || status === 'confirmed');
+      // Warning state: 1+ minutes passed but expert hasn't joined (not yet a no-show)
+      const isWarning = timeSinceStart >= 1 && timeSinceStart < 5 && !expertJoined && (status === 'scheduled' || status === 'confirmed');
 
       // Consider it a no-show if:
-      // 1. 70 minutes have passed since start time
+      // 1. 5 minutes have passed since start time
       // 2. Expert hasn't joined
       // 3. Status is still scheduled/confirmed
-      const isNoShow = timeSinceStart >= 70 && !expertJoined && (status === 'scheduled' || status === 'confirmed');
-      const canReportNoShow = timeSinceStart >= 70 && !expertJoined && (status === 'scheduled' || status === 'confirmed');
+      const isNoShow = timeSinceStart >= 5 && !expertJoined && (status === 'scheduled' || status === 'confirmed');
+      const canReportNoShow = timeSinceStart >= 5 && !expertJoined && (status === 'scheduled' || status === 'confirmed');
 
       // Check if refund was already processed (check both appointment and call_session)
       // Use comprehensive check: reference_id column OR metadata->>reference_id
@@ -931,12 +931,12 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
         isWarning
       });
 
-      // Auto-mark as no-show and process refund if 70 minutes have passed
+      // Auto-mark as no-show and process refund if 5 minutes have passed
       // Only trigger once - check if already cancelled or refund processed
       if (isNoShow && !refundProcessed && !hasCancelledRef.current) {
         // Show global warning notification
         toast.error('Expert No-Show Detected', {
-          description: `The expert did not join your session within 70 minutes. Full refund ${refundAmountDisplay ? `of ${refundAmountDisplay}` : ''} has been processed and credited to your wallet.`,
+          description: `The expert did not join your session within 5 minutes. Full refund ${refundAmountDisplay ? `of ${refundAmountDisplay}` : ''} has been processed and credited to your wallet.`,
           duration: 10000
         });
 
@@ -946,9 +946,9 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
           console.error('Failed to automatically cancel appointment and process refund');
         }
       } else if (isWarning && !isNoShow) {
-        // Show warning notification when 65 minutes passed
+        // Show warning notification when 1 minute passed
         toast.warning('Expert Not Joined Yet', {
-          description: `The expert hasn't joined your session yet. If they don't join within ${70 - timeSinceStart} minute(s), you'll receive a full refund automatically.`,
+          description: `The expert hasn't joined your session yet. If they don't join within ${5 - timeSinceStart} minute(s), you'll receive a full refund automatically.`,
           duration: 8000
         });
       }
@@ -1098,33 +1098,33 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
       const now = new Date();
       
       // Only set up timeout if appointment time has passed or is very close
-      if (!isAfter(appointmentDateTime, addMinutes(now, -70))) {
+      if (!isAfter(appointmentDateTime, addMinutes(now, -5))) {
         const timeSinceStart = differenceInMinutes(now, appointmentDateTime);
         
-        if (timeSinceStart < 70) {
-          // Calculate exact time until 70-minute mark
-          const minutesUntil70Min = 70 - timeSinceStart;
-          const millisecondsUntil70Min = minutesUntil70Min * 60 * 1000;
+        if (timeSinceStart < 5) {
+          // Calculate exact time until 5-minute mark
+          const minutesUntil5Min = 5 - timeSinceStart;
+          const millisecondsUntil5Min = minutesUntil5Min * 60 * 1000;
           
-          // Single timeout for exact 70-minute mark (more efficient than interval)
+          // Single timeout for exact 5-minute mark (more efficient than interval)
           const timeoutId = setTimeout(() => {
             if (!isMounted || expertJoinedRef.current) {
               return;
             }
             checkNoShow();
-          }, millisecondsUntil70Min);
+          }, millisecondsUntil5Min);
           
           // Also set up a fallback interval (every 30 seconds) in case timeout is missed
-          // This ensures we catch the 70-minute mark even if browser tab was inactive
+          // This ensures we catch the 5-minute mark even if browser tab was inactive
           timeCheckInterval = setInterval(() => {
             if (!isMounted || expertJoinedRef.current) return;
             const currentTime = new Date();
             const currentTimeSinceStart = differenceInMinutes(currentTime, appointmentDateTime);
             
-            // Only check if we're past the 70-minute mark
-            if (currentTimeSinceStart >= 70) {
+            // Only check if we're past the 5-minute mark
+            if (currentTimeSinceStart >= 5) {
               checkNoShow();
-              // Clear interval after detecting 70-minute mark
+              // Clear interval after detecting 5-minute mark
               if (timeCheckInterval) {
                 clearInterval(timeCheckInterval);
                 timeCheckInterval = null;
@@ -1135,7 +1135,7 @@ export const useExpertNoShow = (appointmentId: string | null, appointmentDate: s
           // Store timeout ID for cleanup
           checkIntervalRef.current = timeoutId as any;
         } else {
-          // Already past 70-minute mark - check immediately
+          // Already past 5-minute mark - check immediately
           if (!expertJoinedRef.current) {
             checkNoShow();
           }
