@@ -82,6 +82,36 @@ const ExpertOnboardingWelcome: React.FC<ExpertOnboardingWelcomeProps> = ({
         .eq('auth_id', expertId);
 
       if (error) throw error;
+
+      // Send welcome email when onboarding is completed
+      try {
+        // Fetch expert details for email
+        const { data: expertData } = await supabase
+          .from('expert_accounts')
+          .select('name, email')
+          .eq('auth_id', expertId)
+          .single();
+
+        if (expertData?.email && expertData?.name) {
+          console.log('📧 Sending welcome email to expert:', expertData.email);
+          const { error: emailError } = await supabase.functions.invoke('send-expert-welcome-email', {
+            body: {
+              expertName: expertData.name,
+              expertEmail: expertData.email,
+            },
+          });
+
+          if (emailError) {
+            console.warn('⚠️ Failed to send welcome email (non-critical):', emailError);
+            // Don't fail onboarding if email fails - it's non-critical
+          } else {
+            console.log('✅ Welcome email sent successfully');
+          }
+        }
+      } catch (emailErr) {
+        console.warn('⚠️ Error sending welcome email (non-critical):', emailErr);
+        // Don't fail onboarding if email fails
+      }
       
       toast.success('Onboarding completed! Welcome to the platform!');
       onComplete();

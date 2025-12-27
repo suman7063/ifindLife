@@ -41,3 +41,6 @@ verify_jwt = true
 
 [functions.send-notification]
 verify_jwt = false
+
+[functions.send-expert-welcome-email]
+verify_jwt = false

@@ -239,6 +239,25 @@ const ServiceSelectionStep: React.FC<ServiceSelectionStepProps> = ({
           .from('expert_accounts')
           .update({ onboarding_completed: true })
           .eq('auth_id', expertAccount.auth_id);
+
+        // Send welcome email when onboarding is auto-completed
+        try {
+          console.log('📧 Sending welcome email to expert:', expertAccount.email);
+          const { error: emailError } = await supabase.functions.invoke('send-expert-welcome-email', {
+            body: {
+              expertName: expertAccount.name,
+              expertEmail: expertAccount.email,
+            },
+          });
+
+          if (emailError) {
+            console.warn('⚠️ Failed to send welcome email (non-critical):', emailError);
+          } else {
+            console.log('✅ Welcome email sent successfully');
+          }
+        } catch (emailErr) {
+          console.warn('⚠️ Error sending welcome email (non-critical):', emailErr);
+        }
       }
 
       console.log('✅ Services saved successfully');

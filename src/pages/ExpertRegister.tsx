@@ -373,12 +373,16 @@ const ExpertRegister: React.FC = () => {
         return;
       }
 
-      // Create new auth user (original registration flow)
+      // Create new auth user (original registration flow) with email verification enabled
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/expert-login?status=pending`,
+          emailRedirectTo: `${window.location.origin}/expert-login?verify=email&status=pending`,
+          data: {
+            user_type: 'expert',
+            name: data.name,
+          },
         },
       });
 
@@ -413,7 +417,11 @@ const ExpertRegister: React.FC = () => {
         throw new Error(expertError.message);
       }
 
-      toast.success('Registration successful! Please check your email to verify your account.');
+      // Note: Welcome email will be sent when onboarding is completed, not during registration
+      // Sign out after registration since experts need approval
+      await supabase.auth.signOut();
+
+      toast.success('Registration successful! Please verify your email, then wait for admin approval before logging in.');
       navigate('/expert-login?status=pending');
     } catch (error) {
       console.error('Registration error:', error);

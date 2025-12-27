@@ -23,11 +23,12 @@ export const useExpertRegistration = (
         return false;
       }
       
-      // Create auth account
+      // Create auth account with email verification enabled
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
+          emailRedirectTo: `${window.location.origin}/expert-login?verify=email`,
           data: {
             name: data.name,
             phone: data.phone,
@@ -124,10 +125,11 @@ export const useExpertRegistration = (
       
       console.log('Expert registration successful for', data.email);
       
+      // Note: Welcome email will be sent when onboarding is completed, not during registration
       // Sign out and let the component handle the redirect
       await supabase.auth.signOut();
       
-      toast.success('Registration successful! Your application is pending approval. Please log in with your credentials.');
+      toast.success('Registration successful! Please verify your email, then wait for admin approval before logging in.');
       return true;
     } catch (error: unknown) {
       console.error('Registration error:', error);

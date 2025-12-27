@@ -383,6 +383,29 @@ export const ExpertOnboardingFlow: React.FC = () => {
                     if (accountError) {
                       console.error('Error updating expert account:', accountError);
                     }
+
+                    // Send welcome email when onboarding is completed
+                    if (expertAccount?.email && expertAccount?.name) {
+                      try {
+                        console.log('📧 Sending welcome email to expert:', expertAccount.email);
+                        const { error: emailError } = await supabase.functions.invoke('send-expert-welcome-email', {
+                          body: {
+                            expertName: expertAccount.name,
+                            expertEmail: expertAccount.email,
+                          },
+                        });
+
+                        if (emailError) {
+                          console.warn('⚠️ Failed to send welcome email (non-critical):', emailError);
+                          // Don't fail onboarding if email fails - it's non-critical
+                        } else {
+                          console.log('✅ Welcome email sent successfully');
+                        }
+                      } catch (emailErr) {
+                        console.warn('⚠️ Error sending welcome email (non-critical):', emailErr);
+                        // Don't fail onboarding if email fails
+                      }
+                    }
                     
                     console.log('✅ Onboarding completed, redirecting to dashboard');
                     toast.success('Onboarding completed! Redirecting to dashboard...');

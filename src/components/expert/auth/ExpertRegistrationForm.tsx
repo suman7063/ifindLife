@@ -115,12 +115,17 @@ const ExpertRegistrationForm: React.FC = () => {
     console.log('Form submission started', { data, selectedFile, selectedProfilePicture });
 
     try {
-      // Create auth user
+      // Create auth user with email verification enabled
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
           emailRedirectTo: `${window.location.origin}/expert-login?verify=email`,
+          // Ensure email verification is sent
+          data: {
+            user_type: 'expert',
+            name: data.name,
+          },
         },
       });
 
@@ -152,13 +157,18 @@ const ExpertRegistrationForm: React.FC = () => {
         console.log('🔍 User authenticated for upload:', !!currentUser, currentUser?.id);
         
         const fileExt = selectedFile.name.split('.').pop();
-        const fileName = `${authData.user.id}-certificate.${fileExt}`;
+        // Add timestamp to make filename unique and avoid "resource already exists" error
+        const timestamp = Date.now();
+        const fileName = `${authData.user.id}-certificate-${timestamp}.${fileExt}`;
         
         console.log('📁 Uploading certificate:', fileName);
         
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('expert-certificates')
-          .upload(fileName, selectedFile);
+          .upload(fileName, selectedFile, {
+            cacheControl: '3600',
+            upsert: false // Don't overwrite, use unique filename instead
+          });
 
         if (uploadError) {
           console.error('❌ Upload error:', uploadError);
@@ -230,22 +240,68 @@ const ExpertRegistrationForm: React.FC = () => {
       console.log('📝 Insert data profile_picture value:', insertData.profile_picture);
       console.log('📝 Insert data profile_picture is URL?:', insertData.profile_picture?.startsWith('https://'));
       
-      const { error: expertError, data: insertedData } = await supabase
-        .from('expert_accounts')
-        .insert(insertData)
-        .select();
+      // Use RPC function to bypass RLS during registration
+      // This is needed because when email verification is enabled, 
+      // the session might not be fully established yet
+      const { data: rpcResult, error: expertError } = await supabase.rpc(
+        'create_expert_account_during_registration',
+        {
+          p_auth_id: authData.user.id,
+          p_name: insertData.name,
+          p_email: insertData.email,
+          p_phone: insertData.phone,
+          p_address: insertData.address,
+          p_city: insertData.city,
+          p_state: insertData.state,
+          p_country: insertData.country,
+          p_specialization: insertData.specialization,
+          p_experience: insertData.experience,
+          p_bio: insertData.bio,
+          p_certificate_urls: insertData.certificate_urls,
+          p_profile_picture: insertData.profile_picture,
+          p_category: insertData.category,
+          p_languages: insertData.languages,
+          p_status: insertData.status,
+        }
+      );
 
       if (expertError) {
-        console.error('❌ Error creating expert account:', expertError);
-        throw new Error(expertError.message);
-      }
-      
-      if (insertedData && insertedData.length > 0) {
-        console.log('✅ Expert account created successfully');
-        console.log('📸 Saved profile_picture in database:', insertedData[0].profile_picture);
-        console.log('📸 Verification - saved value is URL?:', insertedData[0].profile_picture?.startsWith('https://'));
+        console.error('❌ Error creating expert account via RPC:', expertError);
+        // Fallback to direct insert if RPC fails (for backward compatibility)
+        console.log('⚠️ RPC failed, trying direct insert as fallback...');
+        const { error: directInsertError, data: directInsertData } = await supabase
+          .from('expert_accounts')
+          .insert(insertData)
+          .select();
+        
+        if (directInsertError) {
+          console.error('❌ Direct insert also failed:', directInsertError);
+          throw new Error(directInsertError.message || expertError.message);
+        }
+        
+        // Use direct insert data if RPC failed but direct insert succeeded
+        if (directInsertData && directInsertData.length > 0) {
+          console.log('✅ Expert account created via direct insert fallback');
+          console.log('📸 Saved profile_picture in database:', directInsertData[0].profile_picture);
+        }
+      } else if (rpcResult) {
+        // RPC function returns a record with OUT parameters
+        console.log('✅ Expert account created successfully via RPC');
+        console.log('📝 RPC result:', rpcResult);
+        // Verify the account was created by fetching it
+        const { data: verifyData } = await supabase
+          .from('expert_accounts')
+          .select('*')
+          .eq('auth_id', authData.user.id)
+          .single();
+        
+        if (verifyData) {
+          console.log('✅ Verified expert account exists');
+          console.log('📸 Saved profile_picture in database:', verifyData.profile_picture);
+        }
       }
 
+      // Note: Welcome email will be sent when onboarding is completed, not during registration
       // Important: Sign out AFTER creating expert account since experts need approval
       // This ensures the user is authenticated during file uploads and account creation
       await supabase.auth.signOut();

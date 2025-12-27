@@ -11,10 +11,17 @@ export const useExpertRegistration = (onActionComplete: () => void) => {
     expertData: Partial<ExpertProfile>
   ): Promise<boolean> => {
     try {
-      // First create the user account with Supabase Auth
+      // First create the user account with Supabase Auth (with email verification)
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/expert-login?verify=email`,
+          data: {
+            user_type: 'expert',
+            name: expertData.name || '',
+          },
+        },
       });
 
       if (error) {
@@ -57,13 +64,15 @@ export const useExpertRegistration = (onActionComplete: () => void) => {
           toast.error(`Failed to create expert profile: ${profileError.message}`);
           return false;
         }
+
+        // Note: Welcome email will be sent when onboarding is completed, not during registration
       }
 
       // Important: Sign out immediately after registration since experts need approval
       await supabase.auth.signOut();
 
       localStorage.setItem('sessionType', 'expert');
-      toast.success('Expert account created successfully! Your profile is pending approval. Please wait for admin approval before logging in.');
+      toast.success('Expert account created successfully! Please verify your email, then wait for admin approval before logging in.');
       onActionComplete();
       return true;
     } catch (error) {
