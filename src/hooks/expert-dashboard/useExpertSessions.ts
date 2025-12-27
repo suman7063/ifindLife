@@ -527,9 +527,12 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
         console.log('📅 Cancelled filter');
         query = query.eq('status', 'cancelled');
       } else if (tabFilter === 'history') {
-        // History: completed sessions
-        console.log('📅 History filter');
-        query = query.eq('status', 'completed');
+        // History: fetch ALL appointments (no date or status filter)
+        // Client-side will filter to show only past sessions
+        // This ensures we get all past sessions regardless of status (completed, cancelled, no-show, etc.)
+        console.log('📅 History filter - fetching ALL appointments (no filters) for client-side filtering');
+        // Don't filter by status or date - fetch everything, client-side will filter past sessions
+        // No additional filters needed - query already has .eq('expert_id', expertId)
       } else {
         console.log('📅 No filter - fetching all');
       }
@@ -537,13 +540,14 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
 
       console.log('🔍 Executing query for tab:', tabFilter);
       const { data: appointments, error: appointmentsError } = await query
-        .order('appointment_date', { ascending: true })
-        .order('start_time', { ascending: true });
+        .order('appointment_date', { ascending: false }) // Most recent first for history
+        .order('start_time', { ascending: false });
       
       console.log('📊 Query result:', { 
         count: appointments?.length || 0, 
         error: appointmentsError?.message,
-        tabFilter 
+        tabFilter,
+        sampleDates: appointments?.slice(0, 5).map(a => a.appointment_date) || []
       });
 
       if (appointmentsError) {
@@ -625,180 +629,238 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
       }
 
       // STEP 3: Map appointments to sessions (now uses batch-fetched data)
+      console.log(`🔄 Mapping ${appointments.length} appointments to sessions...`);
       const mappedSessions = await Promise.all(
         appointments.map(async (appointment) => {
-          // Use the batch-fetched call session data (from ONE API call)
-          const callSession = callSessionMap.get(appointment.id) || null;
-          
-          // Get user profile from batch-fetched map (or cache if not in batch)
-          let userProfile = userProfileMap.get(appointment.user_id);
-          if (!userProfile) {
-            // Fallback to cache or fetch if not in batch
-            userProfile = await fetchUserProfile(appointment.user_id);
-          }
-          
-          // Parse start and end times
-          const appointmentDate = new Date(appointment.appointment_date);
-          const startTime = appointment.start_time
-            ? new Date(`${appointment.appointment_date}T${appointment.start_time}`)
-            : appointmentDate;
-          const endTime = appointment.end_time
-            ? new Date(`${appointment.appointment_date}T${appointment.end_time}`)
-            : new Date(startTime.getTime() + (appointment.duration || 60) * 60000);
+          try {
+            // Use the batch-fetched call session data (from ONE API call)
+            const callSession = callSessionMap.get(appointment.id) || null;
+            
+            // Get user profile from batch-fetched map (or cache if not in batch)
+            let userProfile = userProfileMap.get(appointment.user_id);
+            if (!userProfile) {
+              // Fallback to cache or fetch if not in batch
+              userProfile = await fetchUserProfile(appointment.user_id);
+            }
+            
+            // Parse start and end times
+            const appointmentDate = new Date(appointment.appointment_date);
+            const startTime = appointment.start_time
+              ? new Date(`${appointment.appointment_date}T${appointment.start_time}`)
+              : appointmentDate;
+            const endTime = appointment.end_time
+              ? new Date(`${appointment.appointment_date}T${appointment.end_time}`)
+              : new Date(startTime.getTime() + (appointment.duration || 60) * 60000);
+            
+            // Log for debugging
+            const now = new Date();
+            const isPast = endTime < now;
+            if (tabFilter === 'history') {
+              console.log(`📅 Mapping appointment:`, {
+                id: appointment.id,
+                date: appointment.appointment_date,
+                startTime: appointment.start_time,
+                endTime: appointment.end_time,
+                parsedEndTime: endTime.toISOString(),
+                currentTime: now.toISOString(),
+                isPast,
+                status: appointment.status
+              });
+            }
 
-          // Determine session type
-          const type: 'video' | 'audio' | 'in-person' = 
-            appointment.channel_name ? 'video' : 'audio';
+            // Determine session type
+            const type: 'video' | 'audio' | 'in-person' = 
+              appointment.channel_name ? 'video' : 'audio';
 
-          // Map status using call session data from batch fetch
-          let status: Session['status'] = 'scheduled';
-          const appointmentStatus = appointment.status?.toLowerCase();
-          const now = new Date();
-          const isPast = endTime < now;
-          const expertJoined = callSession && callSession.start_time;
+            // Map status using call session data from batch fetch
+            let status: Session['status'] = 'scheduled';
+            const appointmentStatus = appointment.status?.toLowerCase();
+            const expertJoined = callSession && callSession.start_time;
 
-          // Status determination logic (same as before)
-          if (appointmentStatus === 'completed') {
-            status = 'completed';
-          } else if (appointmentStatus === 'cancelled') {
-            status = 'cancelled';
-          } else if (expertJoined) {
-            if (callSession.status === 'active') {
-              const callSessionTime = new Date(callSession.created_at);
-              const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
-              // IMPORTANT: Don't auto-complete sessions just because time passed
-              // Only mark as in-progress if recently started, otherwise keep as scheduled
-              status = callSessionTime >= thirtyMinutesAgo ? 'in-progress' : 'scheduled';
-            } else if (callSession.status === 'completed' || callSession.status === 'ended') {
+            // Status determination logic (same as before)
+            if (appointmentStatus === 'completed') {
               status = 'completed';
-            } else {
-              // IMPORTANT: Don't auto-complete sessions just because time passed
-              // Only mark as completed if explicitly set in database
+            } else if (appointmentStatus === 'cancelled') {
+              status = 'cancelled';
+            } else if (expertJoined) {
+              if (callSession.status === 'active') {
+                const callSessionTime = new Date(callSession.created_at);
+                const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+                // IMPORTANT: Don't auto-complete sessions just because time passed
+                // Only mark as in-progress if recently started, otherwise keep as scheduled
+                status = callSessionTime >= thirtyMinutesAgo ? 'in-progress' : 'scheduled';
+              } else if (callSession.status === 'completed' || callSession.status === 'ended') {
+                status = 'completed';
+              } else {
+                // IMPORTANT: Don't auto-complete sessions just because time passed
+                // Only mark as completed if explicitly set in database
+                status = 'scheduled';
+              }
+            } else if (isPast && (appointmentStatus === 'scheduled' || appointmentStatus === 'pending' || appointmentStatus === 'confirmed')) {
+              status = 'no-show';
+            } else if (appointmentStatus === 'pending' || appointmentStatus === 'confirmed') {
               status = 'scheduled';
             }
-          } else if (isPast && (appointmentStatus === 'scheduled' || appointmentStatus === 'pending' || appointmentStatus === 'confirmed')) {
-            status = 'no-show';
-          } else if (appointmentStatus === 'pending' || appointmentStatus === 'confirmed') {
-            status = 'scheduled';
-          }
-          
-          // IMPORTANT: Override status to 'cancelled' if refund was processed
-          // Check refund only if status would be in-progress to avoid unnecessary queries
-          if (status === 'in-progress' || (callSession && callSession.status === 'active')) {
-            const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(appointment.id);
             
-            let hasRefund = false;
-            if (isUUID) {
-              const { data: refunds } = await supabase
-                .from('wallet_transactions')
-                .select('id')
-                .eq('reference_id', appointment.id)
-                .eq('reference_type', 'appointment')
-                .eq('type', 'credit')
-                .in('reason', ['expert_no_show', 'refund'])
-                .limit(1);
-              hasRefund = (refunds && refunds.length > 0) || false;
-            } else {
-              const { data: refunds } = await supabase
-                .from('wallet_transactions')
-                .select('id')
-                .eq('metadata->>reference_id', appointment.id)
-                .eq('reference_type', 'appointment')
-                .eq('type', 'credit')
-                .in('reason', ['expert_no_show', 'refund'])
-                .limit(1);
-              hasRefund = (refunds && refunds.length > 0) || false;
-            }
-            
-            // Also check call session refunds
-            if (!hasRefund && callSession) {
-              const callSessionIsUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(callSession.id);
-              if (callSessionIsUUID) {
-                const { data: callRefunds } = await supabase
+            // IMPORTANT: Override status to 'cancelled' if refund was processed
+            // Check refund only if status would be in-progress to avoid unnecessary queries
+            if (status === 'in-progress' || (callSession && callSession.status === 'active')) {
+              const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(appointment.id);
+              
+              let hasRefund = false;
+              if (isUUID) {
+                const { data: refunds } = await supabase
                   .from('wallet_transactions')
                   .select('id')
-                  .eq('reference_id', callSession.id)
-                  .eq('reference_type', 'call_session')
+                  .eq('reference_id', appointment.id)
+                  .eq('reference_type', 'appointment')
                   .eq('type', 'credit')
                   .in('reason', ['expert_no_show', 'refund'])
                   .limit(1);
-                hasRefund = (callRefunds && callRefunds.length > 0) || false;
+                hasRefund = (refunds && refunds.length > 0) || false;
               } else {
-                const { data: callRefunds } = await supabase
+                const { data: refunds } = await supabase
                   .from('wallet_transactions')
                   .select('id')
-                  .eq('metadata->>reference_id', callSession.id)
-                  .eq('reference_type', 'call_session')
+                  .eq('metadata->>reference_id', appointment.id)
+                  .eq('reference_type', 'appointment')
                   .eq('type', 'credit')
                   .in('reason', ['expert_no_show', 'refund'])
                   .limit(1);
-                hasRefund = (callRefunds && callRefunds.length > 0) || false;
+                hasRefund = (refunds && refunds.length > 0) || false;
+              }
+              
+              // Also check call session refunds
+              if (!hasRefund && callSession) {
+                const callSessionIsUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(callSession.id);
+                if (callSessionIsUUID) {
+                  const { data: callRefunds } = await supabase
+                    .from('wallet_transactions')
+                    .select('id')
+                    .eq('reference_id', callSession.id)
+                    .eq('reference_type', 'call_session')
+                    .eq('type', 'credit')
+                    .in('reason', ['expert_no_show', 'refund'])
+                    .limit(1);
+                  hasRefund = (callRefunds && callRefunds.length > 0) || false;
+                } else {
+                  const { data: callRefunds } = await supabase
+                    .from('wallet_transactions')
+                    .select('id')
+                    .eq('metadata->>reference_id', callSession.id)
+                    .eq('reference_type', 'call_session')
+                    .eq('type', 'credit')
+                    .in('reason', ['expert_no_show', 'refund'])
+                    .limit(1);
+                  hasRefund = (callRefunds && callRefunds.length > 0) || false;
+                }
+              }
+              
+              if (hasRefund) {
+                console.log('🔄 Refund detected in batch fetch, overriding status to cancelled:', appointment.id);
+                status = 'cancelled';
               }
             }
-            
-            if (hasRefund) {
-              console.log('🔄 Refund detected in batch fetch, overriding status to cancelled:', appointment.id);
-              status = 'cancelled';
+
+            // Calculate actual duration
+            let actualDuration: number | undefined;
+            if (callSession?.start_time && callSession?.end_time) {
+              const start = new Date(callSession.start_time);
+              const end = new Date(callSession.end_time);
+              actualDuration = Math.round((end.getTime() - start.getTime()) / 60000);
+            } else if (callSession?.duration) {
+              actualDuration = callSession.duration;
             }
-          }
 
-          // Calculate actual duration
-          let actualDuration: number | undefined;
-          if (callSession?.start_time && callSession?.end_time) {
-            const start = new Date(callSession.start_time);
-            const end = new Date(callSession.end_time);
-            actualDuration = Math.round((end.getTime() - start.getTime()) / 60000);
-          } else if (callSession?.duration) {
-            actualDuration = callSession.duration;
-          }
+            // Parse notes
+            let notes = appointment.notes || '';
+            let goals: string[] = [];
+            let outcomes: string[] = [];
+            let nextSteps: string[] = [];
 
-          // Parse notes
-          let notes = appointment.notes || '';
-          let goals: string[] = [];
-          let outcomes: string[] = [];
-          let nextSteps: string[] = [];
-
-          try {
-            if (notes) {
-              const parsed = JSON.parse(notes);
-              if (typeof parsed === 'object') {
-                notes = parsed.notes || notes;
-                goals = parsed.goals || [];
-                outcomes = parsed.outcomes || [];
-                nextSteps = parsed.nextSteps || [];
+            try {
+              if (notes) {
+                const parsed = JSON.parse(notes);
+                if (typeof parsed === 'object') {
+                  notes = parsed.notes || notes;
+                  goals = parsed.goals || [];
+                  outcomes = parsed.outcomes || [];
+                  nextSteps = parsed.nextSteps || [];
+                }
               }
+            } catch {
+              // If parsing fails, use notes as-is
             }
-          } catch {
-            // If parsing fails, use notes as-is
-          }
 
-          return {
-            id: appointment.id,
-            clientId: appointment.user_id,
-            clientName: userProfile?.name || 'Unknown Client',
-            clientAvatar: userProfile?.profile_picture || undefined,
-            clientEmail: userProfile?.email || undefined,
-            type,
-            status,
-            startTime,
-            endTime,
-            duration: appointment.duration || 60,
-            actualDuration,
-            notes,
-            goals,
-            outcomes,
-            nextSteps,
-            rating: callSession?.rating || undefined,
-            paymentStatus: (appointment.payment_status as 'pending' | 'paid' | 'refunded') || 'pending',
-            amount: 0,
-            appointmentId: appointment.id,
-            channelName: appointment.channel_name || callSession?.channel_name || undefined,
-            token: appointment.token || callSession?.agora_token || undefined,
-            appointmentDate: appointment.appointment_date,
-          };
+            return {
+              id: appointment.id,
+              clientId: appointment.user_id,
+              clientName: userProfile?.name || 'Unknown Client',
+              clientAvatar: userProfile?.profile_picture || undefined,
+              clientEmail: userProfile?.email || undefined,
+              type,
+              status,
+              startTime,
+              endTime,
+              duration: appointment.duration || 60,
+              actualDuration,
+              notes,
+              goals,
+              outcomes,
+              nextSteps,
+              rating: callSession?.rating || undefined,
+              paymentStatus: (appointment.payment_status as 'pending' | 'paid' | 'refunded') || 'pending',
+              amount: 0,
+              appointmentId: appointment.id,
+              channelName: appointment.channel_name || callSession?.channel_name || undefined,
+              token: appointment.token || callSession?.agora_token || undefined,
+              appointmentDate: appointment.appointment_date,
+              // IMPORTANT: Include call_session status and duration for history filter
+              callSessionStatus: callSession?.status || undefined,
+              callSessionDuration: callSession?.duration || actualDuration || undefined
+            } as Session & { callSessionStatus?: string; callSessionDuration?: number };
+          } catch (error) {
+            console.error(`❌ Error mapping appointment ${appointment.id} to session:`, error);
+            // Return a minimal session object to prevent filtering out
+            return {
+              id: appointment.id,
+              clientId: appointment.user_id,
+              clientName: 'Unknown Client',
+              type: 'audio' as const,
+              status: 'scheduled' as const,
+              startTime: new Date(appointment.appointment_date),
+              endTime: new Date(appointment.appointment_date),
+              duration: appointment.duration || 60,
+              notes: '',
+              goals: [],
+              outcomes: [],
+              nextSteps: [],
+              paymentStatus: 'pending' as const,
+              amount: 0,
+              appointmentId: appointment.id,
+              appointmentDate: appointment.appointment_date,
+              callSessionStatus: undefined,
+              callSessionDuration: undefined
+            } as Session & { callSessionStatus?: string; callSessionDuration?: number };
+          }
         })
       );
 
+      console.log(`✅ Mapped ${mappedSessions.length} sessions from ${appointments.length} appointments`);
+      if (tabFilter === 'history') {
+        const now = new Date();
+        const pastSessions = mappedSessions.filter(s => s.endTime < now);
+        console.log('📚 History check - Past sessions:', {
+          totalMapped: mappedSessions.length,
+          pastSessions: pastSessions.length,
+          samplePast: pastSessions.slice(0, 5).map(s => ({
+            id: s.id,
+            endTime: s.endTime.toISOString(),
+            status: s.status
+          }))
+        });
+      }
+      
       setSessions(mappedSessions);
       console.log('✅ Sessions fetched successfully:', { count: mappedSessions.length, tabFilter });
     } catch (err: any) {

@@ -496,53 +496,44 @@ const SessionManager: React.FC = () => {
 
   const historySessions = useMemo(() => {
     const now = new Date();
+    console.log('📚 Filtering history sessions from', groupedSessions.length, 'total sessions');
+    console.log('📚 Sample session dates:', groupedSessions.slice(0, 10).map(s => ({
+      id: s.id,
+      date: s.startTime.toLocaleDateString(),
+      endTime: s.endTime.toLocaleString(),
+      status: s.status,
+      isPast: s.endTime < now
+    })));
+    
     const filtered = groupedSessions.filter(session => {
-      // Include in history if:
-      // 1. Status is 'completed'
-      // 2. OR session end time has passed AND call session exists with status 'ended' or 'completed'
-      // 3. OR session end time has passed AND appointment status is 'completed'
-      // 4. OR session end time has passed AND call session has duration > 0 (expert attended)
-      
-      if (session.status === 'completed') {
-        return true;
-      }
-      
-      // Check if session time has passed
+      // SIMPLIFIED: If session end time has passed, include it in history
+      // This ensures ALL past appointments appear in history, regardless of status
       const isPast = session.endTime < now;
       
       if (!isPast) {
         return false; // Future sessions shouldn't be in history
       }
       
-      // Check if there's a call session that ended
-      const callSessionStatus = (session as any).callSessionStatus;
-      if (callSessionStatus === 'ended' || callSessionStatus === 'completed') {
-        return true;
-      }
-      
-      // Check if call session has duration (expert attended)
-      const callSessionDuration = (session as any).callSessionDuration;
-      if (callSessionDuration && callSessionDuration > 0) {
-        return true;
-      }
-      
-      // If session is past and status is not 'scheduled', include it
-      // This catches cancelled, no-show, in-progress (if past), and other past sessions
-      if (session.status !== 'scheduled') {
-        return true;
-      }
-      
-      return false;
+      // ALL past sessions should be in history
+      // No need to check status - if time has passed, it's history
+      return true;
     })
     // Sort by start time (most recent first)
     .sort((a, b) => b.startTime.getTime() - a.startTime.getTime());
     
-    console.log('📚 History sessions:', {
+    console.log('📚 History sessions filtered:', {
       total: filtered.length,
+      totalGrouped: groupedSessions.length,
       byStatus: filtered.reduce((acc, s) => {
         acc[s.status] = (acc[s.status] || 0) + 1;
         return acc;
-      }, {} as Record<string, number>)
+      }, {} as Record<string, number>),
+      sampleIds: filtered.slice(0, 10).map(s => ({
+        id: s.id,
+        date: s.startTime.toLocaleDateString(),
+        status: s.status,
+        endTime: s.endTime.toLocaleString()
+      }))
     });
     
     return filtered;
@@ -1700,6 +1691,10 @@ const SessionManager: React.FC = () => {
                 if (expert?.auth_id) {
                   console.log('🔄 Tab changed to:', value);
                   console.log('📡 Fetching sessions for tab:', value);
+                  // For history tab, ensure we fetch ALL appointments
+                  if (value === 'history') {
+                    console.log('📚 History tab selected - fetching ALL appointments');
+                  }
                   fetchSessions(value as 'today' | 'upcoming' | 'history');
                 } else {
                   console.log('❌ Expert ID not available');
