@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "=== Deploying Expert Welcome Email Edge Function ==="
+echo "=== Deploying Expert Email Welcome Status Edge Function ==="
 echo ""
 
 # Check if supabase CLI is installed
@@ -36,11 +36,11 @@ if [ $? -ne 0 ]; then
 fi
 
 echo ""
-echo "Step 3: Deploying send-expert-welcome-email function..."
-supabase functions deploy send-expert-welcome-email
+echo "Step 3: Deploying send-expert-email-welcome-status function..."
+supabase functions deploy send-expert-email-welcome-status
 
 if [ $? -ne 0 ]; then
-    echo "❌ Failed to deploy send-expert-welcome-email"
+    echo "❌ Failed to deploy send-expert-email-welcome-status"
     exit 1
 fi
 

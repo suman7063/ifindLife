@@ -145,18 +145,14 @@ const ExpertApprovals = () => {
       const deleted = rpcData.filter((expert: unknown) => {
         const e = expert as { deleted_at?: string | null };
         const hasDeletedAt = e.deleted_at != null && e.deleted_at !== '';
-        if (hasDeletedAt) {
-          console.error('ExpertApprovals: Found deleted expert:', e);
-        }
         return hasDeletedAt;
       });
       
     
       
-      if (deleted.length === 0) {
-        if (rpcData.length > 0) {
-          console.error('ExpertApprovals: Sample expert from RPC:', rpcData[0]);
-        }
+      // Debug: Log if no deleted experts found but RPC returned data
+      if (deleted.length === 0 && rpcData.length > 0) {
+        console.log('ExpertApprovals: No deleted experts found (all experts have deleted_at = null)');
       }
       
       const deletedWithAuthId = (deleted as unknown[]).map((expert: unknown) => {
@@ -273,16 +269,95 @@ const ExpertApprovals = () => {
       setOpenDialog(false);
 
       // Send email notification (non-blocking)
+      // Use send-expert-email-welcome-status for all status updates (approved, rejected, etc.)
       try {
-        const emailResult = await sendStatusUpdateEmail(selectedExpert.email, selectedStatus, feedbackMessage);
-        if (emailResult && !emailResult.error) {
-          toast.success('Status updated and email notification sent successfully');
+        const { data: emailData, error: emailError } = await supabase.functions.invoke('send-expert-email-welcome-status', {
+          body: {
+            expertName: selectedExpert.name || selectedExpert.email.split('@')[0],
+            expertEmail: selectedExpert.email,
+            emailType: selectedStatus === 'approved' ? 'approval' : selectedStatus === 'rejected' ? 'rejection' : 'onboarding',
+            rejectionMessage: selectedStatus === 'rejected' ? (feedbackMessage.trim() || undefined) : undefined,
+          },
+        });
+
+        if (emailError) {
+          console.error('ExpertApprovals: Error calling send-expert-email-welcome-status:', emailError);
+          
+          // Try to extract error message from response body
+          let errorMessage = emailError.message || 'Failed to send email';
+          let errorDetails = '';
+          
+          // Supabase FunctionsHttpError has context with response
+          if (emailError.context) {
+            // Try to read the response body
+            const response = emailError.context as any;
+            if (response.response || response.body) {
+              try {
+                const responseBody = response.response || response.body;
+                if (typeof responseBody === 'string') {
+                  const parsed = JSON.parse(responseBody);
+                  errorMessage = parsed.error || parsed.message || errorMessage;
+                  errorDetails = parsed.details || parsed.message || '';
+                } else if (typeof responseBody === 'object') {
+                  errorMessage = responseBody.error || responseBody.message || errorMessage;
+                  errorDetails = responseBody.details || responseBody.message || '';
+                }
+              } catch (e) {
+                console.warn('Could not parse error response body:', e);
+              }
+            }
+          }
+          
+          // Also check if error has a data property (sometimes Supabase puts response there)
+          if ((emailError as any).data) {
+            try {
+              const errorData = typeof (emailError as any).data === 'string' 
+                ? JSON.parse((emailError as any).data) 
+                : (emailError as any).data;
+              if (errorData.error || errorData.message) {
+                errorMessage = errorData.error || errorData.message || errorMessage;
+                errorDetails = errorData.details || errorData.message || '';
+              }
+            } catch (e) {
+              // Ignore
+            }
+          }
+          
+          console.error('ExpertApprovals: Error details:', { 
+            errorMessage, 
+            errorDetails, 
+            status: emailError.status,
+            context: emailError.context,
+            errorData: (emailError as any).data,
+            fullError: emailError 
+          });
+          
+          // Show user-friendly message
+          let displayMessage = errorMessage;
+          
+          // If we couldn't extract a specific error, show a helpful default message
+          if (errorMessage === 'Edge Function returned a non-2xx status code' || errorMessage === 'Failed to send email') {
+            displayMessage = 'Email service not configured. Please add RESEND_API_KEY secret in Supabase Dashboard → Edge Functions → Secrets.';
+          } else if (errorMessage.includes('RESEND_API_KEY') || errorMessage.includes('Email service not configured')) {
+            displayMessage = 'Email service not configured. Please add RESEND_API_KEY secret in Supabase Dashboard → Edge Functions → Secrets.';
+          }
+          
+          toast.warning(`Status updated but email failed: ${displayMessage}${errorDetails ? ` - ${errorDetails}` : ''}`);
+        } else if (emailData && emailData.error) {
+          console.error('ExpertApprovals: Email function returned error:', emailData);
+          const errorMsg = emailData.error || emailData.message || 'Unknown error';
+          toast.warning(`Status updated but email failed: ${errorMsg}`);
+        } else if (emailData && emailData.success) {
+          toast.success('Status updated and email sent successfully');
         } else {
-          toast.warning('Status updated but email notification may have failed');
+          // Unexpected response
+          console.warn('ExpertApprovals: Unexpected email response:', emailData);
+          toast.warning('Status updated but email response was unexpected');
         }
-      } catch (emailError) {
+      } catch (emailError: any) {
         console.error('ExpertApprovals: Error sending email notification:', emailError);
-        toast.warning('Status updated but email notification failed to send');
+        const errorMsg = emailError?.message || emailError?.error || 'Failed to send email';
+        toast.warning(`Status updated but email failed: ${errorMsg}`);
       }
     } catch (error) {
       console.error('ExpertApprovals: Error updating expert status:', error);
@@ -291,42 +366,17 @@ const ExpertApprovals = () => {
     }
   };
   
-  // Helper function to send email notification
-  const sendStatusUpdateEmail = async (email: string, status: string, message: string) => {
-    try {
-      // Use the custom message if provided, otherwise use default
-      const emailMessage = message.trim() || getDefaultMessage(status);
-      
-      
-      const { data, error } = await supabase.functions.invoke('notify-expert-status', {
-        body: {
-          email,
-          status,
-          message: emailMessage
-        }
-      });
-
-      if (error) {
-        console.error('ExpertApprovals: Error calling notify-expert-status:', error);
-        throw error;
-      }
-
-      if (data && !data.message) {
-        console.warn('ExpertApprovals: Email function returned unexpected response:', data);
-      }
-
-      return data;
-    } catch (error) {
-      console.error('ExpertApprovals: Failed to send email notification:', error);
-      throw error;
-    }
-  };
-  
+  // Helper function to get default message for placeholder
   const getDefaultMessage = (status: string) => {
     return status === 'approved'
       ? 'Congratulations! Your expert account has been approved. You can now log in to your dashboard.'
-      : 'Unfortunately, your expert account application has been rejected.';
+      : status === 'rejected'
+      ? 'Unfortunately, your expert account application has been rejected.'
+      : 'Enter your feedback message here...';
   };
+  
+  // Note: sendStatusUpdateEmail function removed
+  // Now using send-expert-email-welcome-status for all email notifications (approval, rejection, onboarding)
   
   // Open the approval dialog
   const openApprovalDialog = (expert: ExpertProfileWithStatus) => {

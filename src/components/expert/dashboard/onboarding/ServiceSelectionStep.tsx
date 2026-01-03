@@ -243,7 +243,7 @@ const ServiceSelectionStep: React.FC<ServiceSelectionStepProps> = ({
         // Send welcome email when onboarding is auto-completed
         try {
           console.log('📧 Sending welcome email to expert:', expertAccount.email);
-          const { error: emailError } = await supabase.functions.invoke('send-expert-welcome-email', {
+          const { error: emailError } = await supabase.functions.invoke('send-expert-email-welcome-status', {
             body: {
               expertName: expertAccount.name,
               expertEmail: expertAccount.email,

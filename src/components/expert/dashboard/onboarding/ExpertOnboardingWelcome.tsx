@@ -94,7 +94,7 @@ const ExpertOnboardingWelcome: React.FC<ExpertOnboardingWelcomeProps> = ({
 
         if (expertData?.email && expertData?.name) {
           console.log('📧 Sending welcome email to expert:', expertData.email);
-          const { error: emailError } = await supabase.functions.invoke('send-expert-welcome-email', {
+          const { error: emailError } = await supabase.functions.invoke('send-expert-email-welcome-status', {
             body: {
               expertName: expertData.name,
               expertEmail: expertData.email,
