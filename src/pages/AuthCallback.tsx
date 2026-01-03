@@ -17,6 +17,39 @@ const AuthCallback: React.FC = () => {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
+        // First, check for errors in URL hash fragment (Supabase sends errors in hash)
+        const hash = window.location.hash;
+        if (hash) {
+          const hashParams = new URLSearchParams(hash.substring(1)); // Remove the '#' 
+          const hashError = hashParams.get('error');
+          const hashErrorCode = hashParams.get('error_code');
+          const hashErrorDescription = hashParams.get('error_description');
+          
+          if (hashError) {
+            setStatus('error');
+            let errorMessage = 'Email verification failed.';
+            
+            if (hashError === 'access_denied') {
+              if (hashErrorCode === 'otp_expired' || hashErrorDescription?.includes('expired')) {
+                errorMessage = 'Email verification link has expired. Please request a new verification email.';
+              } else if (hashErrorDescription?.includes('invalid') || hashErrorDescription?.includes('Invalid')) {
+                errorMessage = 'Email verification link is invalid. Please request a new verification email.';
+              } else {
+                errorMessage = hashErrorDescription 
+                  ? decodeURIComponent(hashErrorDescription.replace(/\+/g, ' '))
+                  : 'Email verification link is invalid or has expired.';
+              }
+            } else {
+              errorMessage = hashErrorDescription 
+                ? decodeURIComponent(hashErrorDescription.replace(/\+/g, ' '))
+                : 'Email verification failed. Please try again.';
+            }
+            
+            setMessage(errorMessage);
+            return;
+          }
+        }
+
         // Parse the URL hash for auth tokens
         const { data, error } = await supabase.auth.getSession();
         
@@ -45,18 +78,18 @@ const AuthCallback: React.FC = () => {
           }
           toast.success('Email verified successfully!');
         } else {
-          // Check for error in URL parameters
-          const error = searchParams.get('error');
-          const errorDescription = searchParams.get('error_description');
+          // Check for error in URL query parameters (fallback)
+          const queryError = searchParams.get('error');
+          const queryErrorDescription = searchParams.get('error_description');
           
-          if (error) {
+          if (queryError) {
             setStatus('error');
-            if (error === 'access_denied' && errorDescription?.includes('otp_expired')) {
+            if (queryError === 'access_denied' && queryErrorDescription?.includes('otp_expired')) {
               setMessage('Email verification link has expired. Please request a new verification email.');
-            } else if (error === 'access_denied' && errorDescription?.includes('Email link is invalid')) {
+            } else if (queryError === 'access_denied' && queryErrorDescription?.includes('Email link is invalid')) {
               setMessage('Email verification link is invalid. Please request a new verification email.');
             } else {
-              setMessage(errorDescription || 'Email verification failed. Please try again.');
+              setMessage(queryErrorDescription || 'Email verification failed. Please try again.');
             }
           } else {
             setStatus('error');
@@ -83,11 +116,25 @@ const AuthCallback: React.FC = () => {
 
   const handleResendVerification = async () => {
     try {
-      const email = searchParams.get('email');
+      // Try to get email from query params first
+      let email = searchParams.get('email');
+      
+      // If not in query params, try to get from hash fragment
+      if (!email) {
+        const hash = window.location.hash;
+        if (hash) {
+          const hashParams = new URLSearchParams(hash.substring(1));
+          email = hashParams.get('email');
+        }
+      }
+      
       if (email) {
         const { error } = await supabase.auth.resend({
           type: 'signup',
-          email: email
+          email: email,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth-callback?type=${userType}`
+          }
         });
         
         if (error) {
@@ -96,7 +143,8 @@ const AuthCallback: React.FC = () => {
           toast.success('Verification email sent! Please check your inbox.');
         }
       } else {
-        toast.error('Email address not found. Please try signing up again.');
+        // If email not found, redirect to resend verification page where user can enter email
+        navigate('/resend-verification');
       }
     } catch (error) {
       console.error('Error resending verification:', error);
