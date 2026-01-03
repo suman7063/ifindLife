@@ -16,7 +16,7 @@ export const useExpertRegistration = (onActionComplete: () => void) => {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/expert-login?verify=email`,
+          emailRedirectTo: `${window.location.origin}/auth-callback?type=expert`,
           data: {
             user_type: 'expert',
             name: expertData.name || '',

@@ -120,7 +120,7 @@ const ExpertRegistrationForm: React.FC = () => {
         email: data.email,
         password: data.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/expert-login?verify=email`,
+          emailRedirectTo: `${window.location.origin}/auth-callback?type=expert`,
           // Ensure email verification is sent
           data: {
             user_type: 'expert',

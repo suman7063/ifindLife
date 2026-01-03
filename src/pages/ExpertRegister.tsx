@@ -378,7 +378,7 @@ const ExpertRegister: React.FC = () => {
         email: data.email,
         password: data.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/expert-login?verify=email&status=pending`,
+          emailRedirectTo: `${window.location.origin}/auth-callback?type=expert`,
           data: {
             user_type: 'expert',
             name: data.name,
