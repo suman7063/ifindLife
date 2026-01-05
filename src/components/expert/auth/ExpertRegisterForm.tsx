@@ -15,11 +15,12 @@ import {
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { toast } from 'sonner';
+import { passwordSchema } from '@/utils/passwordValidation';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  password: passwordSchema,
   phone: z.string().optional(),
   specialization: z.string().optional(),
   experience: z.string().optional(),

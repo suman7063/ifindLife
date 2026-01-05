@@ -1,5 +1,6 @@
 
 import { z } from "zod";
+import { passwordSchema } from "@/utils/passwordValidation";
 
 // Define form schema with validation - includes languages field
 export const expertFormSchema = z.object({
@@ -28,7 +29,7 @@ export const expertFormSchema = z.object({
   captchaAnswer: z.number(),
   
   // Account
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: passwordSchema,
   confirmPassword: z.string(),
   termsAccepted: z.boolean().refine(value => value === true, {
     message: "You must accept the terms and conditions",

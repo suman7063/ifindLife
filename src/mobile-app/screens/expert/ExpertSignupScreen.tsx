@@ -10,6 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, Mail, Lock, User, Phone, MapPin, Briefcase, Languages, Upload } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
+import { passwordSchema } from '@/utils/passwordValidation';
 
 const expertCategories = [
   { id: 'listening-volunteer', name: 'Listening Volunteer' },
@@ -105,6 +106,15 @@ export const ExpertSignupScreen: React.FC = () => {
 
     if (formData.password !== formData.confirmPassword) {
       toast.error('Passwords do not match');
+      return;
+    }
+
+    // Validate password using common schema
+    const passwordValidation = passwordSchema.safeParse(formData.password);
+    if (!passwordValidation.success) {
+      // Show first error message
+      const firstError = passwordValidation.error.errors[0];
+      toast.error(firstError.message);
       return;
     }
 
@@ -413,7 +423,7 @@ export const ExpertSignupScreen: React.FC = () => {
                   <Input
                     id="password"
                     type="password"
-                    placeholder="Minimum 8 characters"
+                    placeholder="Min 8 chars: letters, numbers, special chars"
                     value={formData.password}
                     onChange={(e) => setFormData({...formData, password: e.target.value})}
                     className="pl-10"

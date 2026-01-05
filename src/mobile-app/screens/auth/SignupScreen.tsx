@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft, Eye, EyeOff, Mail, Lock, User, Phone } from 'lucide-react';
+import { passwordSchema } from '@/utils/passwordValidation';
 
 export const SignupScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -18,6 +19,21 @@ export const SignupScreen: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate password using common schema
+    const passwordValidation = passwordSchema.safeParse(formData.password);
+    if (!passwordValidation.success) {
+      // Show first error message
+      const firstError = passwordValidation.error.errors[0];
+      alert(firstError.message);
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      alert('Passwords do not match');
+      return;
+    }
+
     // In real app, handle registration and send OTP
     navigate('/mobile-app/auth/otp');
   };

@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { Loader2, User, Mail, Phone, Calendar, MapPin, Shield, Globe, Gift } from 'lucide-react';
 import { processReferralCode } from '@/utils/referralUtils';
 import { ReferralSettings } from '@/types/supabase';
+import { passwordSchema } from '@/utils/passwordValidation';
 // TODO: Re-implement pricing hooks
 // import { useIPBasedPricing } from '@/hooks/call/useIPBasedPricing';
 // import { useUserCurrency } from '@/hooks/call/useUserCurrency';
@@ -23,7 +24,7 @@ const registrationSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email address'),
   phone: z.string().min(10, 'Phone number must be at least 10 digits'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  password: passwordSchema,
   confirmPassword: z.string(),
   
   // Personal Details
@@ -204,9 +205,9 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
       toast.success('Registration successful! Please check your email to verify your account.');
       onSuccess?.();
       
-    } catch (error: any) {
+    } catch (error) {
       console.error('Registration error:', error);
-      const errorMessage = error.message || 'Registration failed. Please try again.';
+      const errorMessage = error instanceof Error ? error.message : 'Registration failed. Please try again.';
       toast.error(errorMessage);
       onError?.(errorMessage);
     } finally {
@@ -223,7 +224,7 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
       
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8" autoComplete="off">
             
             {/* Basic Information Section */}
             <div className="space-y-4">
@@ -254,7 +255,13 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
                     <FormItem>
                       <FormLabel>Email Address *</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="Enter your email" {...field} value={field.value ?? ''} />
+                        <Input 
+                          type="email" 
+                          placeholder="Enter your email" 
+                          autoComplete="off"
+                          {...field} 
+                          value={field.value ?? ''} 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -296,7 +303,13 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
                     <FormItem>
                       <FormLabel>Password *</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder="Create password" {...field} value={field.value ?? ''} />
+                        <Input 
+                          type="password" 
+                          placeholder="Create password" 
+                          autoComplete="new-password"
+                          {...field} 
+                          value={field.value ?? ''} 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -310,7 +323,13 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
                     <FormItem>
                       <FormLabel>Confirm Password *</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder="Confirm password" {...field} value={field.value ?? ''} />
+                        <Input 
+                          type="password" 
+                          placeholder="Confirm password" 
+                          autoComplete="new-password"
+                          {...field} 
+                          value={field.value ?? ''} 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

@@ -14,15 +14,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { passwordSchema, validatePasswordStrength } from '@/utils/passwordValidation';
 
 // Create form validation schema
 const resetPasswordSchema = z.object({
-  password: z.string()
-    .min(8, { message: "Password must be at least 8 characters" })
-    .refine(val => /[A-Z]/.test(val), { message: "Password must contain at least one uppercase letter" })
-    .refine(val => /[a-z]/.test(val), { message: "Password must contain at least one lowercase letter" })
-    .refine(val => /[0-9]/.test(val), { message: "Password must contain at least one number" })
-    .refine(val => /[^A-Za-z0-9]/.test(val), { message: "Password must contain at least one special character" }),
+  password: passwordSchema,
   confirmPassword: z.string(),
 }).refine(data => data.password === data.confirmPassword, {
   message: "Passwords do not match",
@@ -48,38 +44,23 @@ const ResetPassword = () => {
   });
 
   // Update password strength when password changes
+  const password = form.watch("password");
   useEffect(() => {
-    const password = form.watch("password");
     if (!password) {
       setPasswordStrength(0);
       return;
     }
 
-    let strength = 0;
-    
-    // Length check
-    if (password.length >= 8) strength += 1;
-    
-    // Uppercase check
-    if (/[A-Z]/.test(password)) strength += 1;
-    
-    // Lowercase check
-    if (/[a-z]/.test(password)) strength += 1;
-    
-    // Number check
-    if (/[0-9]/.test(password)) strength += 1;
-    
-    // Special character check
-    if (/[^A-Za-z0-9]/.test(password)) strength += 1;
-    
-    setPasswordStrength(strength);
-  }, [form.watch("password")]);
+    // Use common validatePasswordStrength function
+    const strengthResult = validatePasswordStrength(password);
+    setPasswordStrength(strengthResult.score);
+  }, [password]);
 
-  // Determine password strength color and label
+  // Determine password strength color and label (4 checks: length, letter, number, special)
   const getPasswordStrengthInfo = () => {
     if (passwordStrength === 0) return { color: "bg-gray-200", label: "Password strength" };
-    if (passwordStrength < 3) return { color: "bg-red-500", label: "Weak" };
-    if (passwordStrength < 5) return { color: "bg-yellow-500", label: "Medium" };
+    if (passwordStrength < 2) return { color: "bg-red-500", label: "Weak" };
+    if (passwordStrength < 4) return { color: "bg-yellow-500", label: "Medium" };
     return { color: "bg-green-500", label: "Strong" };
   };
 
@@ -127,9 +108,10 @@ const ResetPassword = () => {
       setTimeout(() => {
         navigate(getRedirectPage());
       }, 3000);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error updating password:', error);
-      toast.error(error.message || 'Failed to reset password');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to reset password';
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -188,29 +170,29 @@ const ResetPassword = () => {
                         <div className="space-y-2">
                           <div className="flex justify-between items-center">
                             <span className="text-xs text-muted-foreground">{passwordStrengthInfo.label}</span>
-                            <span className="text-xs text-muted-foreground">{passwordStrength}/5</span>
+                            <span className="text-xs text-muted-foreground">{passwordStrength}/4</span>
                           </div>
                           <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
                             <div 
                               className={`h-full ${passwordStrengthInfo.color} transition-all duration-300`} 
-                              style={{ width: `${(passwordStrength / 5) * 100}%` }}
+                              style={{ width: `${(passwordStrength / 4) * 100}%` }}
                             ></div>
                           </div>
                           
                           <ul className="text-xs space-y-1 text-muted-foreground">
                             <li className="flex items-center">
-                              {/[A-Z]/.test(field.value) ? 
+                              {field.value.length >= 8 ? 
                                 <Check className="h-3 w-3 text-green-500 mr-1" /> : 
                                 <AlertCircle className="h-3 w-3 text-muted-foreground mr-1" />
                               }
-                              One uppercase letter
+                              Minimum 8 characters
                             </li>
                             <li className="flex items-center">
-                              {/[a-z]/.test(field.value) ? 
+                              {/[A-Za-z]/.test(field.value) ? 
                                 <Check className="h-3 w-3 text-green-500 mr-1" /> : 
                                 <AlertCircle className="h-3 w-3 text-muted-foreground mr-1" />
                               }
-                              One lowercase letter
+                              One letter
                             </li>
                             <li className="flex items-center">
                               {/[0-9]/.test(field.value) ? 
@@ -225,13 +207,6 @@ const ResetPassword = () => {
                                 <AlertCircle className="h-3 w-3 text-muted-foreground mr-1" />
                               }
                               One special character
-                            </li>
-                            <li className="flex items-center">
-                              {field.value.length >= 8 ? 
-                                <Check className="h-3 w-3 text-green-500 mr-1" /> : 
-                                <AlertCircle className="h-3 w-3 text-muted-foreground mr-1" />
-                              }
-                              Minimum 8 characters
                             </li>
                           </ul>
                         </div>

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { UseFormReturn } from 'react-hook-form';
 import { ReferralSettings } from '@/types/supabase';
 import { Dispatch, SetStateAction } from 'react';
+import { passwordSchema } from '@/utils/passwordValidation';
 
 // Create form validation schema
 export const registerFormSchema = z.object({
@@ -12,12 +13,7 @@ export const registerFormSchema = z.object({
   country: z.string().min(1, { message: "Please select a country" }),
   city: z.string().optional(),
   referralCode: z.string().optional(),
-  password: z.string()
-    .min(8, { message: "Password must be at least 8 characters" })
-    .refine(val => /[A-Z]/.test(val), { message: "Password must contain at least one uppercase letter" })
-    .refine(val => /[a-z]/.test(val), { message: "Password must contain at least one lowercase letter" })
-    .refine(val => /[0-9]/.test(val), { message: "Password must contain at least one number" })
-    .refine(val => /[^A-Za-z0-9]/.test(val), { message: "Password must contain at least one special character" }),
+  password: passwordSchema,
   confirmPassword: z.string(),
   termsAccepted: z.boolean().refine(val => val === true, { message: "You must accept the terms and conditions" }),
   captcha: z.string().min(1, { message: "Please verify that you are not a robot" }),

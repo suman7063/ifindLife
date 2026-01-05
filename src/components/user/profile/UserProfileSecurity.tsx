@@ -10,13 +10,11 @@ import { useAuth } from '@/contexts/auth/AuthContext';
 import { toast } from 'sonner';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { passwordSchema } from '@/utils/passwordValidation';
 
-const passwordSchema = z.object({
+const changePasswordSchema = z.object({
   currentPassword: z.string().min(6, { message: 'Current password must be at least 6 characters' }),
-  newPassword: z.string().min(8, { message: 'New password must be at least 8 characters' })
-    .regex(/[A-Z]/, { message: 'Password must contain at least one uppercase letter' })
-    .regex(/[a-z]/, { message: 'Password must contain at least one lowercase letter' })
-    .regex(/[0-9]/, { message: 'Password must contain at least one number' }),
+  newPassword: passwordSchema,
   confirmPassword: z.string().min(1, { message: 'Please confirm your password' }),
 }).refine((data) => data.newPassword === data.confirmPassword, {
   message: "Passwords don't match",
@@ -27,8 +25,8 @@ const UserProfileSecurity: React.FC = () => {
   const { updatePassword } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const form = useForm<z.infer<typeof passwordSchema>>({
-    resolver: zodResolver(passwordSchema),
+  const form = useForm<z.infer<typeof changePasswordSchema>>({
+    resolver: zodResolver(changePasswordSchema),
     defaultValues: {
       currentPassword: '',
       newPassword: '',
@@ -36,7 +34,7 @@ const UserProfileSecurity: React.FC = () => {
     },
   });
   
-  const onSubmit = async (values: z.infer<typeof passwordSchema>) => {
+  const onSubmit = async (values: z.infer<typeof changePasswordSchema>) => {
     setIsSubmitting(true);
     
     try {
@@ -70,7 +68,7 @@ const UserProfileSecurity: React.FC = () => {
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>Password Security</AlertTitle>
         <AlertDescription>
-          Use a strong password that you don't use elsewhere. Your password should be at least 8 characters long with a mix of uppercase letters, lowercase letters, and numbers.
+          Use a strong password that you don't use elsewhere. Your password should be at least 8 characters long with a mix of letters, numbers, and special characters.
         </AlertDescription>
       </Alert>
       
@@ -100,7 +98,7 @@ const UserProfileSecurity: React.FC = () => {
                   <Input type="password" placeholder="••••••••" {...field} />
                 </FormControl>
                 <FormDescription>
-                  Password must be at least 8 characters with uppercase, lowercase, and numbers.
+                  Password must be at least 8 characters with letters, numbers, and special characters.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
