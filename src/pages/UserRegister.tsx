@@ -31,8 +31,8 @@ const UserRegister: React.FC = () => {
   }, [searchParams]);
 
   const handleRegistrationSuccess = () => {
-    toast.success('Registration successful! Please check your email to verify your account.');
-    navigate('/user-login');
+    // Dialog will show the success message, no need for toast here
+    // User can close the dialog and then navigate to login if needed
   };
 
   const handleRegistrationError = (error: string) => {

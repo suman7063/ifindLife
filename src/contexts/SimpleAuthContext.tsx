@@ -66,7 +66,8 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
   const validationFailedRef = React.useRef(false);
 
   // Derive authentication state - CRITICAL: This must be consistent
-  const isAuthenticated = Boolean(user && session);
+  // User is authenticated only if they have session AND email is verified
+  const isAuthenticated = Boolean(user && session && user.email_confirmed_at);
 
   // Reduced logging for performance
 
@@ -627,10 +628,21 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         if (error) {
           console.warn('⚠️ Auth: Session check error:', error);
         } else if (session) {
-          setSession(session);
-          setUser(session.user);
-          // Load profiles immediately for initial session
-          await refreshProfiles(session.user.id);
+          // Check if email is verified before allowing access
+          if (!session.user.email_confirmed_at) {
+            console.warn('⚠️ Auth: Email not verified, signing out user');
+            await supabase.auth.signOut();
+            setSession(null);
+            setUser(null);
+            setUserProfile(null);
+            setExpert(null);
+            setUserType('none');
+          } else {
+            setSession(session);
+            setUser(session.user);
+            // Load profiles immediately for initial session
+            await refreshProfiles(session.user.id);
+          }
         } else {
           setUserProfile(null);
           setExpert(null);
@@ -652,6 +664,20 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
       async (event, session) => {
         if (!mounted) return;
         
+        // Check if email is verified before allowing access
+        if (session?.user && !session.user.email_confirmed_at) {
+          console.warn('⚠️ Auth: Email not verified in auth state change, signing out user');
+          await supabase.auth.signOut();
+          setSession(null);
+          setUser(null);
+          setUserProfile(null);
+          setExpert(null);
+          setUserType('none');
+          if (mounted && event !== 'INITIAL_SESSION') {
+            setIsLoading(false);
+          }
+          return;
+        }
         
         setSession(session);
         setUser(session?.user ?? null);

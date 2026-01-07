@@ -61,6 +61,11 @@ const handler = async (req: Request): Promise<Response> => {
     const resend = new Resend(resendApiKey);
 
     const appUrl = Deno.env.get("APP_URL") || "https://ifindlife.com";
+    
+    // Determine if running in development/localhost
+    const isDevelopment = Deno.env.get("ENVIRONMENT") === "development" || 
+                         appUrl.includes("localhost") || 
+                         appUrl.includes("127.0.0.1");
     // Determine email type and subject
     const isApprovalEmail = emailType === 'approval';
     const isRejectionEmail = emailType === 'rejection';
@@ -182,8 +187,25 @@ const handler = async (req: Request): Promise<Response> => {
       </div>
     `;
 
+    // Use verified domain email address (update after domain verification)
+    // For localhost/development: use resend.dev (testing domain - only works for your email)
+    // For production: use verified domain (noreply@ifindlife.com) after domain verification
+    let fromEmail = Deno.env.get("RESEND_FROM_EMAIL");
+    
+    if (!fromEmail) {
+      if (isDevelopment) {
+        // Development: Use testing domain (only works for your email address)
+        fromEmail = "iFindLife Expert Team <onboarding@resend.dev>";
+        console.log("⚠️ Development mode: Using testing domain. Emails will only work for your registered email address.");
+      } else {
+        // Production: Should use verified domain (update after domain verification)
+        fromEmail = "iFindLife Expert Team <noreply@ifindlife.com>";
+        console.log("📧 Production mode: Using verified domain. Make sure domain is verified in Resend.");
+      }
+    }
+    
     const emailResponse = await resend.emails.send({
-      from: "iFindLife Expert Team <onboarding@resend.dev>",
+      from: fromEmail,
       to: [expertEmail],
       subject: emailSubject,
       html: emailHtml,

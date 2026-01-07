@@ -78,6 +78,23 @@ const UserDashboardWrapper = () => {
     );
   }
 
+  // Check if email is verified - redirect to verification page if not verified
+  if (simpleAuth.user && !simpleAuth.user.email_confirmed_at) {
+    navigate('/email-verification-required', { replace: true });
+    return (
+      <>
+        <Navbar />
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+            <p className="mt-2 text-gray-600">Redirecting to email verification...</p>
+          </div>
+        </div>
+        <Footer />
+      </>
+    );
+  }
+
   // If user is authenticated but being redirected to expert dashboard, redirect them
   if (simpleAuth.userType === 'expert') {
     console.log('UserDashboardWrapper: User has expert type, redirecting to expert dashboard');

@@ -60,6 +60,7 @@ import ReferralProgram from './pages/ReferralProgram';
 import AuthCallback from './pages/AuthCallback';
 import ResendVerification from './pages/ResendVerification';
 import EmailVerificationTest from './pages/EmailVerificationTest';
+import EmailVerificationRequired from './pages/EmailVerificationRequired';
 import { MobileAppDemo } from '@/mobile-app/index';
 import SouliLanding from './pages/SouliLanding';
 import SouliTeam from './pages/SouliTeam';
@@ -192,6 +193,7 @@ const UserRoutes: React.FC = () => {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/auth-callback" element={<AuthCallback />} />
         <Route path="/resend-verification" element={<ResendVerification />} />
+        <Route path="/email-verification-required" element={<EmailVerificationRequired />} />
         <Route path="/email-test" element={<EmailVerificationTest />} />
 
         {/* Catch-all route */}

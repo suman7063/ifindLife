@@ -10,7 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2, User, Mail, Phone, Calendar, MapPin, Shield, Globe, Gift } from 'lucide-react';
+import { Loader2, User, Mail, Phone, Calendar, MapPin, Shield, Globe, Gift, CheckCircle } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { processReferralCode } from '@/utils/referralUtils';
 import { ReferralSettings } from '@/types/supabase';
 import { passwordSchema, emailSchema } from '@/utils/validationSchemas';
@@ -74,6 +75,9 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
   referralSettings
 }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [showVerificationDialog, setShowVerificationDialog] = useState(false);
+  const [userEmail, setUserEmail] = useState<string>('');
+  const [resendingEmail, setResendingEmail] = useState(false);
   // TODO: Re-implement pricing logic
   // const pricing = useIPBasedPricing();
   const pricing = { currency: 'INR', pricePerMinute: 30 }; // Default pricing
@@ -107,7 +111,8 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
     setIsLoading(true);
     
     try {
-      const redirectUrl = `${window.location.origin}/`;
+      // Use auth-callback route for proper email verification handling
+      const redirectUrl = `${window.location.origin}/auth-callback?type=user`;
       
       // Create user account
       const { error: authError, data: authData } = await supabase.auth.signUp({
@@ -202,7 +207,9 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
         }
       }
 
-      toast.success('Registration successful! Please check your email to verify your account.');
+      // Show verification dialog instead of toast
+      setUserEmail(data.email);
+      setShowVerificationDialog(true);
       onSuccess?.();
       
     } catch (error) {
@@ -216,6 +223,7 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
   };
 
   return (
+    <>
     <Card className="w-full max-w-4xl mx-auto">
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold">Create Your Account</CardTitle>
@@ -582,6 +590,87 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
         </Form>
       </CardContent>
     </Card>
+    <Dialog open={showVerificationDialog} onOpenChange={setShowVerificationDialog}>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader>
+          <div className="flex justify-center mb-4">
+            <div className="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center">
+              <CheckCircle className="h-8 w-8 text-green-600" />
+            </div>
+          </div>
+          <DialogTitle className="text-center text-2xl">Registration Successful!</DialogTitle>
+          <DialogDescription className="text-center pt-2">
+            We've sent a verification email to <strong>{userEmail}</strong>
+          </DialogDescription>
+        </DialogHeader>
+        <div className="py-4 space-y-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p className="text-sm text-blue-800 mb-2">
+              <strong>Please verify your email to activate your account:</strong>
+            </p>
+            <ul className="text-sm text-blue-700 space-y-1 list-disc list-inside">
+              <li>Check your email inbox</li>
+              <li>Look in spam/junk folder if not found</li>
+              <li>Click the verification link in the email</li>
+              <li>You'll be redirected automatically after verification</li>
+            </ul>
+          </div>
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+            <p className="text-xs text-yellow-800">
+              <strong>Note:</strong> You won't be able to access your account until you verify your email address.
+            </p>
+          </div>
+        </div>
+        <DialogFooter className="flex flex-col gap-2 sm:flex-row">
+          <Button 
+            variant="outline"
+            onClick={async () => {
+              if (!userEmail) return;
+              setResendingEmail(true);
+              try {
+                const { error } = await supabase.auth.resend({
+                  type: 'signup',
+                  email: userEmail,
+                  options: {
+                    emailRedirectTo: `${window.location.origin}/auth-callback?type=user`
+                  }
+                });
+                if (error) {
+                  toast.error('Failed to resend verification email: ' + error.message);
+                } else {
+                  toast.success('Verification email sent! Please check your inbox.');
+                }
+              } catch (error) {
+                toast.error('An unexpected error occurred. Please try again.');
+              } finally {
+                setResendingEmail(false);
+              }
+            }}
+            disabled={resendingEmail}
+            className="w-full sm:w-auto"
+          >
+            {resendingEmail ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Sending...
+              </>
+            ) : (
+              <>
+                <Mail className="mr-2 h-4 w-4" />
+                Resend Email
+              </>
+            )}
+          </Button>
+          <Button 
+            onClick={() => setShowVerificationDialog(false)} 
+            className="w-full sm:w-auto"
+          >
+            Got it!
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 };
 
