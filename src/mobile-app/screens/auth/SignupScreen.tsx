@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft, Eye, EyeOff, Mail, Lock, User, Phone } from 'lucide-react';
-import { passwordSchema } from '@/utils/passwordValidation';
+import { passwordSchema } from '@/utils/validationSchemas';
 
 export const SignupScreen: React.FC = () => {
   const navigate = useNavigate();

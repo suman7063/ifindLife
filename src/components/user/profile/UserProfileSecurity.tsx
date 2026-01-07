@@ -10,7 +10,7 @@ import { useAuth } from '@/contexts/auth/AuthContext';
 import { toast } from 'sonner';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { passwordSchema } from '@/utils/passwordValidation';
+import { passwordSchema } from '@/utils/validationSchemas';
 
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(6, { message: 'Current password must be at least 6 characters' }),

@@ -1,6 +1,14 @@
 import { z } from 'zod';
 
 /**
+ * Common email validation schema for Zod
+ * Validates email format with consistent error message
+ */
+export const emailSchema = z.string()
+  .min(1, { message: 'Email is required' })
+  .email({ message: 'Please enter a valid email address' });
+
+/**
  * Common password validation schema for Zod
  * Requires: minimum 8 characters, at least one letter, one number, and one special character
  */
@@ -60,3 +68,6 @@ export const validatePasswordStrength = (password: string) => {
     isValid: score >= 4 // All 4 requirements must be met
   };
 };
+
+
+

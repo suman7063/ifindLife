@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import { Loader2, User, Mail, Phone, Calendar, MapPin, Shield, Globe, Gift } from 'lucide-react';
 import { processReferralCode } from '@/utils/referralUtils';
 import { ReferralSettings } from '@/types/supabase';
-import { passwordSchema } from '@/utils/passwordValidation';
+import { passwordSchema, emailSchema } from '@/utils/validationSchemas';
 // TODO: Re-implement pricing hooks
 // import { useIPBasedPricing } from '@/hooks/call/useIPBasedPricing';
 // import { useUserCurrency } from '@/hooks/call/useUserCurrency';
@@ -22,7 +22,7 @@ import { passwordSchema } from '@/utils/passwordValidation';
 const registrationSchema = z.object({
   // Basic Information
   name: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email('Please enter a valid email address'),
+  email: emailSchema,
   phone: z.string().min(10, 'Phone number must be at least 10 digits'),
   password: passwordSchema,
   confirmPassword: z.string(),

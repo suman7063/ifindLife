@@ -4,11 +4,11 @@ import { Link, useLocation } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Eye, EyeOff, Mail, Loader2, AlertCircle } from 'lucide-react';
-import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { emailSchema } from '@/utils/validationSchemas';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface LoginFormProps {
@@ -19,9 +19,7 @@ interface LoginFormProps {
 
 // Create form validation schema with detailed error messages
 const loginFormSchema = z.object({
-  email: z.string()
-    .min(1, { message: "Email is required" })
-    .email({ message: "Please enter a valid email address" }),
+  email: emailSchema,
   password: z.string()
     .min(1, { message: "Password is required" })
     .min(8, { message: "Password must be at least 8 characters" }),
@@ -56,7 +54,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading, userType = 'use
         setIsSubmitting(false);
       }
       // If result is true or undefined, let the parent component handle the state
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error during login form submission:", error);
       // Set a more user-friendly error message
       if (error.code === 'invalid_credentials') {
@@ -74,7 +72,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading, userType = 'use
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" autoComplete="off">
         {formError && (
           <Alert variant="destructive" className="text-sm">
             <AlertCircle className="h-4 w-4" />
@@ -97,7 +95,15 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading, userType = 'use
                     type="email"
                     placeholder="your@email.com"
                     className="pl-10"
+                    autoComplete="off"
+                    autoCapitalize="off"
+                    autoCorrect="off"
+                    spellCheck="false"
+                    readOnly
                     {...field}
+                    onFocus={(e) => {
+                      e.target.removeAttribute('readOnly');
+                    }}
                     disabled={loading || isSubmitting}
                   />
                 </FormControl>
@@ -123,7 +129,12 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading, userType = 'use
                   <Input
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
+                    autoComplete="new-password"
+                    readOnly
                     {...field}
+                    onFocus={(e) => {
+                      e.target.removeAttribute('readOnly');
+                    }}
                     disabled={loading || isSubmitting}
                   />
                 </FormControl>

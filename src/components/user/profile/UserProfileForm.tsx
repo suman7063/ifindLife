@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { emailSchema } from '@/utils/validationSchemas';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -29,7 +30,7 @@ export interface UserProfileFormProps {
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email('Invalid email address'),
+  email: emailSchema,
   phone: z.string().min(5, 'Phone number is too short'),
   country: z.string().min(1, 'Country is required'),
   city: z.string().min(1, 'City is required'),

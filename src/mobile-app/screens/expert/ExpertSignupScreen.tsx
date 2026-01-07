@@ -10,7 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, Mail, Lock, User, Phone, MapPin, Briefcase, Languages, Upload } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
-import { passwordSchema } from '@/utils/passwordValidation';
+import { passwordSchema } from '@/utils/validationSchemas';
 
 const expertCategories = [
   { id: 'listening-volunteer', name: 'Listening Volunteer' },

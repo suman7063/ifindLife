@@ -14,7 +14,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { passwordSchema, validatePasswordStrength } from '@/utils/passwordValidation';
+import { passwordSchema, validatePasswordStrength } from '@/utils/validationSchemas';
 
 // Create form validation schema
 const resetPasswordSchema = z.object({

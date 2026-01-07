@@ -15,6 +15,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, User, MapPin, Briefcase, Shield, Upload, Image as ImageIcon, FileText, Eye, ExternalLink } from 'lucide-react';
 import { expertFormSchema, ExpertFormValues } from '@/components/expert/schemas/expertFormSchema';
 import { z } from 'zod';
+import { emailSchema } from '@/utils/validationSchemas';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import Navbar from '@/components/Navbar';
@@ -63,7 +64,7 @@ const ExpertRegister: React.FC = () => {
       return z.object({
         // Personal Info
         name: z.string().min(2, "Name must be at least 2 characters"),
-        email: z.string().email("Please enter a valid email"),
+        email: emailSchema,
         phone: z.string().min(6, "Phone number is required"),
         
         // Address Info

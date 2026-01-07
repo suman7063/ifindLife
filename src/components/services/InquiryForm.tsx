@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { UserProfile } from '@/types/supabase';
+import { emailSchema } from '@/utils/validationSchemas';
 
 interface InquiryFormProps {
   serviceName: string;
@@ -21,7 +22,7 @@ interface InquiryFormProps {
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
-  email: z.string().email({ message: 'Please enter a valid email address' }),
+  email: emailSchema,
   phone: z.string().optional(),
   preferredSlot: z.string().min(1, { message: 'Please select a preferred time slot' }),
   description: z.string().min(10, { message: 'Please provide at least 10 characters describing your situation' }),

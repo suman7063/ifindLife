@@ -3,12 +3,12 @@ import { z } from 'zod';
 import { UseFormReturn } from 'react-hook-form';
 import { ReferralSettings } from '@/types/supabase';
 import { Dispatch, SetStateAction } from 'react';
-import { passwordSchema } from '@/utils/passwordValidation';
+import { passwordSchema, emailSchema } from '@/utils/validationSchemas';
 
 // Create form validation schema
 export const registerFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
-  email: z.string().email({ message: "Invalid email address" }),
+  email: emailSchema,
   phone: z.string().min(6, { message: "Phone number is too short" }),
   country: z.string().min(1, { message: "Please select a country" }),
   city: z.string().optional(),

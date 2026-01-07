@@ -5,13 +5,14 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import souliMascot from "@/assets/souli-mascot.png";
 import { z } from "zod";
+import { emailSchema as commonEmailSchema } from "@/utils/validationSchemas";
 import { Sparkles, Heart, Brain, ArrowRight, CheckCircle2, Share2, Copy, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import SouliFooter from "@/components/SouliFooter";
 import SouliPreloader from "@/components/SouliPreloader";
 
 const emailSchema = z.object({
-  email: z.string().trim().email({ message: "Please enter a valid email address" }).max(255),
+  email: commonEmailSchema.max(255),
 });
 
 const SouliLanding = () => {

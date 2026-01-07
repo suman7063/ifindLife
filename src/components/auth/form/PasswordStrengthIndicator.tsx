@@ -1,6 +1,6 @@
 
 import React, { useMemo } from 'react';
-import { validatePasswordStrength } from '@/utils/passwordValidation';
+import { validatePasswordStrength } from '@/utils/validationSchemas';
 import { PasswordStrengthIndicatorProps } from './types';
 
 const PasswordStrengthIndicator: React.FC<PasswordStrengthIndicatorProps> = ({ password }) => {

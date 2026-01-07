@@ -10,7 +10,7 @@ import PasswordFields from './form/PasswordFields';
 import ReferralCodeField from './form/ReferralCodeField';
 import TermsCheckbox from './form/TermsCheckbox';
 import CaptchaField from './form/CaptchaField';
-import { validatePasswordStrength } from '@/utils/passwordValidation';
+import { validatePasswordStrength } from '@/utils/validationSchemas';
 import { registerFormSchema, RegisterFormValues } from './form/types';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2 } from 'lucide-react';

@@ -6,6 +6,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { z } from 'zod';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { emailSchema } from '@/utils/validationSchemas';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Mail, ArrowLeft } from 'lucide-react';
 import Navbar from '@/components/Navbar';
@@ -27,7 +28,7 @@ const ForgotPassword = () => {
   
   // Create form schema with validation
   const schema = z.object({
-    email: z.string().email({ message: "Please enter a valid email address" }),
+    email: emailSchema,
     captcha: z.string().min(1, { message: "Please verify that you are not a robot" })
   });
   

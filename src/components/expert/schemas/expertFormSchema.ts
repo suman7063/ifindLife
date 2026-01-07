@@ -1,12 +1,12 @@
 
 import { z } from "zod";
-import { passwordSchema } from "@/utils/passwordValidation";
+import { passwordSchema, emailSchema } from "@/utils/validationSchemas";
 
 // Define form schema with validation - includes languages field
 export const expertFormSchema = z.object({
   // Personal Info
   name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Please enter a valid email"),
+  email: emailSchema,
   phone: z.string().min(6, "Phone number is required"),
   
   // Address Info
