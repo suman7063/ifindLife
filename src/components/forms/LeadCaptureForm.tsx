@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { X } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/lib/supabase';
 
 interface LeadCaptureFormProps {
   open: boolean;
@@ -33,22 +34,53 @@ const LeadCaptureForm: React.FC<LeadCaptureFormProps> = ({
     requirements: ''
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Lead form submitted:', formData);
-    toast.success('Thank you for your inquiry! We will contact you soon.');
-    onOpenChange(false);
-    // Reset form
-    setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      organization: '',
-      designation: '',
-      organizationType: '',
-      teamSize: '',
-      requirements: ''
-    });
+    
+    try {
+      // Insert lead data into database
+      // Note: 'leads' table type will be available after running migration and regenerating types
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any)
+        .from('leads')
+        .insert({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          organization: formData.organization,
+          designation: formData.designation,
+          organization_type: formData.organizationType || null,
+          team_size: formData.teamSize || null,
+          requirements: formData.requirements || null,
+          type: type,
+          status: 'new'
+        });
+
+      if (error) {
+        console.error('Error saving lead:', error);
+        toast.error('Failed to submit inquiry. Please try again.');
+        return;
+      }
+
+      console.log('Lead form submitted and saved:', formData);
+      toast.success('Thank you for your inquiry! We will contact you soon.');
+      onOpenChange(false);
+      
+      // Reset form
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        organization: '',
+        designation: '',
+        organizationType: '',
+        teamSize: '',
+        requirements: ''
+      });
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      toast.error('Something went wrong. Please try again.');
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
