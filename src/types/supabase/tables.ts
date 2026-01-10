@@ -61,13 +61,16 @@ export interface UserReview {
 }
 
 export interface ContactSubmission {
-  id: number;
+  id: string; // UUID
   name: string;
   email: string;
   subject: string;
   message: string;
+  user_id?: string | null;
+  status: string;
   is_read?: boolean;
   created_at: string;
+  updated_at?: string;
 }
 
 export interface Report {

@@ -1,11 +1,78 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Mail, Phone, MapPin } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
+
 const Contact = () => {
+  const { user } = useSimpleAuth();
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    subject: '',
+    message: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [id]: value
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.name || !formData.email || !formData.subject || !formData.message) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Insert contact submission into database
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any)
+        .from('contact_submissions')
+        .insert({
+          name: formData.name,
+          email: formData.email,
+          subject: formData.subject,
+          message: formData.message,
+          user_id: user?.id || null,
+          status: 'new'
+        });
+
+      if (error) {
+        console.error('Error saving contact submission:', error);
+        toast.error('Failed to send message. Please try again.');
+        return;
+      }
+
+      toast.success('Thank you for your message! We will get back to you soon.');
+      
+      // Reset form
+      setFormData({
+        name: '',
+        email: '',
+        subject: '',
+        message: ''
+      });
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      toast.error('Something went wrong. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   return <div className="min-h-screen flex flex-col">
       <Navbar />
       
@@ -30,35 +97,65 @@ const Contact = () => {
               <div className="lg:col-span-2">
                 <div className="bg-white p-8 rounded-lg shadow-md">
                   <h2 className="text-2xl font-semibold mb-6">Send Us a Message</h2>
-                  <form className="space-y-6">
+                  <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <label htmlFor="name" className="block text-sm font-medium mb-2">
-                          Your Name
+                          Your Name *
                         </label>
-                        <Input id="name" placeholder="John Doe" />
+                        <Input 
+                          id="name" 
+                          placeholder="John Doe" 
+                          value={formData.name}
+                          onChange={handleInputChange}
+                          required
+                        />
                       </div>
                       <div>
                         <label htmlFor="email" className="block text-sm font-medium mb-2">
-                          Email Address
+                          Email Address *
                         </label>
-                        <Input id="email" type="email" placeholder="john@example.com" />
+                        <Input 
+                          id="email" 
+                          type="email" 
+                          placeholder="john@example.com" 
+                          value={formData.email}
+                          onChange={handleInputChange}
+                          required
+                        />
                       </div>
                     </div>
                     <div>
                       <label htmlFor="subject" className="block text-sm font-medium mb-2">
-                        Subject
+                        Subject *
                       </label>
-                      <Input id="subject" placeholder="How can we help you?" />
+                      <Input 
+                        id="subject" 
+                        placeholder="How can we help you?" 
+                        value={formData.subject}
+                        onChange={handleInputChange}
+                        required
+                      />
                     </div>
                     <div>
                       <label htmlFor="message" className="block text-sm font-medium mb-2">
-                        Your Message
+                        Your Message *
                       </label>
-                      <Textarea id="message" rows={6} placeholder="Enter your message here..." />
+                      <Textarea 
+                        id="message" 
+                        rows={6} 
+                        placeholder="Enter your message here..." 
+                        value={formData.message}
+                        onChange={handleInputChange}
+                        required
+                      />
                     </div>
-                    <Button type="submit" className="w-full bg-ifind-aqua hover:bg-ifind-teal">
-                      Send Message
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-ifind-aqua hover:bg-ifind-teal"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? 'Sending...' : 'Send Message'}
                     </Button>
                   </form>
                 </div>

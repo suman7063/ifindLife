@@ -40,11 +40,11 @@ const ContactSubmissionsTable = () => {
     }
   };
 
-  const markAsRead = async (id: number) => {
+  const markAsRead = async (id: string) => {
     try {
       const { error } = await supabase
         .from('contact_submissions')
-        .update({ is_read: true })
+        .update({ status: 'read' })
         .eq('id', id);
 
       if (error) {
@@ -53,7 +53,7 @@ const ContactSubmissionsTable = () => {
 
       // Update local state
       setSubmissions(prev => 
-        prev.map(sub => sub.id === id ? { ...sub, is_read: true } : sub)
+        prev.map(sub => sub.id === id ? { ...sub, status: 'read', is_read: true } : sub)
       );
       
       toast.success('Marked as read');
@@ -131,15 +131,15 @@ const ContactSubmissionsTable = () => {
                   </TableCell>
                   <TableCell>
                     <span className={`px-2 py-1 rounded-full text-xs ${
-                      submission.is_read 
+                      submission.status === 'read' || submission.is_read
                       ? 'bg-gray-100 text-gray-800' 
                       : 'bg-blue-100 text-blue-800 font-medium'
                     }`}>
-                      {submission.is_read ? 'Read' : 'Unread'}
+                      {submission.status === 'read' || submission.is_read ? 'Read' : 'Unread'}
                     </span>
                   </TableCell>
                   <TableCell className="text-right">
-                    {!submission.is_read && (
+                    {(submission.status !== 'read' && !submission.is_read) && (
                       <Button 
                         variant="ghost" 
                         size="sm"
