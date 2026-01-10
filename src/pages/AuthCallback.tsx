@@ -17,10 +17,13 @@ const AuthCallback: React.FC = () => {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        // First, check for errors in URL hash fragment (Supabase sends errors in hash)
+        // Get URL hash fragment (Supabase sends tokens/errors in hash)
         const hash = window.location.hash;
+        
         if (hash) {
-          const hashParams = new URLSearchParams(hash.substring(1)); // Remove the '#' 
+          const hashParams = new URLSearchParams(hash.substring(1)); // Remove the '#'
+          
+          // First, check for errors in URL hash fragment
           const hashError = hashParams.get('error');
           const hashErrorCode = hashParams.get('error_code');
           const hashErrorDescription = hashParams.get('error_description');
@@ -48,9 +51,51 @@ const AuthCallback: React.FC = () => {
             setMessage(errorMessage);
             return;
           }
+          
+          // Parse the URL hash for auth tokens
+          // Supabase sends tokens in hash fragment when redirect URL doesn't match
+          if (hash.includes('access_token')) {
+            // Extract tokens from hash fragment (hashParams already defined above)
+            const accessToken = hashParams.get('access_token');
+            const refreshToken = hashParams.get('refresh_token');
+            const expiresAt = hashParams.get('expires_at');
+            
+            if (accessToken && refreshToken) {
+              // Set session manually from hash tokens
+              const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken,
+              });
+              
+              if (sessionError) {
+                console.error('Auth callback session error:', sessionError);
+                setStatus('error');
+                setMessage('Email verification failed. Please try signing up again.');
+                return;
+              }
+              
+              if (sessionData.session) {
+                setStatus('success');
+                if (userType === 'expert') {
+                  setMessage('Email verified successfully! Your expert account is pending admin approval.');
+                  await supabase.auth.signOut();
+                  setTimeout(() => {
+                    navigate('/expert-login');
+                  }, 3000);
+                } else {
+                  setMessage('Email verified successfully! You can now access your account.');
+                  setTimeout(() => {
+                    navigate('/user-dashboard');
+                  }, 2000);
+                }
+                toast.success('Email verified successfully!');
+                return;
+              }
+            }
+          }
         }
-
-        // Parse the URL hash for auth tokens
+        
+        // Fallback: Try to get session normally
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -180,28 +225,25 @@ const AuthCallback: React.FC = () => {
           
           {status === 'error' && (
             <div className="space-y-3">
-              <Button onClick={handleRetry} className="w-full">
-                Try Again
-              </Button>
               {(message.includes('expired') || message.includes('invalid')) && (
                 <div className="space-y-2">
                   <Button 
                     onClick={handleResendVerification} 
-                    variant="outline" 
                     className="w-full"
                   >
                     Resend Verification Email
                   </Button>
-                  <Button 
-                    onClick={() => navigate('/resend-verification')} 
-                    variant="ghost" 
-                    className="w-full text-sm"
-                  >
-                    Or go to resend page
-                  </Button>
+                  <p className="text-xs text-gray-500 text-center">
+                    We'll send a new verification link to your email address.
+                  </p>
                 </div>
               )}
-              <p className="text-sm text-gray-500">
+              <Button onClick={handleRetry} variant="outline" className="w-full">
+                {message.includes('expired') || message.includes('invalid') 
+                  ? 'Go to Login' 
+                  : 'Try Again'}
+              </Button>
+              <p className="text-sm text-gray-500 text-center">
                 Need help? Contact our support team.
               </p>
             </div>
