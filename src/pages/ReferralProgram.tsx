@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { useUserAuth } from '@/contexts/auth/hooks/useUserAuth';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,7 +12,7 @@ import { getReferralLink, copyReferralLink, fetchReferralSettings } from '@/util
 import { ReferralSettings } from '@/types/supabase';
 
 const ReferralProgram = () => {
-  const { user } = useUserAuth();
+  const { user, userProfile, isAuthenticated } = useSimpleAuth();
   const [referralSettings, setReferralSettings] = useState<ReferralSettings | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -24,12 +25,12 @@ const ReferralProgram = () => {
   }, []);
 
   const handleCopyReferralLink = () => {
-    if (!user?.referral_code) {
+    if (!userProfile?.referral_code) {
       toast.error('Please complete your profile to get your referral code');
       return;
     }
 
-    const referralLink = getReferralLink(user.referral_code);
+    const referralLink = getReferralLink(userProfile.referral_code);
     const success = copyReferralLink(referralLink);
     
     if (success) {
@@ -41,7 +42,7 @@ const ReferralProgram = () => {
     }
   };
 
-  const referralLink = user?.referral_code ? getReferralLink(user.referral_code) : '';
+  const referralLink = userProfile?.referral_code ? getReferralLink(userProfile.referral_code) : '';
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -215,7 +216,7 @@ const ReferralProgram = () => {
         )}
 
         {/* Referral Link Section */}
-        {user ? (
+        {isAuthenticated && user && userProfile ? (
           <Card className="max-w-2xl mx-auto">
             <CardHeader className="text-center">
               <CardTitle>Your Referral Link</CardTitle>
@@ -224,7 +225,7 @@ const ReferralProgram = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {user.referral_code ? (
+              {userProfile.referral_code ? (
                 <div className="space-y-4">
                   <div className="flex items-center space-x-2">
                     <Input
@@ -243,7 +244,7 @@ const ReferralProgram = () => {
                   </div>
                   <div className="text-center">
                     <p className="text-sm text-muted-foreground mb-2">
-                      Your referral code: <span className="font-mono font-semibold">{user.referral_code}</span>
+                      Your referral code: <span className="font-mono font-semibold">{userProfile.referral_code}</span>
                     </p>
                   </div>
                 </div>
@@ -253,7 +254,7 @@ const ReferralProgram = () => {
                     Complete your profile to get your unique referral code
                   </p>
                   <Button asChild>
-                    <a href="/user-dashboard/profile">Complete Profile</a>
+                    <Link to="/user-dashboard/profile">Complete Profile</Link>
                   </Button>
                 </div>
               )}
@@ -273,10 +274,10 @@ const ReferralProgram = () => {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button asChild>
-                  <a href="/user-signup">Sign Up</a>
+                  <Link to="/user-signup">Sign Up</Link>
                 </Button>
                 <Button variant="outline" asChild>
-                  <a href="/user-login">Log In</a>
+                  <Link to="/user-login">Log In</Link>
                 </Button>
               </div>
             </CardContent>
