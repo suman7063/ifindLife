@@ -712,8 +712,8 @@ async function sendEmailNotification(event: string, payload: RazorpayWebhookPayl
     const emailContent = generateEmailContent(event, payload)
     
     await resend.emails.send({
-      from: 'iFind Life <noreply@ifindlife.com>',
-      to: ['dk@ifindlife.com'],
+      from: 'iFind Life <noreply@ifindlife.org>',
+      to: ['dk@ifindlife.org'],
       subject: `Razorpay Webhook: ${event}`,
       html: emailContent
     })

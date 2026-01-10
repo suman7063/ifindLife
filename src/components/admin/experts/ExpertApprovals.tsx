@@ -268,8 +268,12 @@ const ExpertApprovals = () => {
       toast.success(`Expert ${selectedStatus === 'approved' ? 'approved' : 'rejected'} successfully`);
       setOpenDialog(false);
 
-      // Send email notification (non-blocking)
-      // Use send-expert-email-welcome-status for all status updates (approved, rejected, etc.)
+      // Email notification is now automatically sent via Database Webhook (Supabase native)
+      // When expert_accounts.status is updated, the database trigger automatically calls
+      // the send-expert-email-welcome-status Edge Function
+      // No manual call needed - handled by Supabase Database Webhook
+      
+      /* Manual email call removed - now handled automatically by Database Webhook
       try {
         const { data: emailData, error: emailError } = await supabase.functions.invoke('send-expert-email-welcome-status', {
           body: {
@@ -279,86 +283,11 @@ const ExpertApprovals = () => {
             rejectionMessage: selectedStatus === 'rejected' ? (feedbackMessage.trim() || undefined) : undefined,
           },
         });
-
-        if (emailError) {
-          console.error('ExpertApprovals: Error calling send-expert-email-welcome-status:', emailError);
-          
-          // Try to extract error message from response body
-          let errorMessage = emailError.message || 'Failed to send email';
-          let errorDetails = '';
-          
-          // Supabase FunctionsHttpError has context with response
-          if (emailError.context) {
-            // Try to read the response body
-            const response = emailError.context as any;
-            if (response.response || response.body) {
-              try {
-                const responseBody = response.response || response.body;
-                if (typeof responseBody === 'string') {
-                  const parsed = JSON.parse(responseBody);
-                  errorMessage = parsed.error || parsed.message || errorMessage;
-                  errorDetails = parsed.details || parsed.message || '';
-                } else if (typeof responseBody === 'object') {
-                  errorMessage = responseBody.error || responseBody.message || errorMessage;
-                  errorDetails = responseBody.details || responseBody.message || '';
-                }
-              } catch (e) {
-                console.warn('Could not parse error response body:', e);
-              }
-            }
-          }
-          
-          // Also check if error has a data property (sometimes Supabase puts response there)
-          if ((emailError as any).data) {
-            try {
-              const errorData = typeof (emailError as any).data === 'string' 
-                ? JSON.parse((emailError as any).data) 
-                : (emailError as any).data;
-              if (errorData.error || errorData.message) {
-                errorMessage = errorData.error || errorData.message || errorMessage;
-                errorDetails = errorData.details || errorData.message || '';
-              }
-            } catch (e) {
-              // Ignore
-            }
-          }
-          
-          console.error('ExpertApprovals: Error details:', { 
-            errorMessage, 
-            errorDetails, 
-            status: emailError.status,
-            context: emailError.context,
-            errorData: (emailError as any).data,
-            fullError: emailError 
-          });
-          
-          // Show user-friendly message
-          let displayMessage = errorMessage;
-          
-          // If we couldn't extract a specific error, show a helpful default message
-          if (errorMessage === 'Edge Function returned a non-2xx status code' || errorMessage === 'Failed to send email') {
-            displayMessage = 'Email service not configured. Please add RESEND_API_KEY secret in Supabase Dashboard → Edge Functions → Secrets.';
-          } else if (errorMessage.includes('RESEND_API_KEY') || errorMessage.includes('Email service not configured')) {
-            displayMessage = 'Email service not configured. Please add RESEND_API_KEY secret in Supabase Dashboard → Edge Functions → Secrets.';
-          }
-          
-          toast.warning(`Status updated but email failed: ${displayMessage}${errorDetails ? ` - ${errorDetails}` : ''}`);
-        } else if (emailData && emailData.error) {
-          console.error('ExpertApprovals: Email function returned error:', emailData);
-          const errorMsg = emailData.error || emailData.message || 'Unknown error';
-          toast.warning(`Status updated but email failed: ${errorMsg}`);
-        } else if (emailData && emailData.success) {
-          toast.success('Status updated and email sent successfully');
-        } else {
-          // Unexpected response
-          console.warn('ExpertApprovals: Unexpected email response:', emailData);
-          toast.warning('Status updated but email response was unexpected');
-        }
+        // ... error handling code ...
       } catch (emailError: any) {
-        console.error('ExpertApprovals: Error sending email notification:', emailError);
-        const errorMsg = emailError?.message || emailError?.error || 'Failed to send email';
-        toast.warning(`Status updated but email failed: ${errorMsg}`);
+        // ... error handling code ...
       }
+      */
     } catch (error) {
       console.error('ExpertApprovals: Error updating expert status:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';

@@ -92,6 +92,12 @@ const ExpertOnboardingWelcome: React.FC<ExpertOnboardingWelcomeProps> = ({
           .eq('auth_id', expertId)
           .single();
 
+        // Email notification is now automatically sent via Database Webhook (Supabase native)
+        // When expert_accounts.onboarding_completed is set to true, the database trigger automatically calls
+        // the send-expert-email-welcome-status Edge Function
+        // No manual call needed - handled by Supabase Database Webhook
+        
+        /* Manual email call removed - now handled automatically by Database Webhook
         if (expertData?.email && expertData?.name) {
           console.log('📧 Sending welcome email to expert:', expertData.email);
           const { error: emailError } = await supabase.functions.invoke('send-expert-email-welcome-status', {
@@ -103,10 +109,11 @@ const ExpertOnboardingWelcome: React.FC<ExpertOnboardingWelcomeProps> = ({
 
           if (emailError) {
             console.warn('⚠️ Failed to send welcome email (non-critical):', emailError);
-            // Don't fail onboarding if email fails - it's non-critical
           } else {
             console.log('✅ Welcome email sent successfully');
           }
+        }
+        */
         }
       } catch (emailErr) {
         console.warn('⚠️ Error sending welcome email (non-critical):', emailErr);

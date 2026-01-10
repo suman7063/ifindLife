@@ -63,6 +63,17 @@ const UserLoginContent: React.FC = () => {
         });
         return;
       }
+
+      // Check if email is verified
+      if (!data.user.email_confirmed_at) {
+        console.error('❌ UserLoginContent: Email not verified');
+        // Sign out the user since they haven't verified their email
+        await supabase.auth.signOut();
+        toast.error('Please verify your email address before logging in. Check your inbox for the verification link.', {
+          duration: 4000 // 4 seconds
+        });
+        return;
+      }
       
       toast.success('Login successful!', {
         duration: 2000 // 2 seconds

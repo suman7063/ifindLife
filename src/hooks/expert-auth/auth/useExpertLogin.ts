@@ -32,6 +32,15 @@ export const useExpertLogin = (
         toast.error('Login failed. No session created.');
         return false;
       }
+
+      // Check if email is verified
+      if (!data.user.email_confirmed_at) {
+        console.error('❌ Expert auth: Email not verified');
+        // Sign out the user since they haven't verified their email
+        await supabase.auth.signOut();
+        toast.error('Please verify your email address before logging in. Check your inbox for the verification link.');
+        return false;
+      }
       
       console.log('Expert auth: Session created, checking for expert profile');
       const expertProfile = await fetchExpertProfile(data.session.user.id);

@@ -9,8 +9,28 @@ const corsHeaders = {
 interface WelcomeEmailRequest {
   expertName: string;
   expertEmail: string;
-  emailType?: 'approval' | 'onboarding' | 'rejection'; // 'approval' for admin approval, 'onboarding' for onboarding complete, 'rejection' for rejection
-  rejectionMessage?: string; // Optional custom message for rejection
+  emailType?: 'approval' | 'onboarding' | 'rejection';
+  rejectionMessage?: string;
+}
+
+// Database Webhook payload format (Supabase native)
+interface DatabaseWebhookPayload {
+  type: 'UPDATE' | 'INSERT' | 'DELETE';
+  table: string;
+  schema: string;
+  record: {
+    name: string;
+    email: string;
+    status: 'pending' | 'approved' | 'rejected';
+    feedback_message?: string;
+    onboarding_completed?: boolean;
+    [key: string]: any;
+  };
+  old_record?: {
+    status: string;
+    onboarding_completed?: boolean;
+    [key: string]: any;
+  };
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -32,17 +52,94 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
     
-    const { expertName, expertEmail, emailType = 'onboarding', rejectionMessage }: WelcomeEmailRequest = requestBody;
+    // Check if this is a database webhook payload (Supabase native)
+    const isWebhook = requestBody.type && requestBody.table && requestBody.record;
     
-    if (!expertName || !expertEmail) {
-      console.error("Missing required fields:", { expertName: !!expertName, expertEmail: !!expertEmail });
+    let expertName: string;
+    let originalExpertEmail: string;
+    let emailType: 'approval' | 'onboarding' | 'rejection';
+    let rejectionMessage: string | undefined;
+    
+    if (isWebhook) {
+      // Handle database webhook payload (Supabase native)
+      const webhookPayload = requestBody as DatabaseWebhookPayload;
+      
+      // Only process UPDATE events on expert_accounts table
+      if (webhookPayload.type !== 'UPDATE' || webhookPayload.table !== 'expert_accounts') {
+        return new Response(
+          JSON.stringify({ success: true, message: "Webhook event ignored (not an expert_accounts UPDATE)" }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      
+      const newRecord = webhookPayload.record;
+      const oldRecord = webhookPayload.old_record;
+      
+      // Check if onboarding_completed changed from false to true
+      const onboardingCompleted = newRecord.onboarding_completed === true && 
+                                   (oldRecord?.onboarding_completed === false || oldRecord?.onboarding_completed === null || oldRecord?.onboarding_completed === undefined);
+      
+      // Check if status changed
+      const statusChanged = oldRecord && newRecord.status !== oldRecord.status;
+      
+      // Extract name and email from record (handle null/undefined)
+      expertName = newRecord.name || newRecord.email?.split('@')[0] || 'Expert';
+      originalExpertEmail = newRecord.email || '';
+      
+      // Validate we have email
+      if (!originalExpertEmail) {
+        console.error("Webhook payload missing email:", JSON.stringify(newRecord));
+        return new Response(
+          JSON.stringify({ success: false, error: "Email is required in webhook payload" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      
+      if (onboardingCompleted) {
+        // Onboarding completed - send welcome email
+        emailType = 'onboarding';
+        console.log(`📧 [Supabase Webhook] Onboarding completed for ${expertName} (${originalExpertEmail})`);
+      } else if (statusChanged) {
+        // Status changed - determine email type based on status change
+        if (newRecord.status === 'approved') {
+          emailType = 'approval';
+        } else if (newRecord.status === 'rejected') {
+          emailType = 'rejection';
+          rejectionMessage = newRecord.feedback_message;
+        } else {
+          // Status changed but not to approved/rejected, don't send email
+          return new Response(
+            JSON.stringify({ success: true, message: "Status change doesn't require email" }),
+            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        
+        console.log(`📧 [Supabase Webhook] Status changed from ${oldRecord?.status || 'unknown'} to ${newRecord.status} for ${expertName} (${originalExpertEmail})`);
+      } else {
+        // No relevant change, don't send email
+        return new Response(
+          JSON.stringify({ success: true, message: "No relevant change, email not sent" }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    } else {
+      // Handle manual call payload (backward compatibility)
+      const manualPayload = requestBody as WelcomeEmailRequest;
+      expertName = manualPayload.expertName;
+      originalExpertEmail = manualPayload.expertEmail;
+      emailType = manualPayload.emailType || 'onboarding';
+      rejectionMessage = manualPayload.rejectionMessage;
+      
+      console.log(`📧 [Manual Call] Sending ${emailType} email to ${expertName} (${originalExpertEmail})`);
+    }
+    
+    if (!expertName || !originalExpertEmail) {
+      console.error("Missing required fields:", { expertName: !!expertName, expertEmail: !!originalExpertEmail });
       return new Response(
         JSON.stringify({ error: "Expert name and email are required", message: "expertName and expertEmail are required fields" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-
-    console.log(`Sending email to expert ${expertName} (${expertEmail}), type: ${emailType}`);
 
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     
@@ -66,16 +163,37 @@ const handler = async (req: Request): Promise<Response> => {
     const isDevelopment = Deno.env.get("ENVIRONMENT") === "development" || 
                          appUrl.includes("localhost") || 
                          appUrl.includes("127.0.0.1");
+    
+    // TEMPORARY: Redirect all emails to test email until domain is verified
+    // Remove this after DNS verification is complete in Resend
+    const devTestEmail = Deno.env.get("DEV_TEST_EMAIL") || "singh1996fly@gmail.com";
+    let expertEmail = originalExpertEmail;
+    
+    // Override to test email until domain verification is complete
+    // This prevents 403 errors while DNS records are pending
+    if (originalExpertEmail !== devTestEmail) {
+      expertEmail = devTestEmail;
+      console.log(`🔧 Email override: Redirecting from ${originalExpertEmail} to ${devTestEmail}`);
+      console.log(`📧 Original recipient: ${originalExpertEmail} (${expertName})`);
+      console.log(`⏳ Domain verification pending - emails redirected to test email`);
+      console.log(`💡 After DNS verification, remove this override to send to actual recipients`);
+    }
+    
     // Determine email type and subject
     const isApprovalEmail = emailType === 'approval';
     const isRejectionEmail = emailType === 'rejection';
     const isOnboardingEmail = emailType === 'onboarding';
     
-    const emailSubject = isApprovalEmail 
+    let emailSubject = isApprovalEmail 
       ? "🎉 Your Expert Account has been Approved! Welcome to iFindLife!"
       : isRejectionEmail
       ? "Update on Your Expert Account Application"
       : "🎉 Welcome to iFindLife! Your Profile is Now Active!";
+    
+    // Add original email info to subject in development mode for debugging
+    if (isDevelopment && originalExpertEmail !== expertEmail) {
+      emailSubject = `${emailSubject} [Original: ${originalExpertEmail}]`;
+    }
     
     // Format rejection message if provided
     const formattedRejectionMessage = isRejectionEmail && rejectionMessage 
@@ -188,31 +306,48 @@ const handler = async (req: Request): Promise<Response> => {
     `;
 
     // Use verified domain email address (update after domain verification)
-    // For localhost/development: use resend.dev (testing domain - only works for your email)
-    // For production: use verified domain (noreply@ifindlife.com) after domain verification
+    // IMPORTANT: Always use testing domain (onboarding@resend.dev) until domain is verified
+    // Domain verification required for production emails to work
     let fromEmail = Deno.env.get("RESEND_FROM_EMAIL");
     
     if (!fromEmail) {
+      // Always use testing domain until domain is verified in Resend
+      // This works for your registered email address (singh1996fly@gmail.com)
+      fromEmail = "iFindLife Expert Team <onboarding@resend.dev>";
+      
       if (isDevelopment) {
-        // Development: Use testing domain (only works for your email address)
-        fromEmail = "iFindLife Expert Team <onboarding@resend.dev>";
         console.log("⚠️ Development mode: Using testing domain. Emails will only work for your registered email address.");
       } else {
-        // Production: Should use verified domain (update after domain verification)
-        fromEmail = "iFindLife Expert Team <noreply@ifindlife.com>";
-        console.log("📧 Production mode: Using verified domain. Make sure domain is verified in Resend.");
+        console.log("⚠️ Production mode: Using testing domain (domain not verified). Emails will only work for your registered email address.");
+        console.log("💡 To send to all recipients, verify domain at: https://resend.com/domains");
+        console.log("💡 After verification, set RESEND_FROM_EMAIL secret to: iFindLife Expert Team <noreply@ifindlife.org>");
       }
     }
     
-    const emailResponse = await resend.emails.send({
-      from: fromEmail,
-      to: [expertEmail],
-      subject: emailSubject,
-      html: emailHtml,
-    });
+    console.log(`📧 Attempting to send email to ${expertEmail} using ${fromEmail}`);
+    
+    let emailResponse;
+    try {
+      emailResponse = await resend.emails.send({
+        from: fromEmail,
+        to: [expertEmail],
+        subject: emailSubject,
+        html: emailHtml,
+      });
+    } catch (sendError) {
+      console.error("❌ Resend API call failed:", sendError);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: "Failed to call Resend API", 
+          details: sendError instanceof Error ? sendError.message : String(sendError)
+        }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     if (emailResponse.error) {
-      console.error("Resend email sending error:", emailResponse.error);
+      console.error("❌ Resend email sending error:", JSON.stringify(emailResponse.error));
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -223,7 +358,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log("Welcome email sent successfully:", emailResponse.data);
+    console.log("✅ Welcome email sent successfully:", emailResponse.data);
 
     return new Response(JSON.stringify({ 
       success: true, 

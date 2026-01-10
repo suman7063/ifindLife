@@ -24,6 +24,17 @@ export async function directUserLogin(email: string, password: string): Promise<
       console.error('No session returned from Supabase');
       return { success: false, error: { message: 'Authentication failed. Please try again.' } };
     }
+
+    // Check if email is verified
+    if (!data.user.email_confirmed_at) {
+      console.error('❌ Direct login: Email not verified');
+      // Sign out the user since they haven't verified their email
+      await supabase.auth.signOut();
+      return { 
+        success: false, 
+        error: { message: 'Please verify your email address before logging in. Check your inbox for the verification link.' } 
+      };
+    }
     
     console.log('Login successful, session established:', !!data.session);
     

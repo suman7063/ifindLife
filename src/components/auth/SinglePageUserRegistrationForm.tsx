@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -74,6 +75,7 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
   initialReferralCode,
   referralSettings
 }) => {
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [showVerificationDialog, setShowVerificationDialog] = useState(false);
   const [userEmail, setUserEmail] = useState<string>('');
@@ -207,10 +209,21 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
         }
       }
 
-      // Show verification dialog instead of toast
-      setUserEmail(data.email);
-      setShowVerificationDialog(true);
-      onSuccess?.();
+      // Check if email was actually sent (user created but email might not be sent)
+      // If email confirmation is required, user.email_confirmed_at will be null
+      // If email send failed, we should still show dialog but with a warning
+      const emailSent = authData.user && !authError;
+      
+      // Show verification dialog only if user was created
+      if (authData.user) {
+        setUserEmail(data.email);
+        setShowVerificationDialog(true);
+        onSuccess?.();
+      } else {
+        // This shouldn't happen, but handle it gracefully
+        toast.error('Registration failed. Please try again.');
+        onError?.('Registration failed');
+      }
       
     } catch (error) {
       console.error('Registration error:', error);
@@ -662,7 +675,12 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
             )}
           </Button>
           <Button 
-            onClick={() => setShowVerificationDialog(false)} 
+            onClick={async () => {
+              setShowVerificationDialog(false);
+              // Sign out user since email is not verified yet
+              await supabase.auth.signOut();
+              navigate('/user-login');
+            }} 
             className="w-full sm:w-auto"
           >
             Got it!

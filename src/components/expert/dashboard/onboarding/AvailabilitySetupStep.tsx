@@ -247,7 +247,12 @@ export const AvailabilitySetupStep: React.FC<AvailabilitySetupStepProps> = ({
           .update({ onboarding_completed: true })
           .eq('auth_id', expertAccount.auth_id);
 
-        // Send welcome email when onboarding is auto-completed
+        // Email notification is now automatically sent via Database Webhook (Supabase native)
+        // When expert_accounts.onboarding_completed is set to true, the database trigger automatically calls
+        // the send-expert-email-welcome-status Edge Function
+        // No manual call needed - handled by Supabase Database Webhook
+        
+        /* Manual email call removed - now handled automatically by Database Webhook
         try {
           console.log('📧 Sending welcome email to expert:', expertAccount.email);
           const { error: emailError } = await supabase.functions.invoke('send-expert-email-welcome-status', {
@@ -265,6 +270,7 @@ export const AvailabilitySetupStep: React.FC<AvailabilitySetupStepProps> = ({
         } catch (emailErr) {
           console.warn('⚠️ Error sending welcome email (non-critical):', emailErr);
         }
+        */
       }
 
       console.log('✅ Availability saved successfully');
