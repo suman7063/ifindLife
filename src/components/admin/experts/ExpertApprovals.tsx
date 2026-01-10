@@ -235,7 +235,19 @@ const ExpertApprovals = () => {
       return;
     }
     
+    // Validate that we have a status
+    if (!selectedStatus || (selectedStatus !== 'approved' && selectedStatus !== 'rejected')) {
+      console.error('ExpertApprovals: Invalid status:', selectedStatus);
+      toast.error('Please select a valid status (approved or rejected)');
+      return;
+    }
+    
     try {
+      console.log('ExpertApprovals: Updating expert status:', {
+        id: selectedExpert.auth_id,
+        status: selectedStatus,
+        hasFeedback: !!feedbackMessage.trim()
+      });
 
       // Call edge function (runs with service role) to update status and save feedback message
       const { data: fnData, error: fnError } = await supabase.functions.invoke('admin-update-expert', {
@@ -253,12 +265,57 @@ const ExpertApprovals = () => {
           status: fnError.status,
           context: fnError.context
         });
-        throw new Error(fnError.message || 'Failed to update expert status');
+        
+        // Try to extract error message from response body
+        let errorMessage = fnError.message || 'Failed to update expert status';
+        
+        // Try to parse error from response context
+        if (fnError.context && fnError.context instanceof Response) {
+          try {
+            const errorBody = await fnError.context.clone().json();
+            console.log('ExpertApprovals: Error response body:', errorBody);
+            if (errorBody?.error) {
+              errorMessage = errorBody.error;
+            } else if (errorBody?.message) {
+              errorMessage = errorBody.message;
+            }
+          } catch (e) {
+            console.warn('ExpertApprovals: Could not parse error response:', e);
+            // Try to read as text
+            try {
+              const errorText = await fnError.context.clone().text();
+              console.log('ExpertApprovals: Error response text:', errorText);
+              if (errorText) {
+                try {
+                  const parsed = JSON.parse(errorText);
+                  if (parsed.error) errorMessage = parsed.error;
+                  else if (parsed.message) errorMessage = parsed.message;
+                } catch {
+                  // If not JSON, use as is
+                  if (errorText.length < 200) errorMessage = errorText;
+                }
+              }
+            } catch (e2) {
+              console.warn('ExpertApprovals: Could not read error response:', e2);
+            }
+          }
+        }
+        
+        // Check if fnData contains error (sometimes error is in data, not fnError)
+        if (fnData && typeof fnData === 'object' && 'error' in fnData) {
+          errorMessage = (fnData as { error: string }).error || errorMessage;
+        }
+        
+        console.error('ExpertApprovals: Final error message:', errorMessage);
+        toast.error(`Failed to update expert: ${errorMessage}`);
+        throw new Error(errorMessage);
       }
 
       if (!fnData?.success) {
-        console.error('ExpertApprovals: Edge function returned error:', fnData?.error);
-        throw new Error(fnData?.error || 'Failed to update expert status');
+        const errorMsg = fnData?.error || 'Failed to update expert status';
+        console.error('ExpertApprovals: Edge function returned error:', errorMsg);
+        toast.error(`Failed to update expert: ${errorMsg}`);
+        throw new Error(errorMsg);
       }
 
 

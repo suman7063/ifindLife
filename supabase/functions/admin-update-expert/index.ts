@@ -19,16 +19,35 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
 
-    const body = await req.json().catch(() => ({}));
-    const { id, status, category, feedback_message } = body;
-
-    console.log('admin-update-expert: Received request:', { id, status, category, body });
-
-    if (!id) {
-      console.error('admin-update-expert: Missing required field: id');
+    let body;
+    try {
+      body = await req.json();
+    } catch (parseError) {
+      console.error('admin-update-expert: Failed to parse request body:', parseError);
       return new Response(JSON.stringify({
         success: false,
-        error: `id is required. Received: id=${id}`
+        error: 'Invalid JSON in request body'
+      }), {
+        status: 400,
+        headers: corsHeaders
+      });
+    }
+
+    const { id, status, category, feedback_message } = body || {};
+
+    console.log('admin-update-expert: Received request:', { 
+      id, 
+      status, 
+      category, 
+      feedback_message: feedback_message ? `${feedback_message.substring(0, 50)}...` : null,
+      bodyKeys: Object.keys(body || {})
+    });
+
+    if (!id) {
+      console.error('admin-update-expert: Missing required field: id', { body });
+      return new Response(JSON.stringify({
+        success: false,
+        error: `id is required. Received: id=${id}, body keys: ${Object.keys(body || {}).join(', ')}`
       }), {
         status: 400,
         headers: corsHeaders

@@ -57,7 +57,7 @@ const handler = async (req: Request): Promise<Response> => {
     
     let expertName: string;
     let originalExpertEmail: string;
-    let emailType: 'approval' | 'onboarding' | 'rejection';
+    let emailType: 'approval' | 'onboarding' | 'rejection' | undefined;
     let rejectionMessage: string | undefined;
     
     if (isWebhook) {
@@ -133,10 +133,10 @@ const handler = async (req: Request): Promise<Response> => {
       console.log(`📧 [Manual Call] Sending ${emailType} email to ${expertName} (${originalExpertEmail})`);
     }
     
-    if (!expertName || !originalExpertEmail) {
-      console.error("Missing required fields:", { expertName: !!expertName, expertEmail: !!originalExpertEmail });
+    if (!expertName || !originalExpertEmail || !emailType) {
+      console.error("Missing required fields:", { expertName: !!expertName, expertEmail: !!originalExpertEmail, emailType: !!emailType });
       return new Response(
-        JSON.stringify({ error: "Expert name and email are required", message: "expertName and expertEmail are required fields" }),
+        JSON.stringify({ error: "Expert name, email, and email type are required", message: "expertName, expertEmail, and emailType are required fields" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -157,43 +157,27 @@ const handler = async (req: Request): Promise<Response> => {
 
     const resend = new Resend(resendApiKey);
 
-    const appUrl = Deno.env.get("APP_URL") || "https://ifindlife.com";
+    const appUrl = Deno.env.get("APP_URL") || "https://ifindlife.org";
     
     // Determine if running in development/localhost
     const isDevelopment = Deno.env.get("ENVIRONMENT") === "development" || 
                          appUrl.includes("localhost") || 
                          appUrl.includes("127.0.0.1");
     
-    // TEMPORARY: Redirect all emails to test email until domain is verified
-    // Remove this after DNS verification is complete in Resend
-    const devTestEmail = Deno.env.get("DEV_TEST_EMAIL") || "singh1996fly@gmail.com";
-    let expertEmail = originalExpertEmail;
-    
-    // Override to test email until domain verification is complete
-    // This prevents 403 errors while DNS records are pending
-    if (originalExpertEmail !== devTestEmail) {
-      expertEmail = devTestEmail;
-      console.log(`🔧 Email override: Redirecting from ${originalExpertEmail} to ${devTestEmail}`);
-      console.log(`📧 Original recipient: ${originalExpertEmail} (${expertName})`);
-      console.log(`⏳ Domain verification pending - emails redirected to test email`);
-      console.log(`💡 After DNS verification, remove this override to send to actual recipients`);
-    }
+    // Send email to actual expert email address
+    // Domain is verified in Resend, so emails can be sent to any recipient
+    const expertEmail = originalExpertEmail;
     
     // Determine email type and subject
     const isApprovalEmail = emailType === 'approval';
     const isRejectionEmail = emailType === 'rejection';
     const isOnboardingEmail = emailType === 'onboarding';
     
-    let emailSubject = isApprovalEmail 
+    const emailSubject = isApprovalEmail 
       ? "🎉 Your Expert Account has been Approved! Welcome to iFindLife!"
       : isRejectionEmail
       ? "Update on Your Expert Account Application"
       : "🎉 Welcome to iFindLife! Your Profile is Now Active!";
-    
-    // Add original email info to subject in development mode for debugging
-    if (isDevelopment && originalExpertEmail !== expertEmail) {
-      emailSubject = `${emailSubject} [Original: ${originalExpertEmail}]`;
-    }
     
     // Format rejection message if provided
     const formattedRejectionMessage = isRejectionEmail && rejectionMessage 
