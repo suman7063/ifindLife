@@ -68,17 +68,17 @@ const LeadCaptureForm: React.FC<LeadCaptureFormProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-visible" hideCloseButton>
+        <button
+          onClick={() => onOpenChange(false)}
+          className="absolute right-[-16px] top-[-16px] z-[101] flex items-center justify-center w-8 h-8 rounded-full bg-white border border-gray-200 text-gray-500 hover:text-gray-700 hover:bg-gray-50 shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+          aria-label="Close dialog"
+        >
+          <X className="h-4 w-4" />
+        </button>
+        <div className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-xl font-bold">{title}</DialogTitle>
-            <button
-              onClick={() => onOpenChange(false)}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
+          <DialogTitle className="text-xl font-bold">{title}</DialogTitle>
           <p className="text-sm text-gray-600 mt-2">
             Please fill in your details and we'll get back to you within 24 hours.
           </p>
@@ -236,6 +236,7 @@ const LeadCaptureForm: React.FC<LeadCaptureFormProps> = ({
             Submit Inquiry
           </Button>
         </form>
+        </div>
       </DialogContent>
     </Dialog>
   );
