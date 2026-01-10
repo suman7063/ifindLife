@@ -2,15 +2,8 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { format } from 'date-fns';
-import { Loader2, ExternalLink } from 'lucide-react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Loader2, Mail, Phone, User, Calendar, FileText, MessageSquare } from 'lucide-react';
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { ContactSubmission } from '@/types/supabase/tables';
@@ -93,66 +86,78 @@ const ContactSubmissionsTable = () => {
           No contact form submissions yet.
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Subject</TableHead>
-                <TableHead>Message</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {submissions.map((submission) => (
-                <TableRow 
-                  key={submission.id}
-                  className={submission.is_read ? "" : "bg-blue-50"}
-                >
-                  <TableCell className="font-medium">
-                    {format(new Date(submission.created_at), 'MMM d, yyyy HH:mm')}
-                  </TableCell>
-                  <TableCell>{submission.name}</TableCell>
-                  <TableCell>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {submissions.map((submission) => (
+            <Card 
+              key={submission.id} 
+              className={`hover:shadow-lg transition-shadow ${
+                submission.status === 'read' || submission.is_read ? '' : 'border-blue-200 bg-blue-50/30'
+              }`}
+            >
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-lg mb-1">{submission.name}</h3>
+                    <p className="text-sm text-gray-500 flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {format(new Date(submission.created_at), 'MMM d, yyyy HH:mm')}
+                    </p>
+                  </div>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    submission.status === 'read' || submission.is_read
+                      ? 'bg-gray-100 text-gray-800' 
+                      : 'bg-blue-100 text-blue-800'
+                  }`}>
+                    {submission.status === 'read' || submission.is_read ? 'Read' : 'Unread'}
+                  </span>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Mail className="h-4 w-4 text-gray-400" />
                     <a 
                       href={`mailto:${submission.email}`} 
-                      className="text-blue-600 hover:underline flex items-center gap-1"
+                      className="text-blue-600 hover:underline truncate"
                     >
                       {submission.email}
-                      <ExternalLink className="h-3 w-3" />
                     </a>
-                  </TableCell>
-                  <TableCell>{submission.subject}</TableCell>
-                  <TableCell className="max-w-xs truncate" title={submission.message}>
-                    {submission.message}
-                  </TableCell>
-                  <TableCell>
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      submission.status === 'read' || submission.is_read
-                      ? 'bg-gray-100 text-gray-800' 
-                      : 'bg-blue-100 text-blue-800 font-medium'
-                    }`}>
-                      {submission.status === 'read' || submission.is_read ? 'Read' : 'Unread'}
+                  </div>
+                  
+                  <div className="flex items-start gap-2 text-sm">
+                    <MessageSquare className="h-4 w-4 text-gray-400 mt-0.5" />
+                    <div className="flex-1">
+                      <span className="font-medium text-gray-600">Subject: </span>
+                      <span className="text-gray-700">{submission.subject}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t">
+                  <div className="text-sm">
+                    <span className="font-medium text-gray-600 flex items-start gap-1">
+                      <FileText className="h-4 w-4 mt-0.5" />
+                      Message:
                     </span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {(submission.status !== 'read' && !submission.is_read) && (
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => markAsRead(submission.id)}
-                      >
-                        Mark as read
-                      </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                    <p className="ml-5 text-gray-700 mt-1 line-clamp-3">{submission.message}</p>
+                  </div>
+                </div>
+
+                {(submission.status !== 'read' && !submission.is_read) && (
+                  <div className="pt-2 border-t">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => markAsRead(submission.id)}
+                      className="w-full"
+                    >
+                      Mark as read
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
         </div>
       )}
     </div>
