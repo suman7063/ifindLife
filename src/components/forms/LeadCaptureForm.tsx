@@ -183,16 +183,21 @@ const LeadCaptureForm: React.FC<LeadCaptureFormProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="organizationType">Industry Type</Label>
-                <Select onValueChange={(value) => handleSelectChange('organizationType', value)}>
+                <Select 
+                  value={formData.organizationType || ''} 
+                  onValueChange={(value) => handleSelectChange('organizationType', value)}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select industry" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[200]">
                     <SelectItem value="technology">Technology & IT</SelectItem>
                     <SelectItem value="healthcare">Healthcare</SelectItem>
-                    <SelectItem value="financial">Financial Services</SelectItem>
-                    <SelectItem value="manufacturing">Manufacturing</SelectItem>
+                    <SelectItem value="finance">Finance & Banking</SelectItem>
+                    <SelectItem value="education">Education</SelectItem>
                     <SelectItem value="retail">Retail & E-commerce</SelectItem>
+                    <SelectItem value="manufacturing">Manufacturing</SelectItem>
+                    <SelectItem value="consulting">Consulting</SelectItem>
                     <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>
@@ -200,16 +205,20 @@ const LeadCaptureForm: React.FC<LeadCaptureFormProps> = ({
               
               <div className="space-y-2">
                 <Label htmlFor="teamSize">Team Size</Label>
-                <Select onValueChange={(value) => handleSelectChange('teamSize', value)}>
+                <Select 
+                  value={formData.teamSize || ''} 
+                  onValueChange={(value) => handleSelectChange('teamSize', value)}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select team size" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[200]">
                     <SelectItem value="1-10">1-10 employees</SelectItem>
                     <SelectItem value="11-50">11-50 employees</SelectItem>
                     <SelectItem value="51-200">51-200 employees</SelectItem>
                     <SelectItem value="201-500">201-500 employees</SelectItem>
-                    <SelectItem value="500+">500+ employees</SelectItem>
+                    <SelectItem value="501-1000">501-1000 employees</SelectItem>
+                    <SelectItem value="1000+">1000+ employees</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -220,15 +229,20 @@ const LeadCaptureForm: React.FC<LeadCaptureFormProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="organizationType">Institution Type</Label>
-                <Select onValueChange={(value) => handleSelectChange('organizationType', value)}>
+                <Select 
+                  value={formData.organizationType || ''} 
+                  onValueChange={(value) => handleSelectChange('organizationType', value)}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[200]">
                     <SelectItem value="school">School</SelectItem>
                     <SelectItem value="college">College</SelectItem>
                     <SelectItem value="university">University</SelectItem>
                     <SelectItem value="training">Training Institute</SelectItem>
+                    <SelectItem value="online">Online Learning Platform</SelectItem>
+                    <SelectItem value="vocational">Vocational Institute</SelectItem>
                     <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>
@@ -236,16 +250,20 @@ const LeadCaptureForm: React.FC<LeadCaptureFormProps> = ({
               
               <div className="space-y-2">
                 <Label htmlFor="teamSize">Student Population</Label>
-                <Select onValueChange={(value) => handleSelectChange('teamSize', value)}>
+                <Select 
+                  value={formData.teamSize || ''} 
+                  onValueChange={(value) => handleSelectChange('teamSize', value)}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select range" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[200]">
                     <SelectItem value="1-100">1-100 students</SelectItem>
                     <SelectItem value="101-500">101-500 students</SelectItem>
                     <SelectItem value="501-1000">501-1000 students</SelectItem>
                     <SelectItem value="1001-5000">1001-5000 students</SelectItem>
-                    <SelectItem value="5000+">5000+ students</SelectItem>
+                    <SelectItem value="5001-10000">5001-10000 students</SelectItem>
+                    <SelectItem value="10000+">10000+ students</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

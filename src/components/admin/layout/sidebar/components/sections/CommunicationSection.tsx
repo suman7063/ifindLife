@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { AtSign, Mail, Users } from 'lucide-react';
+import { AtSign, Mail, Users, FileText } from 'lucide-react';
 import MenuSection from '../MenuSection';
 
 interface CommunicationSectionProps {
@@ -8,6 +8,7 @@ interface CommunicationSectionProps {
   onTabChange: (tab: string) => void;
   hasReferralsPermission: boolean;
   hasContactPermission: boolean;
+  hasProgramsInquiryPermission?: boolean;
 }
 
 const CommunicationSection: React.FC<CommunicationSectionProps> = ({
@@ -15,8 +16,18 @@ const CommunicationSection: React.FC<CommunicationSectionProps> = ({
   onTabChange,
   hasReferralsPermission,
   hasContactPermission,
+  hasProgramsInquiryPermission = true, // Default to true for super admin
 }) => {
   const items = [];
+  
+  if (hasProgramsInquiryPermission) {
+    items.push({
+      icon: FileText,
+      label: "Programs Inquiry",
+      isActive: activeTab === 'programs-inquiry',
+      onClick: () => onTabChange('programs-inquiry')
+    });
+  }
   
   if (hasReferralsPermission) {
     items.push({

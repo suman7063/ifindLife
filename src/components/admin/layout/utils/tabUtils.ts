@@ -15,6 +15,7 @@ export const getTabTitle = (tab: string): string => {
     programs: 'Programs Management',
     sessions: 'Sessions Management',
     referrals: 'Referrals Management',
+    'programs-inquiry': 'Programs Inquiry',
     blog: 'Blog Management',
     contact: 'Contact Submissions',
     adminUsers: 'Admin Users Management',
