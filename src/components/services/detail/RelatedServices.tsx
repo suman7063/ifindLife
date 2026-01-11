@@ -54,18 +54,31 @@ const RelatedServices: React.FC<RelatedServicesProps> = ({
         ) : (
           displayServices.map(relatedService => {
             const IconComponent = relatedService.icon;
+            const backgroundColor = relatedService.color || '#5AC8FA';
+            const textColor = relatedService.textColor || relatedService.color || '#5AC8FA';
+            
             return (
               <div key={relatedService.id} className="flex items-start gap-3 group transition-all hover:bg-gray-50 dark:hover:bg-gray-800/50 p-3 rounded-lg">
-                <div className={`p-2 rounded-full ${relatedService.color} flex-shrink-0 mt-1`}>
+                <div 
+                  className="p-2 rounded-full flex-shrink-0 mt-1 shadow-sm"
+                  style={{ backgroundColor: backgroundColor }}
+                >
                   <IconComponent className="h-5 w-5 text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className={`font-medium text-base group-hover:${relatedService.textColor} truncate`}>
-                    <Link to={`/services/${relatedService.slug}`} className="hover:underline">
+                  <h4 
+                    className="font-medium text-base truncate transition-colors"
+                    style={{ color: textColor }}
+                  >
+                    <Link 
+                      to={`/services/${relatedService.slug}`} 
+                      className="hover:underline"
+                      style={{ color: textColor }}
+                    >
                       {relatedService.name}
                     </Link>
                   </h4>
-                  <p className="text-sm text-gray-500 line-clamp-2">{relatedService.description}</p>
+                  <p className="text-sm text-gray-500 line-clamp-2 mt-1">{relatedService.description}</p>
                 </div>
               </div>
             );

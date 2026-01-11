@@ -9,10 +9,10 @@ interface ServiceAboutProps {
   textColor: string;
   color: string;
   gradientColor: string;
-  detailedDescription: string;
-  benefits: string[];
-  duration: string;
-  process: string;
+  detailedDescription?: string;
+  benefits: string[]; // Always provided (default if not in database)
+  duration?: string;
+  process: string; // Always provided (default if not in database)
 }
 
 const ServiceAbout: React.FC<ServiceAboutProps> = ({
@@ -28,48 +28,67 @@ const ServiceAbout: React.FC<ServiceAboutProps> = ({
 }) => {
   const IconComponent = icon;
   
+  // Use hex colors directly with inline styles
+  const borderColor = color || '#5AC8FA';
+  const textColorValue = textColor || color || '#5AC8FA';
+  
   return (
-    <Card className={`border-l-4 ${color} shadow-lg overflow-hidden mb-8`}>
+    <Card className="shadow-lg overflow-hidden mb-8" style={{ borderLeft: `4px solid ${borderColor}` }}>
       <div className="bg-gray-50 dark:bg-gray-900 p-8">
-        <div className={`inline-flex items-center justify-center ${color} text-white p-4 rounded-full mb-4`}>
+        <div 
+          className="inline-flex items-center justify-center text-white p-4 rounded-full mb-4"
+          style={{ backgroundColor: borderColor }}
+        >
           <IconComponent className="h-8 w-8" />
         </div>
-        <CardTitle className={`text-3xl ${textColor} mb-2`}>About {title}</CardTitle>
+        <CardTitle className="text-3xl mb-2" style={{ color: textColorValue }}>About {title}</CardTitle>
         <CardDescription className="text-lg">Comprehensive support for your mental wellness journey</CardDescription>
       </div>
       <CardContent className="space-y-8 p-8 bg-gray-50 dark:bg-gray-900">
-        <div>
-          <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
-            {detailedDescription}
-          </p>
-        </div>
-        
-        <div className="p-6 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-          <h3 className={`text-xl font-semibold mb-6 flex items-center ${textColor}`}>
-            <Check className="h-6 w-6 mr-2" /> Key Benefits
-          </h3>
-          <ul className="space-y-4">
-            {benefits.map((benefit, index) => (
-              <li key={index} className="flex items-start">
-                <span className={`inline-flex items-center justify-center p-1 ${textColor} mr-3 mt-1`}>
-                  <Check className="h-5 w-5" />
-                </span>
-                <span className="text-lg text-gray-700 dark:text-gray-300">{benefit}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-        
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="p-6 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-            <h3 className={`text-xl font-semibold mb-3 flex items-center ${textColor}`}>
-              <Clock className="h-6 w-6 mr-2" /> Duration
-            </h3>
-            <p className="text-lg text-gray-700 dark:text-gray-300">{duration}</p>
+        {detailedDescription && (
+          <div>
+            <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
+              {detailedDescription}
+            </p>
           </div>
-          
+        )}
+        
+        {/* Benefits - Always shown (default provided if not in database) */}
+        {benefits.length > 0 && (
           <div className="p-6 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-            <h3 className={`text-xl font-semibold mb-3 flex items-center ${textColor}`}>
+            <h3 className="text-xl font-semibold mb-6 flex items-center" style={{ color: textColorValue }}>
+              <Check className="h-6 w-6 mr-2" /> Key Benefits
+            </h3>
+            <ul className="space-y-4">
+              {benefits.map((benefit, index) => (
+                <li key={index} className="flex items-start">
+                  <span 
+                    className="inline-flex items-center justify-center p-1 mr-3 mt-1"
+                    style={{ color: textColorValue }}
+                  >
+                    <Check className="h-5 w-5" />
+                  </span>
+                  <span className="text-lg text-gray-700 dark:text-gray-300">{benefit}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        
+        {/* Duration and Process - Always shown */}
+        <div className="grid md:grid-cols-2 gap-6">
+          {duration && (
+            <div className="p-6 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+              <h3 className="text-xl font-semibold mb-3 flex items-center" style={{ color: textColorValue }}>
+                <Clock className="h-6 w-6 mr-2" /> Duration
+              </h3>
+              <p className="text-lg text-gray-700 dark:text-gray-300">{duration}</p>
+            </div>
+          )}
+          
+          {/* Process - Always shown (default provided if not in database) */}
+          <div className="p-6 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+            <h3 className="text-xl font-semibold mb-3 flex items-center" style={{ color: textColorValue }}>
               <Calendar className="h-6 w-6 mr-2" /> Process
             </h3>
             <p className="text-lg text-gray-700 dark:text-gray-300">{process}</p>

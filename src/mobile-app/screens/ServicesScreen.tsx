@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { servicesData } from '@/data/unifiedServicesData';
+import { useUnifiedServices } from '@/hooks/useUnifiedServices';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Search, Filter, ArrowRight, Clock, Star, Users } from 'lucide-react';
@@ -18,12 +18,13 @@ export const ServicesScreen: React.FC = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const { services, loading } = useUnifiedServices();
 
-  const filteredServices = servicesData.filter(service => {
+  const filteredServices = services.filter(service => {
     const matchesSearch = service.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          service.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'All' || 
-                           service.title.toLowerCase().includes(selectedCategory.toLowerCase());
+                           service.category?.toLowerCase().includes(selectedCategory.toLowerCase());
     return matchesSearch && matchesCategory;
   });
 
@@ -81,79 +82,102 @@ export const ServicesScreen: React.FC = () => {
 
       {/* Services List */}
       <div className="flex-1 px-6 pb-6">
-        <div className="space-y-4">
-          {filteredServices.map((service) => (
-            <div
-              key={service.id}
-              onClick={() => navigate(`/mobile-app/app/services/${service.id}`)}
-              className="bg-white rounded-xl p-5 border border-border/50 hover:border-ifind-aqua/30 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md"
-            >
-              <div className="flex items-start space-x-4">
-                <div className={`w-16 h-16 rounded-xl flex items-center justify-center ${service.color.replace('bg-', 'bg-') + '/20'} flex-shrink-0`}>
-                  <service.icon className={`h-8 w-8 ${service.textColor}`} />
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-poppins font-semibold text-ifind-charcoal text-lg leading-tight">
-                      {service.title}
-                    </h3>
-                    <ArrowRight className="h-5 w-5 text-muted-foreground flex-shrink-0 ml-2" />
-                  </div>
-                  
-                  <p className="text-sm text-muted-foreground leading-relaxed mb-3 line-clamp-2">
-                    {service.description}
-                  </p>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                      <div className="flex items-center">
-                        <Clock className="h-3 w-3 mr-1" />
-                        {service.duration || '50 min'}
-                      </div>
-                      <div className="flex items-center">
-                        <Star className="h-3 w-3 mr-1 text-yellow-500" />
-                        4.8
-                      </div>
-                      <div className="flex items-center">
-                        <Users className="h-3 w-3 mr-1" />
-                        120+ experts
-                      </div>
+        {loading ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">Loading services...</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {filteredServices.map((service) => {
+              // Parse colors - they are hex values now
+              const backgroundColor = service.color || '#5AC8FA';
+              const textColor = service.textColor || service.color || '#5AC8FA';
+              const buttonColors = service.buttonColor?.split('|') || [backgroundColor, backgroundColor];
+              const mainButtonColor = buttonColors[0] || backgroundColor;
+              
+              return (
+                <div
+                  key={service.id}
+                  onClick={() => navigate(`/mobile-app/app/services/${service.slug || service.id}`)}
+                  className="bg-white rounded-xl p-5 border border-border/50 hover:border-ifind-aqua/30 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md"
+                >
+                  <div className="flex items-start space-x-4">
+                    <div 
+                      className="w-16 h-16 rounded-xl flex items-center justify-center flex-shrink-0"
+                      style={{ backgroundColor: `${backgroundColor}33` }} // 20% opacity
+                    >
+                      <service.icon 
+                        className="h-8 w-8" 
+                        style={{ color: textColor }}
+                      />
                     </div>
                     
-                    <Badge 
-                      className={`${service.buttonColor.replace('bg-', 'bg-').replace('hover:', '')} text-white text-xs`}
-                    >
-                      Popular
-                    </Badge>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 className="font-poppins font-semibold text-ifind-charcoal text-lg leading-tight">
+                          {service.title}
+                        </h3>
+                        <ArrowRight className="h-5 w-5 text-muted-foreground flex-shrink-0 ml-2" />
+                      </div>
+                      
+                      <p className="text-sm text-muted-foreground leading-relaxed mb-3 line-clamp-2">
+                        {service.description}
+                      </p>
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                          <div className="flex items-center">
+                            <Clock className="h-3 w-3 mr-1" />
+                            {service.formattedDuration || service.duration || '50 min'}
+                          </div>
+                          <div className="flex items-center">
+                            <Star className="h-3 w-3 mr-1 text-yellow-500" />
+                            4.8
+                          </div>
+                          <div className="flex items-center">
+                            <Users className="h-3 w-3 mr-1" />
+                            120+ experts
+                          </div>
+                        </div>
+                        
+                        <Badge 
+                          className="text-white text-xs"
+                          style={{ backgroundColor: mainButtonColor }}
+                        >
+                          Popular
+                        </Badge>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-              
-              {/* Service Benefits Preview */}
-              <div className="mt-4 pt-4 border-t border-border/30">
-                <div className="flex flex-wrap gap-2">
-                  {service.benefits?.slice(0, 2).map((benefit, index) => (
-                    <Badge
-                      key={index}
-                      variant="outline"
-                      className="text-xs bg-background/50 border-ifind-aqua/20 text-muted-foreground"
-                    >
-                      {benefit.length > 30 ? `${benefit.substring(0, 30)}...` : benefit}
-                    </Badge>
-                  ))}
-                  {service.benefits && service.benefits.length > 2 && (
-                    <Badge variant="outline" className="text-xs bg-background/50 border-ifind-aqua/20 text-ifind-aqua">
-                      +{service.benefits.length - 2} more
-                    </Badge>
+                  
+                  {/* Service Benefits Preview */}
+                  {service.benefits && service.benefits.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-border/30">
+                      <div className="flex flex-wrap gap-2">
+                        {service.benefits.slice(0, 2).map((benefit, index) => (
+                          <Badge
+                            key={index}
+                            variant="outline"
+                            className="text-xs bg-background/50 border-ifind-aqua/20 text-muted-foreground"
+                          >
+                            {benefit.length > 30 ? `${benefit.substring(0, 30)}...` : benefit}
+                          </Badge>
+                        ))}
+                        {service.benefits.length > 2 && (
+                          <Badge variant="outline" className="text-xs bg-background/50 border-ifind-aqua/20 text-ifind-aqua">
+                            +{service.benefits.length - 2} more
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
                   )}
                 </div>
-              </div>
-            </div>
-          ))}
-        </div>
+              );
+            })}
+          </div>
+        )}
         
-        {filteredServices.length === 0 && (
+        {!loading && filteredServices.length === 0 && (
           <div className="text-center py-12">
             <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
               <Search className="h-8 w-8 text-muted-foreground" />

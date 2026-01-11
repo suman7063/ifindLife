@@ -1,10 +1,39 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { getServiceFrontendData, SERVICE_FRONTEND_MAP } from '@/data/unifiedServicesData';
-import { Brain } from 'lucide-react';
+import { 
+  Brain, HeartHandshake, HeartPulse, Leaf, MessageCircle, Sparkles, 
+  Heart, Users, User, Shield, Star, Moon, Sun, Flower, Flower2, Smile, SmilePlus, 
+  HandHeart, HandHelping, Handshake, Lightbulb, Target, Award, BookOpen, Book, 
+  GraduationCap, School, Home, Building, TreePine, Mountain, Waves, Wind, Flame, 
+  Zap, Activity, TrendingUp, LucideIcon 
+} from 'lucide-react';
+
+interface DbService {
+  id: string;
+  name: string;
+  description?: string | null;
+  category?: string | null;
+  rate_usd: number;
+  rate_inr: number;
+  rate_eur?: number | null;
+  duration?: number | null;
+  featured?: boolean | null;
+  // UI fields
+  image?: string | null;
+  slug?: string | null;
+  color?: string | null;
+  gradient_color?: string | null;
+  text_color?: string | null;
+  button_color?: string | null;
+  icon_name?: string | null;
+  icon_image?: string | null; // Uploaded icon image URL
+  detailed_description?: string | null;
+  benefits?: string[] | string | null;
+  process?: string | null;
+}
 
 export interface UnifiedService {
-  id: number;
+  id: string | number; // Database uses UUID (string) but can be number too
   name: string;
   description: string;
   category: string;
@@ -13,17 +42,19 @@ export interface UnifiedService {
   rate_eur: number;
   duration: number;
   featured: boolean;
-  // Frontend data
+  // Generated from database data
   slug: string;
-  image: string;
+  title: string; // Same as name from database
+  image?: string; // Banner image from database
+  iconImage?: string; // Icon image from database (uploaded)
   color: string;
   gradientColor: string;
   textColor: string;
   buttonColor: string;
-  icon: any; // Lucide icon component
-  detailedDescription: string;
-  benefits: string[];
-  process: string;
+  icon: LucideIcon; // Lucide icon component (from icon_name or default)
+  detailedDescription?: string; // Optional, can use description
+  benefits: string[]; // Always provided (default if not in database)
+  process: string; // Always provided (default if not in database)
   formattedDuration: string;
 }
 
@@ -46,85 +77,132 @@ export function useUnifiedServices() {
         
         console.log('📊 Raw database services:', dbServices);
 
-        // Map service names to frontend data (since DB uses UUIDs, not numeric IDs)
-        const serviceNameToFrontendMap: Record<string, number> = {
-          'Heart2Heart Listening': 1,
-          'Heart2Heart Listening Sessions': 1,
-          'Listening Session with Guidance': 2,
-          'Listening with Guidance': 2,
-          'Therapy Sessions': 3,
-          'Guided Meditations': 4,
-          'Offline Retreats': 5,
-          'Life Coaching': 6
+        // Helper function to get icon from database icon_name or default
+        const getIconFromName = (iconName?: string | null): LucideIcon => {
+          if (!iconName) return Brain;
+          
+          const iconMap: Record<string, LucideIcon> = {
+            'Brain': Brain,
+            'HeartPulse': HeartPulse,
+            'HeartHandshake': HeartHandshake,
+            'MessageCircle': MessageCircle,
+            'Leaf': Leaf,
+            'Sparkles': Sparkles,
+            'Heart': Heart,
+            'Users': Users,
+            'User': User,
+            'Shield': Shield,
+            'Star': Star,
+            'Moon': Moon,
+            'Sun': Sun,
+            'Flower': Flower,
+            'Flower2': Flower2,
+            'Smile': Smile,
+            'SmilePlus': SmilePlus,
+            'HandHeart': HandHeart,
+            'HandHelping': HandHelping,
+            'Handshake': Handshake,
+            'Lightbulb': Lightbulb,
+            'Target': Target,
+            'Award': Award,
+            'BookOpen': BookOpen,
+            'Book': Book,
+            'GraduationCap': GraduationCap,
+            'School': School,
+            'Home': Home,
+            'Building': Building,
+            'TreePine': TreePine,
+            'Mountain': Mountain,
+            'Waves': Waves,
+            'Wind': Wind,
+            'Flame': Flame,
+            'Zap': Zap,
+            'Activity': Activity,
+            'TrendingUp': TrendingUp,
+          };
+          
+          return iconMap[iconName] || Brain;
+        };
+
+        // Helper function to generate slug from name if not in database (fallback only)
+        const getSlug = (dbService: DbService): string => {
+          if (dbService.slug) return dbService.slug;
+          // Auto-generate only if not set in database
+          return dbService.name
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/(^-|-$)/g, '');
+        };
+
+        // Helper function to format duration (simple formatting)
+        const formatDuration = (duration: number, name: string): string => {
+          const nameLower = name.toLowerCase();
+          if (nameLower.includes('retreat')) {
+            return 'Weekend (2-3 days) to week-long retreats';
+          }
+          if (duration === 45) return '45-minute sessions';
+          if (duration === 60) return '60-minute sessions';
+          return `${duration}-minute sessions`;
         };
         
-        // Merge database data with frontend data
-        const unifiedServices: UnifiedService[] = (dbServices || []).map(dbService => {
-          console.log(`🔍 Processing service ID: ${dbService.id}, name: ${dbService.name}`);
-          
-          // Try to get frontend data by service name first (since DB uses UUIDs)
-          const frontendId = serviceNameToFrontendMap[dbService.name];
-          const frontendData = frontendId ? getServiceFrontendData(frontendId) : null;
-          
-          // Fallback: try by numeric ID if it's a number
-          const numericId = typeof dbService.id === 'number' ? dbService.id : parseInt(dbService.id);
-          const frontendDataById = !frontendData && !isNaN(numericId) ? getServiceFrontendData(numericId) : null;
-          const finalFrontendData = frontendData || frontendDataById;
-          
-          console.log(`📋 Frontend data for "${dbService.name}":`, finalFrontendData);
-          
-          if (!finalFrontendData) {
-            console.warn(`❌ No frontend data found for service: ${dbService.name} (ID: ${dbService.id})`);
-            // Return a fallback service instead of null
-            return {
-              id: dbService.id,
-              name: dbService.name,
-              description: dbService.description,
-              category: dbService.category,
-              rate_usd: dbService.rate_usd,
-              rate_inr: dbService.rate_inr,
-              rate_eur: dbService.rate_eur,
-              duration: dbService.duration,
-              featured: dbService.featured,
-              slug: `service-${dbService.id}`,
-              image: "/lovable-uploads/placeholder.png",
-              color: "bg-ifind-aqua",
-              gradientColor: "from-ifind-aqua/20 to-white",
-              textColor: "text-ifind-aqua",
-              buttonColor: "bg-ifind-aqua hover:bg-ifind-aqua/90",
-              icon: Brain, // Use imported icon
-              detailedDescription: dbService.description,
-              benefits: ["Professional service", "Expert guidance"],
-              process: "Contact us for more details",
-              formattedDuration: "50-minute sessions"
-            };
+        // Default benefits and process (used when database values are null)
+        const defaultBenefits = [
+          "Experience of being fully heard and acknowledged",
+          "Clarification of thoughts and feelings through verbal expression",
+          "Emotional release and reduced mental burden",
+          "Increased self-understanding without external judgment",
+          "Development of your own solutions through self-expression"
+        ];
+        
+        const defaultProcess = "You'll be welcomed into a comfortable, private setting where you can speak freely about whatever is on your mind. The listener will maintain attentive, supportive presence without interrupting or offering advice unless specifically requested.";
+        
+        // Use data directly from database - no hardcoded logic
+        const unifiedServices: UnifiedService[] = (dbServices || []).map((dbService: DbService) => {
+          // Parse benefits from JSONB if it's a string
+          let benefits: string[] = [];
+          if (dbService.benefits) {
+            try {
+              benefits = typeof dbService.benefits === 'string' 
+                ? JSON.parse(dbService.benefits) 
+                : dbService.benefits;
+            } catch (e) {
+              console.warn('Error parsing benefits:', e);
+              benefits = [];
+            }
           }
-
+          
+          // Use default benefits if null or empty
+          const finalBenefits = (benefits && benefits.length > 0) ? benefits : defaultBenefits;
+          
+          // Use default process if null or empty
+          const finalProcess = dbService.process || defaultProcess;
+          
           return {
-            // Database data (maintains original structure)
+            // Database data
             id: dbService.id,
             name: dbService.name,
-            description: dbService.description,
-            category: dbService.category,
+            description: dbService.description || '',
+            category: dbService.category || '',
             rate_usd: dbService.rate_usd,
             rate_inr: dbService.rate_inr,
-            rate_eur: dbService.rate_eur,
-            duration: dbService.duration,
-            featured: dbService.featured,
-            // Frontend data
-            slug: finalFrontendData.slug,
-            image: finalFrontendData.image,
-            color: finalFrontendData.color,
-            gradientColor: finalFrontendData.gradientColor,
-            textColor: finalFrontendData.textColor,
-            buttonColor: finalFrontendData.buttonColor,
-            icon: finalFrontendData.icon,
-            detailedDescription: finalFrontendData.detailedDescription,
-            benefits: [...finalFrontendData.benefits],
-            process: finalFrontendData.process,
-            formattedDuration: finalFrontendData.title.includes('Retreat') ? 'Weekend (2-3 days) to week-long retreats' : 
-                              finalFrontendData.title.includes('Heart2Heart') ? '45-minute sessions' :
-                              '50-minute sessions'
+            rate_eur: dbService.rate_eur || 0,
+            duration: dbService.duration || 60,
+            featured: dbService.featured || false,
+            // UI fields from database - using hex colors directly
+            slug: getSlug(dbService),
+            title: dbService.name, // Use database name as title
+            image: dbService.image || undefined,
+            iconImage: dbService.icon_image || undefined,
+            // Use hex colors from database, default to aqua if not set
+            color: dbService.color || '#5AC8FA',
+            gradientColor: dbService.gradient_color || '#5AC8FA20', // Hex with opacity
+            textColor: dbService.text_color || '#5AC8FA',
+            buttonColor: dbService.button_color || '#5AC8FA|#4AB3E6', // Main|Hover format
+            icon: getIconFromName(dbService.icon_name),
+            detailedDescription: dbService.detailed_description || dbService.description || undefined,
+            benefits: finalBenefits,
+            process: finalProcess,
+            formattedDuration: formatDuration(dbService.duration || 60, dbService.name)
           };
         }).filter(Boolean) as UnifiedService[];
 

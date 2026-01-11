@@ -26,14 +26,14 @@ const ServiceDetailContent: React.FC<ServiceDetailContentProps> = ({
       <div className="md:col-span-2">
         {/* About Service */}
         <ServiceAbout 
-          title={serviceData.title}
+          title={serviceData.title || serviceData.name}
           icon={serviceData.icon}
           textColor={serviceData.textColor}
           color={serviceData.color}
           gradientColor={serviceData.gradientColor}
-          detailedDescription={serviceData.detailedDescription}
+          detailedDescription={serviceData.detailedDescription || serviceData.description}
           benefits={serviceData.benefits}
-          duration={serviceData.duration}
+          duration={serviceData.formattedDuration || serviceData.duration}
           process={serviceData.process}
         />
         
