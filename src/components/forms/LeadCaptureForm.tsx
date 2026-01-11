@@ -100,7 +100,7 @@ const LeadCaptureForm: React.FC<LeadCaptureFormProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-visible" hideCloseButton>
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-hidden p-0" hideCloseButton>
         <button
           onClick={() => onOpenChange(false)}
           className="absolute right-[-16px] top-[-16px] z-[101] flex items-center justify-center w-8 h-8 rounded-full bg-white border border-gray-200 text-gray-500 hover:text-gray-700 hover:bg-gray-50 shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
@@ -108,15 +108,15 @@ const LeadCaptureForm: React.FC<LeadCaptureFormProps> = ({
         >
           <X className="h-4 w-4" />
         </button>
-        <div className="max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-bold">{title}</DialogTitle>
-          <p className="text-sm text-gray-600 mt-2">
-            Please fill in your details and we'll get back to you within 24 hours.
-          </p>
-        </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+        <div className="max-h-[90vh] overflow-y-auto px-6 py-6">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">{title}</DialogTitle>
+            <p className="text-sm text-gray-600 mt-2">
+              Please fill in your details and we'll get back to you within 24 hours.
+            </p>
+          </DialogHeader>
+          
+          <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="name">Full Name *</Label>
@@ -282,10 +282,10 @@ const LeadCaptureForm: React.FC<LeadCaptureFormProps> = ({
             />
           </div>
           
-          <Button type="submit" className="w-full bg-ifind-teal hover:bg-ifind-teal/90">
-            Submit Inquiry
-          </Button>
-        </form>
+            <Button type="submit" className="w-full bg-ifind-teal hover:bg-ifind-teal/90">
+              Submit Inquiry
+            </Button>
+          </form>
         </div>
       </DialogContent>
     </Dialog>
