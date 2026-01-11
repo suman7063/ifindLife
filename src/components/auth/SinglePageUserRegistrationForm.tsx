@@ -445,8 +445,8 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
               </div>
             </div>
 
-            {/* Preferences Section */}
-            <div className="space-y-4">
+            {/* Preferences Section - Hidden */}
+            {/* <div className="space-y-4">
               <div className="flex items-center gap-2 mb-4">
                 <Globe className="h-5 w-5 text-primary" />
                 <h3 className="text-lg font-semibold">Preferences</h3>
@@ -487,7 +487,7 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
                   />
                 </div>
               </div>
-            </div>
+            </div> */}
 
             {/* Referral Section - Only show if referral program is active */}
             {(initialReferralCode || (referralSettings && referralSettings.active)) && (
