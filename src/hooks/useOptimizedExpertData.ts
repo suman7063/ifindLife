@@ -198,8 +198,41 @@ export function useOptimizedExpertData({
         }
 
         if (serviceId) {
-          const serviceIdNum = parseInt(serviceId);
-          if (!isNaN(serviceIdNum)) {
+          // Get the actual UUID service ID from database
+          // serviceId can be either a slug (e.g., "mindful-listening") or UUID
+          let actualServiceId: string | null = null;
+          
+          // Check if it's already a UUID
+          const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+          if (uuidPattern.test(serviceId)) {
+            actualServiceId = serviceId;
+          } else {
+            // Map slug to service name, then find UUID
+            const slugToNameMap: Record<string, string> = {
+              'mindful-listening': 'Heart2Heart Listening',
+              'listening-with-guidance': 'Listening with Guidance',
+              'therapy-sessions': 'Therapy Sessions',
+              'guided-meditations': 'Guided Meditations',
+              'offline-retreats': 'Offline Retreats',
+              'life-coaching': 'Life Coaching'
+            };
+            
+            const serviceName = slugToNameMap[serviceId] || serviceId;
+            
+            // Find service by exact name
+            const { data: serviceData } = await supabase
+              .from('services')
+              .select('id')
+              .eq('name', serviceName)
+              .limit(1)
+              .single();
+            
+            if (serviceData) {
+              actualServiceId = serviceData.id;
+            }
+          }
+          
+          if (actualServiceId) {
             // Filter experts by checking expert_service_specializations table
             const expertIds = filteredData.map(e => e.auth_id || e.id).filter(Boolean);
             if (expertIds.length > 0) {
@@ -207,7 +240,7 @@ export function useOptimizedExpertData({
                 .from('expert_service_specializations')
                 .select('expert_id')
                 .in('expert_id', expertIds)
-                .eq('service_id', serviceIdNum);
+                .eq('service_id', actualServiceId);
               
               const expertIdsWithService = new Set(specializations?.map(s => s.expert_id) || []);
               filteredData = filteredData.filter(expert => 

@@ -46,14 +46,35 @@ export function useUnifiedServices() {
         
         console.log('📊 Raw database services:', dbServices);
 
+        // Map service names to frontend data (since DB uses UUIDs, not numeric IDs)
+        const serviceNameToFrontendMap: Record<string, number> = {
+          'Heart2Heart Listening': 1,
+          'Heart2Heart Listening Sessions': 1,
+          'Listening Session with Guidance': 2,
+          'Listening with Guidance': 2,
+          'Therapy Sessions': 3,
+          'Guided Meditations': 4,
+          'Offline Retreats': 5,
+          'Life Coaching': 6
+        };
+        
         // Merge database data with frontend data
         const unifiedServices: UnifiedService[] = (dbServices || []).map(dbService => {
-          console.log(`🔍 Processing service ID: ${dbService.id}`);
-          const frontendData = getServiceFrontendData(dbService.id);
-          console.log(`📋 Frontend data for ID ${dbService.id}:`, frontendData);
+          console.log(`🔍 Processing service ID: ${dbService.id}, name: ${dbService.name}`);
           
-          if (!frontendData) {
-            console.warn(`❌ No frontend data found for service ID: ${dbService.id}`);
+          // Try to get frontend data by service name first (since DB uses UUIDs)
+          const frontendId = serviceNameToFrontendMap[dbService.name];
+          const frontendData = frontendId ? getServiceFrontendData(frontendId) : null;
+          
+          // Fallback: try by numeric ID if it's a number
+          const numericId = typeof dbService.id === 'number' ? dbService.id : parseInt(dbService.id);
+          const frontendDataById = !frontendData && !isNaN(numericId) ? getServiceFrontendData(numericId) : null;
+          const finalFrontendData = frontendData || frontendDataById;
+          
+          console.log(`📋 Frontend data for "${dbService.name}":`, finalFrontendData);
+          
+          if (!finalFrontendData) {
+            console.warn(`❌ No frontend data found for service: ${dbService.name} (ID: ${dbService.id})`);
             // Return a fallback service instead of null
             return {
               id: dbService.id,
@@ -91,18 +112,18 @@ export function useUnifiedServices() {
             duration: dbService.duration,
             featured: dbService.featured,
             // Frontend data
-            slug: frontendData.slug,
-            image: frontendData.image,
-            color: frontendData.color,
-            gradientColor: frontendData.gradientColor,
-            textColor: frontendData.textColor,
-            buttonColor: frontendData.buttonColor,
-            icon: frontendData.icon,
-            detailedDescription: frontendData.detailedDescription,
-            benefits: [...frontendData.benefits],
-            process: frontendData.process,
-            formattedDuration: frontendData.title.includes('Retreat') ? 'Weekend (2-3 days) to week-long retreats' : 
-                              frontendData.title.includes('Heart2Heart') ? '45-minute sessions' :
+            slug: finalFrontendData.slug,
+            image: finalFrontendData.image,
+            color: finalFrontendData.color,
+            gradientColor: finalFrontendData.gradientColor,
+            textColor: finalFrontendData.textColor,
+            buttonColor: finalFrontendData.buttonColor,
+            icon: finalFrontendData.icon,
+            detailedDescription: finalFrontendData.detailedDescription,
+            benefits: [...finalFrontendData.benefits],
+            process: finalFrontendData.process,
+            formattedDuration: finalFrontendData.title.includes('Retreat') ? 'Weekend (2-3 days) to week-long retreats' : 
+                              finalFrontendData.title.includes('Heart2Heart') ? '45-minute sessions' :
                               '50-minute sessions'
           };
         }).filter(Boolean) as UnifiedService[];

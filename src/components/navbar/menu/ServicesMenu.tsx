@@ -7,8 +7,11 @@ import {
   NavigationMenuContent,
   NavigationMenuLink
 } from "@/components/ui/navigation-menu";
+import { useUnifiedServices } from '@/hooks/useUnifiedServices';
 
 const ServicesMenu = () => {
+  const { services, loading } = useUnifiedServices();
+  
   return (
     <NavigationMenuItem>
       <NavigationMenuTrigger>Services</NavigationMenuTrigger>
@@ -24,66 +27,22 @@ const ServicesMenu = () => {
               </Link>
             </NavigationMenuLink>
           </li>
-          <li>
-            <NavigationMenuLink asChild>
-              <Link 
-                to="/services/mindful-listening" 
-                className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
-              >
-                Heart2Heart Listening
-              </Link>
-            </NavigationMenuLink>
-          </li>
-          <li>
-            <NavigationMenuLink asChild>
-              <Link 
-                to="/services/listening-with-guidance" 
-                className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
-              >
-                Listening with Guidance
-              </Link>
-            </NavigationMenuLink>
-          </li>
-          <li>
-            <NavigationMenuLink asChild>
-              <Link
-                to="/services/therapy-sessions" 
-                className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
-              >
-                Therapy Sessions
-              </Link>
-            </NavigationMenuLink>
-          </li>
-          <li>
-            <NavigationMenuLink asChild>
-              <Link 
-                to="/services/life-coaching" 
-                className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
-              >
-                Life Coaching
-              </Link>
-            </NavigationMenuLink>
-          </li>
-          <li>
-            <NavigationMenuLink asChild>
-              <Link 
-                to="/services/guided-meditations" 
-                className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
-              >
-                Guided Meditations
-              </Link>
-            </NavigationMenuLink>
-          </li>
-          <li>
-            <NavigationMenuLink asChild>
-              <Link 
-                to="/services/offline-retreats" 
-                className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
-              >
-                Offline Retreats
-              </Link>
-            </NavigationMenuLink>
-          </li>
+          {loading ? (
+            <li className="p-2 text-sm text-muted-foreground">Loading...</li>
+          ) : (
+            services.map((service) => (
+              <li key={service.id}>
+                <NavigationMenuLink asChild>
+                  <Link 
+                    to={`/services/${service.slug}`} 
+                    className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
+                  >
+                    {service.name}
+                  </Link>
+                </NavigationMenuLink>
+              </li>
+            ))
+          )}
         </ul>
       </NavigationMenuContent>
     </NavigationMenuItem>

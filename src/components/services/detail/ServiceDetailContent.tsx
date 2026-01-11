@@ -10,12 +10,14 @@ import ServiceExperts from './ServiceExperts';
 
 interface ServiceDetailContentProps {
   serviceId: string;
+  serviceSlug?: string;
   serviceData: any;
   onBookNowClick: () => void;
 }
 
 const ServiceDetailContent: React.FC<ServiceDetailContentProps> = ({
   serviceId,
+  serviceSlug,
   serviceData,
   onBookNowClick
 }) => {
@@ -58,7 +60,7 @@ const ServiceDetailContent: React.FC<ServiceDetailContentProps> = ({
         
         {/* Related Services */}
         <RelatedServices 
-          currentServiceId={serviceId}
+          currentServiceId={serviceSlug || serviceData.slug || serviceId}
           color={serviceData.color}
           relatedServices={serviceData}
         />

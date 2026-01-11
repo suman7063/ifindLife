@@ -172,7 +172,8 @@ const ServiceDetailPage: React.FC = () => {
       {/* Main Content */}
       <div className="container mx-auto py-12 px-4">
         <ServiceDetailContent 
-          serviceId={serviceData.id.toString()}
+          serviceId={serviceId || serviceData.slug || serviceData.id.toString()}
+          serviceSlug={serviceData.slug || serviceId}
           serviceData={serviceData}
           onBookNowClick={handleBookNowClick}
         />

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -16,7 +15,7 @@ interface RelatedService {
 interface RelatedServicesProps {
   currentServiceId: string;
   color: string;
-  relatedServices: any; // This will be ignored as we use servicesData directly
+  relatedServices?: unknown; // This will be ignored as we use servicesData directly
 }
 
 const RelatedServices: React.FC<RelatedServicesProps> = ({
@@ -24,6 +23,25 @@ const RelatedServices: React.FC<RelatedServicesProps> = ({
   color
 }) => {
   const { services } = useUnifiedServices();
+  
+  // Filter out current service by slug or ID
+  const filteredServices = services.filter(s => {
+    // Normalize both values for comparison
+    const serviceSlug = (s.slug || '').toLowerCase().trim();
+    const currentSlug = (currentServiceId || '').toLowerCase().trim();
+    
+    // Exclude current service - check slug and ID
+    const isCurrentBySlug = serviceSlug === currentSlug && serviceSlug !== '';
+    const isCurrentById = s.id.toString() === currentServiceId;
+    
+    const shouldExclude = isCurrentBySlug || isCurrentById;
+    
+    return !shouldExclude;
+  });
+  
+  // Limit to 5 services (excluding current one)
+  const displayServices = filteredServices.slice(0, 5);
+  
   return (
     <Card className="border border-gray-200 overflow-hidden">
       <div className={`${color} h-2 w-full`}></div>
@@ -31,9 +49,10 @@ const RelatedServices: React.FC<RelatedServicesProps> = ({
         <CardTitle className="text-xl">Related Services</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {services
-          .filter(s => s.slug !== currentServiceId && s.id.toString() !== currentServiceId)
-          .map(relatedService => {
+        {displayServices.length === 0 ? (
+          <p className="text-sm text-gray-500">No related services available.</p>
+        ) : (
+          displayServices.map(relatedService => {
             const IconComponent = relatedService.icon;
             return (
               <div key={relatedService.id} className="flex items-start gap-3 group transition-all hover:bg-gray-50 dark:hover:bg-gray-800/50 p-3 rounded-lg">
@@ -50,7 +69,8 @@ const RelatedServices: React.FC<RelatedServicesProps> = ({
                 </div>
               </div>
             );
-          })}
+          })
+        )}
       </CardContent>
     </Card>
   );

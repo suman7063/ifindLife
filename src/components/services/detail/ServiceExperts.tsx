@@ -19,22 +19,10 @@ interface ServiceExpertsProps {
 const ServiceExperts: React.FC<ServiceExpertsProps> = ({ serviceId, serviceData }) => {
   const navigate = useNavigate();
   
-  // Map service string IDs to database service IDs
-  // Based on the experts' selected_services data (1, 2, 3, etc.)
-  const serviceIdMap: Record<string, number> = {
-    'mindful-listening': 1,
-    'listening-with-guidance': 2,
-    'therapy-sessions': 3,
-    'guided-meditations': 4,
-    'offline-retreats': 5,
-    'life-coaching': 6
-  };
-
-  const mappedServiceId = serviceIdMap[serviceId];
-  
-  // Fetch experts for this service
+  // Pass slug directly - useExpertData will convert to UUID
+  // serviceId here is the slug (e.g., "mindful-listening")
   const { experts, loading } = useExpertData({ 
-    serviceId: mappedServiceId ? mappedServiceId.toString() : undefined 
+    serviceId: serviceId // Pass slug directly
   });
 
   const handleExpertClick = (expertId: string) => {

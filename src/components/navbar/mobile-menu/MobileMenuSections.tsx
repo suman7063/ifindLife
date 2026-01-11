@@ -5,8 +5,19 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Accordion } from '@/components/ui/accordion';
 import { ChevronDown, Brain, Heart, Sparkles } from 'lucide-react';
 import MobileAccordionItem from './MobileAccordionItem';
+import { useUnifiedServices } from '@/hooks/useUnifiedServices';
 
 const MobileMenuSections = () => {
+  const { services, loading } = useUnifiedServices();
+  
+  const serviceItems = [
+    { title: 'All Services', href: '/services' },
+    ...(loading ? [] : services.map(service => ({
+      title: service.name,
+      href: `/services/${service.slug}`
+    })))
+  ];
+  
   return (
     <div className="flex-1 py-4">
       <div className="space-y-2">
@@ -21,15 +32,7 @@ const MobileMenuSections = () => {
           <MobileAccordionItem
             title="Services"
             value="services"
-            items={[
-              { title: 'All Services', href: '/services' },
-              { title: 'Heart2Heart Listening', href: '/services/mindful-listening' },
-              { title: 'Listening with Guidance', href: '/services/listening-with-guidance' },
-              { title: 'Therapy Sessions', href: '/services/therapy-sessions' },
-              { title: 'Guided Meditations', href: '/services/guided-meditations' },
-              { title: 'Offline Retreats', href: '/services/offline-retreats' },
-              { title: 'Life Coaching', href: '/services/life-coaching' },
-            ]}
+            items={serviceItems}
           />
         </Accordion>
 
