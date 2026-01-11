@@ -75,6 +75,7 @@ const SidebarMenuItems: React.FC<SidebarMenuItemsProps> = ({
         hasReferralsPermission={checkPermission('referrals')}
         hasContactPermission={checkPermission('contact')}
         hasProgramsInquiryPermission={isSuperAdmin || checkPermission('programs-inquiry')}
+        hasNewsletterPermission={isSuperAdmin || checkPermission('newsletter')}
       />
 
       <UserManagementSection

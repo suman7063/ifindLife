@@ -22,6 +22,7 @@ import AdminAnalytics from '@/components/admin/analytics/AdminAnalytics';
 import AdminReports from '@/components/admin/reports/AdminReports';
 import AdminUsersList from '@/components/admin/users/AdminUsersList';
 import ContentSearchManager from '@/components/admin/content/ContentSearchManager';
+import NewsletterSubscribers from '@/components/admin/newsletter/NewsletterSubscribers';
 import { useAdminContentData } from '@/components/admin/hooks/useAdminContent';
 
 
@@ -68,6 +69,7 @@ const AdminRoutes: React.FC = () => {
       <Route path="/sessions" element={<SessionsEditor />} />
       <Route path="/blog" element={<BlogEditor />} />
       <Route path="/contact" element={<ContactSubmissionsTable />} />
+      <Route path="/newsletter" element={<NewsletterSubscribers />} />
       <Route path="/programs-inquiry" element={<ProgramsInquiry />} />
       <Route path="/referrals" element={<ReferralManagement />} />
       <Route path="/adminUsers" element={<AdminUsersManagerPlaceholder />} />
