@@ -264,9 +264,9 @@ const ExpertCardSimplified: React.FC<ExpertCardSimplifiedProps> = ({
               <h3 className="font-semibold text-lg truncate">{expertData.name}</h3>
               <FavoriteButton
                 isFavorite={isExpertFavorite(expert.auth_id)}
-                onClick={(e) => {
+                onClick={async (e) => {
                   e.stopPropagation();
-                  toggleExpertFavorite(expert.auth_id);
+                  await toggleExpertFavorite(expert.auth_id);
                 }}
                 expertId={expert.auth_id}
                 expertName={expertData.name}
