@@ -33,8 +33,10 @@ const ServiceDetailContent: React.FC<ServiceDetailContentProps> = ({
           gradientColor={serviceData.gradientColor}
           detailedDescription={serviceData.detailedDescription || serviceData.description}
           benefits={serviceData.benefits}
-          duration={serviceData.formattedDuration || serviceData.duration}
+          duration={serviceData.formattedDuration}
           process={serviceData.process}
+          serviceType={serviceData.service_type}
+          retreatInfo={serviceData.retreatInfo}
         />
         
         {/* FAQ Section */}

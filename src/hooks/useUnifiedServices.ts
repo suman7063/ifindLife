@@ -17,6 +17,8 @@ interface DbService {
   rate_inr: number;
   rate_eur?: number | null;
   duration?: number | null;
+  location?: string | null; // Location for Offline Retreats
+  service_type?: string | null; // Service type: 'regular', 'retreat', 'premium', 'exclusive'
   featured?: boolean | null;
   // UI fields
   image?: string | null;
@@ -42,6 +44,7 @@ export interface UnifiedService {
   rate_eur: number;
   duration: number;
   featured: boolean;
+  service_type?: string | null; // Service type: 'regular', 'retreat', 'premium', 'exclusive'
   // Generated from database data
   slug: string;
   title: string; // Same as name from database
@@ -55,7 +58,12 @@ export interface UnifiedService {
   detailedDescription?: string; // Optional, can use description
   benefits: string[]; // Always provided (default if not in database)
   process: string; // Always provided (default if not in database)
-  formattedDuration: string;
+  formattedDuration?: string; // Only for retreats, includes duration, rates, location
+  retreatInfo?: {
+    duration: string;
+    rates: string | null;
+    location: string | null;
+  }; // Structured retreat info for better display
 }
 
 export function useUnifiedServices() {
@@ -134,15 +142,69 @@ export function useUnifiedServices() {
             .replace(/(^-|-$)/g, '');
         };
 
-        // Helper function to format duration (simple formatting)
-        const formatDuration = (duration: number, name: string): string => {
-          const nameLower = name.toLowerCase();
-          if (nameLower.includes('retreat')) {
-            return 'Weekend (2-3 days) to week-long retreats';
+        // Helper function to format duration for retreats (returns structured data)
+        const formatRetreatInfo = (
+          duration: number, 
+          rate_inr: number, 
+          rate_eur: number, 
+          location?: string | null
+        ) => {
+          // Format duration in a user-friendly way
+          let formattedDuration = '';
+          if (duration && duration > 0) {
+            const totalMinutes = duration;
+            const hours = Math.floor(totalMinutes / 60);
+            const days = Math.floor(hours / 24);
+            const weeks = Math.floor(days / 7);
+            const months = Math.floor(days / 30);
+            const years = Math.floor(days / 365);
+            const remainingDays = days % 7;
+            const remainingHours = hours % 24;
+            const remainingMinutes = totalMinutes % 60;
+            
+            // Format based on duration length - make it user-friendly
+            if (years > 0) {
+              formattedDuration = `${years} year${years > 1 ? 's' : ''}`;
+              const remainingMonths = Math.floor((days % 365) / 30);
+              if (remainingMonths > 0) {
+                formattedDuration += ` ${remainingMonths} month${remainingMonths > 1 ? 's' : ''}`;
+              }
+            } else if (months > 0) {
+              formattedDuration = `${months} month${months > 1 ? 's' : ''}`;
+              const remainingDaysAfterMonths = days % 30;
+              if (remainingDaysAfterMonths > 0) {
+                formattedDuration += ` ${remainingDaysAfterMonths} day${remainingDaysAfterMonths > 1 ? 's' : ''}`;
+              }
+            } else if (weeks > 0) {
+              formattedDuration = `${weeks} week${weeks > 1 ? 's' : ''}`;
+              if (remainingDays > 0) {
+                formattedDuration += ` ${remainingDays} day${remainingDays > 1 ? 's' : ''}`;
+              }
+            } else if (days > 0) {
+              formattedDuration = `${days} day${days > 1 ? 's' : ''}`;
+              if (remainingHours > 0) {
+                formattedDuration += ` ${remainingHours} hour${remainingHours > 1 ? 's' : ''}`;
+              }
+            } else if (hours > 0) {
+              formattedDuration = `${hours} hour${hours > 1 ? 's' : ''}`;
+              if (remainingMinutes > 0) {
+                formattedDuration += ` ${remainingMinutes} minute${remainingMinutes > 1 ? 's' : ''}`;
+              }
+            } else {
+              formattedDuration = `${totalMinutes} minute${totalMinutes > 1 ? 's' : ''}`;
+            }
           }
-          if (duration === 45) return '45-minute sessions';
-          if (duration === 60) return '60-minute sessions';
-          return `${duration}-minute sessions`;
+          
+          // Format rates
+          const rates: string[] = [];
+          if (rate_inr > 0) rates.push(`₹${rate_inr.toLocaleString('en-IN')}`);
+          if (rate_eur > 0) rates.push(`€${rate_eur.toLocaleString('en-IN')}`);
+          
+          return {
+            duration: formattedDuration,
+            rates: rates.length > 0 ? rates.join(' / ') : null,
+            location: location || null
+          };
         };
         
         // Default benefits and process (used when database values are null)
@@ -202,7 +264,17 @@ export function useUnifiedServices() {
             detailedDescription: dbService.detailed_description || dbService.description || undefined,
             benefits: finalBenefits,
             process: finalProcess,
-            formattedDuration: formatDuration(dbService.duration || 60, dbService.name)
+            service_type: dbService.service_type || null,
+            // Only format duration for retreats (includes duration, rates, location)
+            retreatInfo: dbService.service_type === 'retreat' 
+              ? formatRetreatInfo(
+                  dbService.duration || 0, 
+                  dbService.rate_inr || 0, 
+                  dbService.rate_eur || 0, 
+                  dbService.location
+                )
+              : undefined,
+            formattedDuration: undefined // Deprecated, use retreatInfo instead
           };
         }).filter(Boolean) as UnifiedService[];
 

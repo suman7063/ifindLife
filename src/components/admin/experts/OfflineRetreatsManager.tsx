@@ -106,6 +106,7 @@ interface Service {
   duration?: number;
   rate_inr?: number;
   rate_eur?: number;
+  location?: string; // Location for Offline Retreats
   // UI fields
   image?: string;
   slug?: string;
@@ -155,6 +156,7 @@ const OfflineRetreatsManager: React.FC = () => {
     duration: '' as string | number,
     rate_inr: '' as string | number,
     rate_eur: '' as string | number,
+    location: '', // Location for Offline Retreats
     // UI fields - storing hex colors directly
     image: '',
     slug: '',
@@ -362,6 +364,7 @@ const OfflineRetreatsManager: React.FC = () => {
         rate_inr: number;
         rate_eur: number;
         rate_usd: number;
+        location: string | null;
         image: string | null;
         slug: string;
         color: string | null;
@@ -381,6 +384,7 @@ const OfflineRetreatsManager: React.FC = () => {
         rate_inr: formData.rate_inr === '' ? 0 : Number(formData.rate_inr) || 0,
         rate_eur: formData.rate_eur === '' ? 0 : Number(formData.rate_eur) || 0,
         rate_usd: 0, // Default value - removed but still required by types
+        location: formData.location || null,
         // UI fields
         image: formData.image || null,
         slug: slug,
@@ -470,6 +474,7 @@ const OfflineRetreatsManager: React.FC = () => {
       duration: service.duration ?? '',
       rate_inr: service.rate_inr ?? '',
       rate_eur: service.rate_eur ?? '',
+      location: service.location || '',
       // UI fields - using hex colors
       image: service.image || '',
       slug: service.slug || '',
@@ -593,6 +598,7 @@ const OfflineRetreatsManager: React.FC = () => {
       duration: '',
       rate_inr: '',
       rate_eur: '',
+      location: '',
       // UI fields - default hex colors
       image: '',
       slug: '',
@@ -710,6 +716,20 @@ const OfflineRetreatsManager: React.FC = () => {
                         setFormData({ ...formData, duration: value === '' ? '' : (isNaN(parseInt(value)) ? '' : parseInt(value)) });
                       }}
                       placeholder="e.g. 1440 (24 hours)"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="location">Location *</Label>
+                    <Input
+                      id="location"
+                      type="text"
+                      value={formData.location}
+                      onChange={(e) => {
+                        setFormData({ ...formData, location: e.target.value });
+                      }}
+                      placeholder="e.g. Rishikesh, Uttarakhand"
                       required
                     />
                   </div>

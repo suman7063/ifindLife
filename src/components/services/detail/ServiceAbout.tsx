@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Check, Clock, Calendar } from 'lucide-react';
+import { Check, Clock, Calendar, MapPin, DollarSign } from 'lucide-react';
 import { Card, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
 
 interface ServiceAboutProps {
@@ -11,8 +11,14 @@ interface ServiceAboutProps {
   gradientColor: string;
   detailedDescription?: string;
   benefits: string[]; // Always provided (default if not in database)
-  duration?: string;
+  duration?: string; // Formatted duration info (only for retreats) - deprecated
   process: string; // Always provided (default if not in database)
+  serviceType?: string | null; // Service type to determine if Duration box should show
+  retreatInfo?: {
+    duration: string;
+    rates: string | null;
+    location: string | null;
+  }; // Structured retreat info for better display
 }
 
 const ServiceAbout: React.FC<ServiceAboutProps> = ({
@@ -24,7 +30,9 @@ const ServiceAbout: React.FC<ServiceAboutProps> = ({
   detailedDescription,
   benefits,
   duration,
-  process
+  process,
+  serviceType,
+  retreatInfo
 }) => {
   const IconComponent = icon;
   
@@ -75,19 +83,59 @@ const ServiceAbout: React.FC<ServiceAboutProps> = ({
           </div>
         )}
         
-        {/* Duration and Process - Always shown */}
+        {/* Duration and Process - Always side by side */}
         <div className="grid md:grid-cols-2 gap-6">
-          {duration && (
-            <div className="p-6 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-              <h3 className="text-xl font-semibold mb-3 flex items-center" style={{ color: textColorValue }}>
-                <Clock className="h-6 w-6 mr-2" /> Duration
+          {/* Retreat Details box - Only show for retreats */}
+          {serviceType === 'retreat' && retreatInfo && (
+            <div className="p-6 rounded-lg bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border border-gray-200 dark:border-gray-700">
+              <h3 className="text-xl font-semibold mb-4 flex items-center" style={{ color: textColorValue }}>
+                <Calendar className="h-6 w-6 mr-2" /> Retreat Details
               </h3>
-              <p className="text-lg text-gray-700 dark:text-gray-300">{duration}</p>
+              <div className="space-y-4">
+                {/* Duration value */}
+                {retreatInfo.duration && (
+                  <div className="flex items-start gap-3">
+                    <Clock className="h-5 w-5 mt-0.5" style={{ color: textColorValue }} />
+                    <div>
+                      <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Duration</div>
+                      <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                        {retreatInfo.duration}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Rates */}
+                {retreatInfo.rates && (
+                  <div className="flex items-start gap-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                    <DollarSign className="h-5 w-5 mt-0.5" style={{ color: textColorValue }} />
+                    <div>
+                      <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Rates</div>
+                      <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                        {retreatInfo.rates}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Location */}
+                {retreatInfo.location && (
+                  <div className="flex items-start gap-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                    <MapPin className="h-5 w-5 mt-0.5" style={{ color: textColorValue }} />
+                    <div>
+                      <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Location</div>
+                      <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                        {retreatInfo.location}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           )}
           
           {/* Process - Always shown (default provided if not in database) */}
-          <div className="p-6 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+          <div className={`p-6 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 ${serviceType !== 'retreat' || !retreatInfo ? 'md:col-span-2' : ''}`}>
             <h3 className="text-xl font-semibold mb-3 flex items-center" style={{ color: textColorValue }}>
               <Calendar className="h-6 w-6 mr-2" /> Process
             </h3>
