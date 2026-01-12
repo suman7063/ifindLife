@@ -1,11 +1,19 @@
 import React from 'react';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { expertCategories } from '@/data/expertCategories';
 
 interface ExpertCategoryTabsProps {
   activeCategory: string;
   onCategoryChange: (category: string) => void;
 }
+
+// Hierarchy levels from basic (1) to expert (5)
+const categoryHierarchy: Record<string, { level: number; levelLabel: string }> = {
+  'listening-volunteer': { level: 1, levelLabel: 'Entry' },
+  'listening-expert': { level: 2, levelLabel: 'Intermediate' },
+  'mindfulness-expert': { level: 3, levelLabel: 'Advanced' },
+  'life-coach': { level: 4, levelLabel: 'Professional' },
+  'spiritual-mentor': { level: 5, levelLabel: 'Master' }
+};
 
 const ExpertCategoryTabs: React.FC<ExpertCategoryTabsProps> = ({
   activeCategory,
@@ -22,25 +30,72 @@ const ExpertCategoryTabs: React.FC<ExpertCategoryTabsProps> = ({
     return colors[index] || colors[0];
   };
 
+  const getActiveBgColor = (index: number) => {
+    const colors = ['bg-ifind-teal', 'bg-ifind-aqua', 'bg-cyan-500', 'bg-purple-500', 'bg-ifind-purple'];
+    return colors[index] || colors[0];
+  };
+
+  const renderLevelIndicator = (categoryId: string, index: number, isActive: boolean) => {
+    const hierarchy = categoryHierarchy[categoryId];
+    if (!hierarchy) return null;
+    
+    const totalLevels = 5;
+    
+    return (
+      <div className="flex items-center gap-0.5 mt-1">
+        {Array.from({ length: totalLevels }).map((_, i) => (
+          <div
+            key={i}
+            className={`h-1 w-3 rounded-full transition-all duration-200 ${
+              i < hierarchy.level
+                ? isActive 
+                  ? 'bg-white/80' 
+                  : getActiveBgColor(index)
+                : isActive
+                  ? 'bg-white/30'
+                  : 'bg-gray-300'
+            }`}
+          />
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="w-full mb-3">
+      {/* Hierarchy label */}
+      <div className="flex justify-center mb-2">
+        <span className="text-xs text-muted-foreground">
+          Basic → Expert
+        </span>
+      </div>
+      
       <div className="flex justify-center gap-2 mb-8">
-        {expertCategories.map((category, index) => (
-          <button
-            key={category.id}
-            onClick={() => onCategoryChange(category.id)}
-            className={`
-              px-4 py-2 rounded-full border-2 transition-all duration-200 font-medium
-              text-xs sm:text-sm
-              ${activeCategory === category.id 
-                ? getTabColor(index).split(' ').filter(c => c.includes('data-[state=active]')).join(' ').replace('data-[state=active]:', '')
-                : getTabColor(index).split(' ').filter(c => !c.includes('data-[state=active]')).join(' ')
-              }
-            `}
-          >
-            {category.label}
-          </button>
-        ))}
+        {expertCategories.map((category, index) => {
+          const isActive = activeCategory === category.id;
+          const hierarchy = categoryHierarchy[category.id];
+          
+          return (
+            <button
+              key={category.id}
+              onClick={() => onCategoryChange(category.id)}
+              className={`
+                px-4 py-2 rounded-xl border-2 transition-all duration-200 font-medium
+                text-xs sm:text-sm flex flex-col items-center min-w-[100px] sm:min-w-[120px]
+                ${isActive 
+                  ? getTabColor(index).split(' ').filter(c => c.includes('data-[state=active]')).join(' ').replace(/data-\[state=active\]:/g, '')
+                  : getTabColor(index).split(' ').filter(c => !c.includes('data-[state=active]')).join(' ')
+                }
+              `}
+            >
+              <span className={`text-[10px] uppercase tracking-wide mb-0.5 ${isActive ? 'text-white/70' : 'text-muted-foreground'}`}>
+                {hierarchy?.levelLabel}
+              </span>
+              <span>{category.label}</span>
+              {renderLevelIndicator(category.id, index, isActive)}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
