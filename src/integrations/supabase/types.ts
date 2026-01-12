@@ -857,7 +857,7 @@ export type Database = {
           },
         ]
       }
-      expert_services: {
+      admin_expert_service_assignments: {
         Row: {
           admin_assigned_rate_inr: number | null
           admin_assigned_rate_usd: number | null
@@ -896,14 +896,14 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "expert_services_expert_id_fkey"
+            foreignKeyName: "admin_expert_service_assignments_expert_id_fkey"
             columns: ["expert_id"]
             isOneToOne: false
             referencedRelation: "expert_accounts"
             referencedColumns: ["auth_id"]
           },
           {
-            foreignKeyName: "expert_services_service_id_fkey"
+            foreignKeyName: "admin_expert_service_assignments_service_id_fkey"
             columns: ["service_id"]
             isOneToOne: false
             referencedRelation: "services"

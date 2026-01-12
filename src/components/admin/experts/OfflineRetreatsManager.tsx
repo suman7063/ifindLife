@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -30,7 +31,8 @@ import {
   Plus, Edit, Trash2, Save, Eye, Brain, HeartHandshake, HeartPulse, Leaf, MessageCircle, Sparkles, 
   Heart, Users, User, Shield, Star, Moon, Sun, Flower, Flower2, Smile, SmilePlus, HandHeart, 
   HandHelping, Handshake, Lightbulb, Target, Award, BookOpen, Book, GraduationCap, School, 
-  Home, Building, TreePine, Mountain, Waves, Wind, Flame, Zap, Activity, TrendingUp, LucideIcon 
+  Home, Building, TreePine, Mountain, Waves, Wind, Flame, Zap, Activity, TrendingUp, LucideIcon,
+  UserCheck
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
@@ -117,22 +119,34 @@ interface Service {
   benefits?: string[] | string; // Can be JSONB array or string
   process?: string;
   created_at?: string;
+  is_retreat?: boolean;
+  assignedExpertsCount?: number; // Number of experts assigned to this retreat
 }
 
-interface ExpertCategory {
+interface Expert {
   id: string;
   name: string;
+  email: string;
+  status: string;
+  category?: string;
 }
 
-const ExpertServicesManager: React.FC = () => {
+const OfflineRetreatsManager: React.FC = () => {
   const [services, setServices] = useState<Service[]>([]);
-  const [categories, setCategories] = useState<ExpertCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isColorPreviewOpen, setIsColorPreviewOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [uploadingBanner, setUploadingBanner] = useState(false);
   const [uploadingIcon, setUploadingIcon] = useState(false);
+  
+  // Expert assignment state
+  const [isExpertDialogOpen, setIsExpertDialogOpen] = useState(false);
+  const [selectedRetreat, setSelectedRetreat] = useState<Service | null>(null);
+  const [allExperts, setAllExperts] = useState<Expert[]>([]);
+  const [assignedExpertIds, setAssignedExpertIds] = useState<string[]>([]);
+  const [loadingExperts, setLoadingExperts] = useState(false);
+  const [savingExperts, setSavingExperts] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -162,33 +176,159 @@ const ExpertServicesManager: React.FC = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Fetch all services first, then filter out retreats (retreats are managed separately)
+      // Fetch only retreat services (using service_type)
       const { data: servicesData, error: servicesError } = await supabase
         .from('services')
         .select('*')
+        .eq('service_type', ServiceType.RETREAT)
         .order('name');
 
       if (servicesError) throw servicesError;
 
-      // Filter out admin-assigned services (retreats, premium, exclusive)
-      // Only show regular services that experts can select
-      const regularServices = (servicesData || []).filter(service => 
-        !requiresAdminAssignment(service.service_type) && 
-        (service.service_type === ServiceType.REGULAR || !service.service_type)
-      );
-
       // Convert id from number to string (UUID) if needed
-      const convertedServices = regularServices.map(service => ({
+      const convertedServices = (servicesData || []).map(service => ({
         ...service,
         id: String(service.id)
       }));
       
-      setServices(convertedServices);
+      // Fetch assigned experts count for each retreat
+      const servicesWithCounts = await Promise.all(
+        convertedServices.map(async (service) => {
+          const { data: expertServices, error } = await supabase
+            .from('admin_expert_service_assignments')
+            .select('expert_id', { count: 'exact' })
+            .eq('service_id', service.id)
+            .eq('is_active', true);
+          
+          return {
+            ...service,
+            assignedExpertsCount: expertServices?.length || 0
+          };
+        })
+      );
+      
+      setServices(servicesWithCounts);
     } catch (error) {
       console.error('Error fetching data:', error);
       toast.error('Failed to load data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchExperts = async (serviceId: string) => {
+    setLoadingExperts(true);
+    try {
+      // Fetch all approved experts with category
+      const { data: expertsData, error: expertsError } = await supabase
+        .from('expert_accounts')
+        .select('auth_id, name, email, status, category')
+        .eq('status', 'approved')
+        .order('name');
+
+      if (expertsError) throw expertsError;
+
+      const experts = (expertsData || []).map(expert => ({
+        id: expert.auth_id,
+        name: expert.name,
+        email: expert.email,
+        status: expert.status,
+        category: expert.category || 'N/A'
+      }));
+
+      setAllExperts(experts);
+
+      // Fetch currently assigned experts for this retreat
+      const { data: assignedData, error: assignedError } = await supabase
+        .from('admin_expert_service_assignments')
+        .select('expert_id')
+        .eq('service_id', serviceId)
+        .eq('is_active', true);
+
+      if (assignedError) {
+        console.error('Error fetching assigned experts:', assignedError);
+        // Don't throw, just log - continue with empty list
+      }
+
+      const assignedIds = (assignedData || []).map(item => item.expert_id);
+      console.log('🔍 Assigned expert IDs for service:', serviceId, assignedIds);
+      setAssignedExpertIds(assignedIds);
+    } catch (error) {
+      console.error('Error fetching experts:', error);
+      toast.error('Failed to load experts');
+    } finally {
+      setLoadingExperts(false);
+    }
+  };
+
+  const handleOpenExpertDialog = async (service: Service) => {
+    setSelectedRetreat(service);
+    setIsExpertDialogOpen(true);
+    // Reset assigned IDs first, then fetch
+    setAssignedExpertIds([]);
+    await fetchExperts(service.id);
+  };
+
+  const handleToggleExpert = (expertId: string) => {
+    setAssignedExpertIds(prev => 
+      prev.includes(expertId)
+        ? prev.filter(id => id !== expertId)
+        : [...prev, expertId]
+    );
+  };
+
+  const handleSaveExpertAssignments = async () => {
+    if (!selectedRetreat) return;
+
+    setSavingExperts(true);
+    try {
+      // Get current user/admin info
+      const { data: userData } = await supabase.auth.getUser();
+      
+      // Delete existing assignments for this retreat
+      const { error: deleteError } = await supabase
+        .from('admin_expert_service_assignments')
+        .delete()
+        .eq('service_id', selectedRetreat.id);
+
+      if (deleteError) {
+        console.error('Delete error:', deleteError);
+        throw deleteError;
+      }
+
+      // Insert new assignments
+      if (assignedExpertIds.length > 0) {
+        const assignments = assignedExpertIds.map(expertId => ({
+          expert_id: expertId,
+          service_id: selectedRetreat.id,
+          is_active: true,
+          admin_assigned_rate_inr: selectedRetreat.rate_inr || null,
+          admin_assigned_rate_usd: 0, // Default value
+          assigned_by: userData.user?.email || 'admin', // Use email or 'admin' as fallback
+          assigned_at: new Date().toISOString()
+        }));
+
+        const { error: insertError } = await supabase
+          .from('admin_expert_service_assignments')
+          .insert(assignments);
+
+        if (insertError) {
+          console.error('Insert error:', insertError);
+          throw insertError;
+        }
+      }
+
+      toast.success('Expert assignments updated successfully');
+      setIsExpertDialogOpen(false);
+      setSelectedRetreat(null);
+      setAssignedExpertIds([]);
+      fetchData(); // Refresh to update counts
+    } catch (error: any) {
+      console.error('Error saving expert assignments:', error);
+      const errorMessage = error?.message || 'Unknown error occurred';
+      toast.error(`Failed to save expert assignments: ${errorMessage}`);
+    } finally {
+      setSavingExperts(false);
     }
   };
 
@@ -233,6 +373,7 @@ const ExpertServicesManager: React.FC = () => {
         detailed_description: string | null;
         benefits: string[] | null;
         process: string | null;
+        is_retreat: boolean;
       } = {
         name: formData.name,
         description: formData.description || null,
@@ -252,6 +393,7 @@ const ExpertServicesManager: React.FC = () => {
         detailed_description: formData.detailed_description || null,
         benefits: benefitsArray.length > 0 ? benefitsArray : null,
         process: formData.process || null,
+        service_type: ServiceType.RETREAT, // Always set to 'retreat' for retreats
       };
 
       if (editingService) {
@@ -262,7 +404,7 @@ const ExpertServicesManager: React.FC = () => {
           .eq('id', editingService.id);
 
         if (error) throw error;
-        toast.success('Service updated successfully');
+        toast.success('Retreat updated successfully');
       } else {
         // Create new service
         const { error } = await supabase
@@ -270,15 +412,15 @@ const ExpertServicesManager: React.FC = () => {
           .insert([serviceData]);
 
         if (error) throw error;
-        toast.success('Service created successfully');
+        toast.success('Retreat created successfully');
       }
 
       setIsDialogOpen(false);
       resetForm();
       fetchData();
     } catch (error) {
-      console.error('Error saving service:', error);
-      toast.error('Failed to save service');
+      console.error('Error saving retreat:', error);
+      toast.error('Failed to save retreat');
     }
   };
 
@@ -345,7 +487,7 @@ const ExpertServicesManager: React.FC = () => {
   };
 
   const handleDelete = async (serviceId: string) => {
-    if (!confirm('Are you sure you want to delete this service? This action cannot be undone.')) {
+    if (!confirm('Are you sure you want to delete this retreat? This action cannot be undone.')) {
       return;
     }
 
@@ -357,16 +499,13 @@ const ExpertServicesManager: React.FC = () => {
 
       if (error) throw error;
 
-      toast.success('Service deleted successfully');
+      toast.success('Retreat deleted successfully');
       fetchData();
     } catch (error) {
-      console.error('Error deleting service:', error);
-      toast.error('Failed to delete service');
+      console.error('Error deleting retreat:', error);
+      toast.error('Failed to delete retreat');
     }
   };
-
-  // Note: Bucket check removed - bucket exists via migration
-  // RLS policies may prevent listBuckets() from working, but upload will work
 
   const handleBannerUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -374,9 +513,8 @@ const ExpertServicesManager: React.FC = () => {
 
     setUploadingBanner(true);
     try {
-      // Bucket exists via migration - proceed directly with upload
       const fileExt = file.name.split('.').pop();
-      const fileName = `service-banner-${Date.now()}.${fileExt}`;
+      const fileName = `retreat-banner-${Date.now()}.${fileExt}`;
       
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('service-images')
@@ -412,9 +550,8 @@ const ExpertServicesManager: React.FC = () => {
 
     setUploadingIcon(true);
     try {
-      // Bucket exists via migration - proceed directly with upload
       const fileExt = file.name.split('.').pop();
-      const fileName = `service-icon-${Date.now()}.${fileExt}`;
+      const fileName = `retreat-icon-${Date.now()}.${fileExt}`;
       
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('service-images')
@@ -476,7 +613,7 @@ const ExpertServicesManager: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Loading services...</div>
+        <div className="text-lg">Loading retreats...</div>
       </div>
     );
   }
@@ -487,22 +624,22 @@ const ExpertServicesManager: React.FC = () => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Expert Services Management</CardTitle>
+              <CardTitle>Offline Retreats Management</CardTitle>
               <p className="text-sm text-muted-foreground mt-1">
-                Manage services that experts can offer. Services only include name and description. Rates are set by category pricing.
+                Manage offline retreats. Retreats are only assigned to specific experts by admin.
               </p>
             </div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button onClick={resetForm}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Service
+                  Add Retreat
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>
-                    {editingService ? 'Edit Service' : 'Add New Service'}
+                    {editingService ? 'Edit Retreat' : 'Add New Retreat'}
                   </DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -511,12 +648,12 @@ const ExpertServicesManager: React.FC = () => {
                     <h3 className="font-semibold text-lg">Basic Information</h3>
                     
                   <div>
-                      <Label htmlFor="name">Service Name *</Label>
+                      <Label htmlFor="name">Retreat Name *</Label>
                     <Input
                       id="name"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="e.g. Heart2Heart Listening"
+                        placeholder="e.g. Offline Retreats"
                       required
                     />
                   </div>
@@ -530,7 +667,7 @@ const ExpertServicesManager: React.FC = () => {
                         placeholder="Auto-generated from name if empty"
                       />
                       <p className="text-xs text-muted-foreground mt-1">
-                        Leave empty to auto-generate from service name
+                        Leave empty to auto-generate from retreat name
                       </p>
                     </div>
 
@@ -540,7 +677,7 @@ const ExpertServicesManager: React.FC = () => {
                       id="description"
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        placeholder="Brief description of the service..."
+                        placeholder="Brief description of the retreat..."
                         rows={2}
                     />
                   </div>
@@ -555,6 +692,60 @@ const ExpertServicesManager: React.FC = () => {
                         rows={4}
                       />
                     </div>
+                  </div>
+
+                  {/* Pricing & Duration */}
+                  <div className="space-y-4 border-b pb-4">
+                    <h3 className="font-semibold text-lg">Pricing & Duration</h3>
+                    
+                    <div>
+                      <Label htmlFor="duration">Duration (minutes) *</Label>
+                    <Input
+                      id="duration"
+                      type="number"
+                      min="1"
+                      value={formData.duration}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setFormData({ ...formData, duration: value === '' ? '' : (isNaN(parseInt(value)) ? '' : parseInt(value)) });
+                      }}
+                      placeholder="e.g. 1440 (24 hours)"
+                      required
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <Label htmlFor="rate_inr">Rate INR (₹) *</Label>
+                      <Input
+                        id="rate_inr"
+                        type="number"
+                        step="0.01"
+                        value={formData.rate_inr}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setFormData({ ...formData, rate_inr: value === '' ? '' : (isNaN(parseFloat(value)) ? '' : parseFloat(value)) });
+                        }}
+                        placeholder="0.00"
+                        required
+                      />
+                    </div>
+                    <div>
+                        <Label htmlFor="rate_eur">Rate EUR (€) *</Label>
+                      <Input
+                        id="rate_eur"
+                        type="number"
+                        step="0.01"
+                        value={formData.rate_eur}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setFormData({ ...formData, rate_eur: value === '' ? '' : (isNaN(parseFloat(value)) ? '' : parseFloat(value)) });
+                        }}
+                        placeholder="0.00"
+                        required
+                      />
+                    </div>
+                  </div>
                   </div>
 
                   {/* UI Configuration */}
@@ -631,52 +822,6 @@ const ExpertServicesManager: React.FC = () => {
                       )}
                     </div>
 
-                    {/* Icon Image - Optional, for custom icon images (currently using icon_name for Lucide icons) */}
-                    <div className="hidden">
-                      <Label htmlFor="icon_image">Icon Image (Optional - Custom Icon)</Label>
-                      <p className="text-xs text-muted-foreground mb-2">
-                        Optional: Upload a custom icon image. By default, icons are selected from Lucide icon library above.
-                      </p>
-                      <div className="flex gap-2">
-                        <Input
-                          id="icon_image"
-                          value={formData.icon_image}
-                          onChange={(e) => setFormData({ ...formData, icon_image: e.target.value })}
-                          placeholder="Icon image URL or upload image"
-                          className="flex-1"
-                        />
-                        <div className="relative">
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleIconUpload}
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                            disabled={uploadingIcon}
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            disabled={uploadingIcon}
-                            className="whitespace-nowrap"
-                          >
-                            {uploadingIcon ? 'Uploading...' : 'Upload'}
-                          </Button>
-                        </div>
-                      </div>
-                      {formData.icon_image && (
-                        <div className="mt-2">
-                          <img 
-                            src={formData.icon_image} 
-                            alt="Icon preview" 
-                            className="h-16 w-16 object-cover rounded border"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none';
-                            }}
-                          />
-                        </div>
-                      )}
-                    </div>
-
                     {/* Icon Name Selection */}
                     <div>
                       <Label htmlFor="icon_name">Icon Name (Lucide Icon)</Label>
@@ -719,13 +864,13 @@ const ExpertServicesManager: React.FC = () => {
                         </SelectContent>
                       </Select>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Select a Lucide icon to display for this service
+                        Select a Lucide icon to display for this retreat
                       </p>
                     </div>
 
                     {/* Color Selection - Actual Color Picker */}
                     <div>
-                      <Label htmlFor="color_picker">Service Color</Label>
+                      <Label htmlFor="color_picker">Retreat Color</Label>
                       <p className="text-xs text-muted-foreground mb-3">
                         Pick a color. Gradient, text, and button colors will be auto-generated.
                       </p>
@@ -891,7 +1036,7 @@ const ExpertServicesManager: React.FC = () => {
                         id="process"
                         value={formData.process}
                         onChange={(e) => setFormData({ ...formData, process: e.target.value })}
-                        placeholder="Describe the service process..."
+                        placeholder="Describe the retreat process..."
                         rows={3}
                       />
                     </div>
@@ -903,7 +1048,7 @@ const ExpertServicesManager: React.FC = () => {
                     </Button>
                     <Button type="submit">
                       <Save className="h-4 w-4 mr-2" />
-                      {editingService ? 'Update Service' : 'Create Service'}
+                      {editingService ? 'Update Retreat' : 'Create Retreat'}
                     </Button>
                   </div>
                 </form>
@@ -918,6 +1063,9 @@ const ExpertServicesManager: React.FC = () => {
                 <TableHead>Image</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Description</TableHead>
+                <TableHead>Duration</TableHead>
+                <TableHead>Rates</TableHead>
+                <TableHead>Assigned Experts</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -946,8 +1094,35 @@ const ExpertServicesManager: React.FC = () => {
                       {service.description || 'N/A'}
                     </div>
                   </TableCell>
+                  <TableCell>
+                    <div className="text-sm">
+                      {service.duration || 60} min
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm">
+                      <div>₹{service.rate_inr || 0}</div>
+                      <div className="text-muted-foreground">€{service.rate_eur || 0}</div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <UserCheck className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm">
+                        {service.assignedExpertsCount || 0} expert{service.assignedExpertsCount !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                  </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end space-x-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleOpenExpertDialog(service)}
+                        title="Manage Expert Assignments"
+                      >
+                        <UserCheck className="h-4 w-4" />
+                      </Button>
                       <Button
                         size="sm"
                         variant="outline"
@@ -970,13 +1145,111 @@ const ExpertServicesManager: React.FC = () => {
           </Table>
           {services.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
-              No services found. Create your first service to get started.
+              No retreats found. Create your first retreat to get started.
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Expert Assignment Dialog */}
+      <Dialog open={isExpertDialogOpen} onOpenChange={setIsExpertDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Manage Expert Assignments - {selectedRetreat?.name}
+            </DialogTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              Select which experts can offer this retreat. Only selected experts will be able to provide this service.
+            </p>
+          </DialogHeader>
+          
+          {loadingExperts ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-lg">Loading experts...</div>
+            </div>
+          ) : (
+            <div className="space-y-4 mt-4">
+              <div className="max-h-96 overflow-y-auto border rounded-lg p-4">
+                {allExperts.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No approved experts found.
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {allExperts.map((expert) => {
+                      const isSelected = assignedExpertIds.includes(expert.id);
+                      return (
+                        <div
+                          key={expert.id}
+                          className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors ${
+                            isSelected
+                              ? 'bg-blue-50 border-blue-200'
+                              : 'hover:bg-gray-50'
+                          }`}
+                          onClick={() => handleToggleExpert(expert.id)}
+                        >
+                          <div className="flex items-center gap-3">
+                            {isSelected ? (
+                              <UserCheck className="h-5 w-5 text-blue-600" />
+                            ) : (
+                              <User className="h-5 w-5 text-gray-400" />
+                            )}
+                            <div>
+                              <div className="font-medium">{expert.name}</div>
+                              <div className="text-sm text-muted-foreground">{expert.email}</div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {expert.category && (
+                              <Badge variant="outline" className="text-xs">
+                                {expert.category.replace(/-/g, ' ')}
+                              </Badge>
+                            )}
+                            {isSelected && (
+                              <Badge variant="default" className="bg-blue-600">
+                                Assigned
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex items-center justify-between pt-4 border-t">
+                <div className="text-sm text-muted-foreground">
+                  {assignedExpertIds.length} of {allExperts.length} expert{allExperts.length !== 1 ? 's' : ''} selected
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setIsExpertDialogOpen(false);
+                      setSelectedRetreat(null);
+                      // Don't reset assignedExpertIds here - keep them for next time dialog opens
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={handleSaveExpertAssignments}
+                    disabled={savingExperts}
+                  >
+                    {savingExperts ? 'Saving...' : 'Save Assignments'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
 
-export default ExpertServicesManager;
+export default OfflineRetreatsManager;
+

@@ -64,7 +64,7 @@ const ExpertServiceAssignment: React.FC<ExpertServiceAssignmentProps> = ({
 
       // Fetch existing expert services (simplified approach)
       const { data: expertServiceData, error: expertError } = await supabase
-        .from('expert_services')
+        .from('admin_expert_service_assignments')
         .select('*')
         .eq('expert_id', expertId);
 
@@ -136,7 +136,7 @@ const ExpertServiceAssignment: React.FC<ExpertServiceAssignmentProps> = ({
     try {
       // Delete existing assignments
       await supabase
-        .from('expert_services')
+        .from('admin_expert_service_assignments')
         .delete()
         .eq('expert_id', expertId);
 
@@ -155,7 +155,7 @@ const ExpertServiceAssignment: React.FC<ExpertServiceAssignmentProps> = ({
         }));
 
         const { error } = await supabase
-          .from('expert_services')
+          .from('admin_expert_service_assignments')
           .insert(servicesToInsert);
 
         if (error) throw error;
@@ -163,7 +163,7 @@ const ExpertServiceAssignment: React.FC<ExpertServiceAssignmentProps> = ({
 
       // Update expert_accounts flags
       // Note: selected_services is INTEGER[] but services use UUID, so we don't update it
-      // Services are stored in expert_services table instead
+      // Services are stored in admin_expert_service_assignments table instead
       const { error: eaUpdateError } = await supabase
         .from('expert_accounts')
         .update({ 
@@ -174,9 +174,9 @@ const ExpertServiceAssignment: React.FC<ExpertServiceAssignmentProps> = ({
       if (eaUpdateError) throw eaUpdateError;
 
       // If all flags satisfied, mark onboarding_completed on expert_accounts
-      // Check services from expert_services table (admin assigned) or expert_service_specializations
+      // Check services from admin_expert_service_assignments table (admin assigned) or expert_service_specializations
       const { data: servicesCheck } = await supabase
-        .from('expert_services')
+        .from('admin_expert_service_assignments')
         .select('id')
         .eq('expert_id', expertId)
         .limit(1);

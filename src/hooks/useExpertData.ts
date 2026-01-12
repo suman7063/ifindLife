@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ExpertCardData } from '@/components/expert-card/types';
 import { useExpertPresence } from '@/contexts/ExpertPresenceContext';
+import { requiresAdminAssignment } from '@/constants/serviceTypes';
 
 interface UseExpertDataProps {
   serviceId?: string;
@@ -122,22 +123,70 @@ export function useExpertData({ serviceId, specialization }: UseExpertDataProps 
           }
           
           if (actualServiceId) {
-            // Filter experts by checking expert_service_specializations table
-            const expertIds = filteredData.map(e => e.auth_id || e.id).filter(Boolean);
-            if (expertIds.length > 0) {
-              const { data: specializations } = await supabase
-                .from('expert_service_specializations')
-                .select('expert_id')
-                .in('expert_id', expertIds)
-                .eq('service_id', actualServiceId);
-              
-              const expertIdsWithService = new Set(specializations?.map(s => s.expert_id) || []);
-              filteredData = filteredData.filter(expert => 
-                expertIdsWithService.has(expert.auth_id || expert.id)
-              );
-            } else {
+            // First, check the service type to determine which table to use
+            const { data: serviceInfo, error: serviceInfoError } = await supabase
+              .from('services')
+              .select('service_type')
+              .eq('id', actualServiceId)
+              .single();
+            
+            if (serviceInfoError) {
+              console.error('Error fetching service info:', serviceInfoError);
+              // If service not found, return empty array (no experts for this service)
               filteredData = [];
+            } else {
+              // Type assertion needed as service_type may not be in generated types yet
+              const serviceType = (serviceInfo as any)?.service_type as string | null | undefined;
+              const isAdminAssigned = requiresAdminAssignment(serviceType);
+              
+              const expertIds = filteredData.map(e => e.auth_id).filter(Boolean) as string[];
+              if (expertIds.length > 0) {
+                let expertIdsWithService: Set<string>;
+                
+                if (isAdminAssigned) {
+                  // For admin-assigned services (retreats, premium, exclusive), use admin_expert_service_assignments
+                  const { data: assignments, error: assignmentsError } = await supabase
+                    .from('admin_expert_service_assignments')
+                    .select('expert_id')
+                    .in('expert_id', expertIds)
+                    .eq('service_id', actualServiceId)
+                    .eq('is_active', true);
+                  
+                  if (assignmentsError) {
+                    console.error('Error fetching admin assignments:', assignmentsError);
+                    expertIdsWithService = new Set();
+                  } else {
+                    expertIdsWithService = new Set(assignments?.map(a => a.expert_id) || []);
+                  }
+                } else {
+                  // For regular services, use expert_service_specializations
+                  const { data: specializations, error: specializationsError } = await supabase
+                    .from('expert_service_specializations')
+                    .select('expert_id')
+                    .in('expert_id', expertIds)
+                    .eq('service_id', actualServiceId)
+                    .eq('is_available', true);
+                  
+                  if (specializationsError) {
+                    console.error('Error fetching specializations:', specializationsError);
+                    expertIdsWithService = new Set();
+                  } else {
+                    expertIdsWithService = new Set(specializations?.map(s => s.expert_id) || []);
+                  }
+                }
+                
+                filteredData = filteredData.filter(expert => 
+                  expert.auth_id && expertIdsWithService.has(expert.auth_id)
+                );
+              } else {
+                filteredData = [];
+              }
             }
+          } else {
+            // If serviceId was provided but actualServiceId not found, return empty array
+            // This ensures we don't show all experts when a specific service was requested
+            console.warn('Service ID not found for serviceId:', serviceId);
+            filteredData = [];
           }
         }
 

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import {
   NavigationMenuItem,
   NavigationMenuTrigger,
@@ -11,6 +11,8 @@ import { useUnifiedServices } from '@/hooks/useUnifiedServices';
 
 const ServicesMenu = () => {
   const { services, loading } = useUnifiedServices();
+  const location = useLocation();
+  const isServicesPage = location.pathname === '/services';
   
   return (
     <NavigationMenuItem>
@@ -21,7 +23,9 @@ const ServicesMenu = () => {
             <NavigationMenuLink asChild>
               <Link 
                 to="/services" 
-                className="block w-full p-2 text-sm hover:bg-accent rounded-md font-medium text-left"
+                className={`block w-full p-2 text-sm hover:bg-accent rounded-md text-left ${
+                  isServicesPage ? 'bg-accent font-medium' : ''
+                }`}
               >
                 All Services
               </Link>

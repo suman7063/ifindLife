@@ -8,6 +8,7 @@ import { ServicesEditor } from '@/components/admin/services';
 import ExpertApprovals from '@/components/admin/experts/ExpertApprovals';
 import ExpertCategoriesManager from '@/components/admin/experts/ExpertCategoriesManager';
 import ExpertServicesManager from '@/components/admin/experts/ExpertServicesManager';
+import OfflineRetreatsManager from '@/components/admin/experts/OfflineRetreatsManager';
 import ExpertManagement from '@/components/admin/experts/ExpertManagement';
 import TestimonialsEditor from '@/components/admin/TestimonialsEditor';
 import AdminSettings from './AdminSettings';
@@ -50,6 +51,7 @@ const AdminRoutes: React.FC = () => {
       <Route path="/experts-list" element={<ExpertManagement />} />
       <Route path="/expert-categories" element={<ExpertCategoriesManager />} />
       <Route path="/expert-services" element={<ExpertServicesManager />} />
+      <Route path="/offline-retreats" element={<OfflineRetreatsManager />} />
       <Route path="/services" element={
         <ServicesEditor 
           categories={services} 

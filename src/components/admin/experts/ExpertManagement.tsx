@@ -67,6 +67,7 @@ interface ExpertData {
   verified?: boolean;
   created_at?: string;
   profile_picture?: string;
+  services_count?: number;
 }
 
 const ExpertManagement: React.FC = () => {
@@ -78,6 +79,8 @@ const ExpertManagement: React.FC = () => {
   const [sortBy, setSortBy] = useState<string>('name');
   const [selectedExpert, setSelectedExpert] = useState<ExpertData | null>(null);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+  const [expertServices, setExpertServices] = useState<Array<{ id: string; name: string; is_primary: boolean }>>([]);
+  const [loadingServices, setLoadingServices] = useState(false);
 
   useEffect(() => {
     fetchExperts();
@@ -98,7 +101,59 @@ const ExpertManagement: React.FC = () => {
       
       // Filter out pending experts (as the original code did)
       const nonPendingExperts = (allData || []).filter((expert: any) => expert.status !== 'pending');
-      setExperts(nonPendingExperts as ExpertData[]);
+      
+      // Fetch services count for each expert from both tables
+      const expertIds = nonPendingExperts.map((expert: any) => expert.auth_id);
+      
+      // Fetch from expert_service_specializations (expert selected during onboarding)
+      const { data: specializationsData, error: specError } = await supabase
+        .from('expert_service_specializations')
+        .select('expert_id')
+        .in('expert_id', expertIds)
+        .eq('is_available', true);
+
+      if (specError) {
+        console.error('Error fetching specializations count:', specError);
+      }
+
+      // Fetch from admin_expert_service_assignments (admin assigned services like retreats)
+      const { data: expertServicesData, error: expertServicesError } = await supabase
+        .from('admin_expert_service_assignments')
+        .select('expert_id')
+        .in('expert_id', expertIds)
+        .eq('is_active', true);
+
+      if (expertServicesError) {
+        console.error('Error fetching expert services count:', expertServicesError);
+      }
+
+      // Count services per expert from both sources
+      const servicesCountMap = new Map<string, number>();
+      
+      // Count from expert_service_specializations
+      (specializationsData || []).forEach((item: any) => {
+        const count = servicesCountMap.get(item.expert_id) || 0;
+        servicesCountMap.set(item.expert_id, count + 1);
+      });
+
+      // Count from expert_services (avoid duplicates by using Set)
+      const expertServicesSet = new Map<string, Set<string>>();
+      (expertServicesData || []).forEach((item: any) => {
+        if (!expertServicesSet.has(item.expert_id)) {
+          expertServicesSet.set(item.expert_id, new Set());
+        }
+        // We're just counting, so we can add to the count directly
+        const count = servicesCountMap.get(item.expert_id) || 0;
+        servicesCountMap.set(item.expert_id, count + 1);
+      });
+
+      // Add services count to experts
+      const expertsWithServices = nonPendingExperts.map((expert: any) => ({
+        ...expert,
+        services_count: servicesCountMap.get(expert.auth_id) || 0
+      }));
+
+      setExperts(expertsWithServices as ExpertData[]);
     } catch (error) {
       console.error('Error fetching experts:', error);
       toast.error('Failed to load experts');
@@ -194,9 +249,89 @@ const ExpertManagement: React.FC = () => {
     );
   };
 
-  const handleViewDetails = (expert: ExpertData) => {
+  const handleViewDetails = async (expert: ExpertData) => {
     setSelectedExpert(expert);
     setIsDetailsDialogOpen(true);
+    await fetchExpertServices(expert.auth_id);
+  };
+
+  const fetchExpertServices = async (expertId: string) => {
+    setLoadingServices(true);
+    try {
+      const allServices: Array<{ id: string; name: string; is_primary: boolean; source: string }> = [];
+
+      // Fetch from expert_service_specializations (expert selected during onboarding)
+      const { data: specData, error: specErr } = await supabase
+        .from('expert_service_specializations')
+        .select('service_id, is_primary_service')
+        .eq('expert_id', expertId)
+        .eq('is_available', true);
+
+      if (specErr) {
+        console.error('Error fetching specializations:', specErr);
+      } else if (specData && specData.length > 0) {
+        const serviceIds = specData.map(s => s.service_id);
+        const { data: servicesData, error: servicesError } = await supabase
+          .from('services')
+          .select('id, name')
+          .in('id', serviceIds);
+
+        if (servicesError) {
+          console.error('Error fetching service names for specializations:', servicesError);
+        } else {
+          const services = (servicesData || []).map(service => {
+            const spec = specData.find(s => s.service_id === service.id);
+            return {
+              id: service.id,
+              name: service.name,
+              is_primary: spec?.is_primary_service || false,
+              source: 'Onboarding'
+            };
+          });
+          allServices.push(...services);
+        }
+      }
+
+      // Fetch from admin_expert_service_assignments (admin assigned services like retreats)
+      const { data: expertServicesData, error: expertServicesErr } = await supabase
+        .from('admin_expert_service_assignments')
+        .select('service_id')
+        .eq('expert_id', expertId)
+        .eq('is_active', true);
+
+      if (expertServicesErr) {
+        console.error('Error fetching expert services:', expertServicesErr);
+      } else if (expertServicesData && expertServicesData.length > 0) {
+        const serviceIds = expertServicesData.map(s => s.service_id);
+        const { data: servicesData, error: servicesError } = await supabase
+          .from('services')
+          .select('id, name')
+          .in('id', serviceIds);
+
+        if (servicesError) {
+          console.error('Error fetching service names for admin_expert_service_assignments:', servicesError);
+        } else {
+          // Only add services that aren't already in the list (avoid duplicates)
+          const existingIds = new Set(allServices.map(s => s.id));
+          const newServices = (servicesData || [])
+            .filter(service => !existingIds.has(service.id))
+            .map(service => ({
+              id: service.id,
+              name: service.name,
+              is_primary: false,
+              source: 'Admin Assigned'
+            }));
+          allServices.push(...newServices);
+        }
+      }
+
+      setExpertServices(allServices);
+    } catch (error) {
+      console.error('Error fetching expert services:', error);
+      setExpertServices([]);
+    } finally {
+      setLoadingServices(false);
+    }
   };
 
   if (loading) {
@@ -276,6 +411,7 @@ const ExpertManagement: React.FC = () => {
                   <TableHead>Expert</TableHead>
                   <TableHead>Contact</TableHead>
                   <TableHead>Expertise</TableHead>
+                  <TableHead>Services</TableHead>
                   <TableHead>Location</TableHead>
                   <TableHead>Rating</TableHead>
                   <TableHead>Status</TableHead>
@@ -319,6 +455,13 @@ const ExpertManagement: React.FC = () => {
                     <TableCell>
                       <div className="text-sm">
                         {expert.specialization || 'N/A'}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">
+                        <Badge variant="outline">
+                          {expert.services_count || 0} service{expert.services_count !== 1 ? 's' : ''}
+                        </Badge>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -492,6 +635,33 @@ const ExpertManagement: React.FC = () => {
                       .join(', ')}
                   </div>
                 </div>
+              </div>
+
+              <div>
+                <h4 className="font-medium mb-2">Services</h4>
+                {loadingServices ? (
+                  <div className="text-sm text-muted-foreground">Loading services...</div>
+                ) : expertServices.length > 0 ? (
+                  <div className="space-y-2">
+                    {expertServices.map((service) => (
+                      <div key={service.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">{service.name}</span>
+                          <Badge variant="outline" className="text-xs">
+                            {service.source}
+                          </Badge>
+                        </div>
+                        {service.is_primary && (
+                          <Badge variant="outline" className="text-xs bg-blue-100">Primary</Badge>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-sm text-red-600 font-medium">
+                    ⚠️ No services found - Expert needs to complete onboarding service selection
+                  </div>
+                )}
               </div>
 
               <div>

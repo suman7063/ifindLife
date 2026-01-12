@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Circle, Sparkles } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { ServiceType, requiresAdminAssignment } from '@/constants/serviceTypes';
 
 interface Service {
   id: string; // UUID
@@ -14,6 +15,8 @@ interface Service {
   rate_usd: number;
   rate_inr: number;
   duration: number;
+  service_type?: string | null; // 'regular', 'retreat', 'premium', 'exclusive'
+  is_retreat?: boolean | null; // Legacy field, kept for backward compatibility
 }
 
 interface ServiceSelectionStepProps {
@@ -40,7 +43,7 @@ const ServiceSelectionStep: React.FC<ServiceSelectionStepProps> = ({
       
       // Check if services are already assigned by admin (Phase 2)
       const { data: adminAssignedServices, error: adminError } = await supabase
-        .from('expert_services')
+        .from('admin_expert_service_assignments')
         .select('*')
         .eq('expert_id', expertAccount.auth_id)
         .eq('is_active', true);
@@ -95,13 +98,13 @@ const ServiceSelectionStep: React.FC<ServiceSelectionStepProps> = ({
           serviceIds = categoryServicesData.map(item => String(item.service_id));
           console.log('🔍 Found mapped services for category:', serviceIds);
         } else {
-          // Fallback: Fetch all services if no category mappings exist
+          // Fallback: Fetch all services if no category mappings exist (excluding retreats)
           console.log('🔍 No category mappings found, fetching all services for category:', expertAccount.category);
           
-          // Fetch all services as fallback
+          // Fetch all services as fallback, excluding admin-assigned services
           const { data: allServices, error: allServicesError } = await supabase
             .from('services')
-            .select('id')
+            .select('id, service_type, is_retreat')
             .order('name');
           
           if (allServicesError) {
@@ -109,12 +112,24 @@ const ServiceSelectionStep: React.FC<ServiceSelectionStepProps> = ({
             throw allServicesError;
           }
           
-          serviceIds = allServices?.map(s => s.id) || [];
-          console.log('🔍 Using all available services as fallback:', serviceIds);
+          // Filter out admin-assigned services (retreats, premium, exclusive)
+          // Support both new service_type field and legacy is_retreat field
+          const regularServiceIds = (allServices || []).filter((s: any) => {
+            // Check new service_type field first
+            if (s.service_type) {
+              return !requiresAdminAssignment(s.service_type);
+            }
+            // Fallback to legacy is_retreat field
+            return !s.is_retreat || s.is_retreat === false;
+          }).map((s: any) => s.id);
+          
+          serviceIds = regularServiceIds || [];
+          console.log('🔍 Using all available services as fallback (excluding admin-assigned services):', serviceIds);
         }
 
         console.log('🔍 Service IDs for category:', serviceIds);
 
+        // Fetch services
         const { data, error } = await supabase
           .from('services')
           .select('*')
@@ -125,8 +140,20 @@ const ServiceSelectionStep: React.FC<ServiceSelectionStepProps> = ({
 
         if (error) throw error;
 
+        // Filter out admin-assigned services (retreats, premium, exclusive)
+        // Only show regular services that experts can select
+        // Support both new service_type field and legacy is_retreat field
+        const selectableServices = (data || []).filter((service: any) => {
+          // Check new service_type field first
+          if (service.service_type) {
+            return !requiresAdminAssignment(service.service_type);
+          }
+          // Fallback to legacy is_retreat field
+          return !service.is_retreat || service.is_retreat === false;
+        });
+
         // Ensure all service IDs are strings (UUIDs)
-        const normalizedServices = (data || []).map(service => ({
+        const normalizedServices = selectableServices.map(service => ({
           ...service,
           id: String(service.id)
         }));

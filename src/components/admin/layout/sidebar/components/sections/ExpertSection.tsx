@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Users, UserCheck, UserPlus, Grid, Settings } from 'lucide-react';
+import { Users, UserCheck, UserPlus, Grid, Settings, Mountain } from 'lucide-react';
 import MenuSection from '../MenuSection';
 
 interface ExpertSectionProps {
@@ -51,6 +51,12 @@ const ExpertSection: React.FC<ExpertSectionProps> = ({
       label: "Expert Services",
       isActive: activeTab === 'expert-services',
       onClick: () => onTabChange('expert-services')
+    });
+    items.push({
+      icon: Mountain,
+      label: "Offline Retreats",
+      isActive: activeTab === 'offline-retreats',
+      onClick: () => onTabChange('offline-retreats')
     });
   }
 
