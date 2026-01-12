@@ -23,6 +23,7 @@ import {
 import { Plus, Edit, Trash2, Save, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
+import { allowsExpertSelection } from '@/constants/serviceTypes';
 
 interface ExpertCategory {
   id: string;
@@ -135,10 +136,13 @@ const ExpertCategoriesManager: React.FC = () => {
       setCategories(sortedCategories);
       
       // Convert service ids from number to string (UUID) if needed
-      const convertedServices = (servicesData || []).map(service => ({
-        ...service,
-        id: String(service.id)
-      }));
+      // Filter out admin-assigned services (retreats, premium, exclusive) - these cannot be assigned to categories
+      const convertedServices = (servicesData || [])
+        .filter(service => allowsExpertSelection((service as any).service_type))
+        .map(service => ({
+          ...service,
+          id: String(service.id)
+        }));
       setServices(convertedServices);
       
       // Group services by category
