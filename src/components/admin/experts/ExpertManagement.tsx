@@ -404,18 +404,16 @@ const ExpertManagement: React.FC = () => {
           </div>
 
           {/* Experts Table */}
-          <div className="border rounded-lg">
-            <Table>
+          <div className="border rounded-lg overflow-x-auto">
+            <div className="min-w-full inline-block">
+              <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Expert</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>Expertise</TableHead>
-                  <TableHead>Services</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Rating</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="min-w-[200px]">Expert</TableHead>
+                  <TableHead className="min-w-[200px]">Contact</TableHead>
+                  <TableHead className="min-w-[100px]">Services</TableHead>
+                  <TableHead className="min-w-[100px]">Status</TableHead>
+                  <TableHead className="text-right min-w-[140px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -454,33 +452,9 @@ const ExpertManagement: React.FC = () => {
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        {expert.specialization || 'N/A'}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
                         <Badge variant="outline">
                           {expert.services_count || 0} service{expert.services_count !== 1 ? 's' : ''}
                         </Badge>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        {expert.city && expert.country ? (
-                          `${expert.city}, ${expert.country}`
-                        ) : (
-                          expert.country || expert.city || 'N/A'
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        <div className="flex items-center space-x-1">
-                          <span>⭐ {expert.average_rating?.toFixed(1) || 'N/A'}</span>
-                        </div>
-                        <div className="text-muted-foreground">
-                          {expert.reviews_count || 0} reviews
-                        </div>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -562,6 +536,7 @@ const ExpertManagement: React.FC = () => {
                 ))}
               </TableBody>
             </Table>
+            </div>
           </div>
 
           {filteredExperts.length === 0 && (

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, Circle, Sparkles } from 'lucide-react';
+import { CheckCircle, Circle, Sparkles, AlertCircle, Info } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { ServiceType, requiresAdminAssignment } from '@/constants/serviceTypes';
@@ -98,33 +98,10 @@ const ServiceSelectionStep: React.FC<ServiceSelectionStepProps> = ({
           serviceIds = categoryServicesData.map(item => String(item.service_id));
           console.log('🔍 Found mapped services for category:', serviceIds);
         } else {
-          // Fallback: Fetch all services if no category mappings exist (excluding retreats)
-          console.log('🔍 No category mappings found, fetching all services for category:', expertAccount.category);
-          
-          // Fetch all services as fallback, excluding admin-assigned services
-          const { data: allServices, error: allServicesError } = await supabase
-            .from('services')
-            .select('id, service_type, is_retreat')
-            .order('name');
-          
-          if (allServicesError) {
-            console.error('Error fetching all services:', allServicesError);
-            throw allServicesError;
-          }
-          
-          // Filter out admin-assigned services (retreats, premium, exclusive)
-          // Support both new service_type field and legacy is_retreat field
-          const regularServiceIds = (allServices || []).filter((s: any) => {
-            // Check new service_type field first
-            if (s.service_type) {
-              return !requiresAdminAssignment(s.service_type);
-            }
-            // Fallback to legacy is_retreat field
-            return !s.is_retreat || s.is_retreat === false;
-          }).map((s: any) => s.id);
-          
-          serviceIds = regularServiceIds || [];
-          console.log('🔍 Using all available services as fallback (excluding admin-assigned services):', serviceIds);
+          // No services assigned to this category - show empty list
+          console.log('⚠️ No services assigned to category:', expertAccount.category);
+          console.log('⚠️ Admin needs to assign services to this category in Expert Categories Management');
+          serviceIds = []; // Empty array - no services available
         }
 
         console.log('🔍 Service IDs for category:', serviceIds);
@@ -326,58 +303,86 @@ const ServiceSelectionStep: React.FC<ServiceSelectionStepProps> = ({
         </div>
       </div>
 
-      <div className="grid gap-4">
-        {availableServices.map((service) => {
-          const serviceId = String(service.id);
-          const isSelected = selectedServices.includes(serviceId);
-          return (
-            <Card 
-              key={serviceId}
-              className={`cursor-pointer transition-all ${
-                isSelected 
-                  ? 'ring-2 ring-primary bg-blue-50' 
-                  : 'hover:shadow-md'
-              }`}
-              onClick={() => toggleService(serviceId)}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      {isSelected ? (
-                        <CheckCircle className="h-5 w-5 text-primary" />
-                      ) : (
-                        <Circle className="h-5 w-5 text-gray-400" />
-                      )}
-                      <h4 className="font-semibold">{service.name}</h4>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      {service.description}
-                    </p>
-                    <div className="flex gap-4 text-xs text-muted-foreground">
-                      <span>Duration: {service.duration} minutes</span>
-                      <span>Rate: ₹{service.rate_inr} / ${service.rate_usd}</span>
-                    </div>
+      {availableServices.length === 0 ? (
+        <Card className="border-2 border-amber-200 bg-amber-50/50">
+          <CardContent className="p-8">
+            <div className="flex flex-col items-center gap-4 text-center">
+              <div className="rounded-full bg-amber-100 p-4">
+                <AlertCircle className="h-8 w-8 text-amber-600" />
+              </div>
+              <div className="space-y-2 max-w-md">
+                <h4 className="font-semibold text-lg text-gray-900">No Services Available</h4>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  No services have been assigned to your category yet. Please contact the administrator to assign services to your category.
+                </p>
+                <div className="mt-4 pt-4 border-t border-amber-200">
+                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-white rounded-lg border border-amber-200">
+                    <Info className="h-4 w-4 text-amber-600" />
+                    <span className="text-sm font-medium text-gray-700">
+                      Category: <span className="text-amber-700">{expertAccount.category?.split('-').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}</span>
+                    </span>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-4">
+          {availableServices.map((service) => {
+            const serviceId = String(service.id);
+            const isSelected = selectedServices.includes(serviceId);
+            return (
+              <Card 
+                key={serviceId}
+                className={`cursor-pointer transition-all ${
+                  isSelected 
+                    ? 'ring-2 ring-primary bg-blue-50' 
+                    : 'hover:shadow-md'
+                }`}
+                onClick={() => toggleService(serviceId)}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        {isSelected ? (
+                          <CheckCircle className="h-5 w-5 text-primary" />
+                        ) : (
+                          <Circle className="h-5 w-5 text-gray-400" />
+                        )}
+                        <h4 className="font-semibold">{service.name}</h4>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        {service.description}
+                      </p>
+                      <div className="flex gap-4 text-xs text-muted-foreground">
+                        <span>Duration: {service.duration} minutes</span>
+                        <span>Rate: ₹{service.rate_inr} / ${service.rate_usd}</span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
 
-      <div className="text-center">
-        <p className="text-sm text-muted-foreground mb-4">
-          Selected {selectedServices.length} of {availableServices.length} services
-        </p>
-        <Button 
-          onClick={handleSaveServices}
-          disabled={selectedServices.length === 0 || saving}
-          className="px-8"
-        >
-          {saving ? 'Saving...' : 'Save Services'}
-        </Button>
-      </div>
+      {availableServices.length > 0 && (
+        <div className="text-center">
+          <p className="text-sm text-muted-foreground mb-4">
+            Selected {selectedServices.length} of {availableServices.length} services
+          </p>
+          <Button 
+            onClick={handleSaveServices}
+            disabled={selectedServices.length === 0 || saving}
+            className="px-8"
+          >
+            {saving ? 'Saving...' : 'Save Services'}
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
