@@ -18,11 +18,16 @@ export type {
 
 // Define ReferralSettings interface
 export interface ReferralSettings {
-  id: string;
-  referrer_reward: number;
-  referred_reward: number;
-  active: boolean;
+  id?: string;
+  referrer_reward?: number; // For backward compatibility
+  referred_reward?: number; // For backward compatibility
+  referrer_reward_inr?: number;
+  referrer_reward_eur?: number;
+  referred_reward_inr?: number;
+  referred_reward_eur?: number;
+  active?: boolean;
   description?: string;
+  currency?: string;
   updated_at?: string;
 }
 

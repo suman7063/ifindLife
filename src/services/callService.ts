@@ -653,6 +653,26 @@ export async function endCall(
       .eq('call_session_id', callSessionId)
       .in('status', ['pending', 'accepted']);
 
+    // Check and complete referral if this is a referred user's first call
+    // Only process for normal call completions (not network errors or misbehavior)
+    // Credits will be awarded after delay (2 minutes for test, 48 hours for production)
+    if (callSession?.user_id && 
+        disconnectionReason === 'normal' && 
+        (endedBy === 'user' || endedBy === 'expert')) {
+      try {
+        // Import dynamically to avoid circular dependencies
+        const { checkAndCompleteReferral } = await import('@/utils/referralCompletion');
+        await checkAndCompleteReferral(
+          callSession.user_id,
+          callSessionId,
+          endTime // Pass call end time for delayed reward calculation
+        );
+      } catch (referralError) {
+        // Silently handle referral errors - they're non-critical
+        console.warn('⚠️ Failed to check referral completion (call still ended):', referralError);
+      }
+    }
+
     // Send notification to user if expert ended the call
     if (endedBy === 'expert' && callSession?.user_id) {
       try {

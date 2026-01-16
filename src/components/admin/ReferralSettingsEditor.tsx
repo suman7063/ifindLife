@@ -6,23 +6,37 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { ReferralSettings } from "@/types/supabase";
 
 const ReferralSettingsEditor: React.FC = () => {
-  const [settings, setSettings] = useState<ReferralSettings>({
+  const [settings, setSettings] = useState<ReferralSettings & { 
+    currency?: string;
+    referrer_reward_inr?: number;
+    referrer_reward_eur?: number;
+    referred_reward_inr?: number;
+    referred_reward_eur?: number;
+  }>({
     id: '',
     referrer_reward: 10,
     referred_reward: 5,
+    referrer_reward_inr: 10,
+    referrer_reward_eur: 10,
+    referred_reward_inr: 5,
+    referred_reward_eur: 5,
     active: true,
+    currency: 'INR',
     description: 'Invite friends and earn rewards when they make their first purchase.',
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [errors, setErrors] = useState<{
-    referrer_reward?: string;
-    referred_reward?: string;
+    referrer_reward_inr?: string;
+    referrer_reward_eur?: string;
+    referred_reward_inr?: string;
+    referred_reward_eur?: string;
     description?: string;
   }>({});
 
@@ -34,17 +48,33 @@ const ReferralSettingsEditor: React.FC = () => {
           .from('referral_settings')
           .select('*')
           .limit(1)
-          .single();
+          .maybeSingle(); // Use maybeSingle instead of single to handle empty table
 
         if (error) {
           console.error('Error fetching referral settings:', error);
-          toast.error('Failed to load referral settings');
+          // Don't show error if table is empty (first time setup)
+          if (error.code !== 'PGRST116') {
+            toast.error('Failed to load referral settings');
+          }
         } else if (data) {
-          setSettings(data);
+          // Map database fields to settings
+          setSettings({
+            id: data.id || '',
+            referrer_reward: data.referrer_reward ?? 10,
+            referred_reward: data.referred_reward ?? 5,
+            referrer_reward_inr: data.referrer_reward_inr ?? data.referrer_reward ?? 10,
+            referrer_reward_eur: data.referrer_reward_eur ?? data.referrer_reward ?? 10,
+            referred_reward_inr: data.referred_reward_inr ?? data.referred_reward ?? 5,
+            referred_reward_eur: data.referred_reward_eur ?? data.referred_reward ?? 5,
+            active: data.active ?? false,
+            currency: data.currency || 'INR',
+            description: data.description || 'Invite friends and earn rewards when they complete their first session.',
+            updated_at: data.updated_at
+          });
         }
       } catch (error) {
         console.error('Error fetching referral settings:', error);
-        toast.error('Failed to load referral settings');
+        // Don't show error if table is empty
       } finally {
         setIsLoading(false);
       }
@@ -55,17 +85,27 @@ const ReferralSettingsEditor: React.FC = () => {
 
   const validateForm = (): boolean => {
     const newErrors: {
-      referrer_reward?: string;
-      referred_reward?: string;
+      referrer_reward_inr?: string;
+      referrer_reward_eur?: string;
+      referred_reward_inr?: string;
+      referred_reward_eur?: string;
       description?: string;
     } = {};
     
-    if (settings.referrer_reward < 0) {
-      newErrors.referrer_reward = 'Reward cannot be negative';
+    if ((settings.referrer_reward_inr ?? 0) < 0) {
+      newErrors.referrer_reward_inr = 'Reward cannot be negative';
     }
     
-    if (settings.referred_reward < 0) {
-      newErrors.referred_reward = 'Reward cannot be negative';
+    if ((settings.referrer_reward_eur ?? 0) < 0) {
+      newErrors.referrer_reward_eur = 'Reward cannot be negative';
+    }
+    
+    if ((settings.referred_reward_inr ?? 0) < 0) {
+      newErrors.referred_reward_inr = 'Reward cannot be negative';
+    }
+    
+    if ((settings.referred_reward_eur ?? 0) < 0) {
+      newErrors.referred_reward_eur = 'Reward cannot be negative';
     }
     
     if (!settings.description || settings.description.trim() === '') {
@@ -84,33 +124,45 @@ const ReferralSettingsEditor: React.FC = () => {
     
     setIsSaving(true);
     try {
-      const updatedSettings = {
+      // Prepare settings for upsert
+      const updatedSettings: any = {
         id: settings.id || undefined,
-        referrer_reward: settings.referrer_reward,
-        referred_reward: settings.referred_reward,
-        active: settings.active,
-        description: settings.description,
+        referrer_reward: settings.referrer_reward_inr ?? 10, // Keep for backward compatibility
+        referred_reward: settings.referred_reward_inr ?? 5, // Keep for backward compatibility
+        referrer_reward_inr: settings.referrer_reward_inr ?? 10,
+        referrer_reward_eur: settings.referrer_reward_eur ?? 10,
+        referred_reward_inr: settings.referred_reward_inr ?? 5,
+        referred_reward_eur: settings.referred_reward_eur ?? 5,
+        active: settings.active ?? false,
+        currency: settings.currency || 'INR',
+        description: settings.description || '',
         updated_at: new Date().toISOString()
       };
 
+      console.log('Saving referral settings:', updatedSettings);
+
       const { data, error } = await supabase
         .from('referral_settings')
-        .upsert(updatedSettings)
+        .upsert(updatedSettings, {
+          onConflict: 'id'
+        })
         .select()
         .single();
 
       if (error) {
         console.error('Error saving referral settings:', error);
-        toast.error('Failed to save referral settings');
+        console.error('Error details:', JSON.stringify(error, null, 2));
+        toast.error(`Failed to save referral settings: ${error.message}`);
       } else {
+        console.log('Settings saved successfully:', data);
         toast.success('Referral settings saved successfully');
         if (data) {
           setSettings(data);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving referral settings:', error);
-      toast.error('Failed to save referral settings');
+      toast.error(`Failed to save referral settings: ${error?.message || 'Unknown error'}`);
     } finally {
       setIsSaving(false);
     }
@@ -123,7 +175,9 @@ const ReferralSettingsEditor: React.FC = () => {
     let parsedValue: string | number | boolean = value;
     
     // Convert numeric string values to numbers
-    if (name === 'referrer_reward' || name === 'referred_reward') {
+    if (name === 'referrer_reward' || name === 'referred_reward' || 
+        name === 'referrer_reward_inr' || name === 'referrer_reward_eur' ||
+        name === 'referred_reward_inr' || name === 'referred_reward_eur') {
       parsedValue = parseFloat(value) || 0;
     }
     
@@ -183,46 +237,97 @@ const ReferralSettingsEditor: React.FC = () => {
           </div>
 
           <div className="grid gap-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="referrer_reward">Referrer Reward (credits)</Label>
-                <Input
-                  id="referrer_reward"
-                  name="referrer_reward"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={settings.referrer_reward}
-                  onChange={handleChange}
-                  placeholder="10"
-                  className={errors.referrer_reward ? "border-red-500" : ""}
-                />
-                {errors.referrer_reward && (
-                  <p className="text-red-500 text-xs">{errors.referrer_reward}</p>
-                )}
-                <p className="text-sm text-muted-foreground">
-                  Credits given to users who invite others
-                </p>
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-lg font-semibold mb-3">Referrer Rewards (Credits)</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="referrer_reward_inr">Referrer Reward (INR) ₹</Label>
+                    <Input
+                      id="referrer_reward_inr"
+                      name="referrer_reward_inr"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={settings.referrer_reward_inr ?? 10}
+                      onChange={handleChange}
+                      placeholder="10"
+                      className={errors.referrer_reward_inr ? "border-red-500" : ""}
+                    />
+                    {errors.referrer_reward_inr && (
+                      <p className="text-red-500 text-xs">{errors.referrer_reward_inr}</p>
+                    )}
+                    <p className="text-sm text-muted-foreground">
+                      Credits given to users who invite others (INR)
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="referrer_reward_eur">Referrer Reward (EUR) €</Label>
+                    <Input
+                      id="referrer_reward_eur"
+                      name="referrer_reward_eur"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={settings.referrer_reward_eur ?? 10}
+                      onChange={handleChange}
+                      placeholder="10"
+                      className={errors.referrer_reward_eur ? "border-red-500" : ""}
+                    />
+                    {errors.referrer_reward_eur && (
+                      <p className="text-red-500 text-xs">{errors.referrer_reward_eur}</p>
+                    )}
+                    <p className="text-sm text-muted-foreground">
+                      Credits given to users who invite others (EUR)
+                    </p>
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="referred_reward">Referred User Reward (credits)</Label>
-                <Input
-                  id="referred_reward"
-                  name="referred_reward"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={settings.referred_reward}
-                  onChange={handleChange}
-                  placeholder="5"
-                  className={errors.referred_reward ? "border-red-500" : ""}
-                />
-                {errors.referred_reward && (
-                  <p className="text-red-500 text-xs">{errors.referred_reward}</p>
-                )}
-                <p className="text-sm text-muted-foreground">
-                  Credits given to new users who sign up via referral
-                </p>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-3">Referred User Rewards (Credits)</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="referred_reward_inr">Referred User Reward (INR) ₹</Label>
+                    <Input
+                      id="referred_reward_inr"
+                      name="referred_reward_inr"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={settings.referred_reward_inr ?? 5}
+                      onChange={handleChange}
+                      placeholder="5"
+                      className={errors.referred_reward_inr ? "border-red-500" : ""}
+                    />
+                    {errors.referred_reward_inr && (
+                      <p className="text-red-500 text-xs">{errors.referred_reward_inr}</p>
+                    )}
+                    <p className="text-sm text-muted-foreground">
+                      Credits given to new users who sign up via referral (INR)
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="referred_reward_eur">Referred User Reward (EUR) €</Label>
+                    <Input
+                      id="referred_reward_eur"
+                      name="referred_reward_eur"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={settings.referred_reward_eur ?? 5}
+                      onChange={handleChange}
+                      placeholder="5"
+                      className={errors.referred_reward_eur ? "border-red-500" : ""}
+                    />
+                    {errors.referred_reward_eur && (
+                      <p className="text-red-500 text-xs">{errors.referred_reward_eur}</p>
+                    )}
+                    <p className="text-sm text-muted-foreground">
+                      Credits given to new users who sign up via referral (EUR)
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
 

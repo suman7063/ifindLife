@@ -17,13 +17,18 @@ const UserRegister: React.FC = () => {
   useEffect(() => {
     // Extract referral code from URL parameters
     const refParam = searchParams.get('ref');
+    console.log('🔍 UserRegister: URL ref param:', refParam);
     if (refParam) {
+      console.log('✅ UserRegister: Setting referral code:', refParam);
       setReferralCode(refParam);
+    } else {
+      console.log('ℹ️ UserRegister: No referral code in URL');
     }
 
     // Fetch referral settings
     const loadReferralSettings = async () => {
       const settings = await fetchReferralSettings();
+      console.log('🔍 UserRegister: Referral settings loaded:', settings);
       setReferralSettings(settings);
     };
 

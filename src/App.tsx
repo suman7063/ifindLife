@@ -125,6 +125,7 @@ const UserRoutes: React.FC = () => {
         {/* User Routes */}
         <Route path="/user-login" element={<UserLogin />} />
         <Route path="/user-signup" element={<UserSignup />} />
+        <Route path="/register" element={<UserSignup />} />
         <Route path="/user-dashboard/*" element={<UserDashboardWrapper />} />
         <Route path="/dashboard" element={<Navigate to="/user-dashboard" replace />} />
         {/* TODO: Re-implement call page if needed */}

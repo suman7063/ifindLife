@@ -36,7 +36,19 @@ export const fetchReferralSettings = async (): Promise<ReferralSettings | null> 
       .maybeSingle();
 
     if (error) throw error;
-    return (data as ReferralSettings) ?? null;
+    
+    // Map currency-specific fields for backward compatibility
+    const settings = data as any;
+    if (settings) {
+      return {
+        ...settings,
+        // For backward compatibility, use INR values as default
+        referrer_reward: settings.referrer_reward_inr ?? 10,
+        referred_reward: settings.referred_reward_inr ?? 5,
+      } as ReferralSettings;
+    }
+    
+    return null;
   } catch (error) {
     console.error('Error fetching referral settings:', error);
     return null;
@@ -88,6 +100,8 @@ export const fetchUserReferrals = async (userId: string): Promise<any[]> => {
  */
 export const processReferralCode = async (referralCode: string, userId: string): Promise<boolean> => {
   try {
+    console.log('🔍 processReferralCode called:', { referralCode, userId });
+    
     // First check if the referral code exists and get the referrer's ID
     const { data: userData, error: userError } = await supabase
       .from('users')
@@ -95,37 +109,53 @@ export const processReferralCode = async (referralCode: string, userId: string):
       .eq('referral_code', referralCode)
       .maybeSingle();
 
+    console.log('🔍 Referral code lookup result:', { userData, userError });
+
     if (userError || !userData) {
-      console.error('Invalid referral code or error:', userError);
+      console.error('❌ Invalid referral code or error:', userError);
       return false;
     }
 
     const referrerId = userData.id;
+    console.log('✅ Found referrer:', referrerId);
 
     // Create a referral record
+    const referralData = {
+      referrer_id: referrerId,
+      referred_id: userId,
+      referral_code: referralCode,
+      status: 'pending',
+      reward_claimed: false
+    };
+    
+    console.log('🔍 Inserting referral record:', referralData);
     const { error: insertError } = await supabase
       .from('referrals')
-      .insert({
-        referrer_id: referrerId,
-        referred_id: userId,
-        referral_code: referralCode,
-        status: 'pending',
-        reward_claimed: false
-      });
+      .insert(referralData);
 
-    if (insertError) throw insertError;
+    if (insertError) {
+      console.error('❌ Error inserting referral record:', insertError);
+      throw insertError;
+    }
+    
+    console.log('✅ Referral record created successfully');
     
     // Update the user's referred_by field
+    console.log('🔍 Updating user referred_by:', { userId, referrerId });
     const { error: updateError } = await supabase
       .from('users')
       .update({ referred_by: referrerId })
       .eq('id', userId);
 
-    if (updateError) throw updateError;
+    if (updateError) {
+      console.error('❌ Error updating user referred_by:', updateError);
+      throw updateError;
+    }
 
+    console.log('✅ User referred_by updated successfully');
     return true;
   } catch (error) {
-    console.error('Error processing referral:', error);
+    console.error('❌ Error processing referral:', error);
     return false;
   }
 };

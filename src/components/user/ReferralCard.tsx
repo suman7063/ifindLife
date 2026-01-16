@@ -34,8 +34,8 @@ const ReferralCard: React.FC<ReferralCardProps> = ({ userProfile, settings }) =>
   // Use referral code from user profile, or generate a fallback
   const referralCode = userProfile.referral_code || 'REF' + Math.random().toString(36).substring(2, 8).toUpperCase();
   
-  // Generate referral link
-  const referralLink = window.location.origin + `/signup?ref=${referralCode}`;
+  // Generate referral link dynamically (always use current origin)
+  const referralLink = `${window.location.origin}/register?ref=${referralCode}`;
   
   const copyToClipboard = (text: string, type: 'code' | 'link') => {
     navigator.clipboard.writeText(text).then(() => {

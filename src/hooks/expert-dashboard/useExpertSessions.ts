@@ -1017,6 +1017,22 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
               duration,
             })
             .eq('id', callSession.id);
+
+          // Check and complete referral if this is a referred user's first call
+          // Credits will be awarded after delay (2 minutes for test, 48 hours for production)
+          if (callSession.user_id) {
+            try {
+              const { checkAndCompleteReferral } = await import('@/utils/referralCompletion');
+              await checkAndCompleteReferral(
+                callSession.user_id,
+                callSession.id,
+                endTime.toISOString() // Pass call end time for delayed reward calculation
+              );
+            } catch (referralError) {
+              // Silently handle referral errors - they're non-critical
+              console.warn('⚠️ Failed to check referral completion:', referralError);
+            }
+          }
         }
 
         // Also update appointment status

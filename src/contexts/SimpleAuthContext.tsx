@@ -159,6 +159,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
           currency: usersData.currency || 'EUR', // Default to EUR instead of USD
           profile_picture: usersData.profile_picture || '',
           referral_code: usersData.referral_code || '',
+          // referral_link stored in DB is relative path - will be generated dynamically when needed
           referral_link: usersData.referral_link || '',
           referred_by: usersData.referred_by || '',
           wallet_balance: usersData.wallet_balance || 0,

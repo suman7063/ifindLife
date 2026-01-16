@@ -15,6 +15,10 @@ const ReferralProgram = () => {
   const { user, userProfile, isAuthenticated } = useSimpleAuth();
   const [referralSettings, setReferralSettings] = useState<ReferralSettings | null>(null);
   const [copied, setCopied] = useState(false);
+  const [isGeneratingCode, setIsGeneratingCode] = useState(false);
+  
+  // Get user's currency
+  const userCurrency = userProfile?.currency || 'INR';
 
   useEffect(() => {
     const loadReferralSettings = async () => {
@@ -23,6 +27,69 @@ const ReferralProgram = () => {
     };
     loadReferralSettings();
   }, []);
+
+  // Generate referral code if user doesn't have one
+  const generateReferralCode = async () => {
+    if (!user?.id) {
+      toast.error('Please login to generate referral code');
+      return;
+    }
+
+    setIsGeneratingCode(true);
+    try {
+      const { supabase } = await import('@/lib/supabase');
+      
+      // Generate unique referral code
+      const generateCode = () => {
+        return Math.random().toString(36).substring(2, 8).toUpperCase();
+      };
+      
+      let referralCode = generateCode();
+      let isUnique = false;
+      let attempts = 0;
+      
+      // Check uniqueness and regenerate if needed
+      while (!isUnique && attempts < 10) {
+        const { data: existing } = await supabase
+          .from('users')
+          .select('id')
+          .eq('referral_code', referralCode)
+          .maybeSingle();
+        
+        if (!existing) {
+          isUnique = true;
+        } else {
+          referralCode = generateCode();
+          attempts++;
+        }
+      }
+      
+      // Generate referral link (store only relative path, not full URL)
+      // Full URL will be generated dynamically using getReferralLink() when needed
+      const referralLink = `/register?ref=${referralCode}`;
+      
+      // Update user profile
+      const { error } = await supabase
+        .from('users')
+        .update({
+          referral_code: referralCode,
+          referral_link: referralLink  // Store relative path only (dynamic URL generated when needed)
+        })
+        .eq('id', user.id);
+      
+      if (error) throw error;
+      
+      toast.success('Referral code generated successfully!');
+      
+      // Reload page or refresh user profile
+      window.location.reload();
+    } catch (error: any) {
+      console.error('Error generating referral code:', error);
+      toast.error('Failed to generate referral code. Please try again.');
+    } finally {
+      setIsGeneratingCode(false);
+    }
+  };
 
   const handleCopyReferralLink = () => {
     if (!userProfile?.referral_code) {
@@ -42,7 +109,21 @@ const ReferralProgram = () => {
     }
   };
 
+  // Generate referral link dynamically (always use current origin)
+  // Use referral_code to generate link, not stored referral_link (which may have old origin)
   const referralLink = userProfile?.referral_code ? getReferralLink(userProfile.referral_code) : '';
+
+  // Debug: Log user profile state
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      console.log('User Profile State:', {
+        hasUserProfile: !!userProfile,
+        hasReferralCode: !!userProfile?.referral_code,
+        referralCode: userProfile?.referral_code,
+        userId: user?.id
+      });
+    }
+  }, [isAuthenticated, user, userProfile]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -188,7 +269,10 @@ const ReferralProgram = () => {
                 <div className="text-center p-6 bg-primary/5 rounded-lg">
                   <h3 className="text-lg font-semibold mb-2">You Earn</h3>
                   <p className="text-3xl font-bold text-primary mb-2">
-                    {referralSettings.referrer_reward} Points
+                    {userCurrency === 'EUR' 
+                      ? (referralSettings.referrer_reward_eur ?? 10)
+                      : (referralSettings.referrer_reward_inr ?? 10)
+                    } {userCurrency === 'EUR' ? '€' : '₹'} Credits
                   </p>
                   <p className="text-sm text-muted-foreground">
                     When someone signs up using your referral code
@@ -197,7 +281,10 @@ const ReferralProgram = () => {
                 <div className="text-center p-6 bg-secondary/5 rounded-lg">
                   <h3 className="text-lg font-semibold mb-2">Your Friend Earns</h3>
                   <p className="text-3xl font-bold text-secondary mb-2">
-                    {referralSettings.referred_reward} Points
+                    {userCurrency === 'EUR' 
+                      ? (referralSettings.referred_reward_eur ?? 5)
+                      : (referralSettings.referred_reward_inr ?? 5)
+                    } {userCurrency === 'EUR' ? '€' : '₹'} Credits
                   </p>
                   <p className="text-sm text-muted-foreground">
                     Welcome bonus for joining our community
@@ -249,13 +336,22 @@ const ReferralProgram = () => {
                   </div>
                 </div>
               ) : (
-                <div className="text-center">
-                  <p className="text-muted-foreground mb-4">
-                    Complete your profile to get your unique referral code
+                <div className="text-center space-y-4">
+                  <p className="text-muted-foreground">
+                    Get your unique referral code to start sharing and earning rewards
                   </p>
-                  <Button asChild>
-                    <Link to="/user-dashboard/profile">Complete Profile</Link>
-                  </Button>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <Button 
+                      onClick={generateReferralCode}
+                      disabled={isGeneratingCode}
+                      className="bg-ifind-aqua hover:bg-ifind-teal"
+                    >
+                      {isGeneratingCode ? 'Generating...' : 'Generate Referral Code'}
+                    </Button>
+                    <Button variant="outline" asChild>
+                      <Link to="/user-dashboard/profile">Complete Profile</Link>
+                    </Button>
+                  </div>
                 </div>
               )}
             </CardContent>

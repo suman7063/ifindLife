@@ -17,8 +17,22 @@ const ReferralsSection: React.FC<ReferralsSectionProps> = ({ user }) => {
   const [referrals, setReferrals] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   
-  // Generate referral link if not already present
-  const referralLink = user?.referral_link || `${window.location.origin}/signup?ref=${user?.referral_code || ''}`;
+  // Generate referral link dynamically (always use current origin)
+  // If referral_link exists in DB, it's a relative path - prepend origin
+  // Otherwise generate from referral_code
+  const getDynamicReferralLink = () => {
+    if (user?.referral_code) {
+      return `${window.location.origin}/register?ref=${user.referral_code}`;
+    }
+    if (user?.referral_link) {
+      // If stored link is relative, prepend origin; if absolute, use as-is
+      return user.referral_link.startsWith('http') 
+        ? user.referral_link 
+        : `${window.location.origin}${user.referral_link}`;
+    }
+    return '';
+  };
+  const referralLink = getDynamicReferralLink();
   
   // Fetch referrals data
   useEffect(() => {

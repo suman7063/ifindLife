@@ -76,29 +76,54 @@ const ReferralAnalytics: React.FC = () => {
         });
 
         // Fetch recent referrals with user names
+        // First get referrals
         const { data: recentData, error: recentError } = await supabase
           .from('referrals')
-          .select(`
-            id,
-            status,
-            reward_claimed,
-            created_at,
-            referrer:referrer_id(name),
-            referred:referred_id(name)
-          `)
+          .select('id, referrer_id, referred_id, status, reward_claimed, created_at')
           .order('created_at', { ascending: false })
           .limit(10);
 
-        if (!recentError && recentData) {
+        console.log('🔍 Recent referrals raw data:', { recentData, recentError });
+
+        if (!recentError && recentData && recentData.length > 0) {
+          // Get unique user IDs
+          const userIds = new Set<string>();
+          recentData.forEach(ref => {
+            if (ref.referrer_id) userIds.add(ref.referrer_id);
+            if (ref.referred_id) userIds.add(ref.referred_id);
+          });
+
+          // Fetch user names
+          const { data: usersData, error: usersError } = await supabase
+            .from('users')
+            .select('id, name')
+            .in('id', Array.from(userIds));
+
+          console.log('🔍 Users data for referrals:', { usersData, usersError });
+
+          // Create a map of user IDs to names
+          const userMap = new Map<string, string>();
+          if (usersData) {
+            usersData.forEach(user => {
+              userMap.set(user.id, user.name || 'Unknown');
+            });
+          }
+
+          // Format referrals with user names
           const formattedReferrals: RecentReferral[] = recentData.map(ref => ({
             id: ref.id,
-            referrerName: (ref.referrer as any)?.name || 'Unknown',
-            referredName: (ref.referred as any)?.name || 'Unknown',
+            referrerName: userMap.get(ref.referrer_id) || 'Unknown',
+            referredName: userMap.get(ref.referred_id) || 'Unknown',
             status: ref.status,
             createdAt: ref.created_at,
             rewardClaimed: ref.reward_claimed
           }));
+
+          console.log('🔍 Formatted recent referrals:', formattedReferrals);
           setRecentReferrals(formattedReferrals);
+        } else {
+          console.log('⚠️ No recent referrals found or error:', { recentError, recentData });
+          setRecentReferrals([]);
         }
 
       } catch (error) {

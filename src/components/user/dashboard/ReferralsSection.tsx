@@ -76,7 +76,8 @@ const ReferralsSection: React.FC<ReferralsSectionProps> = ({ user }) => {
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   
   const referralCode = user?.referral_code || 'ABC123';
-  const referralLink = `${window.location.origin}/signup?ref=${referralCode}`;
+  // Generate referral link dynamically (always use current origin)
+  const referralLink = `${window.location.origin}/register?ref=${referralCode}`;
   
   const copyReferralCode = () => {
     navigator.clipboard.writeText(referralCode);

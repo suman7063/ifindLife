@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -13,7 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Loader2, User, Mail, Phone, Calendar, MapPin, Shield, Globe, Gift, CheckCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { processReferralCode } from '@/utils/referralUtils';
+import { processReferralCode, getReferralLink } from '@/utils/referralUtils';
 import { ReferralSettings } from '@/types/supabase';
 import { passwordSchema, emailSchema } from '@/utils/validationSchemas';
 // TODO: Re-implement pricing hooks
@@ -109,7 +109,60 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
     },
   });
 
+  // Update form when initialReferralCode changes (async load from URL)
+  useEffect(() => {
+    console.log('🔍 SinglePageForm: initialReferralCode changed:', initialReferralCode);
+    if (initialReferralCode) {
+      console.log('✅ SinglePageForm: Setting referral code in form:', initialReferralCode);
+      form.setValue('referralCode', initialReferralCode, {
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true
+      });
+      const formValue = form.getValues('referralCode');
+      console.log('🔍 SinglePageForm: Form value after setValue:', formValue);
+      
+      // Also update the form state to ensure it's persisted
+      setTimeout(() => {
+        const currentValue = form.getValues('referralCode');
+        console.log('🔍 SinglePageForm: Form value after timeout:', currentValue);
+        if (!currentValue && initialReferralCode) {
+          console.warn('⚠️ Form value lost, resetting:', initialReferralCode);
+          form.setValue('referralCode', initialReferralCode, {
+            shouldValidate: true,
+            shouldDirty: true,
+            shouldTouch: true
+          });
+        }
+      }, 100);
+    }
+  }, [initialReferralCode, form]);
+
   const handleSubmit = async (data: RegistrationFormData) => {
+    // Get current form values to check if referral code is present
+    const currentFormValues = form.getValues();
+    console.log('🔍 SinglePageForm: Form submitted with data:', {
+      email: data.email,
+      referralCode: data.referralCode,
+      currentFormReferralCode: currentFormValues.referralCode,
+      hasReferralCode: !!data.referralCode,
+      initialReferralCode: initialReferralCode,
+      referralSettings: referralSettings,
+      referralSettingsActive: referralSettings?.active
+    });
+    
+    // If referralCode is empty but initialReferralCode exists, use it
+    if (!data.referralCode && initialReferralCode) {
+      console.log('⚠️ Referral code missing in form data, using initialReferralCode:', initialReferralCode);
+      data.referralCode = initialReferralCode;
+    }
+    
+    console.log('🔍 After fallback check:', {
+      dataReferralCode: data.referralCode,
+      initialReferralCode: initialReferralCode,
+      finalReferralCode: data.referralCode || initialReferralCode
+    });
+    
     setIsLoading(true);
     
     try {
@@ -135,36 +188,136 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
         throw authError;
       }
 
-      console.log('authData', authData);
+      console.log('🔍 SinglePageForm: Auth data received:', {
+        hasUser: !!authData.user,
+        userId: authData.user?.id,
+        email: authData.user?.email
+      });
       if (authData.user) {
+        // Generate unique referral code for the new user
+        const generateCode = () => {
+          return Math.random().toString(36).substring(2, 8).toUpperCase();
+        };
+        
+        let referralCode = generateCode();
+        let isUnique = false;
+        let attempts = 0;
+        
+        // Check uniqueness and regenerate if needed
+        while (!isUnique && attempts < 10) {
+          const { data: existing } = await supabase
+            .from('users')
+            .select('id')
+            .eq('referral_code', referralCode)
+            .maybeSingle();
+          
+          if (!existing) {
+            isUnique = true;
+          } else {
+            referralCode = generateCode();
+            attempts++;
+          }
+        }
+        
+        // Generate referral link (store only relative path, not full URL)
+        // Full URL will be generated dynamically using getReferralLink() when needed
+        const referralLink = `/register?ref=${referralCode}`;
+        
+        // Process referral code BEFORE creating user record to get referrer_id
+        let referrerId: string | null = null;
+        const referralCodeToProcess = data.referralCode?.trim() || initialReferralCode?.trim();
+        
+        console.log('🔍 Referral Processing Debug:', {
+          dataReferralCode: data.referralCode,
+          initialReferralCode: initialReferralCode,
+          referralCodeToProcess: referralCodeToProcess,
+          referralSettingsActive: referralSettings?.active,
+          hasReferralCode: !!referralCodeToProcess,
+          referralSettings: referralSettings
+        });
+        
+        console.log('🔍 Condition check:', {
+          hasReferralCodeToProcess: !!referralCodeToProcess,
+          referralCodeToProcess: referralCodeToProcess,
+          referralSettingsActive: referralSettings?.active,
+          willEnterIf: !!(referralCodeToProcess && referralSettings?.active)
+        });
+        
+        if (referralCodeToProcess && referralSettings?.active) {
+          console.log('✅ Entering referrer lookup block');
+          console.log('🔍 Looking up referrer before user creation:', referralCodeToProcess);
+          
+          try {
+            const { data: referrerData, error: referrerError } = await supabase
+              .from('users')
+              .select('id')
+              .eq('referral_code', referralCodeToProcess)
+              .maybeSingle();
+            
+            console.log('🔍 Referrer lookup result:', { referrerData, referrerError });
+            
+            if (!referrerError && referrerData) {
+              referrerId = referrerData.id;
+              console.log('✅ Found referrer ID:', referrerId);
+            } else {
+              console.warn('⚠️ Referrer not found for code:', referralCodeToProcess, referrerError);
+            }
+          } catch (lookupError) {
+            console.error('❌ Error during referrer lookup:', lookupError);
+          }
+        } else {
+          console.warn('⚠️ Skipping referrer lookup:', {
+            hasCode: !!referralCodeToProcess,
+            isActive: referralSettings?.active,
+            referralCodeToProcess: referralCodeToProcess,
+            referralSettings: referralSettings
+          });
+        }
+        
+        console.log('🔍 Final referrerId before user creation:', referrerId);
+        
         // Create user record with extended profile data
+        const userInsertData = {
+          id: authData.user.id,
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          country: data.country,
+          city: data.city,
+          currency: data.country && (data.country.toLowerCase() === 'india' || data.country.toLowerCase() === 'in') ? 'INR' : 'EUR', // INR for India, EUR for rest
+          date_of_birth: data.dateOfBirth,
+          gender: data.gender,
+          occupation: data.occupation,
+          terms_accepted: data.termsAccepted,
+          privacy_accepted: data.privacyAccepted,
+          marketing_consent: data.marketingConsent,
+          referral_code: referralCode,  // Generate referral code for new user
+          referral_link: referralLink,  // Store relative path only (dynamic URL generated when needed)
+          referred_by: referrerId,  // Set referred_by directly during user creation
+          preferences: {
+            notifications: {
+              email: data.emailNotifications,
+              sms: data.smsNotifications,
+            }
+          }
+        };
+        
+        console.log('🔍 User insert data:', {
+          ...userInsertData,
+          referred_by: referrerId,
+          hasReferrerId: !!referrerId
+        });
+        
         const { error: userError } = await supabase
           .from('users')
-          .insert({
-            id: authData.user.id,
-            name: data.name,
-            email: data.email,
-            phone: data.phone,
-            country: data.country,
-            city: data.city,
-            currency: data.country && (data.country.toLowerCase() === 'india' || data.country.toLowerCase() === 'in') ? 'INR' : 'EUR', // INR for India, EUR for rest
-            date_of_birth: data.dateOfBirth,
-            gender: data.gender,
-            occupation: data.occupation,
-            terms_accepted: data.termsAccepted,
-            privacy_accepted: data.privacyAccepted,
-            marketing_consent: data.marketingConsent,
-            preferences: {
-              notifications: {
-                email: data.emailNotifications,
-                sms: data.smsNotifications,
-              }
-            }
-          });
+          .insert(userInsertData);
 
         if (userError) {
-          console.error('User profile creation error:', userError);
+          console.error('❌ User profile creation error:', userError);
+          console.error('❌ User insert data that failed:', userInsertData);
           // Don't throw here as auth account was created successfully
+        } else {
+          console.log('✅ User profile created successfully with referred_by:', referrerId);
         }
 
         // Create notification preferences
@@ -184,27 +337,38 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
           console.error('Notification preferences error:', notifError);
         }
 
-        // Process referral code if provided and referral program is active
-        if (data.referralCode && data.referralCode.trim()) {
+        // Create referral record if referrer was found
+        if (referrerId && referralCodeToProcess) {
           try {
-            // Check if referral program is active before processing
-            if (!referralSettings?.active) {
-              console.log('Referral program is disabled, skipping referral processing');
+            console.log('✅ Creating referral record:', {
+              referrer_id: referrerId,
+              referred_id: authData.user.id,
+              referral_code: referralCodeToProcess
+            });
+            
+            const { error: referralInsertError } = await supabase
+              .from('referrals')
+              .insert({
+                referrer_id: referrerId,
+                referred_id: authData.user.id,
+                referral_code: referralCodeToProcess,
+                status: 'pending',
+                reward_claimed: false
+              });
+            
+            if (referralInsertError) {
+              console.error('❌ Error creating referral record:', referralInsertError);
             } else {
-              console.log('Processing referral code:', data.referralCode);
-              const referralSuccess = await processReferralCode(data.referralCode.trim(), authData.user.id);
-              if (referralSuccess) {
-                console.log('Referral processed successfully');
-                toast.success('Referral code applied successfully!');
-              } else {
-                console.warn('Referral processing failed, but registration continues');
-                toast.warning('Invalid referral code, but registration was successful');
-              }
+              console.log('✅ Referral record created successfully');
+              toast.success('Referral code applied successfully!');
             }
-          } catch (referralError) {
-            console.error('Referral processing error:', referralError);
-            // Don't fail registration if referral processing fails
-            toast.warning('Could not process referral code, but registration was successful');
+          } catch (referralError: any) {
+            console.error('❌ Error creating referral record:', referralError);
+          }
+        } else if (referralCodeToProcess && !referrerId) {
+          console.warn('⚠️ Referral code provided but referrer not found:', referralCodeToProcess);
+          if (!initialReferralCode) {
+            toast.warning('Invalid referral code, but registration was successful');
           }
         }
       }
@@ -489,8 +653,9 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
               </div>
             </div> */}
 
-            {/* Referral Section - Only show if referral program is active */}
-            {(initialReferralCode || (referralSettings && referralSettings.active)) && (
+            {/* Referral Section - Only show if referral code came from URL */}
+            {/* Field will only be visible if user came via referral link */}
+            {initialReferralCode && (
               <div className="space-y-4">
                 <div className="flex items-center gap-2 mb-4">
                   <Gift className="h-5 w-5 text-primary" />
@@ -500,27 +665,64 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
                 <FormField
                   control={form.control}
                   name="referralCode"
-                  render={({ field }) => (
-                    <FormItem className="space-y-2">
-                      <FormLabel>Referral Code (Optional)</FormLabel>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <Gift className="h-4 w-4 text-muted-foreground" />
+                  render={({ field }) => {
+                    // If referral code came from URL, make it read-only
+                    const isFromUrl = !!initialReferralCode;
+                    const displayValue = field.value || initialReferralCode || '';
+                    
+                    return (
+                      <FormItem className="space-y-2">
+                        <FormLabel>Referral Code (Optional)</FormLabel>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <Gift className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                          <FormControl>
+                            <Input 
+                              placeholder="Enter referral code" 
+                              className="pl-10" 
+                              value={displayValue}
+                              onChange={(e) => {
+                                // Only allow editing if not from URL
+                                if (!isFromUrl) {
+                                  console.log('🔍 Referral field onChange:', e.target.value);
+                                  field.onChange(e);
+                                }
+                              }}
+                              onBlur={field.onBlur}
+                              name={field.name}
+                              ref={field.ref}
+                              readOnly={isFromUrl}
+                              disabled={isFromUrl}
+                              style={isFromUrl ? { 
+                                cursor: 'not-allowed', 
+                                backgroundColor: 'rgba(0, 0, 0, 0.05)',
+                                opacity: 0.8
+                              } : {}}
+                            />
+                          </FormControl>
+                          {isFromUrl && (
+                            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                              <span className="text-xs text-muted-foreground">From link</span>
+                            </div>
+                          )}
                         </div>
-                        <FormControl>
-                          <Input placeholder="Enter referral code" className="pl-10" {...field} value={field.value ?? ''} />
-                        </FormControl>
-                      </div>
                       
-                      {referralSettings && referralSettings.active && (
-                        <div className="text-xs text-gray-500 mt-1 flex items-center p-2 bg-primary/5 rounded-md">
-                          <Gift className="h-3 w-3 mr-1 text-primary" />
-                          {referralSettings.description || `Get $${referralSettings.referred_reward} credit when you sign up with a referral code!`}
-                        </div>
-                      )}
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                        {referralSettings && referralSettings.active && (
+                          <div className="text-xs text-gray-500 mt-1 flex items-center p-2 bg-primary/5 rounded-md">
+                            <Gift className="h-3 w-3 mr-1 text-primary" />
+                            {referralSettings.description || `Get $${referralSettings.referred_reward} credit when you sign up with a referral code!`}
+                          </div>
+                        )}
+                        {isFromUrl && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            This referral code was automatically applied from your link.
+                          </p>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
               </div>
             )}

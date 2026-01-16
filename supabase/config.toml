@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.send-expert-email-welcome-status]
 verify_jwt = false
+
+[functions.admin-referral-settings]
+verify_jwt = false

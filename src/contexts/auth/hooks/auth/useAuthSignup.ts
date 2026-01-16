@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { UserProfile } from '@/types/database/unified';
 import { getCurrencyFromCountry } from '@/hooks/useUserCurrency';
+import { getReferralLink } from '@/utils/referralUtils';
 
 export const useAuthSignup = (onActionComplete: () => void) => {
   const signup = useCallback(async (
@@ -30,6 +31,35 @@ export const useAuthSignup = (onActionComplete: () => void) => {
         // Determine currency based on country
         const currency = getCurrencyFromCountry(userData.country || null);
         
+        // Generate unique referral code for the new user
+        const generateCode = () => {
+          return Math.random().toString(36).substring(2, 8).toUpperCase();
+        };
+        
+        let referralCode = generateCode();
+        let isUnique = false;
+        let attempts = 0;
+        
+        // Check uniqueness and regenerate if needed
+        while (!isUnique && attempts < 10) {
+          const { data: existing } = await supabase
+            .from('users')
+            .select('id')
+            .eq('referral_code', referralCode)
+            .maybeSingle();
+          
+          if (!existing) {
+            isUnique = true;
+          } else {
+            referralCode = generateCode();
+            attempts++;
+          }
+        }
+        
+        // Generate referral link (store only relative path, not full URL)
+        // Full URL will be generated dynamically using getReferralLink() when needed
+        const referralLink = `/register?ref=${referralCode}`;
+        
         // Create user profile with additional data
         const profileData = {
           ...userData,
@@ -37,7 +67,8 @@ export const useAuthSignup = (onActionComplete: () => void) => {
           email,
           currency: currency, // Set currency based on country
           referred_by: null,
-          referral_code: Math.random().toString(36).substring(2, 8).toUpperCase(),
+          referral_code: referralCode,
+          referral_link: referralLink,  // Store relative path only (dynamic URL generated when needed)
         };
 
         // If referral code provided, find referrer and link
