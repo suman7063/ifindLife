@@ -66,6 +66,8 @@ const CallManagementPage: React.FC = () => {
   const [autoAcceptCalls, setAutoAcceptCalls] = useState(false);
   const [incomingCalls, setIncomingCalls] = useState<CallRequest[]>([]);
   const [missedCalls, setMissedCalls] = useState<CallRequest[]>([]);
+  const [todaysCalls, setTodaysCalls] = useState<CallRequest[]>([]);
+  const [allCalls, setAllCalls] = useState<CallRequest[]>([]);
   const [offlineMessages, setOfflineMessages] = useState<OfflineMessage[]>([]);
   const [currentCall, setCurrentCall] = useState<CallRequest | null>(null);
   const [callStats, setCallStats] = useState({
@@ -124,6 +126,57 @@ const CallManagementPage: React.FC = () => {
       if (missedError) throw missedError;
       setMissedCalls(missed || []);
 
+      // Load today's calls (all calls from today - accepted, completed, declined, expired)
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayStart = today.toISOString();
+      
+      // Load incoming_call_requests with call_sessions to get actual call status
+      const { data: todayCalls, error: todayCallsError } = await supabase
+        .from('incoming_call_requests')
+        .select(`
+          *,
+          call_sessions (
+            id,
+            status,
+            end_time,
+            duration,
+            call_metadata
+          )
+        `)
+        .eq('expert_id', expertAuthId)
+        .gte('created_at', todayStart)
+        .order('created_at', { ascending: false });
+
+      if (todayCallsError) {
+        console.warn('Error loading today\'s calls:', todayCallsError);
+      } else {
+        setTodaysCalls(todayCalls || []);
+      }
+
+      // Load all calls (call history) - not just today's
+      const { data: allCallsData, error: allCallsError } = await supabase
+        .from('incoming_call_requests')
+        .select(`
+          *,
+          call_sessions (
+            id,
+            status,
+            end_time,
+            duration,
+            call_metadata
+          )
+        `)
+        .eq('expert_id', expertAuthId)
+        .order('created_at', { ascending: false })
+        .limit(100); // Limit to last 100 calls for performance
+
+      if (allCallsError) {
+        console.warn('Error loading call history:', allCallsError);
+      } else {
+        setAllCalls(allCallsData || []);
+      }
+
       // Load offline messages (gracefully handle missing table)
       // Skip query if we already know table doesn't exist (to avoid repeated 404s)
       if (awayMessagesTableExistsRef.current === false) {
@@ -154,12 +207,41 @@ const CallManagementPage: React.FC = () => {
         }
       }
 
-      // Load call stats (mock data for now)
+      // Calculate call stats from actual data
+      const todayCallsCount = todayCalls?.length || 0;
+      const missedCount = missed?.length || 0;
+      
+      // Calculate total duration and earnings from call_sessions for today
+      const { data: todaySessions } = await supabase
+        .from('call_sessions')
+        .select('duration, cost, currency')
+        .eq('expert_id', expertAuthId)
+        .gte('created_at', todayStart)
+        .eq('status', 'ended');
+
+      let totalDuration = 0;
+      let totalEarnings = 0;
+      
+      if (todaySessions) {
+        todaySessions.forEach(session => {
+          if (session.duration) {
+            totalDuration += session.duration; // duration is in seconds
+          }
+          if (session.cost) {
+            // Convert to user's currency if needed
+            const sessionCost = session.cost;
+            if (session.currency === currency || !session.currency) {
+              totalEarnings += sessionCost;
+            }
+          }
+        });
+      }
+
       setCallStats({
-        todaysCalls: 5,
-        totalDuration: 240, // minutes
-        earnings: 600,
-        missedCallsCount: missed?.length || 0
+        todaysCalls: todayCallsCount,
+        totalDuration: Math.floor(totalDuration / 60), // Convert to minutes
+        earnings: totalEarnings,
+        missedCallsCount: missedCount
       });
 
     } catch (error) {
@@ -199,6 +281,19 @@ const CallManagementPage: React.FC = () => {
               }
               return [newCall, ...prev];
             });
+            
+            // Also add to today's calls if it's from today
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const callDate = new Date(newCall.created_at);
+            if (callDate >= today) {
+              setTodaysCalls(prev => {
+                if (prev.some(call => call.id === newCall.id)) {
+                  return prev;
+                }
+                return [newCall, ...prev];
+              });
+            }
             
             // Don't show dialog here - the global dialog in NewExpertDashboard handles it
             // Just update the list for display purposes
@@ -430,10 +525,60 @@ const CallManagementPage: React.FC = () => {
     });
   };
 
+  const formatDateTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    // Check if it's today
+    if (date.toDateString() === today.toDateString()) {
+      return `Today at ${formatTime(dateString)}`;
+    }
+    // Check if it's yesterday
+    if (date.toDateString() === yesterday.toDateString()) {
+      return `Yesterday at ${formatTime(dateString)}`;
+    }
+    // Otherwise show full date
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: date.getFullYear() !== today.getFullYear() ? 'numeric' : undefined
+    }) + ` at ${formatTime(dateString)}`;
+  };
+
   const formatDuration = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
     return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+  };
+
+  const formatCallDuration = (seconds: number | null | undefined) => {
+    if (!seconds || seconds === 0) return null;
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    if (minutes > 0) {
+      return secs > 0 ? `${minutes}m ${secs}s` : `${minutes}m`;
+    }
+    return `${secs}s`;
+  };
+
+  const getEndedByText = (call: CallRequest) => {
+    const callSession = (call as any).call_sessions;
+    const callSessionData = Array.isArray(callSession) ? callSession[0] : callSession;
+    const metadata = callSessionData?.call_metadata as Record<string, any> | undefined;
+    
+    if (!metadata || !metadata.ended_by) {
+      return null;
+    }
+    
+    const endedBy = metadata.ended_by;
+    if (endedBy === 'user') {
+      return 'Ended by user';
+    } else if (endedBy === 'expert') {
+      return 'Ended by you';
+    }
+    return null;
   };
 
   return (
@@ -523,8 +668,20 @@ const CallManagementPage: React.FC = () => {
         </Card>
       </div>
 
-      <Tabs defaultValue="incoming" className="space-y-4">
+      <Tabs defaultValue="today" className="space-y-4">
         <TabsList>
+          <TabsTrigger value="today">
+            Today's Calls
+            {todaysCalls.length > 0 && (
+              <Badge variant="default" className="ml-2">{todaysCalls.length}</Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="history">
+            Call History
+            {allCalls.length > 0 && (
+              <Badge variant="default" className="ml-2">{allCalls.length}</Badge>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="incoming">
             Incoming Calls
             {incomingCalls.length > 0 && (
@@ -545,6 +702,264 @@ const CallManagementPage: React.FC = () => {
           </TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
+
+        {/* Today's Calls */}
+        <TabsContent value="today">
+          <Card>
+            <CardHeader>
+              <CardTitle>Today's Calls</CardTitle>
+              <CardDescription>
+                All calls received today (accepted, declined, expired, completed)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {todaysCalls.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Phone className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p>No calls today</p>
+                  <p className="text-sm">Calls received today will appear here</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {todaysCalls.map((call) => {
+                    const getStatusBadge = (call: CallRequest) => {
+                      // Check call_sessions status to determine if call was completed
+                      const callSession = (call as any).call_sessions;
+                      const callSessionStatus = Array.isArray(callSession) ? callSession[0]?.status : callSession?.status;
+                      
+                      // If call_session status is 'ended', it means call was completed
+                      if (callSessionStatus === 'ended' && call.status === 'accepted') {
+                        return <Badge variant="default" className="bg-blue-500">Completed</Badge>;
+                      }
+                      
+                      // Otherwise, use incoming_call_requests status
+                      switch (call.status) {
+                        case 'accepted':
+                          return <Badge variant="default" className="bg-green-500">Accepted</Badge>;
+                        case 'declined':
+                          return <Badge variant="destructive">Declined</Badge>;
+                        case 'expired':
+                        case 'timeout':
+                          return <Badge variant="secondary">Expired</Badge>;
+                        case 'cancelled':
+                          // If call was cancelled but call_session exists and is ended, it means call completed
+                          if (callSessionStatus === 'ended') {
+                            return <Badge variant="default" className="bg-blue-500">Completed</Badge>;
+                          }
+                          return <Badge variant="secondary">Cancelled</Badge>;
+                        case 'pending':
+                          return <Badge variant="outline">Pending</Badge>;
+                        default:
+                          return <Badge variant="outline">{call.status}</Badge>;
+                      }
+                    };
+
+                    // Get call session data
+                    const callSession = (call as any).call_sessions;
+                    const callSessionData = Array.isArray(callSession) ? callSession[0] : callSession;
+                    const callDuration = callSessionData?.duration;
+                    const endedByText = getEndedByText(call);
+
+                    return (
+                      <div key={call.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                        <div className="flex justify-between items-start">
+                          <div className="flex items-center gap-3">
+                            {call.call_type === 'video' ? (
+                              <Video className="h-8 w-8 text-blue-500" />
+                            ) : (
+                              <Phone className="h-8 w-8 text-green-500" />
+                            )}
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <h3 className="font-semibold">
+                                  {call.user_metadata?.name || 'Anonymous User'}
+                                </h3>
+                                {getStatusBadge(call)}
+                              </div>
+                              <p className="text-sm text-gray-600">
+                                {call.call_type} call • {
+                                  call.estimated_cost_inr && currency === 'INR' ? `₹${call.estimated_cost_inr}` : 
+                                  call.estimated_cost_eur && currency === 'EUR' ? `€${call.estimated_cost_eur}` :
+                                  call.estimated_cost_inr ? `₹${call.estimated_cost_inr}` : 
+                                  call.estimated_cost_eur ? `€${call.estimated_cost_eur}` : 
+                                  `$${call.estimated_cost_usd || 0}`
+                                }
+                              </p>
+                              <div className="flex flex-wrap items-center gap-2 mt-1">
+                                {callDuration && (
+                                  <p className="text-xs text-gray-600">
+                                    <Clock className="h-3 w-3 inline mr-1" />
+                                    Duration: {formatCallDuration(callDuration)}
+                                  </p>
+                                )}
+                                {endedByText && (
+                                  <p className="text-xs text-gray-600">
+                                    • {endedByText}
+                                  </p>
+                                )}
+                              </div>
+                              <p className="text-xs text-gray-500 mt-1">
+                                {formatTime(call.created_at)}
+                              </p>
+                            </div>
+                          </div>
+                          {call.status === 'pending' && (
+                            <div className="flex gap-2">
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => handleDeclineCall(call.id)}
+                              >
+                                <PhoneOff className="h-4 w-4 mr-1" />
+                                Decline
+                              </Button>
+                              <Button 
+                                size="sm"
+                                onClick={() => handleAcceptCall(call.id)}
+                              >
+                                <PhoneCall className="h-4 w-4 mr-1" />
+                                Accept
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Call History */}
+        <TabsContent value="history">
+          <Card>
+            <CardHeader>
+              <CardTitle>Call History</CardTitle>
+              <CardDescription>
+                All your past calls (accepted, declined, expired, completed)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {allCalls.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Phone className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p>No call history</p>
+                  <p className="text-sm">Your call history will appear here</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {allCalls.map((call) => {
+                    const getStatusBadge = (call: CallRequest) => {
+                      // Check call_sessions status to determine if call was completed
+                      const callSession = (call as any).call_sessions;
+                      const callSessionStatus = Array.isArray(callSession) ? callSession[0]?.status : callSession?.status;
+                      
+                      // If call_session status is 'ended', it means call was completed
+                      if (callSessionStatus === 'ended' && call.status === 'accepted') {
+                        return <Badge variant="default" className="bg-blue-500">Completed</Badge>;
+                      }
+                      
+                      // Otherwise, use incoming_call_requests status
+                      switch (call.status) {
+                        case 'accepted':
+                          return <Badge variant="default" className="bg-green-500">Accepted</Badge>;
+                        case 'declined':
+                          return <Badge variant="destructive">Declined</Badge>;
+                        case 'expired':
+                        case 'timeout':
+                          return <Badge variant="secondary">Expired</Badge>;
+                        case 'cancelled':
+                          // If call was cancelled but call_session exists and is ended, it means call completed
+                          if (callSessionStatus === 'ended') {
+                            return <Badge variant="default" className="bg-blue-500">Completed</Badge>;
+                          }
+                          return <Badge variant="secondary">Cancelled</Badge>;
+                        case 'pending':
+                          return <Badge variant="outline">Pending</Badge>;
+                        default:
+                          return <Badge variant="outline">{call.status}</Badge>;
+                      }
+                    };
+
+                    // Get call session data
+                    const callSession = (call as any).call_sessions;
+                    const callSessionData = Array.isArray(callSession) ? callSession[0] : callSession;
+                    const callDuration = callSessionData?.duration;
+                    const endedByText = getEndedByText(call);
+
+                    return (
+                      <div key={call.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                        <div className="flex justify-between items-start">
+                          <div className="flex items-center gap-3">
+                            {call.call_type === 'video' ? (
+                              <Video className="h-8 w-8 text-blue-500" />
+                            ) : (
+                              <Phone className="h-8 w-8 text-green-500" />
+                            )}
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <h3 className="font-semibold">
+                                  {call.user_metadata?.name || 'Anonymous User'}
+                                </h3>
+                                {getStatusBadge(call)}
+                              </div>
+                              <p className="text-sm text-gray-600">
+                                {call.call_type} call • {
+                                  call.estimated_cost_inr && currency === 'INR' ? `₹${call.estimated_cost_inr}` : 
+                                  call.estimated_cost_eur && currency === 'EUR' ? `€${call.estimated_cost_eur}` :
+                                  call.estimated_cost_inr ? `₹${call.estimated_cost_inr}` : 
+                                  call.estimated_cost_eur ? `€${call.estimated_cost_eur}` : 
+                                  `$${call.estimated_cost_usd || 0}`
+                                }
+                              </p>
+                              <div className="flex flex-wrap items-center gap-2 mt-1">
+                                {callDuration && (
+                                  <p className="text-xs text-gray-600">
+                                    <Clock className="h-3 w-3 inline mr-1" />
+                                    Duration: {formatCallDuration(callDuration)}
+                                  </p>
+                                )}
+                                {endedByText && (
+                                  <p className="text-xs text-gray-600">
+                                    • {endedByText}
+                                  </p>
+                                )}
+                              </div>
+                              <p className="text-xs text-gray-500 mt-1">
+                                {formatDateTime(call.created_at)}
+                              </p>
+                            </div>
+                          </div>
+                          {call.status === 'pending' && (
+                            <div className="flex gap-2">
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => handleDeclineCall(call.id)}
+                              >
+                                <PhoneOff className="h-4 w-4 mr-1" />
+                                Decline
+                              </Button>
+                              <Button 
+                                size="sm"
+                                onClick={() => handleAcceptCall(call.id)}
+                              >
+                                <PhoneCall className="h-4 w-4 mr-1" />
+                                Accept
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {/* Incoming Calls */}
         <TabsContent value="incoming">

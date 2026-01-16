@@ -106,6 +106,7 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
   const [disconnectionReason, setDisconnectionReason] = useState<string>('');
   const [showUserEndCallConfirmation, setShowUserEndCallConfirmation] = useState(false);
   const [showChat, setShowChat] = useState(false);
+  const [isActiveSession, setIsActiveSession] = useState<boolean>(false); // Track if this is an active session (for rejoin vs join)
   const hasBeenConnectedRef = useRef<boolean>(false);
   const reconnectingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const userDisconnectedRef = useRef<boolean>(false);
@@ -1269,11 +1270,69 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
     };
   }, []);
 
-  // IMPORTANT: Don't auto-join on mount - expert should manually join via button
-  // Auto-join is completely disabled - expert must always manually click "Join Call" button
-  // This prevents accidental auto-joins when starting a new session
-  // Auto-join was causing issues where call would join and immediately end
+  // Check if call session is active (for determining Join vs Rejoin)
   useEffect(() => {
+    const checkSessionStatus = async () => {
+      if (!callRequest.call_session_id) {
+        setIsActiveSession(false);
+        return;
+      }
+
+      try {
+        const { data: session, error } = await supabase
+          .from('call_sessions')
+          .select('status, start_time')
+          .eq('id', callRequest.call_session_id)
+          .maybeSingle();
+
+        if (error) {
+          console.warn('⚠️ Error checking session status:', error);
+          setIsActiveSession(false);
+          return;
+        }
+
+        // Session is active if status is 'active' AND has start_time (expert already joined before)
+        const isActive = session?.status === 'active' && !!session?.start_time;
+        setIsActiveSession(isActive);
+        console.log('📊 Call session status check:', {
+          sessionId: callRequest.call_session_id,
+          status: session?.status,
+          hasStartTime: !!session?.start_time,
+          isActiveSession: isActive,
+          willShow: isActive ? 'Rejoin Call' : 'Join Call'
+        });
+      } catch (error) {
+        console.error('❌ Error checking session status:', error);
+        setIsActiveSession(false);
+      }
+    };
+
+    checkSessionStatus();
+  }, [callRequest.call_session_id]);
+
+  // Auto-join for NEW calls (not rejoin scenarios)
+  // IMPORTANT: Only auto-join if:
+  // 1. It's a new call (not an active session that needs rejoin)
+  // 2. Not already joined or connecting
+  // 3. Channel name exists
+  // 4. Session status check is complete (isActiveSession is determined)
+  useEffect(() => {
+    // Don't auto-join if already joined or connecting
+    if (callState.isJoined || isConnecting) {
+      return;
+    }
+
+    // Don't auto-join if it's an active session (needs manual rejoin)
+    if (isActiveSession) {
+      console.log('⏸️ Expert: Active session detected - manual rejoin required');
+      return;
+    }
+
+    // Don't auto-join if no channel name
+    if (!callRequest.channel_name) {
+      return;
+    }
+
     // Prevent duplicate joins - check if client already exists and is connecting/connected
     if (clientRef.current) {
       const connectionState = clientRef.current.connectionState;
@@ -1283,22 +1342,25 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
       }
     }
 
-    // IMPORTANT: Never auto-join - expert must always manually click "Join Call" button
-    // This useEffect only logs - it does NOT trigger handleJoinCall
-    // The "Join Call" button (line 1368) is the ONLY way to join
-    if (callRequest.channel_name) {
-      console.log('⏸️ Expert: Auto-join disabled - expert must manually click "Join Call" button', {
-        channel_name: callRequest.channel_name,
-        has_call_session_id: !!callRequest.call_session_id,
-        isJoined: callState.isJoined,
-        isConnecting: isConnecting
-      });
-    }
-    
-    // EXPLICITLY DO NOT CALL handleJoinCall HERE
-    // The only way to join is via the "Join Call" button click handler
+    // Auto-join for new calls (not rejoin)
+    // Small delay to ensure component is fully mounted and state is ready
+    console.log('🚀 Expert: Auto-joining new call (not a rejoin scenario)', {
+      channel_name: callRequest.channel_name,
+      has_call_session_id: !!callRequest.call_session_id,
+      isActiveSession,
+      isJoined: callState.isJoined,
+      isConnecting: isConnecting
+    });
+
+    const autoJoinTimer = setTimeout(() => {
+      handleJoinCall();
+    }, 500); // Small delay to ensure everything is ready
+
+    return () => {
+      clearTimeout(autoJoinTimer);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [callRequest.channel_name, callRequest.call_session_id]);
+  }, [callRequest.channel_name, callRequest.call_session_id, isActiveSession, callState.isJoined, isConnecting]);
 
   // Subscribe to call session status changes (to detect when user ends call)
   // Note: Subscription is set up in handleJoinCall when session ID is available
@@ -1393,20 +1455,20 @@ const AgoraCallInterface: React.FC<AgoraCallInterfaceProps> = ({
       {!callState.isJoined && !isConnecting && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center space-y-4">
           <p className="text-blue-800 font-medium">
-            {callRequest.call_session_id ? 'Ready to rejoin the call' : 'Ready to join the call'}
+            {isActiveSession ? 'Ready to rejoin the call' : 'Ready to join the call'}
           </p>
           <p className="text-blue-600 text-sm">
-            {callRequest.call_session_id 
+            {isActiveSession 
               ? 'Click the button below to rejoin the call and continue where you left off.'
               : 'Click the button below to join the call and wait for the user to connect.'}
           </p>
           <Button
-            onClick={handleJoinCall}
+            onClick={isActiveSession ? handleRejoinCall : handleJoinCall}
             size="lg"
             className="bg-blue-600 hover:bg-blue-700 text-white"
           >
             <Phone className="w-5 h-5 mr-2" />
-            {callRequest.call_session_id ? 'Rejoin Call' : 'Join Call'}
+            {isActiveSession ? 'Rejoin Call' : 'Join Call'}
           </Button>
         </div>
       )}

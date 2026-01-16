@@ -9,6 +9,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   PhoneOff,
   Video,
   VideoOff,
@@ -64,6 +74,7 @@ const InCallModal: React.FC<InCallModalProps> = ({
 }) => {
   const { user, userProfile } = useSimpleAuth();
   const [showChat, setShowChat] = useState(false);
+  const [showEndCallConfirm, setShowEndCallConfirm] = useState(false);
   const userName = userProfile?.name || user?.email || 'You';
 
   const formatTime = (seconds: number) => {
@@ -74,6 +85,15 @@ const InCallModal: React.FC<InCallModalProps> = ({
 
   const toggleChat = () => {
     setShowChat(!showChat);
+  };
+
+  const handleEndCallClick = () => {
+    setShowEndCallConfirm(true);
+  };
+
+  const handleConfirmEndCall = () => {
+    setShowEndCallConfirm(false);
+    onEndCall();
   };
 
   // Play local video when available - trigger immediately when modal opens or state changes
@@ -357,7 +377,7 @@ const InCallModal: React.FC<InCallModalProps> = ({
               <Button
                 variant="destructive"
                 size="lg"
-                onClick={onEndCall}
+                onClick={handleEndCallClick}
               >
                 <PhoneOff className="w-5 h-5 mr-2" />
                 End Call
@@ -367,6 +387,32 @@ const InCallModal: React.FC<InCallModalProps> = ({
         </div>
         </div>
       </DialogContent>
+
+      {/* End Call Confirmation Dialog */}
+      <AlertDialog open={showEndCallConfirm} onOpenChange={setShowEndCallConfirm}>
+        <AlertDialogContent className="sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>End Call?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to end this call? The call will be marked as completed and you will be disconnected.
+              <br />
+              <br />
+              Call duration: <strong>{formatTime(duration)}</strong>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowEndCallConfirm(false)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmEndCall}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Yes, End Call
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 };

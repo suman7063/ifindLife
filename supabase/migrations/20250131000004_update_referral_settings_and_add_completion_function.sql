@@ -34,13 +34,19 @@ BEGIN
   FROM public.referrals
   WHERE id = p_referral_id;
 
-  -- Check if referral exists and is pending
+  -- Check if referral exists
   IF NOT FOUND THEN
     RAISE EXCEPTION 'Referral not found';
   END IF;
 
-  IF v_referral.status != 'pending' THEN
-    RAISE EXCEPTION 'Referral is already completed';
+  -- If referral is already completed, skip status update but still award rewards
+  -- This allows rewards to be awarded even if status was updated earlier
+  IF v_referral.status = 'completed' THEN
+    -- Status already completed, just award rewards (don't update status again)
+    -- Continue to reward processing
+  ELSIF v_referral.status != 'pending' THEN
+    -- Status is neither pending nor completed (shouldn't happen)
+    RAISE EXCEPTION 'Referral status is invalid: %', v_referral.status;
   END IF;
 
   v_referrer_id := v_referral.referrer_id;
@@ -114,13 +120,14 @@ BEGIN
     );
   END IF;
 
-  -- Update referral status
+  -- Update referral status (only if not already completed)
   UPDATE public.referrals
   SET 
     status = 'completed',
     reward_claimed = true,
-    completed_at = NOW()
-  WHERE id = p_referral_id;
+    completed_at = COALESCE(completed_at, NOW()) -- Don't overwrite if already set
+  WHERE id = p_referral_id
+    AND status != 'completed'; -- Only update if not already completed
 
   -- Update wallet balances for both users
   UPDATE public.users

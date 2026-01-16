@@ -8,6 +8,7 @@ import ReferralCard from '@/components/user/ReferralCard';
 import { ReferralSettings } from '@/types/supabase/referral';
 import { fetchReferralSettings, fetchUserReferrals } from '@/utils/referralUtils';
 import { AlertCircle } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 interface UserReferralsPageProps {
   user: UserProfile | null;
@@ -16,6 +17,8 @@ interface UserReferralsPageProps {
 const UserReferralsPage: React.FC<UserReferralsPageProps> = ({ user }) => {
   const [settings, setSettings] = useState<ReferralSettings | null>(null);
   const [referrals, setReferrals] = useState<any[]>([]);
+  const [myReferral, setMyReferral] = useState<any>(null); // Referral where user was referred
+  const [referrerName, setReferrerName] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -27,10 +30,32 @@ const UserReferralsPage: React.FC<UserReferralsPageProps> = ({ user }) => {
         const settingsData = await fetchReferralSettings();
         setSettings(settingsData);
         
-        // Load user's referrals if user exists
         if (user?.id) {
+          // Load user's referrals (where user is referrer)
           const userReferrals = await fetchUserReferrals(user.id);
           setReferrals(userReferrals);
+          
+          // Load referral where user was referred (if any)
+          const { data: myReferralData, error: myReferralError } = await supabase
+            .from('referrals')
+            .select('*')
+            .eq('referred_id', user.id)
+            .maybeSingle();
+          
+          if (!myReferralError && myReferralData) {
+            setMyReferral(myReferralData);
+            
+            // Get referrer's name
+            if (myReferralData.referrer_id) {
+              const { data: referrerData } = await supabase
+                .from('users')
+                .select('name')
+                .eq('id', myReferralData.referrer_id)
+                .single();
+              
+              setReferrerName(referrerData?.name || 'Unknown User');
+            }
+          }
         }
       } catch (err) {
         console.error('Error loading referral data:', err);
@@ -90,6 +115,48 @@ const UserReferralsPage: React.FC<UserReferralsPageProps> = ({ user }) => {
             Share your unique referral code with friends. When they sign up and complete their first session,
             you'll both earn rewards!
           </p>
+          
+          {/* Show if user was referred by someone */}
+          {myReferral && (
+            <Card className="mb-6 border-blue-200 bg-blue-50/50">
+              <CardHeader>
+                <CardTitle className="text-lg">You Were Referred By</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Referrer:</span>
+                    <span className="font-medium">{referrerName || 'Unknown User'}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Status:</span>
+                    <span className={`inline-block px-2 py-1 text-xs rounded-full ${
+                      myReferral.status === 'completed' 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-amber-100 text-amber-800'
+                    }`}>
+                      {myReferral.status.charAt(0).toUpperCase() + myReferral.status.slice(1)}
+                    </span>
+                  </div>
+                  {myReferral.completed_at && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Completed At:</span>
+                      <span className="text-sm">
+                        {new Date(myReferral.completed_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                  )}
+                  {myReferral.status === 'completed' && (
+                    <div className="pt-2 border-t">
+                      <p className="text-sm text-green-700 font-medium">
+                        ✅ You've completed your first session! Rewards have been credited.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
           
           <ReferralCard userProfile={user} settings={settings} />
 

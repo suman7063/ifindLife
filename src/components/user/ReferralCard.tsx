@@ -66,22 +66,22 @@ const ReferralCard: React.FC<ReferralCardProps> = ({ userProfile, settings }) =>
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Your Referral Code</CardTitle>
+        <CardTitle>Your Referral Link</CardTitle>
         <CardDescription>
-          Share this code with friends and you'll both earn rewards
+          Share this link with friends and you'll both earn rewards
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center gap-2">
           <Input 
-            value={referralCode} 
+            value={referralLink} 
             readOnly 
-            className="font-mono text-center"
+            className="font-mono text-sm"
           />
           <Button 
             variant="outline" 
             size="icon"
-            onClick={() => copyToClipboard(referralCode, 'code')}
+            onClick={() => copyToClipboard(referralLink, 'link')}
           >
             <Copy className="h-4 w-4" />
           </Button>
@@ -95,7 +95,7 @@ const ReferralCard: React.FC<ReferralCardProps> = ({ userProfile, settings }) =>
         <div className="text-sm text-muted-foreground mt-4 border-t pt-4">
           <p className="mb-2">How it works:</p>
           <ul className="list-disc list-inside space-y-1">
-            <li>Share your unique code with friends</li>
+            <li>Share your unique referral link with friends</li>
             <li>When they sign up & complete their first session, you get ${referrerReward}</li>
             <li>They receive ${referredReward} credit to their account</li>
           </ul>

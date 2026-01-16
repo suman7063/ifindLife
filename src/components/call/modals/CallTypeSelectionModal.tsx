@@ -580,11 +580,19 @@ const CallTypeSelectionModal: React.FC<CallTypeSelectionModalProps> = ({
                 </div>
               ) : (
                 <span className={hasSufficientBalance ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
-                  {symbol}{safeWalletBalance.toFixed(2)}
+                  {symbol}{safeWalletBalance < 0 ? '0.00' : safeWalletBalance.toFixed(2)}
+                  {safeWalletBalance < 0 && (
+                    <span className="text-xs ml-1 text-red-500">(Negative: {symbol}{Math.abs(safeWalletBalance).toFixed(2)})</span>
+                  )}
                 </span>
               )}
             </div>
-            {!walletLoading && !hasSufficientBalance && (
+            {!walletLoading && safeWalletBalance < 0 && (
+              <div className="text-xs text-orange-600 bg-orange-50 p-2 rounded border border-orange-200">
+                ⚠️ Your wallet has a negative balance. Please add credits to resolve this before starting a call.
+              </div>
+            )}
+            {!walletLoading && !hasSufficientBalance && safeWalletBalance >= 0 && (
               <div className="text-xs text-red-600 bg-red-50 p-2 rounded">
                 Insufficient balance. Need {symbol}{balanceShortfall.toFixed(2)} more. Payment gateway will open automatically.
               </div>

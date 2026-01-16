@@ -18,7 +18,8 @@ import {
   Calendar,
   TrendingUp,
   History,
-  Star
+  Star,
+  Users
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -62,6 +63,7 @@ const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({
     { icon: Home, label: 'Dashboard', path: '/user-dashboard', exact: true },
     { icon: User2, label: 'My Profile', path: '/user-dashboard/profile' },
     { icon: Wallet, label: 'Wallet', path: '/user-dashboard/wallet' },
+    { icon: Users, label: 'Referrals', path: '/user-dashboard/referrals' },
     { icon: BookOpen, label: 'My Programs', path: '/user-dashboard/programs' },
     { icon: History, label: 'Booking History', path: '/user-dashboard/booking-history' },
     { icon: TrendingUp, label: 'Progress Tracking', path: '/user-dashboard/progress' },

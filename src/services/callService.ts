@@ -647,11 +647,21 @@ export async function endCall(
       }
     }
 
+    // Update incoming_call_requests status based on call completion
+    // IMPORTANT: Only update if call was pending (not accepted yet)
+    // If call was already accepted, keep it as 'accepted' (call completed successfully)
+    // Only mark as 'cancelled' if call was pending and never accepted
     await supabase
       .from('incoming_call_requests')
-      .update({ status: 'cancelled' })
+      .update({ 
+        status: 'cancelled',
+        updated_at: endTime
+      })
       .eq('call_session_id', callSessionId)
-      .in('status', ['pending', 'accepted']);
+      .eq('status', 'pending'); // Only update if status is 'pending' (call never accepted)
+    
+    // Note: If status is 'accepted', we don't update it - it means call was accepted and completed
+    // This way, accepted calls that ended normally will show as 'accepted' (completed)
 
     // Check and complete referral if this is a referred user's first call
     // Only process for normal call completions (not network errors or misbehavior)
