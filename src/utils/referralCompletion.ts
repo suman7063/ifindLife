@@ -99,7 +99,7 @@ export const checkAndCompleteReferral = async (
 
       // Create pending reward entry (will be processed after delay)
       // Rewards will be awarded after delay (48 hours for production)
-      // Processing happens automatically via pg_cron job that runs every minute
+      // Processing happens automatically via pg_cron job that runs once per day at 2 AM UTC
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: pendingReward, error: pendingError } = await (supabase as any).rpc(
         'create_pending_referral_reward',
@@ -115,7 +115,7 @@ export const checkAndCompleteReferral = async (
       } else {
         console.log('✅ Pending referral reward created. Credits will be awarded automatically after 48 hours delay');
         console.log('Pending reward ID:', pendingReward);
-        console.log('ℹ️ Automatic processing is enabled via pg_cron (runs every minute)');
+        console.log('ℹ️ Automatic processing is enabled via pg_cron (runs once per day at 2 AM UTC)');
       }
     }
   } catch (error) {
@@ -126,7 +126,7 @@ export const checkAndCompleteReferral = async (
 
 /**
  * Process pending referral rewards that are due
- * This is automatically called every minute via pg_cron job
+ * This is automatically called once per day (2 AM UTC) via pg_cron job
  * Can also be called manually from admin panel if needed
  */
 export const processPendingReferralRewards = async (): Promise<{
