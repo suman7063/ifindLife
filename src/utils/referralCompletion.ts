@@ -2,7 +2,7 @@ import { supabase } from '@/lib/supabase';
 
 /**
  * Check if a user has a pending referral and create a pending reward entry
- * Credits will be awarded after delay (2 minutes for test, 48 hours for production)
+ * Credits will be awarded after delay (48 hours for production)
  * This should be called when a call is completed by a referred user
  */
 export const checkAndCompleteReferral = async (
@@ -98,7 +98,7 @@ export const checkAndCompleteReferral = async (
       }
 
       // Create pending reward entry (will be processed after delay)
-      // Rewards will be awarded after delay (2 minutes for test, 48 hours for production)
+      // Rewards will be awarded after delay (48 hours for production)
       // Processing happens automatically via pg_cron job that runs every minute
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: pendingReward, error: pendingError } = await (supabase as any).rpc(
@@ -113,7 +113,7 @@ export const checkAndCompleteReferral = async (
       if (pendingError) {
         console.error('Error creating pending referral reward:', pendingError);
       } else {
-        console.log('✅ Pending referral reward created. Credits will be awarded automatically after 2 minutes delay');
+        console.log('✅ Pending referral reward created. Credits will be awarded automatically after 48 hours delay');
         console.log('Pending reward ID:', pendingReward);
         console.log('ℹ️ Automatic processing is enabled via pg_cron (runs every minute)');
       }

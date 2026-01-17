@@ -222,7 +222,7 @@ const ReferralAnalytics: React.FC = () => {
         message += `, ${result.failed} failed. Check browser console for details.`;
       }
       if (result.processed === 0) {
-        message = 'No pending rewards to process. Rewards are awarded 2 minutes after call completion.';
+        message = 'No pending rewards to process. Rewards are awarded 48 hours after call completion.';
       }
       alert(message);
     } catch (error) {

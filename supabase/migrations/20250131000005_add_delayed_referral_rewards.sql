@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS public.referral_rewards_pending (
     referral_id UUID NOT NULL REFERENCES public.referrals(id) ON DELETE CASCADE,
     call_session_id TEXT REFERENCES public.call_sessions(id),
     call_end_time TIMESTAMPTZ NOT NULL,
-    reward_due_at TIMESTAMPTZ NOT NULL, -- call_end_time + delay (2 mins for test, 48hrs for production)
+    reward_due_at TIMESTAMPTZ NOT NULL, -- call_end_time + delay (48hrs for production)
     status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'failed')),
     created_at TIMESTAMPTZ DEFAULT NOW(),
     processed_at TIMESTAMPTZ,
@@ -33,9 +33,8 @@ DECLARE
     v_pending RECORD;
     v_processed_count INTEGER := 0;
     v_failed_count INTEGER := 0;
-    -- TEST: 2 minutes delay
-    -- PRODUCTION: Change to INTERVAL '48 hours'
-    v_delay_interval INTERVAL := INTERVAL '2 minutes';
+    -- PRODUCTION: 48 hours delay
+    v_delay_interval INTERVAL := INTERVAL '48 hours';
 BEGIN
     -- Get all pending rewards that are due (reward_due_at <= NOW())
     FOR v_pending IN 
@@ -93,9 +92,8 @@ SECURITY DEFINER
 AS $$
 DECLARE
     v_pending_id UUID;
-    -- TEST: 2 minutes delay
-    -- PRODUCTION: Change to INTERVAL '48 hours'
-    v_delay_interval INTERVAL := INTERVAL '2 minutes';
+    -- PRODUCTION: 48 hours delay
+    v_delay_interval INTERVAL := INTERVAL '48 hours';
     v_reward_due_at TIMESTAMPTZ;
 BEGIN
     -- Calculate reward due time (call_end_time + delay)

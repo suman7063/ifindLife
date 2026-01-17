@@ -1019,7 +1019,7 @@ export const useExpertSessions = ({ expertId, autoFetch = true }: UseExpertSessi
             .eq('id', callSession.id);
 
           // Check and complete referral if this is a referred user's first call
-          // Credits will be awarded after delay (2 minutes for test, 48 hours for production)
+          // Credits will be awarded after delay (48 hours for production)
           if (callSession.user_id) {
             try {
               const { checkAndCompleteReferral } = await import('@/utils/referralCompletion');
