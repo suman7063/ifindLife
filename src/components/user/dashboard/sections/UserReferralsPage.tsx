@@ -66,6 +66,33 @@ const UserReferralsPage: React.FC<UserReferralsPageProps> = ({ user }) => {
     };
 
     loadData();
+    
+    // Set up real-time subscription for referrals table to auto-refresh
+    let referralsSubscription: any = null;
+    if (user?.id) {
+      referralsSubscription = supabase
+        .channel(`user-referrals-changes-${user.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'referrals',
+            filter: `referred_id=eq.${user.id}`
+          },
+          () => {
+            // Refresh data when referral status changes
+            loadData();
+          }
+        )
+        .subscribe();
+    }
+
+    return () => {
+      if (referralsSubscription) {
+        referralsSubscription.unsubscribe();
+      }
+    };
   }, [user?.id]);
 
   if (isLoading) {

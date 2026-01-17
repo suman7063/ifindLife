@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -80,6 +80,7 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
   const [showVerificationDialog, setShowVerificationDialog] = useState(false);
   const [userEmail, setUserEmail] = useState<string>('');
   const [resendingEmail, setResendingEmail] = useState(false);
+  const dateInputRef = useRef<HTMLInputElement>(null);
   // TODO: Re-implement pricing logic
   // const pricing = useIPBasedPricing();
   const pricing = { currency: 'INR', pricePerMinute: 30 }; // Default pricing
@@ -474,7 +475,22 @@ const SinglePageUserRegistrationForm: React.FC<SinglePageUserRegistrationFormPro
                     <FormItem>
                       <FormLabel>Date of Birth *</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} value={field.value ?? ''} />
+                        <Input 
+                          type="date" 
+                          {...field} 
+                          value={field.value ?? ''} 
+                          ref={(e) => {
+                            field.ref(e);
+                            dateInputRef.current = e;
+                          }}
+                          onClick={(e) => {
+                            // Make entire field clickable to open date picker
+                            if (dateInputRef.current) {
+                              dateInputRef.current.showPicker?.();
+                            }
+                          }}
+                          className="cursor-pointer"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

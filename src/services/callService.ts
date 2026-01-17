@@ -666,8 +666,13 @@ export async function endCall(
     // Check and complete referral if this is a referred user's first call
     // Only process for normal call completions (not network errors or misbehavior)
     // Credits will be awarded after delay (2 minutes for test, 48 hours for production)
+    // Allow 'normal', 'user_ended', and 'expert_ended' as valid reasons for referral completion
+    const isValidReferralCompletion = disconnectionReason === 'normal' || 
+                                      disconnectionReason === 'user_ended' || 
+                                      disconnectionReason === 'expert_ended';
+    
     if (callSession?.user_id && 
-        disconnectionReason === 'normal' && 
+        isValidReferralCompletion && 
         (endedBy === 'user' || endedBy === 'expert')) {
       try {
         // Import dynamically to avoid circular dependencies
