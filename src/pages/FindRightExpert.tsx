@@ -71,7 +71,7 @@ const FindRightExpert = () => {
                   <h2 className="text-2xl md:text-3xl font-bold text-foreground">
                     1. Solution & Guidance Sessions
                   </h2>
-                  <p className="text-sm text-muted-foreground">(3 types of experts)</p>
+                  <p className="text-base md:text-lg text-muted-foreground font-medium">(3 types of experts)</p>
                 </div>
               </div>
               
@@ -146,7 +146,7 @@ const FindRightExpert = () => {
                   <h2 className="text-2xl md:text-3xl font-bold text-foreground">
                     2. Listening-Only Sessions
                   </h2>
-                  <p className="text-sm text-muted-foreground">(2 types of experts)</p>
+                  <p className="text-base md:text-lg text-muted-foreground font-medium">(2 types of experts)</p>
                 </div>
               </div>
               
