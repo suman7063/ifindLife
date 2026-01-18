@@ -55,6 +55,7 @@ import { FavoritesManager } from '@/components/favorites/FavoritesManager';
 import CallPage from './pages/CallPage';
 import MessagingPage from './pages/MessagingPage';
 import UnifiedExpertsPage from './pages/UnifiedExpertsPage';
+import FindRightExpert from './pages/FindRightExpert';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import ReferralProgram from './pages/ReferralProgram';
@@ -102,6 +103,7 @@ const UserRoutes: React.FC = () => {
         
         {/* Expert Routes */}
         <Route path="/experts" element={<Experts />} />
+        <Route path="/find-right-expert" element={<FindRightExpert />} />
         <Route path="/experts-enhanced" element={<EnhancedExpertSearch />} />
         <Route path="/experts/:id" element={<ExpertDetail />} />
         <Route path="/expert/:id" element={<ExpertDetail />} /> {/* Backward compatibility */}
