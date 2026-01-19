@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Container } from '@/components/ui/container';
@@ -14,9 +14,80 @@ import {
   CheckCircle,
   ArrowRight
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import ExpertCard from '@/components/expert-card/ExpertCard';
+import { ExpertCardData } from '@/components/expert-card/types';
+import { supabase } from '@/integrations/supabase/client';
+import { Skeleton } from '@/components/ui/skeleton';
+
+// Hook to fetch experts by category
+const useCategoryExperts = (category: string, limit: number = 3) => {
+  const [experts, setExperts] = useState<ExpertCardData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchExperts = async () => {
+      try {
+        const { data, error } = await supabase.rpc('get_approved_experts');
+        
+        if (error) throw error;
+        
+        const filteredExperts = (data || [])
+          .filter((expert: any) => expert.category === category)
+          .slice(0, limit)
+          .map((dbExpert: any): ExpertCardData => ({
+            id: String(dbExpert.id),
+            auth_id: dbExpert.auth_id,
+            name: dbExpert.name || 'Unknown Expert',
+            profilePicture: dbExpert.profile_picture || '',
+            specialization: dbExpert.specialization || 'General Counseling',
+            experience: typeof dbExpert.experience === 'string' ? parseInt(dbExpert.experience) || 0 : Number(dbExpert.experience) || 0,
+            averageRating: Number(dbExpert.average_rating) || 4.5,
+            reviewsCount: Number(dbExpert.reviews_count) || 0,
+            price: 30,
+            verified: Boolean(dbExpert.verified),
+            status: 'offline' as const,
+            waitTime: 'Not Available',
+            category: dbExpert.category || category,
+            dbStatus: dbExpert.status
+          }));
+        
+        setExperts(filteredExperts);
+      } catch (err) {
+        console.error('Error fetching category experts:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchExperts();
+  }, [category, limit]);
+
+  return { experts, loading };
+};
 
 const FindRightExpert = () => {
+  const navigate = useNavigate();
+  
+  // Fetch experts for each category
+  const { experts: mentalHealthGuides, loading: loadingMHG } = useCategoryExperts('mindfulness-expert', 3);
+  const { experts: mindfulnessCoaches, loading: loadingMC } = useCategoryExperts('life-coach', 3);
+  const { experts: spiritualMentors, loading: loadingSM } = useCategoryExperts('spiritual-mentor', 3);
+  const { experts: listeningVolunteers, loading: loadingLV } = useCategoryExperts('listening-volunteer', 3);
+  const { experts: listeningExperts, loading: loadingLE } = useCategoryExperts('listening-expert', 3);
+
+  const handleExpertClick = (expert: ExpertCardData) => {
+    navigate(`/experts/${expert.auth_id || expert.id}`);
+  };
+
+  const handleConnectNow = (type: 'video' | 'voice') => {
+    console.log('Connect now:', type);
+  };
+
+  const handleBookNow = () => {
+    console.log('Book now clicked');
+  };
+
   return (
     <>
       <Navbar />
@@ -85,7 +156,7 @@ const FindRightExpert = () => {
             </div>
 
             {/* 3 Expert Types Grid */}
-            <div className="grid lg:grid-cols-3 gap-6">
+            <div className="space-y-10">
               {/* 1.1 Mental Health Guide */}
               <ExpertTypeCard
                 number="1.1"
@@ -100,6 +171,11 @@ const FindRightExpert = () => {
                   { title: "Supportive Guidance + Mindfulness", desc: "Suggestions for next steps + quick guided meditation." }
                 ]}
                 categoryLink="/experts/categories?category=mindfulness-expert"
+                experts={mentalHealthGuides}
+                loading={loadingMHG}
+                onExpertClick={handleExpertClick}
+                onConnectNow={handleConnectNow}
+                onBookNow={handleBookNow}
               />
 
               {/* 1.2 Mental Health and Mindfulness Coach */}
@@ -116,6 +192,11 @@ const FindRightExpert = () => {
                   { title: "Live Mindfulness & Breathwork", desc: "Guided techniques for quick relief and long-term resilience." }
                 ]}
                 categoryLink="/experts/categories?category=life-coach"
+                experts={mindfulnessCoaches}
+                loading={loadingMC}
+                onExpertClick={handleExpertClick}
+                onConnectNow={handleConnectNow}
+                onBookNow={handleBookNow}
               />
 
               {/* 1.3 Mental Health and Spiritual Mentor */}
@@ -132,6 +213,11 @@ const FindRightExpert = () => {
                   { title: "Deeper Inner Work", desc: "Exploration of patterns + Guided Spiritual Meditations." }
                 ]}
                 categoryLink="/experts/categories?category=spiritual-mentor"
+                experts={spiritualMentors}
+                loading={loadingSM}
+                onExpertClick={handleExpertClick}
+                onConnectNow={handleConnectNow}
+                onBookNow={handleBookNow}
               />
             </div>
           </section>
@@ -160,7 +246,7 @@ const FindRightExpert = () => {
             </div>
 
             {/* 2 Expert Types Grid */}
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="space-y-10">
               {/* 2.1 Listening Volunteers */}
               <ListeningExpertCard
                 number="2.1"
@@ -174,6 +260,11 @@ const FindRightExpert = () => {
                   { title: "Active Listening", desc: "Help you naturally discover insights by hearing your own story in a more coherent form." }
                 ]}
                 categoryLink="/experts/categories?category=listening-volunteer"
+                experts={listeningVolunteers}
+                loading={loadingLV}
+                onExpertClick={handleExpertClick}
+                onConnectNow={handleConnectNow}
+                onBookNow={handleBookNow}
               />
 
               {/* 2.2 Conscious Listening Experts */}
@@ -189,6 +280,11 @@ const FindRightExpert = () => {
                   { title: "Complex Issue Processing", desc: "Specialized support for navigating challenging life situations and emotions." }
                 ]}
                 categoryLink="/experts/categories?category=listening-expert"
+                experts={listeningExperts}
+                loading={loadingLE}
+                onExpertClick={handleExpertClick}
+                onConnectNow={handleConnectNow}
+                onBookNow={handleBookNow}
               />
             </div>
           </section>
@@ -217,7 +313,7 @@ const FindRightExpert = () => {
   );
 };
 
-// Card for Solution & Guidance experts (compact for 3-column layout)
+// Card for Solution & Guidance experts with expert cards
 interface ExpertTypeCardProps {
   number: string;
   title: string;
@@ -226,6 +322,11 @@ interface ExpertTypeCardProps {
   description: string;
   offerings: Array<{ title: string; desc: string }>;
   categoryLink: string;
+  experts: ExpertCardData[];
+  loading: boolean;
+  onExpertClick: (expert: ExpertCardData) => void;
+  onConnectNow: (type: 'video' | 'voice') => void;
+  onBookNow: () => void;
 }
 
 const ExpertTypeCard: React.FC<ExpertTypeCardProps> = ({
@@ -235,7 +336,12 @@ const ExpertTypeCard: React.FC<ExpertTypeCardProps> = ({
   accentColor,
   description,
   offerings,
-  categoryLink
+  categoryLink,
+  experts,
+  loading,
+  onExpertClick,
+  onConnectNow,
+  onBookNow
 }) => {
   const colorClasses = {
     teal: { bg: 'bg-ifind-teal/10', text: 'text-ifind-teal', border: 'border-ifind-teal/30', hoverBorder: 'hover:border-ifind-teal/60' },
@@ -245,25 +351,41 @@ const ExpertTypeCard: React.FC<ExpertTypeCardProps> = ({
 
   const colors = colorClasses[accentColor];
 
+  // Expert card skeleton loader
+  const ExpertCardSkeleton = () => (
+    <Card className="overflow-hidden">
+      <CardContent className="p-4">
+        <div className="flex items-start gap-4">
+          <Skeleton className="h-16 w-16 rounded-full" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-4 w-20" />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
-    <Card className={`h-full border-2 ${colors.border} ${colors.hoverBorder} transition-all duration-300 hover:shadow-lg flex flex-col`}>
-      <CardContent className="p-5 flex flex-col h-full">
+    <Card className={`border-2 ${colors.border} ${colors.hoverBorder} transition-all duration-300 hover:shadow-lg`}>
+      <CardContent className="p-6">
         {/* Header */}
         <div className="flex items-start gap-3 mb-4">
-          <div className={`w-11 h-11 rounded-lg ${colors.bg} flex items-center justify-center flex-shrink-0 ${colors.text}`}>
+          <div className={`w-12 h-12 rounded-lg ${colors.bg} flex items-center justify-center flex-shrink-0 ${colors.text}`}>
             {icon}
           </div>
           <div>
             <span className="text-xs font-medium text-muted-foreground">{number}</span>
-            <h3 className="text-base font-bold text-foreground leading-tight">{title}</h3>
+            <h3 className="text-lg md:text-xl font-bold text-foreground leading-tight">{title}</h3>
           </div>
         </div>
 
         {/* Description */}
-        <p className="text-sm text-muted-foreground mb-4 leading-relaxed">{description}</p>
+        <p className="text-sm text-muted-foreground mb-5 leading-relaxed">{description}</p>
 
         {/* Offerings */}
-        <div className="space-y-2.5 mb-5 flex-grow">
+        <div className="grid md:grid-cols-2 gap-3 mb-6">
           {offerings.map((offering, index) => (
             <div key={index} className="flex gap-2">
               <CheckCircle className={`w-4 h-4 ${colors.text} flex-shrink-0 mt-0.5`} />
@@ -275,19 +397,46 @@ const ExpertTypeCard: React.FC<ExpertTypeCardProps> = ({
           ))}
         </div>
 
-        {/* Button */}
-        <Link to={categoryLink} className="mt-auto">
-          <Button variant="outline" size="sm" className="w-full">
-            View Experts
-            <ArrowRight className="ml-2 w-4 h-4" />
-          </Button>
-        </Link>
+        {/* Expert Cards Section */}
+        <div className="border-t pt-5">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-sm font-semibold text-foreground">Top Experts</h4>
+            <Link to={categoryLink}>
+              <Button variant="ghost" size="sm" className={`${colors.text} hover:${colors.bg}`}>
+                View All
+                <ArrowRight className="ml-1 w-4 h-4" />
+              </Button>
+            </Link>
+          </div>
+          
+          {loading ? (
+            <div className="grid md:grid-cols-3 gap-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <ExpertCardSkeleton key={i} />
+              ))}
+            </div>
+          ) : experts.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No experts available in this category yet.</p>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {experts.map((expert) => (
+                <ExpertCard
+                  key={expert.id}
+                  expert={expert}
+                  onClick={() => onExpertClick(expert)}
+                  onConnectNow={onConnectNow}
+                  onBookNow={onBookNow}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
 };
 
-// Card for Listening experts (wider for 2-column layout)
+// Card for Listening experts with expert cards
 interface ListeningExpertCardProps {
   number: string;
   title: string;
@@ -296,6 +445,11 @@ interface ListeningExpertCardProps {
   whoTheyAre: string;
   offerings: Array<{ title: string; desc: string }>;
   categoryLink: string;
+  experts: ExpertCardData[];
+  loading: boolean;
+  onExpertClick: (expert: ExpertCardData) => void;
+  onConnectNow: (type: 'video' | 'voice') => void;
+  onBookNow: () => void;
 }
 
 const ListeningExpertCard: React.FC<ListeningExpertCardProps> = ({
@@ -305,7 +459,12 @@ const ListeningExpertCard: React.FC<ListeningExpertCardProps> = ({
   accentColor,
   whoTheyAre,
   offerings,
-  categoryLink
+  categoryLink,
+  experts,
+  loading,
+  onExpertClick,
+  onConnectNow,
+  onBookNow
 }) => {
   const colorClasses = {
     teal: { bg: 'bg-ifind-teal/10', text: 'text-ifind-teal', border: 'border-ifind-teal/30', hoverBorder: 'hover:border-ifind-teal/60' },
@@ -314,9 +473,25 @@ const ListeningExpertCard: React.FC<ListeningExpertCardProps> = ({
 
   const colors = colorClasses[accentColor];
 
+  // Expert card skeleton loader
+  const ExpertCardSkeleton = () => (
+    <Card className="overflow-hidden">
+      <CardContent className="p-4">
+        <div className="flex items-start gap-4">
+          <Skeleton className="h-16 w-16 rounded-full" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-4 w-20" />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
-    <Card className={`h-full border-2 ${colors.border} ${colors.hoverBorder} transition-all duration-300 hover:shadow-lg flex flex-col`}>
-      <CardContent className="p-6 flex flex-col h-full">
+    <Card className={`border-2 ${colors.border} ${colors.hoverBorder} transition-all duration-300 hover:shadow-lg`}>
+      <CardContent className="p-6">
         {/* Header */}
         <div className="flex items-start gap-3 mb-4">
           <div className={`w-12 h-12 rounded-lg ${colors.bg} flex items-center justify-center flex-shrink-0 ${colors.text}`}>
@@ -324,7 +499,7 @@ const ListeningExpertCard: React.FC<ListeningExpertCardProps> = ({
           </div>
           <div>
             <span className="text-xs font-medium text-muted-foreground">{number}</span>
-            <h3 className="text-lg font-bold text-foreground">{title}</h3>
+            <h3 className="text-lg md:text-xl font-bold text-foreground">{title}</h3>
           </div>
         </div>
 
@@ -335,9 +510,9 @@ const ListeningExpertCard: React.FC<ListeningExpertCardProps> = ({
         </div>
 
         {/* Offerings */}
-        <div className="mb-5 flex-grow">
+        <div className="mb-6">
           <h4 className="text-sm font-semibold text-foreground mb-3">What they offer</h4>
-          <div className="space-y-3">
+          <div className="grid md:grid-cols-2 gap-3">
             {offerings.map((offering, index) => (
               <div key={index} className="flex gap-2.5">
                 <CheckCircle className={`w-4 h-4 ${colors.text} flex-shrink-0 mt-0.5`} />
@@ -350,13 +525,40 @@ const ListeningExpertCard: React.FC<ListeningExpertCardProps> = ({
           </div>
         </div>
 
-        {/* Button */}
-        <Link to={categoryLink} className="mt-auto">
-          <Button variant="outline" className="w-full">
-            View {title}
-            <ArrowRight className="ml-2 w-4 h-4" />
-          </Button>
-        </Link>
+        {/* Expert Cards Section */}
+        <div className="border-t pt-5">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-sm font-semibold text-foreground">Top Experts</h4>
+            <Link to={categoryLink}>
+              <Button variant="ghost" size="sm" className={`${colors.text} hover:${colors.bg}`}>
+                View All
+                <ArrowRight className="ml-1 w-4 h-4" />
+              </Button>
+            </Link>
+          </div>
+          
+          {loading ? (
+            <div className="grid md:grid-cols-2 gap-4">
+              {Array.from({ length: 2 }).map((_, i) => (
+                <ExpertCardSkeleton key={i} />
+              ))}
+            </div>
+          ) : experts.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No experts available in this category yet.</p>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {experts.map((expert) => (
+                <ExpertCard
+                  key={expert.id}
+                  expert={expert}
+                  onClick={() => onExpertClick(expert)}
+                  onConnectNow={onConnectNow}
+                  onBookNow={onBookNow}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
