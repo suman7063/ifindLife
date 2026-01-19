@@ -20,18 +20,20 @@ const FindRightExpert = () => {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 py-16 md:py-20">
-        <Container>
-          {/* Hero Section */}
-          <div className="text-center mb-12">
-            <h1 className="text-3xl md:text-5xl font-bold text-foreground mb-6">
+      <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
+        {/* Hero Section - matching other pages */}
+        <section className="bg-gradient-to-r from-ifind-teal/20 to-ifind-purple/20 text-ifind-charcoal py-16">
+          <div className="container mx-auto px-6 text-center">
+            <h1 className="text-3xl md:text-4xl font-bold mb-4">
               Choose the Right Support for You
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
-              At iFindLife, you can choose the kind of support that feels right for you in this moment:
+            <p className="text-gray-700 max-w-3xl mx-auto">
+              At iFindLife, you can choose the kind of support that feels right for you in this moment.
             </p>
           </div>
+        </section>
 
+        <Container className="py-12 md:py-16">
           {/* Quick Navigation Cards */}
           <div className="grid md:grid-cols-2 gap-6 mb-16">
             <a href="#solution-guidance" className="block">
@@ -71,7 +73,7 @@ const FindRightExpert = () => {
                   <h2 className="text-2xl md:text-3xl font-bold text-foreground">
                     1. Solution & Guidance Sessions
                   </h2>
-                  <p className="text-base md:text-lg text-muted-foreground font-medium">(3 types of experts)</p>
+                  <p className="text-sm md:text-base text-muted-foreground">(3 types of experts)</p>
                 </div>
               </div>
               
@@ -89,7 +91,7 @@ const FindRightExpert = () => {
                 number="1.1"
                 title="Mental Health Guide"
                 icon={<Heart className="w-6 h-6" />}
-                accentColor="rose"
+                accentColor="teal"
                 description="Our Mental Health Guides offer a warm, safe space to share what you are going through, while giving you simple, practical steps for quick emotional and mental relief."
                 offerings={[
                   { title: "Immediate Emotional Relief", desc: "Grounding questions, reframes, and simple actions to feel lighter and calmer." },
@@ -105,7 +107,7 @@ const FindRightExpert = () => {
                 number="1.2"
                 title="Mental Health & Mindfulness Coach"
                 icon={<Brain className="w-6 h-6" />}
-                accentColor="cyan"
+                accentColor="aqua"
                 description="Our Coaches support you with clear strategies, structured sessions, and guided practices to manage stress, anxiety, and emotional instability."
                 offerings={[
                   { title: "Quick Relief to Long-Term Resilience", desc: "Science-backed steps for immediate and lasting wellbeing." },
@@ -146,7 +148,7 @@ const FindRightExpert = () => {
                   <h2 className="text-2xl md:text-3xl font-bold text-foreground">
                     2. Listening-Only Sessions
                   </h2>
-                  <p className="text-base md:text-lg text-muted-foreground font-medium">(2 types of experts)</p>
+                  <p className="text-sm md:text-base text-muted-foreground">(2 types of experts)</p>
                 </div>
               </div>
               
@@ -179,7 +181,7 @@ const FindRightExpert = () => {
                 number="2.2"
                 title="Conscious Listening Experts"
                 icon={<Ear className="w-6 h-6" />}
-                accentColor="indigo"
+                accentColor="purple"
                 whoTheyAre="Conscious Listening Experts are experienced listeners who have gone through a transformation process themselves through Soulversity's training. They combine compassionate presence with refined skills of reflecting, summarizing, and gently offering a positive direction."
                 offerings={[
                   { title: "Deep, Conscious Listening", desc: "Stay fully present while mindfully interrupting repetitive patterns toward clarity." },
@@ -200,7 +202,7 @@ const FindRightExpert = () => {
                   Choose the support that resonates with you and take the first step toward emotional wellness and inner peace.
                 </p>
                 <Link to="/experts/categories">
-                  <Button size="lg" className="bg-ifind-teal hover:bg-ifind-teal/90">
+                  <Button size="lg" className="bg-ifind-teal hover:bg-ifind-teal/90 text-white">
                     Browse All Experts
                     <ArrowRight className="ml-2 w-5 h-5" />
                   </Button>
@@ -220,7 +222,7 @@ interface ExpertTypeCardProps {
   number: string;
   title: string;
   icon: React.ReactNode;
-  accentColor: 'rose' | 'cyan' | 'purple';
+  accentColor: 'teal' | 'aqua' | 'purple';
   description: string;
   offerings: Array<{ title: string; desc: string }>;
   categoryLink: string;
@@ -236,9 +238,9 @@ const ExpertTypeCard: React.FC<ExpertTypeCardProps> = ({
   categoryLink
 }) => {
   const colorClasses = {
-    rose: { bg: 'bg-rose-500/10', text: 'text-rose-500', border: 'border-rose-500/30', hoverBorder: 'hover:border-rose-500/60' },
-    cyan: { bg: 'bg-cyan-500/10', text: 'text-cyan-500', border: 'border-cyan-500/30', hoverBorder: 'hover:border-cyan-500/60' },
-    purple: { bg: 'bg-purple-500/10', text: 'text-purple-500', border: 'border-purple-500/30', hoverBorder: 'hover:border-purple-500/60' }
+    teal: { bg: 'bg-ifind-teal/10', text: 'text-ifind-teal', border: 'border-ifind-teal/30', hoverBorder: 'hover:border-ifind-teal/60' },
+    aqua: { bg: 'bg-ifind-aqua/10', text: 'text-ifind-aqua', border: 'border-ifind-aqua/30', hoverBorder: 'hover:border-ifind-aqua/60' },
+    purple: { bg: 'bg-ifind-purple/10', text: 'text-ifind-purple', border: 'border-ifind-purple/30', hoverBorder: 'hover:border-ifind-purple/60' }
   };
 
   const colors = colorClasses[accentColor];
@@ -290,7 +292,7 @@ interface ListeningExpertCardProps {
   number: string;
   title: string;
   icon: React.ReactNode;
-  accentColor: 'teal' | 'indigo';
+  accentColor: 'teal' | 'purple';
   whoTheyAre: string;
   offerings: Array<{ title: string; desc: string }>;
   categoryLink: string;
@@ -306,8 +308,8 @@ const ListeningExpertCard: React.FC<ListeningExpertCardProps> = ({
   categoryLink
 }) => {
   const colorClasses = {
-    teal: { bg: 'bg-teal-500/10', text: 'text-teal-500', border: 'border-teal-500/30', hoverBorder: 'hover:border-teal-500/60' },
-    indigo: { bg: 'bg-indigo-500/10', text: 'text-indigo-500', border: 'border-indigo-500/30', hoverBorder: 'hover:border-indigo-500/60' }
+    teal: { bg: 'bg-ifind-teal/10', text: 'text-ifind-teal', border: 'border-ifind-teal/30', hoverBorder: 'hover:border-ifind-teal/60' },
+    purple: { bg: 'bg-ifind-purple/10', text: 'text-ifind-purple', border: 'border-ifind-purple/30', hoverBorder: 'hover:border-ifind-purple/60' }
   };
 
   const colors = colorClasses[accentColor];
