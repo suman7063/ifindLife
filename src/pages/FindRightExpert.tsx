@@ -15,7 +15,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import ExpertCard from '@/components/expert-card/ExpertCard';
+import ExpertCardSimplified from '@/components/expert-card/ExpertCardSimplified';
 import { ExpertCardData } from '@/components/expert-card/types';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -420,7 +420,7 @@ const ExpertTypeCard: React.FC<ExpertTypeCardProps> = ({
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
               {experts.map((expert) => (
-                <ExpertCard
+                <ExpertCardSimplified
                   key={expert.id}
                   expert={expert}
                   onClick={() => onExpertClick(expert)}
@@ -548,7 +548,7 @@ const ListeningExpertCard: React.FC<ListeningExpertCardProps> = ({
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
               {experts.map((expert) => (
-                <ExpertCard
+                <ExpertCardSimplified
                   key={expert.id}
                   expert={expert}
                   onClick={() => onExpertClick(expert)}
