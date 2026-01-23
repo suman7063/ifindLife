@@ -26,50 +26,10 @@ const ExpertsMenu = () => {
           <li>
             <NavigationMenuLink asChild>
               <Link 
-                to="/experts/listening-volunteer" 
+                to="/find-right-expert" 
                 className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
               >
-                Listening Volunteers
-              </Link>
-            </NavigationMenuLink>
-          </li>
-          <li>
-            <NavigationMenuLink asChild>
-              <Link 
-                to="/experts/listening-expert" 
-                className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
-              >
-                Listening Experts
-              </Link>
-            </NavigationMenuLink>
-          </li>
-          <li>
-            <NavigationMenuLink asChild>
-              <Link 
-                to="/experts/mindfulness-expert" 
-                className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
-              >
-                Mindfulness Experts
-              </Link>
-            </NavigationMenuLink>
-          </li>
-          <li>
-            <NavigationMenuLink asChild>
-              <Link 
-                to="/experts/life-coach" 
-                className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
-              >
-                Life Coaches
-              </Link>
-            </NavigationMenuLink>
-          </li>
-          <li>
-            <NavigationMenuLink asChild>
-              <Link 
-                to="/experts/spiritual-mentor" 
-                className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
-              >
-                Spiritual Mentors
+                Find the Right Expert
               </Link>
             </NavigationMenuLink>
           </li>
