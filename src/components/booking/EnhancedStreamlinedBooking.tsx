@@ -597,18 +597,43 @@ const EnhancedStreamlinedBooking: React.FC<EnhancedStreamlinedBookingProps> = ({
           return;
         }
 
-        // Create appointments - all checks passed
-        const appointments = slotsToBook.map(({ slot }) => ({
-          user_id: user.id,
-          expert_id: expert.auth_id,
-          expert_name: expert.name,
-          appointment_date: appointmentDate,
-          start_time: slot.start_time,
-          end_time: slot.end_time,
-          status: 'scheduled',
-          duration: 30,
-          payment_status: 'pending'
-        }));
+        // Generate channel names and tokens for each appointment
+        const appointmentsWithTokens = await Promise.all(
+          slotsToBook.map(async ({ slot }) => {
+            // Generate unique channel name for each appointment
+            const channelName = `appointment_${Date.now()}_${user.id}_${slot.id}`;
+            
+            // Generate Agora token for the appointment
+            const { data: tokenData, error: tokenError } = await supabase.functions.invoke('smooth-action', {
+              body: {
+                channelName,
+                uid: Math.floor(Math.random() * 1000000),
+                role: 1,
+                expireTime: 3600 // 1 hour token validity
+              }
+            });
+
+            if (tokenError) {
+              console.error('Failed to generate Agora token:', tokenError);
+            }
+
+            return {
+              user_id: user.id,
+              expert_id: expert.auth_id,
+              expert_name: expert.name,
+              appointment_date: appointmentDate,
+              start_time: slot.start_time,
+              end_time: slot.end_time,
+              status: 'scheduled',
+              duration: 30,
+              payment_status: 'pending',
+              channel_name: channelName,
+              token: tokenData?.token || null
+            };
+          })
+        );
+
+        const appointments = appointmentsWithTokens;
 
         const { data: appointmentData, error: appointmentError } = await supabase
           .from('appointments')
