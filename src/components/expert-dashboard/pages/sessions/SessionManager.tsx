@@ -664,10 +664,12 @@ const SessionManager: React.FC = () => {
       
       if (!channelName) {
         // Generate unique channel name
+        // Use appointment_ format to match booking flow, or session_ format as fallback
         const timestamp = Date.now();
         const shortExpertId = expert?.auth_id?.replace(/-/g, '').substring(0, 8) || 'expert';
         const shortUserId = session.clientId.replace(/-/g, '').substring(0, 8);
-        channelName = `session_${shortExpertId}_${shortUserId}_${timestamp}`;
+        // Prefer appointment_ format for consistency with booking
+        channelName = `appointment_${timestamp}_${session.clientId}`;
       }
       
       // ALWAYS generate fresh token when expert starts session

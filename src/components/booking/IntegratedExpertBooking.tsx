@@ -241,6 +241,23 @@ const IntegratedExpertBooking: React.FC<IntegratedExpertBookingProps> = ({
               return `${year}-${month}-${day}`;
             };
 
+            // Generate channel name for Agora call
+            const channelName = `appointment_${Date.now()}_${user.id}`;
+            
+            // Generate Agora token for the appointment
+            const { data: tokenData, error: tokenError } = await supabase.functions.invoke('smooth-action', {
+              body: {
+                channelName,
+                uid: Math.floor(Math.random() * 1000000),
+                role: 1,
+                expireTime: 3600 // 1 hour token validity
+              }
+            });
+
+            if (tokenError) {
+              console.error('Failed to generate Agora token:', tokenError);
+            }
+
             const appointmentData = {
               user_id: user.id,
               expert_id: expert.auth_id,
@@ -252,6 +269,8 @@ const IntegratedExpertBooking: React.FC<IntegratedExpertBookingProps> = ({
               status: 'scheduled',
               notes: notes,
               duration: 60, // 1 hour default
+              channel_name: channelName,
+              token: tokenData?.token || null
             };
 
             const { data, error } = await supabase
